@@ -3,6 +3,9 @@ from app.db import create_db_and_tables, get_session
 from app.models.postModel import PostModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
+from app.routes.postRoute import router as post_router
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -11,7 +14,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
+app.include_router(post_router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

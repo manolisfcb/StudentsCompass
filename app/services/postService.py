@@ -1,4 +1,4 @@
-from app.models import PostModel
+from app.models.postModel import PostModel
 from sqlalchemy import select
 from app.schemas.postSchema import PostCreate, PostRead
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,7 @@ class PostService:
         self.session = session
         
     async def create_post(self, post_create: PostCreate) -> PostModel:
-        new_post = PostCreate(
+        new_post = PostModel(
             caption=post_create.caption,
             url=post_create.url,
             file_type=post_create.file_type,
