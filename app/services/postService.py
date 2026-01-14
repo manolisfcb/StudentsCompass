@@ -2,6 +2,7 @@ from app.models.postModel import PostModel
 from sqlalchemy import select
 from app.schemas.postSchema import PostCreate, PostRead
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
 class PostService:
     def __init__(self, session: AsyncSession):
@@ -19,6 +20,11 @@ class PostService:
         await self.session.refresh(new_post)
         return new_post
     
-    async def get_post_by_id(self, post_id: int) -> PostRead | None:
-        result = await self.session.get(PostRead, post_id)
+    async def get_post_by_id(self, post_id: UUID) -> PostRead | None:
+        result = await self.session.get(PostModel, post_id)
         return PostRead.model_validate(result) if result else None
+
+    async def get_all_posts(self) -> list[PostRead]:
+        result = await self.session.execute(select(PostModel).order_by(PostModel.created_at.desc()))
+        posts = result.scalars().all()
+        return [post for post in posts]

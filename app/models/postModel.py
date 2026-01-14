@@ -1,9 +1,7 @@
-from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession 
+
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import relationship
 from app.db import Base
 from datetime import datetime
 import uuid
