@@ -1,4 +1,4 @@
-from schemas.postSchema import PostCreate
+from app.schemas.postSchema import PostCreate
 from fastapi import APIRouter, Depends, HTTPException
 
 
