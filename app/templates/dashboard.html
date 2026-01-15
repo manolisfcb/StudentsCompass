@@ -9,19 +9,7 @@
 </head>
 
 <body>
-  <header>
-    <nav>
-      <div class="container">
-        <h1>StudentsCompass</h1>
-        <ul>
-          <li><a href="/dashboard">Dashboard</a></li>
-          <li><a href="/roadmap">My Roadmap</a></li>
-          <li><a href="/resources">Resources</a></li>
-          <li><a href="#" id="logout-link">Logout</a></li>
-        </ul>
-      </div>
-    </nav>
-  </header>
+  {% include "includes/header.html" %}
 
   <main class="dashboard-layout">
     {% include "includes/sidebar.html" %}
@@ -101,15 +89,7 @@
     </aside>
   </main>
 
-  <footer>
-    <div class="container">
-      <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
-      <ul>
-        <li><a href="#">Privacy Policy</a></li>
-        <li><a href="#">Terms of Service</a></li>
-      </ul>
-    </div>
-  </footer>
+  {% include "includes/footer.html" %}
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
