@@ -26,11 +26,18 @@ async def submit_questionnaire(
     service = QuestionnaireService(session)
     return await service.submit_questionnaire(user.id, submit)
 
-@router.get("/profile")
+@router.get("/questionnaire/profile")
 async def get_user_profile(
     session: AsyncSession = Depends(get_session),
+    
     user: User = Depends(current_active_user)
+
 ):
+    try:
+        print("Fetching profile for user:", user.id)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     """
     Obtiene el perfil completo del usuario con sus respuestas y resultados del último cuestionario completado
     """
@@ -38,6 +45,7 @@ async def get_user_profile(
         # Get the latest questionnaire response for the user
         from app.models.questionnaireModel import UserQuestionnaire
         from sqlalchemy import desc
+        print("Fetching profile for user:", user.id)
         
         stmt = select(UserQuestionnaire).filter(
             UserQuestionnaire.user_id == user.id

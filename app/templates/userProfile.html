@@ -1,107 +1,164 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil Profesional</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>My Professional Profile</title>
+    <link rel="stylesheet" href="/static/css/style.css">
     <style>
+        .profile-card { transition: all 0.3s ease; }
+        .profile-card:hover { transform: translateY(-2px); }
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .profile-card { transition: all 0.3s ease; }
-        .profile-card:hover { transform: translateY(-2px); }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        .result-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: transform 0.3s;
+        }
+        .result-card:hover {
+            transform: translateY(-3px);
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .progress-bar {
+            background-color: var(--light-gray);
+            height: 8px;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+        .progress {
+            background: linear-gradient(to right, var(--primary-color), #2563EB);
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .question-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        .answer-highlight {
+            background-color: #EEF2FF;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .info-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
-    
-    <div class="flex h-screen">
-        <!-- Sidebar -->
+<body>
+    {% include "includes/header.html" %}
+
+    <main class="dashboard-layout">
         {% include "includes/sidebar.html" %}
 
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
-            <div class="p-8 max-w-6xl">
-                <!-- Header -->
-                <div class="mb-8 fade-in">
-                    <h1 class="text-4xl font-bold text-gray-900 mb-2">Mi Perfil Profesional</h1>
-                    <p class="text-gray-500">Visualiza tus respuestas y perfil generado</p>
+        <main class="dashboard">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h2>My Professional Profile</h2>
+                    <p>View your answers and generated profile</p>
                 </div>
 
                 <!-- Loading State -->
-                <div id="loading" class="flex items-center justify-center py-12">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mr-4"></div>
-                    <p class="text-gray-500 font-medium">Cargando tu perfil...</p>
+                <div id="loading" class="profile-card" style="text-align: center; padding: 3rem;">
+                    <div style="display: inline-block; margin-bottom: 1rem;">
+                        <div style="border: 4px solid var(--light-gray); border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;" id="spinner"></div>
+                    </div>
+                    <p style="color: var(--gray); font-weight: 500;">Loading your profile...</p>
                 </div>
 
+                <style>
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                </style>
+
                 <!-- Profile Content -->
-                <div id="content" class="hidden">
+                <div id="content" style="display: none;">
                     <!-- User Info Card -->
-                    <div class="bg-white rounded-xl shadow-md p-8 mb-8 profile-card fade-in">
-                        <div class="flex items-start justify-between mb-6">
+                    <div class="info-card profile-card fade-in">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
                             <div>
-                                <h2 class="text-2xl font-bold text-gray-900 mb-1" id="userName">Cargando...</h2>
-                                <p class="text-gray-500" id="userEmail">-</p>
+                                <h3 id="userName" style="margin: 0 0 0.5rem 0;">Cargando...</h3>
+                                <p id="userEmail" style="color: var(--gray); margin: 0;">-</p>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm text-gray-500 mb-2">Cuestionario completado</p>
-                                <p class="text-lg font-semibold text-indigo-600" id="completionDate">-</p>
+                            <div style="text-align: right;">
+                                <p style="color: var(--gray); font-size: 0.9rem; margin: 0 0 0.5rem 0;">Questionnaire completed</p>
+                                <p id="completionDate" style="font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin: 0;">-</p>
                             </div>
                         </div>
-                        <div class="border-t border-gray-200 pt-6">
-                            <p class="text-sm text-gray-600">Revisa tus respuestas y descubre tu perfil profesional basado en tus intereses y habilidades.</p>
+                        <div style="border-top: 1px solid var(--light-gray); padding-top: 1.5rem;">
+                            <p style="color: var(--gray); margin: 0;">Review your answers and discover your professional profile based on your interests and skills.</p>
                         </div>
                     </div>
 
                     <!-- Results Summary -->
-                    <div id="resultsContainer" class="mb-8 hidden">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">Tus Resultados</h3>
-                        <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div id="resultsContainer" style="display: none;">
+                        <h3 style="margin-bottom: 1.5rem;">Your Results</h3>
+                        <div id="resultsGrid" class="results-grid">
                             <!-- Results injected here -->
                         </div>
                     </div>
 
-                    <!-- Questions Answered -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">Preguntas Respondidas</h3>
-                        <div id="questionsContainer" class="space-y-4">
-                            <!-- Questions injected here -->
-                        </div>
-                    </div>
-
                     <!-- Action Buttons -->
-                    <div class="flex gap-4 mt-8">
-                        <a href="/questionnaire" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                                <path d="M12 5v14M5 12h14"></path>
-                            </svg>
-                            Repetir Cuestionario
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <a href="/questionnaire" class="cta-button" style="text-decoration: none; display: inline-block;">
+                            ➕ Re-take the Test
                         </a>
-                        <a href="/dashboard" class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                            Volver al Dashboard
+                        <a href="/dashboard" style="background-color: var(--white); border: 2px solid var(--light-gray); color: var(--text-color); padding: 0.8rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.3s;">
+                            Back to Dashboard
                         </a>
                     </div>
                 </div>
 
                 <!-- No Data State -->
-                <div id="noData" class="hidden bg-white rounded-xl shadow-md p-12 text-center">
-                    <div class="mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-gray-400">
+                <div id="noData" style="display: none; background-color: var(--white); border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); padding: 3rem; text-align: center;">
+                    <div style="margin-bottom: 1rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--light-gray); margin: 0 auto;">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">No hay perfil generado</h3>
-                    <p class="text-gray-500 mb-6">Completa el cuestionario profesional para generar tu perfil</p>
-                    <a href="/questionnaire" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-                        Comenzar Cuestionario
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.5rem;">No profile generated</h3>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Complete the professional questionnaire to generate your profile</p>
+                    <a href="/questionnaire" class="cta-button" style="text-decoration: none; display: inline-block;">
+                        Start Questionnaire
                     </a>
                 </div>
             </div>
         </main>
-    </div>
+
+        <aside class="dashboard-sidebar right">
+            <h4>Tips</h4>
+            <p>Complete the professional questionnaire to get personalized recommendations.</p>
+        </aside>
+    </main>
+
+    {% include "includes/footer.html" %}
 
     <script>
         async function loadProfile() {
@@ -148,9 +205,9 @@
             content.style.display = 'block';
 
             // Display user info
-            const userName = data.user_name || 'Usuario';
+            const userName = data.user_name || 'User';
             const userEmail = data.user_email || '-';
-            const completionDate = data.created_at ? new Date(data.created_at).toLocaleDateString('es-ES') : '-';
+            const completionDate = data.created_at ? new Date(data.created_at).toLocaleDateString('en-US') : '-';
 
             document.getElementById('userName').textContent = userName;
             document.getElementById('userEmail').textContent = userEmail;
@@ -161,10 +218,6 @@
                 displayResults(data.results);
             }
 
-            // Display questions answered
-            if (data.answers && data.answers.length > 0) {
-                displayQuestions(data.answers, data.questionnaire);
-            }
         }
 
         function displayResults(results) {
@@ -172,42 +225,16 @@
             const grid = document.getElementById('resultsGrid');
             
             grid.innerHTML = results.slice(0, 3).map(result => `
-                <div class="bg-white rounded-lg shadow-md p-6 profile-card fade-in">
-                    <h4 class="font-semibold text-gray-900 mb-2">${result.career}</h4>
-                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
-                        <div class="bg-indigo-600 h-2 rounded-full" style="width: ${Math.min(result.score * 10, 100)}%"></div>
+                <div class="result-card profile-card fade-in">
+                    <h4 style="margin: 0 0 1rem 0; font-weight: 600; color: var(--text-color);">${result.career}</h4>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: ${Math.min(result.score * 10, 100)}%"></div>
                     </div>
-                    <p class="text-sm text-gray-600">Afinidad: <span class="font-bold">${result.score.toFixed(1)}/10</span></p>
+                    <p style="color: var(--gray); font-size: 0.9rem; margin: 0;">Affinity: <span style="font-weight: 600; color: var(--text-color);">${result.score.toFixed(1)}/10</span></p>
                 </div>
             `).join('');
 
             container.style.display = 'block';
-        }
-
-        function displayQuestions(answers, questionnaire) {
-            const container = document.getElementById('questionsContainer');
-            
-            const questionsHtml = answers.map((answer, index) => {
-                const question = questionnaire?.questions?.find(q => q.id === answer.question_id);
-                const option = question?.options?.find(o => o.id === answer.option_id);
-                
-                return `
-                    <div class="bg-white rounded-lg shadow-md p-6 profile-card fade-in" style="animation-delay: ${index * 0.05}s">
-                        <div class="flex justify-between items-start mb-3">
-                            <h4 class="font-semibold text-gray-900 flex-1 mr-4">${question?.title || 'Pregunta'}</h4>
-                            <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full whitespace-nowrap">
-                                Pregunta ${index + 1}
-                            </span>
-                        </div>
-                        <p class="text-gray-600 mb-4">${question?.subtitle || ''}</p>
-                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                            <p class="text-indigo-900 font-medium">✓ ${option?.text || 'Respuesta seleccionada'}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = questionsHtml;
         }
 
         function showNoData() {
