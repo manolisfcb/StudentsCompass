@@ -25,3 +25,11 @@ async def register(request: Request):
 @router.get("/dashboard")
 async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@router.get("/questionnaire")
+async def questionnaire(request: Request):
+    return templates.TemplateResponse("questionnaire.html", {"request": request})
+
+@router.get("/user-profile")
+async def user_profile(request: Request):
+    return templates.TemplateResponse("userProfile.html", {"request": request})

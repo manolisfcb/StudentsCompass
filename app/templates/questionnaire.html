@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descubre tu Perfil Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-card:hover { border-color: #4f46e5; background-color: #eef2ff; }
+        .option-card.selected { border-color: #4f46e5; background-color: #eef2ff; ring: 2px solid #4f46e5; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans text-gray-800">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden relative min-h-[600px] flex flex-col">
+        
+        <!-- Loading State -->
+        <div id="loading" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+            <p class="text-gray-500 font-medium">Cargando cuestionario...</p>
+        </div>
+
+        <!-- Header & Progress -->
+        <div id="header-section" class="hidden">
+            <div class="w-full bg-gray-100 h-1.5">
+                <div id="progress-bar" class="bg-indigo-600 h-1.5 transition-all duration-500 ease-out" style="width: 0%"></div>
+            </div>
+            <div class="px-8 pt-6 flex justify-between items-end">
+                <span id="step-counter" class="text-xs font-bold tracking-wider text-indigo-600 uppercase">Pregunta 1</span>
+                <span id="progress-text" class="text-xs text-gray-400">0%</span>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div id="question-view" class="flex-1 flex flex-col p-8 hidden">
+            <div class="mb-6 fade-in">
+                <h2 id="question-title" class="text-2xl font-bold text-gray-900 mb-2 leading-tight"></h2>
+                <p id="question-subtitle" class="text-gray-500 text-sm"></p>
+            </div>
+
+            <div id="options-list" class="flex-1 space-y-3 overflow-y-auto max-h-[400px] pr-1 pb-4 fade-in">
+                <!-- Options injected here -->
+            </div>
+
+            <div class="mt-auto pt-6 border-t border-gray-100 flex justify-between items-center">
+                <button id="btn-prev" class="text-gray-400 hover:text-gray-600 font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-0">
+                    Atrás
+                </button>
+                <button id="btn-next" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-8 py-2.5 rounded-lg shadow-lg shadow-indigo-200 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none">
+                    Siguiente
+                </button>
+            </div>
+        </div>
+
+        <!-- Results View -->
+        <div id="results-view" class="flex-1 flex flex-col items-center justify-center p-10 hidden fade-in text-center">
+            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">¡Análisis Completado!</h2>
+            <p class="text-gray-500 mb-8 max-w-md mx-auto">Basado en tus respuestas, estas son las 3 áreas profesionales que mejor encajan contigo:</p>
+
+            <div id="top-careers-list" class="w-full max-w-md space-y-4 text-left">
+                <!-- Results injected here -->
+            </div>
+
+            <button onclick="window.location.reload()" class="mt-10 text-sm text-indigo-600 font-medium hover:text-indigo-800 underline">
+                Volver a realizar el test
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- State ---
+        let questions = [];
+        let currentStep = 0;
+        let answers = {}; // Map: question_id -> option_id
+        
+        // --- Elements ---
+        const els = {
+            loading: document.getElementById('loading'),
+            header: document.getElementById('header-section'),
+            questionView: document.getElementById('question-view'),
+            resultsView: document.getElementById('results-view'),
+            progressBar: document.getElementById('progress-bar'),
+            stepCounter: document.getElementById('step-counter'),
+            progressText: document.getElementById('progress-text'),
+            title: document.getElementById('question-title'),
+            subtitle: document.getElementById('question-subtitle'),
+            optionsList: document.getElementById('options-list'),
+            btnNext: document.getElementById('btn-next'),
+            btnPrev: document.getElementById('btn-prev'),
+            careersList: document.getElementById('top-careers-list')
+        };
+
+        // --- API ---
+        async function fetchQuestionnaire() {
+            try {
+                const token = localStorage.getItem('bearer_token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const res = await fetch('/api/v1/questionnaire', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }); 
+                if (!res.ok) throw new Error('Error fetching data o No autorizado');
+                const data = await res.json();
+                questions = data.questions;
+                initQuiz();
+            } catch (err) {
+                alert('Error cargando el cuestionario. Asegúrate de estar logueado.');
+                console.error(err);
+            }
+        }
+
+        async function submitAnswers() {
+            els.questionView.classList.add('hidden');
+            els.header.classList.add('hidden');
+            els.loading.classList.remove('hidden');
+            els.loading.querySelector('p').textContent = "Calculando tu perfil...";
+
+            const payload = {
+                answers: Object.entries(answers).map(([qid, oid]) => ({ question_id: qid, option_id: oid }))
+            };
+
+            try {
+                const token = localStorage.getItem('bearer_token');
+                const res = await fetch('/api/v1/questionnaire', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                showResults(result.top_careers);
+            } catch (err) {
+                alert('Error enviando respuestas.');
+                location.reload();
+            }
+        }
+
+        // --- Logic ---
+        function initQuiz() {
+            els.loading.classList.add('hidden');
+            els.header.classList.remove('hidden');
+            els.questionView.classList.remove('hidden');
+            renderStep();
+        }
+
+        function renderStep() {
+            const q = questions[currentStep];
+            
+            // Update UI Texts
+            els.title.textContent = q.title;
+            els.subtitle.textContent = q.subtitle || "";
+            els.stepCounter.textContent = `Pregunta ${currentStep + 1} de ${questions.length}`;
+            
+            // Update Progress
+            const progress = ((currentStep) / questions.length) * 100;
+            els.progressBar.style.width = `${progress}%`;
+            els.progressText.textContent = `${Math.round(progress)}%`;
+
+            // Render Options
+            els.optionsList.innerHTML = '';
+            q.options.forEach(opt => {
+                const btn = document.createElement('div');
+                const isSelected = answers[q.id] === opt.id;
+                
+                btn.className = `option-card p-4 border rounded-xl cursor-pointer transition-all duration-200 flex items-center group ${isSelected ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-gray-200 hover:border-indigo-300'}`;
+                btn.innerHTML = `
+                    <div class="w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center ${isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 group-hover:border-indigo-400'}">
+                        ${isSelected ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : ''}
+                    </div>
+                    <span class="font-medium ${isSelected ? 'text-indigo-900' : 'text-gray-700'}">${opt.label}</span>
+                `;
+                btn.onclick = () => selectOption(q.id, opt.id);
+                els.optionsList.appendChild(btn);
+            });
+
+            // Buttons State
+            els.btnPrev.disabled = currentStep === 0;
+            els.btnNext.disabled = !answers[q.id];
+        }
+
+        function selectOption(questionId, optionId) {
+            answers[questionId] = optionId;
+            renderStep(); // Re-render to show selection
+        }
+
+        function next() {
+            if (currentStep < questions.length - 1) {
+                currentStep++;
+                renderStep();
+            } else {
+                submitAnswers();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderStep();
+            }
+        }
+
+        function showResults(careers) {
+            els.loading.classList.add('hidden');
+            els.resultsView.classList.remove('hidden');
+            
+            // Top 3
+            const top3 = careers.slice(0, 3);
+            
+            els.careersList.innerHTML = top3.map((c, i) => `
+                <div class="bg-white border border-gray-100 p-4 rounded-xl shadow-sm flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg mr-4">
+                        ${i + 1}
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">${c.career}</h3>
+                        <div class="w-full bg-gray-100 h-1.5 rounded-full mt-2 w-32">
+                            <div class="bg-indigo-500 h-1.5 rounded-full" style="width: ${Math.min(c.score * 10, 100)}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- Events ---
+        els.btnNext.addEventListener('click', next);
+        els.btnPrev.addEventListener('click', prev);
+        
+        // Start
+        fetchQuestionnaire();
+    </script>
+</body>
+</html>
