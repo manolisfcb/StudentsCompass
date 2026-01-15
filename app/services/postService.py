@@ -28,3 +28,12 @@ class PostService:
         result = await self.session.execute(select(PostModel).order_by(PostModel.created_at.desc()))
         posts = result.scalars().all()
         return [post for post in posts]
+    
+    
+    async def delete_post(self, post_id: UUID) -> None:
+        post = await self.session.get(PostModel, post_id)
+        if post:
+            await self.session.delete(post)
+            await self.session.commit()
+        else:
+            raise Exception("Post not found")
