@@ -21,63 +21,97 @@
         </nav>
     </header>
 
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2 id="welcome-message">Welcome Back!</h2>
-                <p>Here's a snapshot of your academic journey.</p>
+    <main class="dashboard-layout">
+        <aside class="dashboard-sidebar left">
+            <div class="sidebar-menu">
+                <h4>Explore</h4>
+                <ul>
+                    <li>
+                        <a href="#" class="active">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                            <span>Job Board</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                            <span>Roadmaps</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                            <span>Resources Hub</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
+        </aside>
 
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <h3>My Goals</h3>
-                    <ul class="goal-list">
-                        <li>
-                            <strong>Complete Math Thesis:</strong> 
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 75%;"></div>
-                            </div>
-                            <span>75%</span>
-                        </li>
-                        <li>
-                            <strong>Prepare for Chemistry Exam:</strong>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 40%;"></div>
-                            </div>
-                            <span>40%</span>
-                        </li>
-                        <li>
-                            <strong>Apply for Internships:</strong>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 90%;"></div>
-                            </div>
-                            <span>90%</span>
-                        </li>
-                    </ul>
-                    <a href="/goals" class="card-link">View All Goals</a>
+        <main class="dashboard">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h2 id="welcome-message">Welcome Back!</h2>
+                    <p>Here's a snapshot of your academic journey.</p>
                 </div>
 
-                <div class="dashboard-card">
-                    <h3>Upcoming Deadlines</h3>
-                    <ul class="deadline-list">
-                        <li><strong>History Paper:</strong> January 20, 2026</li>
-                        <li><strong>Scholarship Application:</strong> February 1, 2026</li>
-                        <li><strong>Final Project Proposal:</strong> February 15, 2026</li>
-                    </ul>
-                    <a href="/calendar" class="card-link">View Calendar</a>
-                </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>My Goals</h3>
+                        <ul class="goal-list">
+                            <li>
+                                <strong>Complete Math Thesis:</strong> 
+                                <div class="progress-bar">
+                                    <div class="progress" style="width: 75%;"></div>
+                                </div>
+                                <span>75%</span>
+                            </li>
+                            <li>
+                                <strong>Prepare for Chemistry Exam:</strong>
+                                <div class="progress-bar">
+                                    <div class="progress" style="width: 40%;"></div>
+                                </div>
+                                <span>40%</span>
+                            </li>
+                            <li>
+                                <strong>Apply for Internships:</strong>
+                                <div class="progress-bar">
+                                    <div class="progress" style="width: 90%;"></div>
+                                </div>
+                                <span>90%</span>
+                            </li>
+                        </ul>
+                        <a href="/goals" class="card-link">View All Goals</a>
+                    </div>
 
-                <div class="dashboard-card recommended-resources">
-                    <h3>Recommended Resources</h3>
-                    <ul>
-                        <li><a href="#">Advanced Calculus Cheatsheet</a></li>
-                        <li><a href="#">Resume Building Workshop</a></li>
-                        <li><a href="#">Time Management Techniques</a></li>
-                    </ul>
-                    <a href="/resources" class="card-link">Explore More</a>
+                    <div class="dashboard-card">
+                        <h3>Upcoming Deadlines</h3>
+                        <ul class="deadline-list">
+                            <li><strong>History Paper:</strong> January 20, 2026</li>
+                            <li><strong>Scholarship Application:</strong> February 1, 2026</li>
+                            <li><strong>Final Project Proposal:</strong> February 15, 2026</li>
+                        </ul>
+                        <a href="/calendar" class="card-link">View Calendar</a>
+                    </div>
+
+                    <div class="dashboard-card recommended-resources">
+                        <h3>Recommended Resources</h3>
+                        <ul>
+                            <li><a href="#">Advanced Calculus Cheatsheet</a></li>
+                            <li><a href="#">Resume Building Workshop</a></li>
+                            <li><a href="#">Time Management Techniques</a></li>
+                        </ul>
+                        <a href="/resources" class="card-link">Explore More</a>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <aside class="dashboard-sidebar right">
+            <!-- Content for the right sidebar can be added here -->
+            <h4>Notifications</h4>
+            <p>No new notifications.</p>
+        </aside>
     </main>
 
     <footer>
