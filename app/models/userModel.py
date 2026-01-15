@@ -10,7 +10,11 @@ from fastapi import Depends
 class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "users"
     nickname: str = Column(String, unique=False, nullable=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    
     post = relationship("PostModel", back_populates="user")
+    questionnaires = relationship("UserQuestionnaire", back_populates="user")
     
 
         

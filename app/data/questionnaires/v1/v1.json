@@ -1,0 +1,1068 @@
+{
+  "version": "v1",
+  "title": "Career Profile Questionnaire",
+  "questions": [
+    {
+      "id": "energy_source",
+      "title": "What kind of work gives you energy?",
+      "subtitle": "Pick what feels most natural.",
+      "kind": "single",
+      "options": [
+        {
+          "id": "help_people",
+          "label": "Helping people directly (support, care, guidance)",
+          "weights": {
+            "Customer Service / Front Desk": 3,
+            "Healthcare / Caregiving": 3,
+            "Education / Training": 2,
+            "People & HR": 2
+          }
+        },
+        {
+          "id": "organize",
+          "label": "Organizing, planning, keeping things running smoothly",
+          "weights": {
+            "Operations & Administration": 4,
+            "Logistics / Supply Chain": 2,
+            "People & HR": 1,
+            "Finance / Accounting": 1
+          }
+        },
+        {
+          "id": "persuade",
+          "label": "Persuading, negotiating, influencing outcomes",
+          "weights": {
+            "Sales / Business Development": 4,
+            "Marketing / Content": 2
+          }
+        },
+        {
+          "id": "create",
+          "label": "Creating ideas, visuals, writing, or experiences",
+          "weights": {
+            "Creative / Design": 4,
+            "Marketing / Content": 3
+          }
+        },
+        {
+          "id": "build_fix",
+          "label": "Building, fixing, working with hands/tools",
+          "weights": {
+            "Skilled Trades / Hands-on": 4,
+            "Logistics / Supply Chain": 2
+          }
+        },
+        {
+          "id": "analyze",
+          "label": "Analyzing numbers, patterns, accuracy, details",
+          "weights": {
+            "Finance / Accounting": 3,
+            "Tech / Data": 3,
+            "Operations & Administration": 1
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "work_environment",
+      "title": "Which environment do you prefer most?",
+      "subtitle": null,
+      "kind": "single",
+      "options": [
+        {
+          "id": "office",
+          "label": "Office / desk-based",
+          "weights": {
+            "Operations & Administration": 2,
+            "Finance / Accounting": 2,
+            "People & HR": 2,
+            "Tech / Data": 1
+          }
+        },
+        {
+          "id": "customer_facing",
+          "label": "Customer-facing (front desk, retail, service)",
+          "weights": {
+            "Customer Service / Front Desk": 4,
+            "Sales / Business Development": 2
+          }
+        },
+        {
+          "id": "field",
+          "label": "On-the-go / field work",
+          "weights": {
+            "Logistics / Supply Chain": 3,
+            "Skilled Trades / Hands-on": 2,
+            "Sales / Business Development": 1
+          }
+        },
+        {
+          "id": "care",
+          "label": "Care setting (clinic, caregiving, community)",
+          "weights": {
+            "Healthcare / Caregiving": 4
+          }
+        },
+        {
+          "id": "classroom",
+          "label": "Teaching / training environment",
+          "weights": {
+            "Education / Training": 4
+          }
+        },
+        {
+          "id": "studio",
+          "label": "Creative environment (design, content, media)",
+          "weights": {
+            "Creative / Design": 3,
+            "Marketing / Content": 2
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "social_level",
+      "title": "How social do you want your day to be?",
+      "subtitle": null,
+      "kind": "single",
+      "options": [
+        {
+          "id": "low",
+          "label": "Low (mostly independent work)",
+          "weights": {
+            "Tech / Data": 2,
+            "Finance / Accounting": 2,
+            "Creative / Design": 1,
+            "Skilled Trades / Hands-on": 1
+          }
+        },
+        {
+          "id": "medium",
+          "label": "Medium (team collaboration + some interaction)",
+          "weights": {
+            "Operations & Administration": 2,
+            "Logistics / Supply Chain": 2,
+            "Marketing / Content": 2,
+            "People & HR": 2
+          }
+        },
+        {
+          "id": "high",
+          "label": "High (talking to people most of the day)",
+          "weights": {
+            "Customer Service / Front Desk": 3,
+            "Sales / Business Development": 3,
+            "Education / Training": 2,
+            "People & HR": 2,
+            "Healthcare / Caregiving": 2
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "structure_vs_variety",
+      "title": "Do you prefer structure or variety?",
+      "subtitle": null,
+      "kind": "single",
+      "options": [
+        {
+          "id": "structure",
+          "label": "Clear structure & routines",
+          "weights": {
+            "Operations & Administration": 3,
+            "Finance / Accounting": 3,
+            "Logistics / Supply Chain": 2
+          }
+        },
+        {
+          "id": "balanced",
+          "label": "A mix of both",
+          "weights": {
+            "People & HR": 2,
+            "Marketing / Content": 2,
+            "Customer Service / Front Desk": 2,
+            "Education / Training": 2
+          }
+        },
+        {
+          "id": "variety",
+          "label": "Variety & changing tasks",
+          "weights": {
+            "Sales / Business Development": 3,
+            "Skilled Trades / Hands-on": 2,
+            "Healthcare / Caregiving": 2,
+            "Creative / Design": 2
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "stress_style",
+      "title": "When things get stressful, what fits you best?",
+      "subtitle": null,
+      "kind": "single",
+      "options": [
+        {
+          "id": "calm_process",
+          "label": "Stay calm and follow a process",
+          "weights": {
+            "Operations & Administration": 2,
+            "Healthcare / Caregiving": 2,
+            "Logistics / Supply Chain": 2,
+            "Finance / Accounting": 2
+          }
+        },
+        {
+          "id": "talk_solve",
+          "label": "Talk it through and solve it with people",
+          "weights": {
+            "Customer Service / Front Desk": 2,
+            "People & HR": 3,
+            "Education / Training": 2
+          }
+        },
+        {
+          "id": "push_targets",
+          "label": "Push hard and focus on results/targets",
+          "weights": {
+            "Sales / Business Development": 3
+          }
+        },
+        {
+          "id": "creative_adapt",
+          "label": "Adapt creatively and improvise",
+          "weights": {
+            "Marketing / Content": 2,
+            "Creative / Design": 2
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "learning_preference",
+      "title": "What would you enjoy improving next?",
+      "subtitle": null,
+      "kind": "single",
+      "options": [
+        {
+          "id": "people_skills",
+          "label": "Communication & people skills",
+          "weights": {
+            "Customer Service / Front Desk": 2,
+            "People & HR": 2,
+            "Sales / Business Development": 2,
+            "Education / Training": 2
+          }
+        },
+        {
+          "id": "organization",
+          "label": "Organization, planning, coordination",
+          "weights": {
+            "Operations & Administration": 3,
+            "Logistics / Supply Chain": 2
+          }
+        },
+        {
+          "id": "money",
+          "label": "Money, budgeting, accuracy",
+          "weights": {
+            "Finance / Accounting": 4
+          }
+        },
+        {
+          "id": "care",
+          "label": "Care skills & helping others",
+          "weights": {
+            "Healthcare / Caregiving": 4
+          }
+        },
+        {
+          "id": "creative",
+          "label": "Creative skills (writing/design/media)",
+          "weights": {
+            "Creative / Design": 3,
+            "Marketing / Content": 3
+          }
+        },
+        {
+          "id": "tech",
+          "label": "Tech tools, data, automation",
+          "weights": {
+            "Tech / Data": 4
+          }
+        },
+        {
+          "id": "hands_on",
+          "label": "Hands-on technical skills (tools, repairs)",
+          "weights": {
+            "Skilled Trades / Hands-on": 4
+          }
+        }
+      ]
+    },
+{
+    "id": "preferred_schedule",
+    "title": "What schedule fits you best?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "fixed_9_5",
+        "label": "Fixed schedule (predictable hours)",
+        "weights": {
+          "Operations & Administration": 2,
+          "Finance / Accounting": 2,
+          "Education / Training": 1
+        }
+      },
+      {
+        "id": "shift_work",
+        "label": "Shift work (evenings/weekends possible)",
+        "weights": {
+          "Customer Service / Front Desk": 2,
+          "Healthcare / Caregiving": 2,
+          "Logistics / Supply Chain": 2,
+          "Skilled Trades / Hands-on": 1
+        }
+      },
+      {
+        "id": "flexible",
+        "label": "Flexible schedule (results over hours)",
+        "weights": {
+          "Sales / Business Development": 2,
+          "Marketing / Content": 2,
+          "Creative / Design": 2,
+          "Tech / Data": 1
+        }
+      },
+      {
+        "id": "mix",
+        "label": "A mix (some structure + some flexibility)",
+        "weights": {
+          "People & HR": 2,
+          "Operations & Administration": 1,
+          "Marketing / Content": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "physical_activity",
+    "title": "How physical do you want your work to be?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "mostly_desk",
+        "label": "Mostly desk-based",
+        "weights": {
+          "Operations & Administration": 2,
+          "Finance / Accounting": 2,
+          "Tech / Data": 2,
+          "Marketing / Content": 1
+        }
+      },
+      {
+        "id": "mixed",
+        "label": "A mix of movement + desk work",
+        "weights": {
+          "Customer Service / Front Desk": 2,
+          "Logistics / Supply Chain": 2,
+          "People & HR": 1,
+          "Education / Training": 1
+        }
+      },
+      {
+        "id": "hands_on",
+        "label": "Hands-on / active most of the day",
+        "weights": {
+          "Skilled Trades / Hands-on": 4,
+          "Logistics / Supply Chain": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "leadership_interest",
+    "title": "Do you want to lead people or projects?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "yes_lead",
+        "label": "Yes, I enjoy leading and coordinating",
+        "weights": {
+          "People & HR": 3,
+          "Operations & Administration": 2,
+          "Sales / Business Development": 1,
+          "Education / Training": 1
+        }
+      },
+      {
+        "id": "maybe",
+        "label": "Maybe later, after I gain experience",
+        "weights": {
+          "Operations & Administration": 1,
+          "Marketing / Content": 1,
+          "Tech / Data": 1,
+          "Finance / Accounting": 1
+        }
+      },
+      {
+        "id": "no",
+        "label": "No, I prefer being an individual contributor",
+        "weights": {
+          "Tech / Data": 2,
+          "Finance / Accounting": 2,
+          "Creative / Design": 1,
+          "Skilled Trades / Hands-on": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "routine_vs_change",
+    "title": "Which feels better day-to-day?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "routine",
+        "label": "Routine and consistency",
+        "weights": {
+          "Finance / Accounting": 3,
+          "Operations & Administration": 2,
+          "Logistics / Supply Chain": 1
+        }
+      },
+      {
+        "id": "balanced",
+        "label": "A balance of routine and change",
+        "weights": {
+          "People & HR": 2,
+          "Education / Training": 2,
+          "Marketing / Content": 1,
+          "Customer Service / Front Desk": 1
+        }
+      },
+      {
+        "id": "change",
+        "label": "Change, variety, new challenges",
+        "weights": {
+          "Sales / Business Development": 3,
+          "Healthcare / Caregiving": 2,
+          "Skilled Trades / Hands-on": 1,
+          "Creative / Design": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "risk_tolerance",
+    "title": "How do you feel about performance pressure (targets, KPIs)?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "high",
+        "label": "I like it — it motivates me",
+        "weights": {
+          "Sales / Business Development": 4,
+          "Marketing / Content": 2
+        }
+      },
+      {
+        "id": "medium",
+        "label": "I can handle it with balance",
+        "weights": {
+          "Operations & Administration": 2,
+          "People & HR": 1,
+          "Customer Service / Front Desk": 1,
+          "Logistics / Supply Chain": 1
+        }
+      },
+      {
+        "id": "low",
+        "label": "I prefer low pressure and steady pace",
+        "weights": {
+          "Finance / Accounting": 2,
+          "Tech / Data": 2,
+          "Creative / Design": 1,
+          "Education / Training": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "learning_speed",
+    "title": "How do you prefer to learn new things?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "hands_on",
+        "label": "By doing (hands-on practice)",
+        "weights": {
+          "Skilled Trades / Hands-on": 2,
+          "Logistics / Supply Chain": 1,
+          "Customer Service / Front Desk": 1
+        }
+      },
+      {
+        "id": "structured",
+        "label": "With structured training and clear steps",
+        "weights": {
+          "Operations & Administration": 2,
+          "Finance / Accounting": 2,
+          "Healthcare / Caregiving": 1
+        }
+      },
+      {
+        "id": "explore",
+        "label": "By exploring, testing ideas, self-learning",
+        "weights": {
+          "Tech / Data": 2,
+          "Creative / Design": 2,
+          "Marketing / Content": 1
+        }
+      },
+      {
+        "id": "teach_others",
+        "label": "By teaching or explaining to others",
+        "weights": {
+          "Education / Training": 3,
+          "People & HR": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "customer_pressure",
+    "title": "How do you feel about dealing with complaints or difficult customers?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "comfortable",
+        "label": "Comfortable — I can stay calm and help",
+        "weights": {
+          "Customer Service / Front Desk": 4,
+          "People & HR": 1,
+          "Healthcare / Caregiving": 1
+        }
+      },
+      {
+        "id": "sometimes",
+        "label": "Sometimes — depends on the situation",
+        "weights": {
+          "Customer Service / Front Desk": 2,
+          "Sales / Business Development": 1,
+          "Operations & Administration": 1
+        }
+      },
+      {
+        "id": "avoid",
+        "label": "I prefer to avoid that type of work",
+        "weights": {
+          "Tech / Data": 2,
+          "Finance / Accounting": 2,
+          "Creative / Design": 1,
+          "Marketing / Content": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "attention_to_detail",
+    "title": "How important is precision and attention to detail in the work you enjoy?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "very",
+        "label": "Very important — I like accuracy and standards",
+        "weights": {
+          "Finance / Accounting": 3,
+          "Tech / Data": 2,
+          "Healthcare / Caregiving": 2,
+          "QA / Test Automation": 0
+        }
+      },
+      {
+        "id": "medium",
+        "label": "Important, but not obsessive",
+        "weights": {
+          "Operations & Administration": 2,
+          "People & HR": 1,
+          "Logistics / Supply Chain": 1
+        }
+      },
+      {
+        "id": "low",
+        "label": "Not a priority — I prefer big-picture work",
+        "weights": {
+          "Sales / Business Development": 2,
+          "Marketing / Content": 2,
+          "Creative / Design": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "independence_level",
+    "title": "How much independence do you want?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "high",
+        "label": "High — I want ownership and autonomy",
+        "weights": {
+          "Tech / Data": 2,
+          "Creative / Design": 2,
+          "Marketing / Content": 1,
+          "Skilled Trades / Hands-on": 1
+        }
+      },
+      {
+        "id": "medium",
+        "label": "Medium — autonomy with regular check-ins",
+        "weights": {
+          "Operations & Administration": 2,
+          "People & HR": 2,
+          "Finance / Accounting": 1
+        }
+      },
+      {
+        "id": "low",
+        "label": "Low — I prefer clear guidance and support",
+        "weights": {
+          "Customer Service / Front Desk": 2,
+          "Education / Training": 1,
+          "Healthcare / Caregiving": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "long_term_goals",
+    "title": "Which long-term path sounds most appealing?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "specialist",
+        "label": "Becoming a specialist/expert in one area",
+        "weights": {
+          "Finance / Accounting": 2,
+          "Tech / Data": 2,
+          "Skilled Trades / Hands-on": 2,
+          "Creative / Design": 1
+        }
+      },
+      {
+        "id": "manager",
+        "label": "Managing people and processes",
+        "weights": {
+          "People & HR": 3,
+          "Operations & Administration": 2,
+          "Sales / Business Development": 1
+        }
+      },
+      {
+        "id": "entrepreneur",
+        "label": "Building something of my own",
+        "weights": {
+          "Sales / Business Development": 2,
+          "Marketing / Content": 2,
+          "Creative / Design": 2
+        }
+      },
+      {
+        "id": "stable",
+        "label": "Stable career with predictable growth",
+        "weights": {
+          "Operations & Administration": 2,
+          "Finance / Accounting": 2,
+          "Education / Training": 1
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "team_preference",
+    "title": "What team setting do you prefer?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "small",
+        "label": "Small team (close collaboration)",
+        "weights": {
+          "People & HR": 2,
+          "Marketing / Content": 2,
+          "Operations & Administration": 1
+        }
+      },
+      {
+        "id": "large",
+        "label": "Large team (specialized roles)",
+        "weights": {
+          "Logistics / Supply Chain": 2,
+          "Healthcare / Caregiving": 1,
+          "Customer Service / Front Desk": 1,
+          "Operations & Administration": 1
+        }
+      },
+      {
+        "id": "solo",
+        "label": "Mostly solo work",
+        "weights": {
+          "Tech / Data": 2,
+          "Finance / Accounting": 2,
+          "Creative / Design": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "communication_style",
+    "title": "Which type of communication do you prefer?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "writing",
+        "label": "Writing (emails, documentation, content)",
+        "weights": {
+          "Operations & Administration": 2,
+          "Marketing / Content": 2,
+          "Finance / Accounting": 1
+        }
+      },
+      {
+        "id": "talking",
+        "label": "Talking (calls, meetings, customers)",
+        "weights": {
+          "Sales / Business Development": 2,
+          "Customer Service / Front Desk": 2,
+          "People & HR": 2
+        }
+      },
+      {
+        "id": "mixed",
+        "label": "A mix of writing and talking",
+        "weights": {
+          "Education / Training": 2,
+          "People & HR": 1,
+          "Operations & Administration": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "problem_type",
+    "title": "What kind of problems do you enjoy solving?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "people_problems",
+        "label": "People problems (support, conflicts, guidance)",
+        "weights": {
+          "People & HR": 3,
+          "Customer Service / Front Desk": 2,
+          "Healthcare / Caregiving": 1
+        }
+      },
+      {
+        "id": "process_problems",
+        "label": "Process problems (making things efficient)",
+        "weights": {
+          "Operations & Administration": 3,
+          "Logistics / Supply Chain": 2
+        }
+      },
+      {
+        "id": "growth_problems",
+        "label": "Growth problems (finding opportunities, convincing others)",
+        "weights": {
+          "Sales / Business Development": 3,
+          "Marketing / Content": 2
+        }
+      },
+      {
+        "id": "creative_problems",
+        "label": "Creative problems (ideas, visuals, storytelling)",
+        "weights": {
+          "Creative / Design": 3,
+          "Marketing / Content": 2
+        }
+      },
+      {
+        "id": "numbers_problems",
+        "label": "Numbers and logic (accuracy, patterns, reporting)",
+        "weights": {
+          "Finance / Accounting": 3,
+          "Tech / Data": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "pace_preference",
+    "title": "What pace do you prefer?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "steady",
+        "label": "Steady and predictable",
+        "weights": {
+          "Finance / Accounting": 2,
+          "Operations & Administration": 2,
+          "Education / Training": 1
+        }
+      },
+      {
+        "id": "dynamic",
+        "label": "Dynamic and fast-paced",
+        "weights": {
+          "Customer Service / Front Desk": 2,
+          "Sales / Business Development": 2,
+          "Logistics / Supply Chain": 2
+        }
+      },
+      {
+        "id": "project_based",
+        "label": "Project-based (sprints, milestones)",
+        "weights": {
+          "Marketing / Content": 2,
+          "Creative / Design": 2,
+          "Tech / Data": 1,
+          "Operations & Administration": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "feedback_preference",
+    "title": "How do you prefer to receive feedback?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "direct",
+        "label": "Direct and frequent feedback",
+        "weights": {
+          "Customer Service / Front Desk": 1,
+          "Sales / Business Development": 1,
+          "People & HR": 2
+        }
+      },
+      {
+        "id": "scheduled",
+        "label": "Scheduled check-ins (weekly/biweekly)",
+        "weights": {
+          "Operations & Administration": 2,
+          "Finance / Accounting": 1,
+          "Marketing / Content": 1
+        }
+      },
+      {
+        "id": "minimal",
+        "label": "Minimal — I prefer autonomy",
+        "weights": {
+          "Tech / Data": 2,
+          "Creative / Design": 1,
+          "Skilled Trades / Hands-on": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "creativity_level",
+    "title": "How much creativity do you want in your work?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "high",
+        "label": "High — I want to create and innovate",
+        "weights": {
+          "Creative / Design": 4,
+          "Marketing / Content": 3
+        }
+      },
+      {
+        "id": "medium",
+        "label": "Some creativity, but with structure",
+        "weights": {
+          "Operations & Administration": 1,
+          "People & HR": 2,
+          "Education / Training": 2,
+          "Marketing / Content": 1
+        }
+      },
+      {
+        "id": "low",
+        "label": "Low — I prefer clear rules and standards",
+        "weights": {
+          "Finance / Accounting": 2,
+          "Logistics / Supply Chain": 1,
+          "Healthcare / Caregiving": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "helping_mode",
+    "title": "When helping others, what do you prefer?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "teach",
+        "label": "Teaching and explaining",
+        "weights": {
+          "Education / Training": 4,
+          "People & HR": 1
+        }
+      },
+      {
+        "id": "support",
+        "label": "Supporting and solving issues",
+        "weights": {
+          "Customer Service / Front Desk": 3,
+          "Healthcare / Caregiving": 2
+        }
+      },
+      {
+        "id": "coach",
+        "label": "Coaching and motivating",
+        "weights": {
+          "People & HR": 3,
+          "Sales / Business Development": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "numbers_comfort",
+    "title": "How comfortable are you with numbers and budgets?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "love",
+        "label": "Very comfortable — I enjoy it",
+        "weights": {
+          "Finance / Accounting": 4,
+          "Tech / Data": 2,
+          "Operations & Administration": 1
+        }
+      },
+      {
+        "id": "ok",
+        "label": "Somewhat comfortable",
+        "weights": {
+          "Operations & Administration": 1,
+          "Logistics / Supply Chain": 1,
+          "Marketing / Content": 1
+        }
+      },
+      {
+        "id": "avoid",
+        "label": "I prefer to avoid numbers-heavy work",
+        "weights": {
+          "Customer Service / Front Desk": 1,
+          "Creative / Design": 1,
+          "Healthcare / Caregiving": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "hands_on_tools",
+    "title": "How do you feel about tools, repairs, or technical equipment?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "enjoy",
+        "label": "I enjoy it — I like fixing/building things",
+        "weights": {
+          "Skilled Trades / Hands-on": 4,
+          "Logistics / Supply Chain": 2
+        }
+      },
+      {
+        "id": "neutral",
+        "label": "Neutral — I can do it if needed",
+        "weights": {
+          "Logistics / Supply Chain": 1,
+          "Operations & Administration": 1
+        }
+      },
+      {
+        "id": "avoid",
+        "label": "I prefer not to work with tools/equipment",
+        "weights": {
+          "Finance / Accounting": 1,
+          "Marketing / Content": 1,
+          "People & HR": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "service_orientation",
+    "title": "Which statement sounds most like you?",
+    "subtitle": null,
+    "kind": "single",
+    "options": [
+      {
+        "id": "service",
+        "label": "I feel satisfied when I improve someone’s day",
+        "weights": {
+          "Customer Service / Front Desk": 3,
+          "Healthcare / Caregiving": 2,
+          "Education / Training": 1
+        }
+      },
+      {
+        "id": "results",
+        "label": "I feel satisfied when I hit goals and see results",
+        "weights": {
+          "Sales / Business Development": 3,
+          "Operations & Administration": 1,
+          "Marketing / Content": 1
+        }
+      },
+      {
+        "id": "quality",
+        "label": "I feel satisfied when things are done correctly and cleanly",
+        "weights": {
+          "Finance / Accounting": 2,
+          "Operations & Administration": 2,
+          "Logistics / Supply Chain": 1
+        }
+      },
+      {
+        "id": "creativity",
+        "label": "I feel satisfied when I create something meaningful",
+        "weights": {
+          "Creative / Design": 3,
+          "Marketing / Content": 2
+        }
+      }
+    ]
+  }
+  ]
+}

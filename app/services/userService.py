@@ -24,6 +24,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
     
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         logger.info(f"User {user.id} has registered.")
+        await super().on_after_register(user, request)
         
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None

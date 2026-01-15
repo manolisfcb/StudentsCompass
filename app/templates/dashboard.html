@@ -2,143 +2,152 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - StudentsCompass</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - StudentsCompass</title>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
 <body>
-    <header>
-        <nav>
-            <div class="container">
-                <h1>StudentsCompass</h1>
-                <ul>
-                    <li><a href="/dashboard">Dashboard</a></li>
-                    <li><a href="/roadmap">My Roadmap</a></li>
-                    <li><a href="/resources">Resources</a></li>
-                    <li><a href="#" id="logout-link">Logout</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+  <header>
+    <nav>
+      <div class="container">
+        <h1>StudentsCompass</h1>
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/roadmap">My Roadmap</a></li>
+          <li><a href="/resources">Resources</a></li>
+          <li><a href="#" id="logout-link">Logout</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
 
-    <main class="dashboard-layout">
-        {% include "includes/sidebar.html" %}
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
 
-        <main class="dashboard">
-            <div class="container">
-                <div class="dashboard-header">
-                    <h2 id="welcome-message">Welcome Back!</h2>
-                    <p>Here's a snapshot of your academic journey.</p>
+    <main class="dashboard">
+      <div class="container">
+        <div class="dashboard-header">
+          <h2 id="welcome-message">Welcome Back!</h2>
+          <p>Here’s a snapshot of your job search journey.</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Card 1: Career Goals / Progress -->
+          <div class="dashboard-card">
+            <h3>Career Progress</h3>
+            <ul class="goal-list">
+              <li>
+                <strong>Resume Creation Progress</strong>
+                <div class="progress-bar">
+                  <div class="progress" style="width: 65%;"></div>
                 </div>
+                <span>65%</span>
+              </li>
 
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h3>My Goals</h3>
-                        <ul class="goal-list">
-                            <li>
-                                <strong>Complete Math Thesis:</strong>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 75%;"></div>
-                                </div>
-                                <span>75%</span>
-                            </li>
-                            <li>
-                                <strong>Prepare for Chemistry Exam:</strong>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 40%;"></div>
-                                </div>
-                                <span>40%</span>
-                            </li>
-                            <li>
-                                <strong>Apply for Internships:</strong>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 90%;"></div>
-                                </div>
-                                <span>90%</span>
-                            </li>
-                        </ul>
-                        <a href="/goals" class="card-link">View All Goals</a>
-                    </div>
-
-                    <div class="dashboard-card">
-                        <h3>Upcoming Deadlines</h3>
-                        <ul class="deadline-list">
-                            <li><strong>History Paper:</strong> January 20, 2026</li>
-                            <li><strong>Scholarship Application:</strong> February 1, 2026</li>
-                            <li><strong>Final Project Proposal:</strong> February 15, 2026</li>
-                        </ul>
-                        <a href="/calendar" class="card-link">View Calendar</a>
-                    </div>
-
-                    <div class="dashboard-card recommended-resources">
-                        <h3>Recommended Resources</h3>
-                        <ul>
-                            <li><a href="#">Advanced Calculus Cheatsheet</a></li>
-                            <li><a href="#">Resume Building Workshop</a></li>
-                            <li><a href="#">Time Management Techniques</a></li>
-                        </ul>
-                        <a href="/resources" class="card-link">Explore More</a>
-                    </div>
+              <li>
+                <strong>LinkedIn Profile Review</strong>
+                <div class="progress-bar">
+                  <div class="progress" style="width: 40%;"></div>
                 </div>
-            </div>
-        </main>
+                <span>40%</span>
+              </li>
 
-        <aside class="dashboard-sidebar right">
-            <!-- Content for the right sidebar can be added here -->
-            <h4>Notifications</h4>
-            <p>No new notifications.</p>
-        </aside>
+              <li>
+                <strong>Interview Preparation</strong>
+                <div class="progress-bar">
+                  <div class="progress" style="width: 25%;"></div>
+                </div>
+                <span>25%</span>
+              </li>
+            </ul>
+            <a href="/roadmap" class="card-link">View My Roadmap</a>
+          </div>
+
+          <!-- Card 2: Job Applications Status -->
+          <div class="dashboard-card">
+            <h3>Job Applications Status</h3>
+            <ul class="deadline-list">
+              <li><strong>Applied:</strong> 12 roles</li>
+              <li><strong>In Review:</strong> 5 applications</li>
+              <li><strong>Interviews:</strong> 2 scheduled</li>
+              <li><strong>Offers:</strong> 0</li>
+            </ul>
+            <a href="/applications" class="card-link">View Applications</a>
+          </div>
+
+          <!-- Card 3: Personalized Resource Hub -->
+          <div class="dashboard-card recommended-resources">
+            <h3>Resource Hub (For You)</h3>
+            <p style="margin-top: 6px; opacity: 0.85;">
+              Curated materials aligned with your interests and target roles.
+            </p>
+            <ul>
+              <li><a href="#">ATS-Friendly Resume Templates (Tech)</a></li>
+              <li><a href="#">LinkedIn Headline & About Examples (Data/Tech)</a></li>
+              <li><a href="#">Interview Question Bank (Behavioral + Technical)</a></li>
+              <li><a href="#">Portfolio Checklist (Projects that recruiters like)</a></li>
+            </ul>
+            <a href="/resources" class="card-link">Explore Resource Hub</a>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
-            <ul>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
-            </ul>
-        </div>
-    </footer>
+    <aside class="dashboard-sidebar right">
+      <h4>Notifications</h4>
+      <p>No new notifications.</p>
+    </aside>
+  </main>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('bearer_token');
-            const welcomeMessage = document.getElementById('welcome-message');
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+      </ul>
+    </div>
+  </footer>
 
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('bearer_token');
+      const welcomeMessage = document.getElementById('welcome-message');
 
-            try {
-                const response = await fetch('/api/v1/users/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
 
-                if (response.ok) {
-                    const user = await response.json();
-                    welcomeMessage.textContent = `Welcome Back, ${user.email}!`;
-                } else {
-                    localStorage.removeItem('bearer_token');
-                    window.location.href = '/login';
-                }
-            } catch (error) {
-                localStorage.removeItem('bearer_token');
-                window.location.href = '/login';
-            }
-
-            const logoutLink = document.getElementById('logout-link');
-            logoutLink.addEventListener('click', (event) => {
-                event.preventDefault();
-                localStorage.removeItem('bearer_token');
-                window.location.href = '/login';
-            });
+      try {
+        const response = await fetch('/api/v1/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
-    </script>
+
+        if (response.ok) {
+          const user = await response.json();
+          welcomeMessage.textContent = `Welcome Back, ${user.nickname || user.email}!`;
+        } else {
+          localStorage.removeItem('bearer_token');
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        localStorage.removeItem('bearer_token');
+        window.location.href = '/login';
+      }
+
+      const logoutLink = document.getElementById('logout-link');
+      logoutLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        localStorage.removeItem('bearer_token');
+        window.location.href = '/login';
+      });
+    });
+  </script>
 </body>
 
 </html>
