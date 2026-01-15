@@ -8,7 +8,8 @@
     --light-gray: #E5E7EB;
 }
 
-body, html {
+body,
+html {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -229,14 +230,16 @@ footer a:hover {
 /* Responsive */
 @media (max-width: 768px) {
     nav ul {
-        display: none; /* Simple responsive behavior for now */
+        display: none;
+        /* Simple responsive behavior for now */
     }
 
     .hero h2 {
         font-size: 2.5rem;
     }
 
-    .steps, .testimonial-cards {
+    .steps,
+    .testimonial-cards {
         flex-direction: column;
         align-items: center;
     }
@@ -371,12 +374,16 @@ main.dashboard {
     padding-bottom: 0.5rem;
 }
 
-.goal-list, .deadline-list, .recommended-resources ul {
+.goal-list,
+.deadline-list,
+.recommended-resources ul {
     list-style: none;
     padding: 0;
 }
 
-.goal-list li, .deadline-list li, .recommended-resources li {
+.goal-list li,
+.deadline-list li,
+.recommended-resources li {
     margin-bottom: 1rem;
 }
 
@@ -445,12 +452,7 @@ main.dashboard {
     align-items: flex-start;
 }
 
-.dashboard-sidebar {
-    /* background-color: var(--white); */
-    /* padding: 1.5rem; */
-    /* border-radius: 12px; */
-    /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); */
-}
+
 
 .dashboard-sidebar.left {
     width: 240px;
@@ -486,24 +488,74 @@ main.dashboard {
     padding: 1rem 1.5rem;
     color: var(--text-color);
     text-decoration: none;
-    border-radius: 12px;
+    border-radius: 16px;
+    /* Slightly more rounded */
     font-weight: 600;
-    transition: all 0.2s ease-in-out;
-    border: 1px solid var(--light-gray);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Smoother transition */
+    border: none;
+    /* Remove border for cleaner look */
     background-color: var(--white);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    /* Soft shadow */
+    margin-bottom: 1rem;
+    /* More space between items */
+    position: relative;
+    overflow: hidden;
 }
 
 .sidebar-menu li a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     color: var(--primary-color);
+    background-color: #fff;
+    /* Ensure bg stays white on hover */
+}
+
+/* Add a subtle highlight effect on hover */
+.sidebar-menu li a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background-color: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-menu li a:hover::before {
+    opacity: 1;
 }
 
 .sidebar-menu li a.active {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), #2563EB);
+    /* Gradient for active */
     color: var(--white);
-    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4), 0 4px 6px -2px rgba(59, 130, 246, 0.2);
+    /* Colored shadow */
+}
+
+.sidebar-menu li a.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 20px -6px rgba(59, 130, 246, 0.5);
+    /* Stronger shadow on hover for active */
+}
+
+.sidebar-menu li a.active .sidebar-icon {
+    /* Ensure icon is white in active state */
+    stroke: var(--white);
+}
+
+/* Specific icon adjustments if needed, though stroke usually inherits color */
+.sidebar-menu li a:not(.active) .sidebar-icon {
+    color: var(--gray);
+    transition: color 0.3s;
+}
+
+.sidebar-menu li a:hover .sidebar-icon {
+    color: var(--primary-color);
 }
 
 
@@ -517,4 +569,3 @@ main.dashboard {
     flex-grow: 1;
     padding: 0;
 }
-
