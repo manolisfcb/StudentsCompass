@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .profile-card { transition: all 0.3s ease; }
+        .profile-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+    
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        {% include "includes/sidebar.html" %}
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="p-8 max-w-6xl">
+                <!-- Header -->
+                <div class="mb-8 fade-in">
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2">Mi Perfil Profesional</h1>
+                    <p class="text-gray-500">Visualiza tus respuestas y perfil generado</p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mr-4"></div>
+                    <p class="text-gray-500 font-medium">Cargando tu perfil...</p>
+                </div>
+
+                <!-- Profile Content -->
+                <div id="content" class="hidden">
+                    <!-- User Info Card -->
+                    <div class="bg-white rounded-xl shadow-md p-8 mb-8 profile-card fade-in">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-1" id="userName">Cargando...</h2>
+                                <p class="text-gray-500" id="userEmail">-</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500 mb-2">Cuestionario completado</p>
+                                <p class="text-lg font-semibold text-indigo-600" id="completionDate">-</p>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 pt-6">
+                            <p class="text-sm text-gray-600">Revisa tus respuestas y descubre tu perfil profesional basado en tus intereses y habilidades.</p>
+                        </div>
+                    </div>
+
+                    <!-- Results Summary -->
+                    <div id="resultsContainer" class="mb-8 hidden">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Tus Resultados</h3>
+                        <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Results injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Questions Answered -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Preguntas Respondidas</h3>
+                        <div id="questionsContainer" class="space-y-4">
+                            <!-- Questions injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4 mt-8">
+                        <a href="/questionnaire" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                <path d="M12 5v14M5 12h14"></path>
+                            </svg>
+                            Repetir Cuestionario
+                        </a>
+                        <a href="/dashboard" class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                            Volver al Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- No Data State -->
+                <div id="noData" class="hidden bg-white rounded-xl shadow-md p-12 text-center">
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-gray-400">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">No hay perfil generado</h3>
+                    <p class="text-gray-500 mb-6">Completa el cuestionario profesional para generar tu perfil</p>
+                    <a href="/questionnaire" class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                        Comenzar Cuestionario
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('bearer_token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Get questionnaire data
+                const response = await fetch('/api/v1/questionnaire/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showNoData();
+                        return;
+                    }
+                    throw new Error('Error loading profile');
+                }
+
+                const data = await response.json();
+                displayProfile(data);
+            } catch (error) {
+                console.error('Error:', error);
+                showNoData();
+            }
+        }
+
+        function displayProfile(data) {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const noData = document.getElementById('noData');
+
+            // Hide loading
+            loading.style.display = 'none';
+            noData.style.display = 'none';
+            content.style.display = 'block';
+
+            // Display user info
+            const userName = data.user_name || 'Usuario';
+            const userEmail = data.user_email || '-';
+            const completionDate = data.created_at ? new Date(data.created_at).toLocaleDateString('es-ES') : '-';
+
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('userEmail').textContent = userEmail;
+            document.getElementById('completionDate').textContent = completionDate;
+
+            // Display results if available
+            if (data.results && data.results.length > 0) {
+                displayResults(data.results);
+            }
+
+            // Display questions answered
+            if (data.answers && data.answers.length > 0) {
+                displayQuestions(data.answers, data.questionnaire);
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            const grid = document.getElementById('resultsGrid');
+            
+            grid.innerHTML = results.slice(0, 3).map(result => `
+                <div class="bg-white rounded-lg shadow-md p-6 profile-card fade-in">
+                    <h4 class="font-semibold text-gray-900 mb-2">${result.career}</h4>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div class="bg-indigo-600 h-2 rounded-full" style="width: ${Math.min(result.score * 10, 100)}%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600">Afinidad: <span class="font-bold">${result.score.toFixed(1)}/10</span></p>
+                </div>
+            `).join('');
+
+            container.style.display = 'block';
+        }
+
+        function displayQuestions(answers, questionnaire) {
+            const container = document.getElementById('questionsContainer');
+            
+            const questionsHtml = answers.map((answer, index) => {
+                const question = questionnaire?.questions?.find(q => q.id === answer.question_id);
+                const option = question?.options?.find(o => o.id === answer.option_id);
+                
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-6 profile-card fade-in" style="animation-delay: ${index * 0.05}s">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-semibold text-gray-900 flex-1 mr-4">${question?.title || 'Pregunta'}</h4>
+                            <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full whitespace-nowrap">
+                                Pregunta ${index + 1}
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-4">${question?.subtitle || ''}</p>
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                            <p class="text-indigo-900 font-medium">✓ ${option?.text || 'Respuesta seleccionada'}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = questionsHtml;
+        }
+
+        function showNoData() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const noData = document.getElementById('noData');
+
+            loading.style.display = 'none';
+            content.style.display = 'none';
+            noData.style.display = 'block';
+        }
+
+        // Load profile on page load
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>
