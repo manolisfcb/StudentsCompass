@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - StudentsCompass</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Welcome Back!</h2>
+            <p>Log in to your StudentsCompass account.</p>
+            <div id="error-message" style="color: red; margin-bottom: 1rem;"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Email</label>
+                    <input type="email" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="cta-button auth-button">Login</button>
+            </form>
+            <div class="auth-links">
+                <p>Don't have an account? <a href="/register">Sign Up</a></p>
+                <p><a href="/forgot-password">Forgot Password?</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const errorMessage = document.getElementById('error-message');
+
+            errorMessage.textContent = '';
+
+            try {
+                const response = await fetch('/auth/jwt/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('bearer_token', data.access_token);
+                    window.location.href = '/dashboard';
+                } else {
+                    const errorData = await response.json();
+                    errorMessage.textContent = errorData.detail || 'Login failed. Please check your credentials.';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An unexpected error occurred. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>
