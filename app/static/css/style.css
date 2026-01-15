@@ -27,7 +27,6 @@ body, html {
 header {
     background: linear-gradient(to right, var(--primary-color), #2563EB);
     color: var(--white);
-    padding-bottom: 4rem;
 }
 
 nav {
@@ -437,3 +436,85 @@ main.dashboard {
 .card-link:hover {
     text-decoration: underline;
 }
+
+/* Dashboard Layout */
+.dashboard-layout {
+    display: flex;
+    gap: 2rem;
+    padding: 4rem 2rem;
+    align-items: flex-start;
+}
+
+.dashboard-sidebar {
+    /* background-color: var(--white); */
+    /* padding: 1.5rem; */
+    /* border-radius: 12px; */
+    /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); */
+}
+
+.dashboard-sidebar.left {
+    width: 240px;
+    background: transparent;
+    box-shadow: none;
+}
+
+.dashboard-sidebar.right {
+    width: 280px;
+}
+
+.sidebar-menu h4 {
+    font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    padding: 0 1rem;
+}
+
+.sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.75rem;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid var(--light-gray);
+    background-color: var(--white);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.sidebar-menu li a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    color: var(--primary-color);
+}
+
+.sidebar-menu li a.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+
+.sidebar-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 1rem;
+}
+
+main.dashboard {
+    flex-grow: 1;
+    padding: 0;
+}
+
