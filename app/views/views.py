@@ -33,3 +33,13 @@ async def questionnaire(request: Request):
 @router.get("/user-profile")
 async def user_profile(request: Request):
     return templates.TemplateResponse("userProfile.html", {"request": request})
+
+
+@router.get("/resources")
+async def resources(request: Request):
+    return templates.TemplateResponse("resources.html", {"request": request})
+
+
+@router.get("/roadmap")
+async def roadmap(request: Request):
+    return templates.TemplateResponse("roadmap.html", {"request": request})

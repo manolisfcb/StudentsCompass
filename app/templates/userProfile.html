@@ -42,7 +42,7 @@
             overflow: hidden;
         }
         .progress {
-            background: linear-gradient(to right, var(--primary-color), #2563EB);
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
             height: 100%;
             transition: width 0.3s;
         }
@@ -55,7 +55,7 @@
             border-left: 4px solid var(--primary-color);
         }
         .answer-highlight {
-            background-color: #EEF2FF;
+            background-color: #E0E7FF;
             border-left: 4px solid var(--primary-color);
             padding: 1rem;
             border-radius: 8px;
@@ -148,6 +148,55 @@
                     <a href="/questionnaire" class="cta-button" style="text-decoration: none; display: inline-block;">
                         Start Questionnaire
                     </a>
+                </div>
+
+                <!-- CV Upload Section (Always Visible) -->
+                <div class="info-card profile-card fade-in" style="margin-top: 2rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color); margin-right: 1rem;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="13" x2="12" y2="17"></line>
+                            <line x1="10" y1="15" x2="14" y2="15"></line>
+                        </svg>
+                        <h3 style="margin: 0; font-weight: 600;">Upload Your CV</h3>
+                    </div>
+                    <p style="color: var(--gray); margin-bottom: 1.5rem;">Share your resume to enhance your professional profile and boost your visibility to employers.</p>
+                    
+                    <!-- File Upload Area -->
+                        <div style="border: 2px dashed var(--primary-color); border-radius: 12px; padding: 2rem; text-align: center; background-color: #EDE9FE; cursor: pointer; transition: all 0.3s;" id="uploadArea">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color); margin: 0 auto 1rem; display: block;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p style="font-weight: 600; color: var(--primary-color); margin: 0 0 0.5rem 0; font-size: 1rem;">Click to upload or drag and drop</p>
+                        <p style="color: var(--gray); font-size: 0.9rem; margin: 0;">PDF or DOCX • Max 5MB</p>
+                        <input type="file" id="cvFile" accept=".pdf,.docx,.doc" style="display: none;">
+                    </div>
+
+                    <!-- File Preview -->
+                    <div id="filePreview" style="display: none; margin-top: 1.5rem; padding: 1rem; background-color: #F0FDF4; border: 1px solid #86EFAC; border-radius: 8px;">
+                        <div style="display: flex; align-items: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #22C55E; margin-right: 1rem;">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <div style="flex: 1;">
+                                <p id="fileName" style="font-weight: 600; margin: 0; color: #22C55E;">Document ready</p>
+                                <p id="fileSize" style="font-size: 0.85rem; color: var(--gray); margin: 0;"></p>
+                            </div>
+                            <button type="button" id="removeFile" style="background: none; border: none; color: #EF4444; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Remove</button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Button -->
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button id="uploadBtn" type="button" style="background-color: var(--primary-color); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;" disabled>
+                            Upload CV
+                        </button>
+                        <p id="uploadStatus" style="margin: 0; align-self: center; color: var(--gray); font-size: 0.9rem;"></p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -248,7 +297,137 @@
         }
 
         // Load profile on page load
-        document.addEventListener('DOMContentLoaded', loadProfile);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfile();
+            setupCVUpload();
+        });
+
+        // CV Upload functionality
+        function setupCVUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const cvFile = document.getElementById('cvFile');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const filePreview = document.getElementById('filePreview');
+            const removeFileBtn = document.getElementById('removeFile');
+            const uploadStatus = document.getElementById('uploadStatus');
+            let selectedFile = null;
+
+            // Click to upload
+            uploadArea.addEventListener('click', () => cvFile.click());
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '#DDD6FE';
+                uploadArea.style.borderColor = '#4F46E5';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.backgroundColor = '#EDE9FE';
+                uploadArea.style.borderColor = '#4F46E5';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '#F0F4FF';
+                uploadArea.style.borderColor = 'var(--primary-color)';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            // File input change
+            cvFile.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            // Handle file selection
+            function handleFileSelect(file) {
+                const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+
+                if (!validTypes.includes(file.type)) {
+                    uploadStatus.textContent = '❌ Only PDF and DOCX files are allowed';
+                    uploadStatus.style.color = '#EF4444';
+                    return;
+                }
+
+                if (file.size > maxSize) {
+                    uploadStatus.textContent = '❌ File size must be less than 5MB';
+                    uploadStatus.style.color = '#EF4444';
+                    return;
+                }
+
+                selectedFile = file;
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+
+                document.getElementById('fileName').textContent = fileName;
+                document.getElementById('fileSize').textContent = fileSize;
+                filePreview.style.display = 'block';
+                uploadBtn.disabled = false;
+                uploadStatus.textContent = '';
+            }
+
+            // Remove file
+            removeFileBtn.addEventListener('click', () => {
+                selectedFile = null;
+                cvFile.value = '';
+                filePreview.style.display = 'none';
+                uploadBtn.disabled = true;
+                uploadStatus.textContent = '';
+            });
+
+            // Upload file
+            uploadBtn.addEventListener('click', async () => {
+                if (!selectedFile) return;
+
+                uploadBtn.disabled = true;
+                uploadStatus.textContent = '⏳ Uploading...';
+                uploadStatus.style.color = '#999999';
+
+                const formData = new FormData();
+                formData.append('cv', selectedFile);
+
+                try {
+                    const token = localStorage.getItem('bearer_token');
+                    const response = await fetch('/api/v1/profile/cv/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData,
+                        timeout: 30000
+                    });
+
+                    if (response.ok) {
+                        uploadStatus.textContent = '✅ CV uploaded successfully!';
+                        uploadStatus.style.color = '#22C55E';
+                        setTimeout(() => {
+                            selectedFile = null;
+                            cvFile.value = '';
+                            filePreview.style.display = 'none';
+                            uploadBtn.disabled = true;
+                            uploadStatus.textContent = '';
+                        }, 2000);
+                    } else {
+                        console.error('Upload response:', response.status);
+                        uploadStatus.textContent = '❌ Upload failed. Please try again.';
+                        uploadStatus.style.color = '#EF4444';
+                        uploadBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    uploadStatus.textContent = '❌ Error uploading file';
+                    uploadStatus.style.color = '#EF4444';
+                    uploadBtn.disabled = false;
+                }
+            });
+        }
     </script>
 </body>
 </html>
