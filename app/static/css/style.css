@@ -1,8 +1,9 @@
 :root {
-    --primary-color: #3B82F6;
-    --secondary-color: #10B981;
-    --background-color: #F9FAFB;
-    --text-color: #1F2937;
+    --primary-color: #4F46E5;
+    --secondary-color: #8B5CF6;
+    --accent-color: #FACC15;
+    --background-color: #F8FAFC;
+    --text-color: #0F172A;
     --white: #FFFFFF;
     --gray: #6B7280;
     --light-gray: #E5E7EB;
@@ -26,7 +27,7 @@ html {
 
 /* Header */
 header {
-    background: linear-gradient(to right, var(--primary-color), #2563EB);
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
     color: var(--white);
 }
 
@@ -92,7 +93,7 @@ nav a:hover {
 }
 
 .cta-button:hover {
-    background-color: #059669;
+    background-color: #7C3AED;
     transform: translateY(-2px);
 }
 
@@ -260,7 +261,7 @@ footer a:hover {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(to right, var(--primary-color), #2563EB);
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
 }
 
 .auth-card {
@@ -530,10 +531,10 @@ main.dashboard {
 }
 
 .sidebar-menu li a.active {
-    background: linear-gradient(135deg, var(--primary-color), #2563EB);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     /* Gradient for active */
     color: var(--white);
-    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4), 0 4px 6px -2px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4), 0 4px 6px -2px rgba(79, 70, 229, 0.2);
     /* Colored shadow */
 }
 

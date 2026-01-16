@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roadmaps - StudentsCompass</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <div class="container">
+        <div class="dashboard-header">
+          <h2>Roadmaps</h2>
+          <p>Roadmaps and learning paths to guide your career progression.</p>
+        </div>
+
+        <!-- My Roadmaps -->
+        <section style="margin-top: 1rem;">
+          <h3>My Roadmaps</h3>
+          <p style="color: var(--gray); margin-top: 0.5rem;">Your personalized or saved roadmaps will appear here.</p>
+          <div class="feature-cards" style="margin-top: 1rem;">
+            <!-- Placeholder saved roadmap card -->
+            <article class="card">
+              <h3>No saved roadmaps</h3>
+              <p style="color: var(--gray);">You haven't saved any roadmaps yet. Save roadmaps to access them quickly here.</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- Most In-Demand -->
+        <section style="margin-top: 2.5rem;">
+          <h3>Most In-Demand</h3>
+          <p style="color: var(--gray); margin-top: 0.25rem;">Roadmaps most requested by employers and learners.</p>
+          <div class="feature-cards" style="margin-top: 1rem;">
+            <article class="card">
+              <h3>Web Developer Roadmap</h3>
+              <p>Step-by-step learning path from HTML/CSS to advanced backend and deployment.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+
+            <article class="card">
+              <h3>Data Scientist Roadmap</h3>
+              <p>Guided path covering statistics, ML, data engineering and portfolio projects.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+
+            <article class="card">
+              <h3>Product Manager Roadmap</h3>
+              <p>Roadmap for building product sense, research, prioritization and stakeholder work.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+          </div>
+        </section>
+
+        <!-- Other Roadmaps -->
+        <section style="margin-top: 2.5rem;">
+          <h3>Other Roadmaps</h3>
+          <p style="color: var(--gray); margin-top: 0.5rem;">Additional learning paths and trade roadmaps.</p>
+          <div class="feature-cards" style="margin-top: 1rem;">
+            <article class="card">
+              <h3>Design & UX Roadmap</h3>
+              <p>Learn the fundamentals of UX, prototyping, research and building portfolios.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+
+            <article class="card">
+              <h3>Realtor Roadmap</h3>
+              <p>Steps to become a licensed real estate agent, build listings and close deals.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+
+            <article class="card">
+              <h3>Customer Service Roadmap</h3>
+              <p>Core skills for excellent customer support, communication and escalation handling.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+
+            <article class="card">
+              <h3>Waiter / Hospitality Roadmap</h3>
+              <p>Front-of-house skills, upselling, POS systems and building a hospitality career.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+
+            <article class="card">
+              <h3>Carpentry Roadmap</h3>
+              <p>Hands-on woodworking, tools, safety, and steps to become a professional carpenter.</p>
+              <a href="#" class="card-link">View Roadmap</a>
+            </article>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <aside class="dashboard-sidebar right">
+      <h4>Tips</h4>
+      <p>Pick a roadmap and follow tasks consistently — small daily progress wins.</p>
+    </aside>
+  </main>
+
+  {% include "includes/footer.html" %}
+</body>
+</html>

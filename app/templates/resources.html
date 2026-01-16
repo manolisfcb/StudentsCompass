@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resources Hub - StudentsCompass</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <div class="container">
+        <div class="dashboard-header">
+          <h2>Resources Hub</h2>
+          <p>Curated resources to help you progress in your career search and skill development.</p>
+        </div>
+
+        <section class="feature-cards">
+          <article class="card">
+            <h3>Resume Templates</h3>
+            <p>ATS-friendly resume templates and examples tailored for tech and data roles.</p>
+            <a href="#" class="card-link">View Templates</a>
+          </article>
+
+          <article class="card">
+            <h3>LinkedIn Optimization</h3>
+            <p>Guides and examples to improve your LinkedIn headline, summary and experience sections.</p>
+            <a href="#" class="card-link">Improve Profile</a>
+          </article>
+
+          <article class="card">
+            <h3>Interview Prep</h3>
+            <p>Behavioral and technical question bank, plus tips to structure your answers.</p>
+            <a href="#" class="card-link">Start Practicing</a>
+          </article>
+
+          <article class="card">
+            <h3>Portfolio Checklist</h3>
+            <p>What to include in your portfolio to impress recruiters and hiring managers.</p>
+            <a href="#" class="card-link">See Checklist</a>
+          </article>
+        </section>
+
+        <section style="margin-top: 2.5rem;">
+          <h3>Recommended Articles</h3>
+          <ul style="margin-top: 1rem; list-style: none; padding: 0;">
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--light-gray);"><a href="#">How to pass an ATS in 2025</a></li>
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--light-gray);"><a href="#">10 projects to add to your portfolio</a></li>
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--light-gray);"><a href="#">Negotiating your first offer</a></li>
+          </ul>
+        </section>
+
+      </div>
+    </main>
+
+    <aside class="dashboard-sidebar right">
+      <h4>Tips</h4>
+      <p>Use the filters to find resources tailored to your interests.</p>
+    </aside>
+  </main>
+
+  {% include "includes/footer.html" %}
+</body>
+</html>
