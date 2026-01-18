@@ -432,6 +432,24 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/39/a0/81b33000d59eb265b88074c6a15c1fda6f9120581878c368a94e87638d96/fastapi_users-15.0.3-py3-none-any.whl", hash = "sha256:cea3da00ba1bfdd04ce61dcb4515a0914f19d9609d3ba68cf54367c876f380c3", size = 39031, upload-time = "2025-12-19T09:41:10.34Z" },
 ]
 
+[package.optional-dependencies]
+sqlalchemy = [
+    { name = "fastapi-users-db-sqlalchemy" },
+]
+
+[[package]]
+name = "fastapi-users-db-sqlalchemy"
+version = "7.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastapi-users" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/87/12/bc9e6146ae31564741cefc87ee6e37fa5b566933f0afe8aa030779d60e60/fastapi_users_db_sqlalchemy-7.0.0.tar.gz", hash = "sha256:6823eeedf8a92f819276a2b2210ef1dcfd71fe8b6e37f7b4da8d1c60e3dfd595", size = 10877, upload-time = "2025-01-04T13:09:05.086Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/08/9968963c1fb8c34627b7f1fbcdfe9438540f87dc7c9bfb59bb4fd19a4ecf/fastapi_users_db_sqlalchemy-7.0.0-py3-none-any.whl", hash = "sha256:5fceac018e7cfa69efc70834dd3035b3de7988eb4274154a0dbe8b14f5aa001e", size = 6891, upload-time = "2025-01-04T13:09:02.869Z" },
+]
+
 [[package]]
 name = "greenlet"
 version = "3.3.0"
@@ -1122,6 +1140,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bf/e1/3ccb13c643399d22289c6a9786c1a91e3dcbb68bce4beb44926ac2c557bf/sqlalchemy-2.0.45-py3-none-any.whl", hash = "sha256:5225a288e4c8cc2308dbdd874edad6e7d0fd38eac1e9e5f23503425c8eee20d0", size = 1936672, upload-time = "2025-12-09T21:54:52.608Z" },
 ]
 
+[package.optional-dependencies]
+asyncio = [
+    { name = "greenlet" },
+]
+
 [[package]]
 name = "starlette"
 version = "0.50.0"
@@ -1143,7 +1166,7 @@ dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
     { name = "fastapi" },
-    { name = "fastapi-users" },
+    { name = "fastapi-users", extra = ["sqlalchemy"] },
     { name = "imagekitio" },
     { name = "jinja2" },
     { name = "pillow" },
@@ -1156,7 +1179,7 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "alembic", specifier = ">=1.18.1" },
     { name = "fastapi", specifier = ">=0.128.0" },
-    { name = "fastapi-users", extras = ["sqlchemy"], specifier = ">=14.0.2" },
+    { name = "fastapi-users", extras = ["sqlalchemy", "sqlchemy"], specifier = ">=14.0.2" },
     { name = "imagekitio", specifier = ">=5.0.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pillow", specifier = ">=12.1.0" },
