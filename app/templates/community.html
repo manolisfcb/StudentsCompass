@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community - StudentsCompass</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .communities-container {
+      padding: 2rem;
+    }
+
+    .communities-header {
+      margin-bottom: 2rem;
+    }
+
+    .communities-header h2 {
+      font-size: 2rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .communities-header p {
+      color: #475569;
+      font-size: 1.1rem;
+    }
+
+    .communities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .community-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .community-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .community-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+
+    .community-card.python .community-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+    }
+
+    .community-card.r .community-icon {
+      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
+    }
+
+    .community-card.sql .community-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
+    }
+
+    .community-card.tableau .community-icon {
+      background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+    }
+
+    .community-card.powerbi .community-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FBBF24 100%);
+    }
+
+    .community-card.excel .community-icon {
+      background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+    }
+
+    .community-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .community-description {
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .community-stats {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .stat-item svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .community-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tag {
+      background: #E5E7EB;
+      color: #0F766E;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .join-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .join-btn:hover {
+      opacity: 0.9;
+    }
+
+    .filter-section {
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #0F766E;
+      background: white;
+      color: #0F766E;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      background: #0F766E;
+      color: white;
+    }
+
+    .filter-btn:hover {
+      background: #0F766E;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <div class="communities-container">
+        <div class="communities-header">
+          <h2>Data Analytics Communities</h2>
+          <p>Connect with students and professionals passionate about data analysis</p>
+        </div>
+
+        <div class="filter-section">
+          <button class="filter-btn active" onclick="filterCommunities('all')">All</button>
+          <button class="filter-btn" onclick="filterCommunities('programming')">Programming</button>
+          <button class="filter-btn" onclick="filterCommunities('visualization')">Visualization</button>
+          <button class="filter-btn" onclick="filterCommunities('database')">Databases</button>
+        </div>
+
+        <div class="communities-grid">
+          <!-- Python for Data Analytics -->
+          <div class="community-card python" data-category="programming">
+            <div class="community-icon">🐍</div>
+            <h3 class="community-title">Python Data Analytics</h3>
+            <p class="community-description">
+              Learn to use Python for data analysis with pandas, NumPy, and matplotlib. Perfect for beginners and experts.
+            </p>
+            <div class="community-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>1,234 miembros</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Very active</span>
+              </div>
+            </div>
+            <div class="community-tags">
+              <span class="tag">Python</span>
+              <span class="tag">Pandas</span>
+              <span class="tag">Data Science</span>
+            </div>
+            <button class="join-btn" onclick="joinCommunity('python')">Join</button>
+          </div>
+
+          <!-- R for Data Analytics -->
+          <div class="community-card r" data-category="programming">
+            <div class="community-icon">📊</div>
+            <h3 class="community-title">R Analytics Community</h3>
+            <p class="community-description">
+              Master R for statistical analysis and visualization. Community focused on tidyverse and ggplot2.
+            </p>
+            <div class="community-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>892 miembros</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Active</span>
+              </div>
+            </div>
+            <div class="community-tags">
+              <span class="tag">R</span>
+              <span class="tag">Statistics</span>
+              <span class="tag">ggplot2</span>
+            </div>
+            <button class="join-btn" onclick="joinCommunity('r')">Join</button>
+          </div>
+
+          <!-- SQL for Data Analytics -->
+          <div class="community-card sql" data-category="database">
+            <div class="community-icon">🗄️</div>
+            <h3 class="community-title">SQL & Database Analytics</h3>
+            <p class="community-description">
+              Learn to query, manipulate and analyze data using SQL. From beginner to advanced queries.
+            </p>
+            <div class="community-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>1,567 miembros</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Very active</span>
+              </div>
+            </div>
+            <div class="community-tags">
+              <span class="tag">SQL</span>
+              <span class="tag">PostgreSQL</span>
+              <span class="tag">MySQL</span>
+            </div>
+            <button class="join-btn" onclick="joinCommunity('sql')">Join</button>
+          </div>
+
+          <!-- Tableau Community -->
+          <div class="community-card tableau" data-category="visualization">
+            <div class="community-icon">📈</div>
+            <h3 class="community-title">Tableau Visualization</h3>
+            <p class="community-description">
+              Create impactful visualizations with Tableau. Share dashboards and learn advanced techniques.
+            </p>
+            <div class="community-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>756 miembros</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Active</span>
+              </div>
+            </div>
+            <div class="community-tags">
+              <span class="tag">Tableau</span>
+              <span class="tag">Dashboards</span>
+              <span class="tag">Viz</span>
+            </div>
+            <button class="join-btn" onclick="joinCommunity('tableau')">Join</button>
+          </div>
+
+          <!-- Power BI Community -->
+          <div class="community-card powerbi" data-category="visualization">
+            <div class="community-icon">📉</div>
+            <h3 class="community-title">Power BI Analytics</h3>
+            <p class="community-description">
+              Master Power BI for Business Intelligence. From DAX to interactive visualizations.
+            </p>
+            <div class="community-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>1,089 miembros</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Very active</span>
+              </div>
+            </div>
+            <div class="community-tags">
+              <span class="tag">Power BI</span>
+              <span class="tag">DAX</span>
+              <span class="tag">Business Intelligence</span>
+            </div>
+            <button class="join-btn" onclick="joinCommunity('powerbi')">Join</button>
+          </div>
+
+          <!-- Excel Analytics Community -->
+          <div class="community-card excel" data-category="programming">
+            <div class="community-icon">📑</div>
+            <h3 class="community-title">Excel Data Analytics</h3>
+            <p class="community-description">
+              Data analysis with Excel. Power Query, pivot tables, VBA and advanced formulas.
+            </p>
+            <div class="community-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>2,145 miembros</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Very active</span>
+              </div>
+            </div>
+            <div class="community-tags">
+              <span class="tag">Excel</span>
+              <span class="tag">Power Query</span>
+              <span class="tag">VBA</span>
+            </div>
+            <button class="join-btn" onclick="joinCommunity('excel')">Join</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </main>
+
+  {% include "includes/footer.html" %}
+
+  <script>
+    function filterCommunities(category) {
+      const cards = document.querySelectorAll('.community-card');
+      const buttons = document.querySelectorAll('.filter-btn');
+
+      // Update active button
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Filter cards
+      cards.forEach(card => {
+        if (category === 'all') {
+          card.style.display = 'block';
+        } else {
+          const cardCategory = card.getAttribute('data-category');
+          card.style.display = cardCategory === category ? 'block' : 'none';
+        }
+      });
+    }
+
+    function joinCommunity(communityName) {
+      alert(`You'll soon be able to join the ${communityName} community! This feature will be available soon.`);
+    }
+  </script>
+</body>
+
+</html>

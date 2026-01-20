@@ -277,9 +277,9 @@
                 <div class="result-card profile-card fade-in">
                     <h4 style="margin: 0 0 1rem 0; font-weight: 600; color: var(--text-color);">${result.career}</h4>
                     <div class="progress-bar">
-                        <div class="progress" style="width: ${Math.min(result.score * 10, 100)}%"></div>
+                        <div class="progress" style="width: ${Math.min(result.score, 100)}%"></div>
                     </div>
-                    <p style="color: var(--gray); font-size: 0.9rem; margin: 0;">Affinity: <span style="font-weight: 600; color: var(--text-color);">${result.score.toFixed(1)}/10</span></p>
+                    <p style="color: var(--gray); font-size: 0.9rem; margin: 0;">Affinity: <span style="font-weight: 600; color: var(--text-color);">${(result.score / 10).toFixed(1)}/10</span></p>
                 </div>
             `).join('');
 
@@ -319,12 +319,12 @@
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 uploadArea.style.backgroundColor = '#DDD6FE';
-                uploadArea.style.borderColor = '#4F46E5';
+                uploadArea.style.borderColor = '#0F766E';
             });
 
             uploadArea.addEventListener('dragleave', () => {
                 uploadArea.style.backgroundColor = '#EDE9FE';
-                uploadArea.style.borderColor = '#4F46E5';
+                uploadArea.style.borderColor = '#0F766E';
             });
 
             uploadArea.addEventListener('drop', (e) => {

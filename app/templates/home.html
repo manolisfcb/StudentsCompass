@@ -7,10 +7,17 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+    <script>
+        // If user is already logged in, redirect to dashboard
+        const existingToken = localStorage.getItem('bearer_token');
+        if (existingToken) {
+            window.location.href = '/dashboard';
+        }
+    </script>
     <header>
         <nav>
             <div class="container">
-                <h1>StudentsCompass</h1>
+                <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
                 <ul>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#how-it-works">How It Works</a></li>

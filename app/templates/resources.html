@@ -5,6 +5,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resources Hub - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .resources-container {
+      padding: 2rem;
+    }
+
+    .resources-header {
+      margin-bottom: 2rem;
+    }
+
+    .resources-header h2 {
+      font-size: 2rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .resources-header p {
+      color: #475569;
+      font-size: 1.1rem;
+    }
+
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .resource-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .resource-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .resource-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+
+    .resource-card.resume .resource-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
+    }
+
+    .resource-card.linkedin .resource-icon {
+      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
+    }
+
+    .resource-card.interview .resource-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FBBF24 100%);
+    }
+
+    .resource-card.portfolio .resource-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+    }
+
+    .resource-card.courses .resource-icon {
+      background: linear-gradient(135deg, #5EEAD4 0%, #A7F3D0 100%);
+    }
+
+    .resource-card.networking .resource-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FCA5A5 100%);
+    }
+
+    .resource-card.salary .resource-icon {
+      background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 100%);
+    }
+
+    .resource-card.certifications .resource-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+    }
+
+    .resource-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .resource-description {
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .resource-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tag {
+      background: #E5E7EB;
+      color: #0F766E;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .resource-link {
+      display: inline-block;
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .resource-link:hover {
+      opacity: 0.9;
+    }
+
+    .filter-section {
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #0F766E;
+      background: white;
+      color: #0F766E;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      background: #0F766E;
+      color: white;
+    }
+
+    .filter-btn:hover {
+      background: #0F766E;
+      color: white;
+    }
+
+    .articles-section {
+      margin-top: 3rem;
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .articles-section h3 {
+      font-size: 1.5rem;
+      color: #0F172A;
+      margin-bottom: 1.5rem;
+    }
+
+    .article-item {
+      padding: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: background 0.3s ease;
+    }
+
+    .article-item:last-child {
+      border-bottom: none;
+    }
+
+    .article-item:hover {
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .article-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .article-item a {
+      color: #0F172A;
+      text-decoration: none;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .article-item a:hover {
+      color: #0F766E;
+    }
+  </style>
 </head>
 <body>
   {% include "includes/header.html" %}
@@ -13,56 +229,189 @@
     {% include "includes/sidebar.html" %}
 
     <main class="dashboard">
-      <div class="container">
-        <div class="dashboard-header">
+      <div class="resources-container">
+        <div class="resources-header">
           <h2>Resources Hub</h2>
-          <p>Curated resources to help you progress in your career search and skill development.</p>
+          <p>Curated resources to help you progress in your career search and skill development</p>
         </div>
 
-        <section class="feature-cards">
-          <article class="card">
-            <h3>Resume Templates</h3>
-            <p>ATS-friendly resume templates and examples tailored for tech and data roles.</p>
-            <a href="#" class="card-link">View Templates</a>
-          </article>
+        <div class="filter-section">
+          <button class="filter-btn active" onclick="filterResources('all')">All</button>
+          <button class="filter-btn" onclick="filterResources('career')">Career</button>
+          <button class="filter-btn" onclick="filterResources('learning')">Learning</button>
+          <button class="filter-btn" onclick="filterResources('professional')">Professional</button>
+        </div>
 
-          <article class="card">
-            <h3>LinkedIn Optimization</h3>
-            <p>Guides and examples to improve your LinkedIn headline, summary and experience sections.</p>
-            <a href="#" class="card-link">Improve Profile</a>
-          </article>
+        <div class="resources-grid">
+          <!-- Resume Templates -->
+          <div class="resource-card resume" data-category="career">
+            <div class="resource-icon">📄</div>
+            <h3 class="resource-title">Resume Templates</h3>
+            <p class="resource-description">
+              ATS-friendly resume templates and examples tailored for tech and data roles. Stand out with professional designs.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Templates</span>
+              <span class="tag">ATS</span>
+              <span class="tag">Career</span>
+            </div>
+            <a href="#" class="resource-link">View Templates</a>
+          </div>
 
-          <article class="card">
-            <h3>Interview Prep</h3>
-            <p>Behavioral and technical question bank, plus tips to structure your answers.</p>
-            <a href="#" class="card-link">Start Practicing</a>
-          </article>
+          <!-- LinkedIn Optimization -->
+          <div class="resource-card linkedin" data-category="professional">
+            <div class="resource-icon">💼</div>
+            <h3 class="resource-title">LinkedIn Optimization</h3>
+            <p class="resource-description">
+              Guides and examples to improve your LinkedIn headline, summary and experience sections for better visibility.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">LinkedIn</span>
+              <span class="tag">Profile</span>
+              <span class="tag">Networking</span>
+            </div>
+            <a href="#" class="resource-link">Improve Profile</a>
+          </div>
 
-          <article class="card">
-            <h3>Portfolio Checklist</h3>
-            <p>What to include in your portfolio to impress recruiters and hiring managers.</p>
-            <a href="#" class="card-link">See Checklist</a>
-          </article>
-        </section>
+          <!-- Interview Prep -->
+          <div class="resource-card interview" data-category="career">
+            <div class="resource-icon">🎯</div>
+            <h3 class="resource-title">Interview Preparation</h3>
+            <p class="resource-description">
+              Behavioral and technical question bank, plus tips to structure your answers using STAR method.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Interview</span>
+              <span class="tag">STAR Method</span>
+              <span class="tag">Practice</span>
+            </div>
+            <a href="#" class="resource-link">Start Practicing</a>
+          </div>
 
-        <section style="margin-top: 2.5rem;">
-          <h3>Recommended Articles</h3>
-          <ul style="margin-top: 1rem; list-style: none; padding: 0;">
-            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--light-gray);"><a href="#">How to pass an ATS in 2025</a></li>
-            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--light-gray);"><a href="#">10 projects to add to your portfolio</a></li>
-            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--light-gray);"><a href="#">Negotiating your first offer</a></li>
-          </ul>
-        </section>
+          <!-- Portfolio Checklist -->
+          <div class="resource-card portfolio" data-category="career">
+            <div class="resource-icon">🎨</div>
+            <h3 class="resource-title">Portfolio Checklist</h3>
+            <p class="resource-description">
+              What to include in your portfolio to impress recruiters and hiring managers. Showcase your best work.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Portfolio</span>
+              <span class="tag">Projects</span>
+              <span class="tag">Showcase</span>
+            </div>
+            <a href="#" class="resource-link">See Checklist</a>
+          </div>
 
+          <!-- Online Courses -->
+          <div class="resource-card courses" data-category="learning">
+            <div class="resource-icon">📚</div>
+            <h3 class="resource-title">Online Courses</h3>
+            <p class="resource-description">
+              Curated list of online courses from Coursera, Udemy, and other platforms to boost your skills.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Courses</span>
+              <span class="tag">Learning</span>
+              <span class="tag">Skills</span>
+            </div>
+            <a href="#" class="resource-link">Browse Courses</a>
+          </div>
+
+          <!-- Networking Tips -->
+          <div class="resource-card networking" data-category="professional">
+            <div class="resource-icon">🤝</div>
+            <h3 class="resource-title">Networking Guide</h3>
+            <p class="resource-description">
+              Learn how to build meaningful professional relationships and expand your network effectively.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Networking</span>
+              <span class="tag">Events</span>
+              <span class="tag">Connections</span>
+            </div>
+            <a href="#" class="resource-link">Learn More</a>
+          </div>
+
+          <!-- Salary Negotiation -->
+          <div class="resource-card salary" data-category="career">
+            <div class="resource-icon">💰</div>
+            <h3 class="resource-title">Salary Negotiation</h3>
+            <p class="resource-description">
+              Master the art of negotiating your salary and benefits package with confidence and data.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Salary</span>
+              <span class="tag">Negotiation</span>
+              <span class="tag">Compensation</span>
+            </div>
+            <a href="#" class="resource-link">Negotiation Tips</a>
+          </div>
+
+          <!-- Certifications -->
+          <div class="resource-card certifications" data-category="learning">
+            <div class="resource-icon">🏆</div>
+            <h3 class="resource-title">Certifications Guide</h3>
+            <p class="resource-description">
+              Discover the most valuable certifications in tech and data that employers are looking for.
+            </p>
+            <div class="resource-tags">
+              <span class="tag">Certifications</span>
+              <span class="tag">Credentials</span>
+              <span class="tag">Career Growth</span>
+            </div>
+            <a href="#" class="resource-link">View Guide</a>
+          </div>
+        </div>
+
+        <div class="articles-section">
+          <h3>📖 Recommended Articles</h3>
+          <div class="article-item">
+            <div class="article-icon">📝</div>
+            <a href="#">How to pass an ATS in 2026</a>
+          </div>
+          <div class="article-item">
+            <div class="article-icon">💡</div>
+            <a href="#">10 projects to add to your portfolio</a>
+          </div>
+          <div class="article-item">
+            <div class="article-icon">💬</div>
+            <a href="#">Negotiating your first offer</a>
+          </div>
+          <div class="article-item">
+            <div class="article-icon">🚀</div>
+            <a href="#">Building a strong personal brand</a>
+          </div>
+          <div class="article-item">
+            <div class="article-icon">🎓</div>
+            <a href="#">Transitioning from student to professional</a>
+          </div>
+        </div>
       </div>
     </main>
-
-    <aside class="dashboard-sidebar right">
-      <h4>Tips</h4>
-      <p>Use the filters to find resources tailored to your interests.</p>
-    </aside>
   </main>
 
   {% include "includes/footer.html" %}
+
+  <script>
+    function filterResources(category) {
+      const cards = document.querySelectorAll('.resource-card');
+      const buttons = document.querySelectorAll('.filter-btn');
+
+      // Update active button
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Filter cards
+      cards.forEach(card => {
+        if (category === 'all') {
+          card.style.display = 'block';
+        } else {
+          const cardCategory = card.getAttribute('data-category');
+          card.style.display = cardCategory === category ? 'block' : 'none';
+        }
+      });
+    }
+  </script>
 </body>
 </html>

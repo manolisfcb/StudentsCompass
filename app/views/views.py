@@ -18,6 +18,10 @@ async def root(request: Request):
 async def login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@router.get("/register")
+async def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
 @router.get("/api/v1/auth/register")
 async def register(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
@@ -43,3 +47,8 @@ async def resources(request: Request):
 @router.get("/roadmap")
 async def roadmap(request: Request):
     return templates.TemplateResponse("roadmap.html", {"request": request})
+
+
+@router.get("/community")
+async def community(request: Request):
+    return templates.TemplateResponse("community.html", {"request": request})

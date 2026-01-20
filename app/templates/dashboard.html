@@ -6,6 +6,310 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .dashboard-container {
+      padding: 2rem;
+    }
+
+    .dashboard-header {
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-header h2 {
+      font-size: 2rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header p {
+      color: #475569;
+      font-size: 1.1rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      color: white;
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card.applications {
+      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
+    }
+
+    .stat-card.interviews {
+      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
+    }
+
+    .stat-card.offers {
+      background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+    }
+
+    .stat-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.95rem;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    .main-content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 968px) {
+      .main-content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .content-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .content-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #E5E7EB;
+    }
+
+    .card-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+    }
+
+    .card-header h3 {
+      font-size: 1.3rem;
+      color: #0F172A;
+      margin: 0;
+    }
+
+    .progress-item {
+      margin-bottom: 1.5rem;
+    }
+
+    .progress-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-label strong {
+      color: #0F172A;
+      font-size: 0.95rem;
+    }
+
+    .progress-percentage {
+      color: #0F766E;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .progress-bar {
+      background-color: #e9ecef;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress {
+      background: linear-gradient(90deg, #0F766E 0%, #5EEAD4 100%);
+      height: 100%;
+      transition: width 0.6s ease;
+      border-radius: 5px;
+    }
+
+    .status-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+    }
+
+    .status-item:hover {
+      background: #e9ecef;
+    }
+
+    .status-item strong {
+      color: #0F172A;
+      font-size: 0.95rem;
+    }
+
+    .status-value {
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .resource-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+
+    .resource-item {
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border-left: 3px solid #0F766E;
+      background: #f8f9fa;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .resource-item:hover {
+      background: #e9ecef;
+      border-left-width: 5px;
+      padding-left: 0.9rem;
+    }
+
+    .resource-item a {
+      color: #0F172A;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .resource-item a:hover {
+      color: #0F766E;
+    }
+
+    .card-link {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: opacity 0.3s ease;
+      text-align: center;
+    }
+
+    .card-link:hover {
+      opacity: 0.9;
+    }
+
+    .full-width-card {
+      grid-column: 1 / -1;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .action-btn {
+      background: white;
+      border: 2px solid #0F766E;
+      color: #0F766E;
+      padding: 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+
+    .action-btn:hover {
+      background: #0F766E;
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+    }
+
+    .action-icon {
+      font-size: 1.3rem;
+    }
+
+    .notification-card {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      box-shadow: 0 4px 12px rgba(251, 113, 133, 0.2);
+    }
+
+    .notification-card h4 {
+      margin: 0 0 0.5rem 0;
+      color: #0F172A;
+      font-size: 1.1rem;
+    }
+
+    .notification-card p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+  </style>
 </head>
 
 <body>
@@ -15,78 +319,167 @@
     {% include "includes/sidebar.html" %}
 
     <main class="dashboard">
-      <div class="container">
+      <div class="dashboard-container">
         <div class="dashboard-header">
           <h2 id="welcome-message">Welcome Back!</h2>
-          <p>Here’s a snapshot of your job search journey.</p>
+          <p>Here's a snapshot of your job search journey</p>
         </div>
 
-        <div class="dashboard-grid">
-          <!-- Card 1: Career Goals / Progress -->
-          <div class="dashboard-card">
-            <h3>Career Progress</h3>
-            <ul class="goal-list">
-              <li>
-                <strong>Resume Creation Progress</strong>
-                <div class="progress-bar">
-                  <div class="progress" style="width: 65%;"></div>
-                </div>
-                <span>65%</span>
-              </li>
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value">65%</div>
+            <div class="stat-label">Overall Progress</div>
+          </div>
 
-              <li>
-                <strong>LinkedIn Profile Review</strong>
-                <div class="progress-bar">
-                  <div class="progress" style="width: 40%;"></div>
-                </div>
-                <span>40%</span>
-              </li>
+          <div class="stat-card applications">
+            <div class="stat-icon">📝</div>
+            <div class="stat-value">12</div>
+            <div class="stat-label">Applications Sent</div>
+          </div>
 
-              <li>
+          <div class="stat-card interviews">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-value">2</div>
+            <div class="stat-label">Interviews Scheduled</div>
+          </div>
+
+          <div class="stat-card offers">
+            <div class="stat-icon">🎉</div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Offers Received</div>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="main-content-grid">
+          <!-- Career Progress Card -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="card-icon">🚀</div>
+              <h3>Career Progress</h3>
+            </div>
+            
+            <div class="progress-item">
+              <div class="progress-label">
+                <strong>Resume Creation</strong>
+                <span class="progress-percentage">65%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress" style="width: 65%;"></div>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">
+                <strong>LinkedIn Profile</strong>
+                <span class="progress-percentage">40%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress" style="width: 40%;"></div>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">
                 <strong>Interview Preparation</strong>
-                <div class="progress-bar">
-                  <div class="progress" style="width: 25%;"></div>
-                </div>
-                <span>25%</span>
-              </li>
-            </ul>
+                <span class="progress-percentage">25%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress" style="width: 25%;"></div>
+              </div>
+            </div>
+
             <a href="/roadmap" class="card-link">View My Roadmap</a>
           </div>
 
-          <!-- Card 2: Job Applications Status -->
-          <div class="dashboard-card">
-            <h3>Job Applications Status</h3>
-            <ul class="deadline-list">
-              <li><strong>Applied:</strong> 12 roles</li>
-              <li><strong>In Review:</strong> 5 applications</li>
-              <li><strong>Interviews:</strong> 2 scheduled</li>
-              <li><strong>Offers:</strong> 0</li>
+          <!-- Application Status Card -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="card-icon">📋</div>
+              <h3>Application Status</h3>
+            </div>
+            
+            <ul class="status-list">
+              <li class="status-item">
+                <strong>Applied</strong>
+                <span class="status-value">12 roles</span>
+              </li>
+              <li class="status-item">
+                <strong>In Review</strong>
+                <span class="status-value">5 apps</span>
+              </li>
+              <li class="status-item">
+                <strong>Interviews</strong>
+                <span class="status-value">2 scheduled</span>
+              </li>
+              <li class="status-item">
+                <strong>Offers</strong>
+                <span class="status-value">0</span>
+              </li>
             </ul>
-            <a href="/applications" class="card-link">View Applications</a>
+
+            <a href="#" class="card-link">View All Applications</a>
           </div>
 
-          <!-- Card 3: Personalized Resource Hub -->
-          <div class="dashboard-card recommended-resources">
-            <h3>Resource Hub (For You)</h3>
-            <p style="margin-top: 6px; opacity: 0.85;">
-              Curated materials aligned with your interests and target roles.
+          <!-- Recommended Resources Card -->
+          <div class="content-card full-width-card">
+            <div class="card-header">
+              <div class="card-icon">📚</div>
+              <h3>Recommended Resources</h3>
+            </div>
+            
+            <p style="color: #475569; margin-bottom: 1rem;">
+              Curated materials aligned with your interests and target roles
             </p>
-            <ul>
-              <li><a href="#">ATS-Friendly Resume Templates (Tech)</a></li>
-              <li><a href="#">LinkedIn Headline & About Examples (Data/Tech)</a></li>
-              <li><a href="#">Interview Question Bank (Behavioral + Technical)</a></li>
-              <li><a href="#">Portfolio Checklist (Projects that recruiters like)</a></li>
+
+            <ul class="resource-list">
+              <li class="resource-item">
+                <a href="#">📄 ATS-Friendly Resume Templates (Tech)</a>
+              </li>
+              <li class="resource-item">
+                <a href="#">💼 LinkedIn Headline & About Examples (Data/Tech)</a>
+              </li>
+              <li class="resource-item">
+                <a href="#">🎯 Interview Question Bank (Behavioral + Technical)</a>
+              </li>
+              <li class="resource-item">
+                <a href="#">🎨 Portfolio Checklist (Projects that recruiters like)</a>
+              </li>
             </ul>
+
             <a href="/resources" class="card-link">Explore Resource Hub</a>
           </div>
         </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <a href="/questionnaire" class="action-btn">
+            <span class="action-icon">📝</span>
+            <span>Take Questionnaire</span>
+          </a>
+          <a href="/community" class="action-btn">
+            <span class="action-icon">👥</span>
+            <span>Join Community</span>
+          </a>
+          <a href="/user-profile" class="action-btn">
+            <span class="action-icon">👤</span>
+            <span>View Profile</span>
+          </a>
+          <a href="/resources" class="action-btn">
+            <span class="action-icon">📖</span>
+            <span>Browse Resources</span>
+          </a>
+        </div>
+
+        <!-- Notification Card -->
+        <div class="notification-card">
+          <h4>💡 Pro Tip</h4>
+          <p>Complete your career questionnaire to get personalized job recommendations and tailored resources!</p>
+        </div>
       </div>
     </main>
-
-    <aside class="dashboard-sidebar right">
-      <h4>Notifications</h4>
-      <p>No new notifications.</p>
-    </aside>
   </main>
 
   {% include "includes/footer.html" %}

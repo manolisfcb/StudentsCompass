@@ -5,6 +5,231 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roadmaps - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .roadmaps-container {
+      padding: 2rem;
+    }
+
+    .roadmaps-header {
+      margin-bottom: 2rem;
+    }
+
+    .roadmaps-header h2 {
+      font-size: 2rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .roadmaps-header p {
+      color: #475569;
+      font-size: 1.1rem;
+    }
+
+    .section-header {
+      margin-top: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h3 {
+      font-size: 1.5rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    .roadmaps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .roadmap-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .roadmap-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .roadmap-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+
+    .roadmap-card.web .roadmap-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+    }
+
+    .roadmap-card.data .roadmap-icon {
+      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
+    }
+
+    .roadmap-card.product .roadmap-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
+    }
+
+    .roadmap-card.design .roadmap-icon {
+      background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+    }
+
+    .roadmap-card.realtor .roadmap-icon {
+      background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+    }
+
+    .roadmap-card.service .roadmap-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+    }
+
+    .roadmap-card.hospitality .roadmap-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FCA5A5 100%);
+    }
+
+    .roadmap-card.carpentry .roadmap-icon {
+      background: linear-gradient(135deg, #92400E 0%, #D97706 100%);
+    }
+
+    .roadmap-card.empty .roadmap-icon {
+      background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%);
+    }
+
+    .roadmap-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .roadmap-description {
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .roadmap-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tag {
+      background: #E5E7EB;
+      color: #0F766E;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .roadmap-stats {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .stat-item svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .roadmap-link {
+      display: inline-block;
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .roadmap-link:hover {
+      opacity: 0.9;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem;
+      background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+      border-radius: 12px;
+      border: 2px dashed #E5E7EB;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: #475569;
+    }
+
+    .filter-section {
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #0F766E;
+      background: white;
+      color: #0F766E;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      background: #0F766E;
+      color: white;
+    }
+
+    .filter-btn:hover {
+      background: #0F766E;
+      color: white;
+    }
+  </style>
 </head>
 <body>
   {% include "includes/header.html" %}
@@ -13,96 +238,241 @@
     {% include "includes/sidebar.html" %}
 
     <main class="dashboard">
-      <div class="container">
-        <div class="dashboard-header">
-          <h2>Roadmaps</h2>
-          <p>Roadmaps and learning paths to guide your career progression.</p>
+      <div class="roadmaps-container">
+        <div class="roadmaps-header">
+          <h2>Career Roadmaps</h2>
+          <p>Step-by-step learning paths to guide your career progression</p>
+        </div>
+
+        <div class="filter-section">
+          <button class="filter-btn active" onclick="filterRoadmaps('all')">All</button>
+          <button class="filter-btn" onclick="filterRoadmaps('tech')">Tech</button>
+          <button class="filter-btn" onclick="filterRoadmaps('business')">Business</button>
+          <button class="filter-btn" onclick="filterRoadmaps('trades')">Trades</button>
         </div>
 
         <!-- My Roadmaps -->
-        <section style="margin-top: 1rem;">
-          <h3>My Roadmaps</h3>
-          <p style="color: var(--gray); margin-top: 0.5rem;">Your personalized or saved roadmaps will appear here.</p>
-          <div class="feature-cards" style="margin-top: 1rem;">
-            <!-- Placeholder saved roadmap card -->
-            <article class="card">
-              <h3>No saved roadmaps</h3>
-              <p style="color: var(--gray);">You haven't saved any roadmaps yet. Save roadmaps to access them quickly here.</p>
-            </article>
+        <div class="section-header">
+          <h3>📚 My Roadmaps</h3>
+          <p>Your personalized or saved roadmaps will appear here</p>
+        </div>
+
+        <div class="roadmaps-grid">
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>No saved roadmaps yet</h3>
+            <p>Save roadmaps from below to access them quickly here</p>
           </div>
-        </section>
+        </div>
 
         <!-- Most In-Demand -->
-        <section style="margin-top: 2.5rem;">
-          <h3>Most In-Demand</h3>
-          <p style="color: var(--gray); margin-top: 0.25rem;">Roadmaps most requested by employers and learners.</p>
-          <div class="feature-cards" style="margin-top: 1rem;">
-            <article class="card">
-              <h3>Web Developer Roadmap</h3>
-              <p>Step-by-step learning path from HTML/CSS to advanced backend and deployment.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
+        <div class="section-header">
+          <h3>🔥 Most In-Demand</h3>
+          <p>Roadmaps most requested by employers and learners</p>
+        </div>
 
-            <article class="card">
-              <h3>Data Scientist Roadmap</h3>
-              <p>Guided path covering statistics, ML, data engineering and portfolio projects.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
-
-            <article class="card">
-              <h3>Product Manager Roadmap</h3>
-              <p>Roadmap for building product sense, research, prioritization and stakeholder work.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
+        <div class="roadmaps-grid">
+          <!-- Web Developer -->
+          <div class="roadmap-card web" data-category="tech">
+            <div class="roadmap-icon">💻</div>
+            <h3 class="roadmap-title">Web Developer</h3>
+            <p class="roadmap-description">
+              Step-by-step learning path from HTML/CSS to advanced backend and deployment. Build real projects.
+            </p>
+            <div class="roadmap-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>6-12 months</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                <span>2,345 learning</span>
+              </div>
+            </div>
+            <div class="roadmap-tags">
+              <span class="tag">HTML/CSS</span>
+              <span class="tag">JavaScript</span>
+              <span class="tag">React</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
           </div>
-        </section>
+
+          <!-- Data Scientist -->
+          <div class="roadmap-card data" data-category="tech">
+            <div class="roadmap-icon">📊</div>
+            <h3 class="roadmap-title">Data Scientist</h3>
+            <p class="roadmap-description">
+              Guided path covering statistics, ML, data engineering and portfolio projects. From beginner to job-ready.
+            </p>
+            <div class="roadmap-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>8-14 months</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                <span>1,892 learning</span>
+              </div>
+            </div>
+            <div class="roadmap-tags">
+              <span class="tag">Python</span>
+              <span class="tag">ML</span>
+              <span class="tag">SQL</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
+          </div>
+
+          <!-- Product Manager -->
+          <div class="roadmap-card product" data-category="business">
+            <div class="roadmap-icon">🎯</div>
+            <h3 class="roadmap-title">Product Manager</h3>
+            <p class="roadmap-description">
+              Build product sense, research skills, prioritization frameworks and stakeholder management expertise.
+            </p>
+            <div class="roadmap-stats">
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>4-8 months</span>
+              </div>
+              <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                <span>1,567 learning</span>
+              </div>
+            </div>
+            <div class="roadmap-tags">
+              <span class="tag">Strategy</span>
+              <span class="tag">Research</span>
+              <span class="tag">Leadership</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
+          </div>
+        </div>
 
         <!-- Other Roadmaps -->
-        <section style="margin-top: 2.5rem;">
-          <h3>Other Roadmaps</h3>
-          <p style="color: var(--gray); margin-top: 0.5rem;">Additional learning paths and trade roadmaps.</p>
-          <div class="feature-cards" style="margin-top: 1rem;">
-            <article class="card">
-              <h3>Design & UX Roadmap</h3>
-              <p>Learn the fundamentals of UX, prototyping, research and building portfolios.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
+        <div class="section-header">
+          <h3>🗺️ Other Career Paths</h3>
+          <p>Additional learning paths and specialized roadmaps</p>
+        </div>
 
-            <article class="card">
-              <h3>Realtor Roadmap</h3>
-              <p>Steps to become a licensed real estate agent, build listings and close deals.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
-
-            <article class="card">
-              <h3>Customer Service Roadmap</h3>
-              <p>Core skills for excellent customer support, communication and escalation handling.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
-
-            <article class="card">
-              <h3>Waiter / Hospitality Roadmap</h3>
-              <p>Front-of-house skills, upselling, POS systems and building a hospitality career.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
-
-            <article class="card">
-              <h3>Carpentry Roadmap</h3>
-              <p>Hands-on woodworking, tools, safety, and steps to become a professional carpenter.</p>
-              <a href="#" class="card-link">View Roadmap</a>
-            </article>
+        <div class="roadmaps-grid">
+          <!-- Design & UX -->
+          <div class="roadmap-card design" data-category="tech">
+            <div class="roadmap-icon">🎨</div>
+            <h3 class="roadmap-title">Design & UX</h3>
+            <p class="roadmap-description">
+              Learn UX fundamentals, prototyping, user research and build a stunning portfolio.
+            </p>
+            <div class="roadmap-tags">
+              <span class="tag">Figma</span>
+              <span class="tag">UX Research</span>
+              <span class="tag">Portfolio</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
           </div>
-        </section>
 
+          <!-- Realtor -->
+          <div class="roadmap-card realtor" data-category="business">
+            <div class="roadmap-icon">🏡</div>
+            <h3 class="roadmap-title">Real Estate Agent</h3>
+            <p class="roadmap-description">
+              Steps to become licensed, build your listings and close deals successfully.
+            </p>
+            <div class="roadmap-tags">
+              <span class="tag">Licensing</span>
+              <span class="tag">Sales</span>
+              <span class="tag">Marketing</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
+          </div>
+
+          <!-- Customer Service -->
+          <div class="roadmap-card service" data-category="business">
+            <div class="roadmap-icon">💬</div>
+            <h3 class="roadmap-title">Customer Service</h3>
+            <p class="roadmap-description">
+              Master excellent support skills, communication and escalation handling.
+            </p>
+            <div class="roadmap-tags">
+              <span class="tag">Communication</span>
+              <span class="tag">Problem Solving</span>
+              <span class="tag">CRM</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
+          </div>
+
+          <!-- Hospitality -->
+          <div class="roadmap-card hospitality" data-category="trades">
+            <div class="roadmap-icon">🍽️</div>
+            <h3 class="roadmap-title">Hospitality Professional</h3>
+            <p class="roadmap-description">
+              Front-of-house skills, upselling techniques, POS systems and career growth.
+            </p>
+            <div class="roadmap-tags">
+              <span class="tag">Service</span>
+              <span class="tag">Sales</span>
+              <span class="tag">Management</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
+          </div>
+
+          <!-- Carpentry -->
+          <div class="roadmap-card carpentry" data-category="trades">
+            <div class="roadmap-icon">🔨</div>
+            <h3 class="roadmap-title">Professional Carpenter</h3>
+            <p class="roadmap-description">
+              Hands-on woodworking, tools mastery, safety and building a carpentry business.
+            </p>
+            <div class="roadmap-tags">
+              <span class="tag">Woodworking</span>
+              <span class="tag">Tools</span>
+              <span class="tag">Safety</span>
+            </div>
+            <a href="#" class="roadmap-link">View Roadmap</a>
+          </div>
+        </div>
       </div>
     </main>
-
-    <aside class="dashboard-sidebar right">
-      <h4>Tips</h4>
-      <p>Pick a roadmap and follow tasks consistently — small daily progress wins.</p>
-    </aside>
   </main>
 
   {% include "includes/footer.html" %}
+
+  <script>
+    function filterRoadmaps(category) {
+      const cards = document.querySelectorAll('.roadmap-card');
+      const buttons = document.querySelectorAll('.filter-btn');
+
+      // Update active button
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Filter cards
+      cards.forEach(card => {
+        if (category === 'all') {
+          card.style.display = 'block';
+        } else {
+          const cardCategory = card.getAttribute('data-category');
+          card.style.display = cardCategory === category ? 'block' : 'none';
+        }
+      });
+    }
+  </script>
 </body>
 </html>
