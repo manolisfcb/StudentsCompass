@@ -15,6 +15,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     
     post = relationship("PostModel", back_populates="user")
     questionnaires = relationship("UserQuestionnaire", back_populates="user")
+    resumes = relationship("ResumeModel", back_populates="user")
+    resume = relationship("ResumeModel", back_populates="user", uselist=False)
     
 
         

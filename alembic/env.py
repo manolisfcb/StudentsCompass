@@ -10,7 +10,7 @@ from app.db import Base  # 👈 AJUSTA este path
 from app.models.userModel import User  # 👈 AJUSTA este path
 from app.models.postModel import PostModel  # 👈 AJUSTA este path
 from app.models.questionnaireModel import UserQuestionnaire
-
+from app.models.resumeModel import ResumeModel
 
 
 

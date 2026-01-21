@@ -197,6 +197,27 @@
                         </button>
                         <p id="uploadStatus" style="margin: 0; align-self: center; color: var(--gray); font-size: 0.9rem;"></p>
                     </div>
+
+                    <!-- Uploaded CVs List -->
+                    <div style="margin-top: 2rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <h4 style="margin: 0; font-weight: 600;">Your CVs</h4>
+                            <button id="refreshCvList" type="button" style="background: none; border: none; color: var(--primary-color); cursor: pointer; font-weight: 600;">Refresh</button>
+                        </div>
+                        <div id="cvListEmpty" style="color: var(--gray); font-size: 0.95rem;">No CV uploaded yet.</div>
+                        <div id="cvTableWrapper" style="display: none; overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="text-align: left; border-bottom: 1px solid var(--light-gray);">
+                                        <th style="padding: 0.5rem 0;">File</th>
+                                        <th style="padding: 0.5rem 0;">Uploaded</th>
+                                        <th style="padding: 0.5rem 0;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cvTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -300,7 +321,85 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadProfile();
             setupCVUpload();
+            loadResumes();
+            const refreshBtn = document.getElementById('refreshCvList');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', loadResumes);
+            }
         });
+
+        // Fetch and render resumes list
+        async function loadResumes() {
+            const token = localStorage.getItem('bearer_token');
+            if (!token) return;
+            const emptyState = document.getElementById('cvListEmpty');
+            const tableWrapper = document.getElementById('cvTableWrapper');
+            const tbody = document.getElementById('cvTableBody');
+            emptyState.textContent = 'Loading...';
+            emptyState.style.color = 'var(--gray)';
+            tableWrapper.style.display = 'none';
+            tbody.innerHTML = '';
+            try {
+                const res = await fetch('/api/v1/profile/cv', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load CVs');
+                const data = await res.json();
+                if (!data || data.length === 0) {
+                    emptyState.textContent = 'No CV uploaded yet.';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                emptyState.style.display = 'none';
+                tableWrapper.style.display = 'block';
+                tbody.innerHTML = data.map(item => `
+                    <tr style="border-bottom: 1px solid var(--light-gray);">
+                        <td style="padding: 0.6rem 0; font-weight: 600; color: var(--text-color);">
+                            <a href="${item.view_url}" target="_blank" style="color: var(--primary-color); text-decoration: none;">${item.original_filename}</a>
+                        </td>
+                        <td style="padding: 0.6rem 0; color: var(--gray);">${formatDate(item.created_at)}</td>
+                        <td style="padding: 0.6rem 0;">
+                            <button data-resume-id="${item.id}" class="delete-cv-btn" style="background: none; border: none; color: #EF4444; font-weight: 600; cursor: pointer;">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+                attachDeleteHandlers();
+            } catch (err) {
+                emptyState.textContent = 'Error loading CV list';
+                emptyState.style.color = '#EF4444';
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString();
+        }
+
+        function attachDeleteHandlers() {
+            const buttons = document.querySelectorAll('.delete-cv-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const resumeId = btn.getAttribute('data-resume-id');
+                    btn.textContent = 'Deleting...';
+                    btn.disabled = true;
+                    const token = localStorage.getItem('bearer_token');
+                    try {
+                        const res = await fetch(`/api/v1/profile/cv/${resumeId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (!res.ok) throw new Error('Delete failed');
+                        await loadResumes();
+                    } catch (err) {
+                        btn.textContent = 'Delete';
+                        btn.disabled = false;
+                        alert('Could not delete CV');
+                    }
+                });
+            });
+        }
 
         // CV Upload functionality
         function setupCVUpload() {
@@ -407,6 +506,7 @@
                     if (response.ok) {
                         uploadStatus.textContent = '✅ CV uploaded successfully!';
                         uploadStatus.style.color = '#22C55E';
+                        await loadResumes();
                         setTimeout(() => {
                             selectedFile = null;
                             cvFile.value = '';
