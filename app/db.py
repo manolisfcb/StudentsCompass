@@ -7,7 +7,13 @@ from fastapi import Depends
 
 
 
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# PostgreSQL (Neon) async connection URL
+# Uses asyncpg driver for SQLAlchemy AsyncEngine
+DATABASE_URL = (
+    "postgresql+asyncpg://"
+    "neondb_owner:npg_ADpQzRkP2T6O"
+    "@ep-broad-mud-ah6lygvy-pooler.c-3.us-east-1.aws.neon.tech/neondb"
+)
 
 class Base(DeclarativeBase):
     pass
