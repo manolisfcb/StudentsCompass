@@ -17,6 +17,7 @@ from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
 from app.views.views import router as views_router
 from app.routes.questionnaireRoute import router as questionnaire_router
 from app.routes.resumeRoute import router as resume_router
+from app.routes.jobRoute import router as job_router
 
 
 @asynccontextmanager
@@ -38,3 +39,4 @@ app.include_router(fastapi_users.get_users_router(UserRead, UserUpdate), prefix=
 app.include_router(views_router, tags=["views"])
 app.include_router(questionnaire_router, prefix="/api/v1", tags=["questionnaire"])
 app.include_router(resume_router, prefix="/api/v1", tags=["resume"])
+app.include_router(job_router, prefix="/api/v1", tags=["jobs"])

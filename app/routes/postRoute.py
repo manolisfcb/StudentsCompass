@@ -6,17 +6,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from fastapi import UploadFile, Form, File
 from app.services.images import upload_media
+from app.services.userService import current_active_user
+from app.models.userModel import User
 
 router = APIRouter()
 
 @router.post("/posts", response_model=PostCreate)
-async def create_post(post: PostCreate, session:AsyncSession = Depends(get_session)):
+async def create_post(
+    post: PostCreate,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
     post_service = PostService(session)
     return await post_service.create_post(post) if post else HTTPException(status_code=400, detail="Invalid post data")
     
     
 @router.get("/posts/{post_id}", response_model=PostRead)
-async def get_post(post_id: UUID, session:AsyncSession = Depends(get_session)):
+async def get_post(
+    post_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
     post_service = PostService(session)
     post = await post_service.get_post_by_id(post_id)
     if not post:
@@ -24,7 +34,10 @@ async def get_post(post_id: UUID, session:AsyncSession = Depends(get_session)):
     return post
 
 @router.get("/posts", response_model=list[PostRead])
-async def get_all_posts(session:AsyncSession = Depends(get_session)):
+async def get_all_posts(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
     post_service = PostService(session)
     return await post_service.get_all_posts()
 
@@ -33,7 +46,9 @@ async def get_all_posts(session:AsyncSession = Depends(get_session)):
 async def upload_file(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
-    caption: str = Form(...)):
+    caption: str = Form(...),
+    user: User = Depends(current_active_user),
+):
 
     try:
         post_data = upload_media(
@@ -55,7 +70,11 @@ async def upload_file(
 
 
 @router.delete("/delete_post/{post_id}")
-async def delete_post(post_id: UUID, session:AsyncSession = Depends(get_session)):
+async def delete_post(
+    post_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
     post_service = PostService(session)
     await post_service.delete_post(post_id)
     return {"detail": "Post deleted successfully"}

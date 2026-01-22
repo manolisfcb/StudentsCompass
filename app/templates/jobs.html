@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Board</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .job-board-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .job-board-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .search-panel {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .search-panel h3 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #5b48d1;
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .jobs-container {
+            min-height: 400px;
+        }
+
+        .jobs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .jobs-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+
+        .jobs-count {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .job-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .job-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0 0 0.5rem 0;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .job-title:hover {
+            text-decoration: underline;
+        }
+
+        .job-company {
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0 0 0.25rem 0;
+            font-size: 0.95rem;
+        }
+
+        .job-location {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .job-location svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .job-time {
+            color: var(--gray);
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #991B1B;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray);
+        }
+
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/header.html" %}
+
+    <main class="dashboard-layout">
+        {% include "includes/sidebar.html" %}
+
+        <main class="dashboard">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h2>Job Board</h2>
+                    <p>Find jobs matched to your skills and interests</p>
+                </div>
+
+                <div class="job-board-container">
+                    <!-- Search Panel -->
+                    <div class="search-panel">
+                        <h3>Find Jobs</h3>
+                        
+                        <!-- Mode Selector -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Search Mode</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button id="modeAuto" class="mode-btn mode-active" style="flex: 1; padding: 0.6rem; border: 2px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                    From CV
+                                </button>
+                                <button id="modeManual" class="mode-btn" style="flex: 1; padding: 0.6rem; border: 2px solid var(--light-gray); background-color: white; color: var(--text-color); border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                    Manual
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Auto Mode Info -->
+                        <div id="autoModeInfo" style="background-color: #EDE9FE; border: 1px solid #DDD6FE; border-radius: 8px; padding: 0.75rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-color);">
+                            <p id="cvStatus" style="margin: 0;">👆 Select a search mode to get started</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="keywords">Keywords</label>
+                            <input 
+                                type="text" 
+                                id="keywords" 
+                                placeholder="e.g., Python Developer" 
+                                value=""
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input 
+                                type="text" 
+                                id="location" 
+                                placeholder="e.g., New York, Remote" 
+                                value="Remote"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="limit">Number of Jobs</label>
+                            <select id="limit">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <input 
+                                type="checkbox" 
+                                id="remote" 
+                                checked
+                            >
+                            <label for="remote">Remote Only</label>
+                        </div>
+
+                        <button id="searchBtn" class="search-btn">Search Jobs</button>
+                        <p id="searchStatus" style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--gray);"></p>
+                    </div>
+
+                    <!-- Jobs Listing -->
+                    <div class="jobs-container">
+                        <div class="jobs-header">
+                            <h2>Available Positions</h2>
+                            <span class="jobs-count" id="jobsCount"></span>
+                        </div>
+
+                        <div id="jobsList">
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <h3>Search for jobs to get started</h3>
+                                <p>Use the filters on the left to find positions that match your skills</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="dashboard-sidebar right">
+            <h4>Tips</h4>
+            <ul style="padding-left: 1.5rem; color: var(--gray); font-size: 0.9rem;">
+                <li>Use specific keywords related to your skills</li>
+                <li>Filter by location to find jobs near you</li>
+                <li>Check "Remote Only" for work from home positions</li>
+                <li>Click job titles to view full details on LinkedIn</li>
+            </ul>
+        </aside>
+    </main>
+
+    {% include "includes/footer.html" %}
+
+    <script>
+        const searchBtn = document.getElementById('searchBtn');
+        const keywordsInput = document.getElementById('keywords');
+        const locationInput = document.getElementById('location');
+        const limitSelect = document.getElementById('limit');
+        const remoteCheckbox = document.getElementById('remote');
+        const jobsList = document.getElementById('jobsList');
+        const searchStatus = document.getElementById('searchStatus');
+        const jobsCount = document.getElementById('jobsCount');
+        
+        // Mode buttons
+        const modeAutoBtn = document.getElementById('modeAuto');
+        const modeManualBtn = document.getElementById('modeManual');
+        const autoModeInfo = document.getElementById('autoModeInfo');
+        const cvStatus = document.getElementById('cvStatus');
+        
+        let currentMode = 'auto'; // 'auto' or 'manual'
+        let autoKeywords = '';
+
+        // Mode switcher
+        modeAutoBtn.addEventListener('click', () => {
+            currentMode = 'auto';
+            modeAutoBtn.classList.add('mode-active');
+            modeAutoBtn.style.backgroundColor = 'var(--primary-color)';
+            modeAutoBtn.style.color = 'white';
+            modeAutoBtn.style.borderColor = 'var(--primary-color)';
+            
+            modeManualBtn.classList.remove('mode-active');
+            modeManualBtn.style.backgroundColor = 'white';
+            modeManualBtn.style.color = 'var(--text-color)';
+            modeManualBtn.style.borderColor = 'var(--light-gray)';
+            
+            autoModeInfo.style.display = 'block';
+            loadAutoKeywords();
+        });
+
+        modeManualBtn.addEventListener('click', () => {
+            currentMode = 'manual';
+            modeManualBtn.classList.add('mode-active');
+            modeManualBtn.style.backgroundColor = 'var(--primary-color)';
+            modeManualBtn.style.color = 'white';
+            modeManualBtn.style.borderColor = 'var(--primary-color)';
+            
+            modeAutoBtn.classList.remove('mode-active');
+            modeAutoBtn.style.backgroundColor = 'white';
+            modeAutoBtn.style.color = 'var(--text-color)';
+            modeAutoBtn.style.borderColor = 'var(--light-gray)';
+            
+            autoModeInfo.style.display = 'none';
+            keywordsInput.value = '';
+            keywordsInput.focus();
+        });
+
+        async function loadAutoKeywords() {
+            const token = localStorage.getItem('bearer_token');
+            if (!token) {
+                cvStatus.textContent = 'Please log in to use auto mode';
+                return false;
+            }
+            
+            // Show loading state
+            cvStatus.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 16px; height: 16px; border: 2px solid var(--primary-color); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <span>Analyzing your CV with AI...</span>
+                </div>
+            `;
+            modeAutoBtn.disabled = true;
+            modeManualBtn.disabled = true;
+            searchBtn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/v1/jobs/keywords', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed');
+                const data = await res.json();
+                autoKeywords = data.keywords;
+                keywordsInput.value = autoKeywords;
+                
+                if (data.has_cv) {
+                    cvStatus.innerHTML = `📄 Keywords from your CV: <strong>"${data.keywords}"</strong>`;
+                    return true;
+                } else {
+                    cvStatus.innerHTML = `⚠️ No CV uploaded. Please <a href="/user-profile" style="color: var(--primary-color); text-decoration: underline;">upload your CV</a> to use auto mode.`;
+                    return false;
+                }
+            } catch (err) {
+                cvStatus.textContent = 'Could not load keywords. Use manual mode.';
+                return false;
+            } finally {
+                // Re-enable buttons
+                modeAutoBtn.disabled = false;
+                modeManualBtn.disabled = false;
+                searchBtn.disabled = false;
+            }
+        }
+
+        // Check CV availability on page load
+        async function checkCVAvailability() {
+            const token = localStorage.getItem('bearer_token');
+            if (!token) {
+                modeAutoBtn.disabled = true;
+                modeAutoBtn.style.opacity = '0.5';
+                modeAutoBtn.title = 'Log in to use this feature';
+                cvStatus.textContent = '🔒 Log in to use auto mode';
+                // Switch to manual mode
+                currentMode = 'manual';
+                modeManualBtn.click();
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/v1/jobs/keywords', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!data.has_cv) {
+                        // Disable From CV button
+                        modeAutoBtn.disabled = true;
+                        modeAutoBtn.style.opacity = '0.5';
+                        modeAutoBtn.title = 'Upload a CV to use this feature';
+                        cvStatus.innerHTML = `⚠️ No CV uploaded. Please <a href="/user-profile" style="color: var(--primary-color); text-decoration: underline;">upload your CV</a> to use auto mode.`;
+                        // Switch to manual mode
+                        currentMode = 'manual';
+                        modeManualBtn.click();
+                    } else {
+                        // CV available - show instruction message
+                        cvStatus.innerHTML = `👆 Click <strong>"From CV"</strong> to analyze your resume and extract keywords automatically.`;
+                    }
+                } else {
+                    cvStatus.textContent = '⚠️ Could not check CV status. Use manual mode.';
+                    currentMode = 'manual';
+                    modeManualBtn.click();
+                }
+            } catch (err) {
+                console.error('Failed to check CV availability', err);
+                cvStatus.textContent = '⚠️ Could not check CV status. Use manual mode.';
+                currentMode = 'manual';
+                modeManualBtn.click();
+            }
+        }
+
+        // Perform search on button click
+        searchBtn.addEventListener('click', performSearch);
+
+        // Allow Enter key to search
+        keywordsInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        async function performSearch() {
+            const keywords = keywordsInput.value.trim();
+            const location = locationInput.value.trim();
+            const limit = parseInt(limitSelect.value);
+            const remote = remoteCheckbox.checked;
+            const token = localStorage.getItem('bearer_token');
+
+            if (!token) {
+                searchStatus.textContent = 'Inicia sesión para buscar';
+                searchStatus.style.color = '#EF4444';
+                return;
+            }
+
+            if (!keywords) {
+                searchStatus.textContent = 'Please enter keywords';
+                searchStatus.style.color = '#EF4444';
+                return;
+            }
+
+            searchBtn.disabled = true;
+            searchStatus.textContent = 'Searching...';
+            searchStatus.style.color = 'var(--gray)';
+            jobsList.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Finding jobs for you...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/v1/jobs/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        keywords,
+                        location,
+                        limit,
+                        remote,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const jobs = await response.json();
+                displayJobs(jobs);
+                searchStatus.textContent = '';
+            } catch (error) {
+                jobsList.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> Failed to search jobs. Please try again.
+                    </div>
+                `;
+                searchStatus.textContent = 'Search failed';
+                searchStatus.style.color = '#EF4444';
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        function displayJobs(jobs) {
+            jobsCount.textContent = `${jobs.length} position${jobs.length !== 1 ? 's' : ''} found`;
+
+            if (jobs.length === 0) {
+                jobsList.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3>No jobs found</h3>
+                        <p>Try adjusting your search filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            jobsList.innerHTML = jobs.map(job => `
+                <div class="job-card">
+                    <a href="${job.url}" target="_blank" class="job-title">${escapeHtml(job.title)}</a>
+                    <p class="job-company">${escapeHtml(job.company)}</p>
+                    <div class="job-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        ${escapeHtml(job.location || 'Location not specified')}
+                    </div>
+                    ${job.listed_at ? `<p class="job-time">Posted: ${formatDate(job.listed_at)}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function formatDate(dateStr) {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch {
+                return dateStr;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Check CV availability and auto-load keywords on page load
+        window.addEventListener('load', () => {
+            // Start in manual mode by default
+            modeManualBtn.click();
+        });
+    </script>
+</body>
+</html>

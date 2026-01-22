@@ -52,3 +52,8 @@ async def roadmap(request: Request):
 @router.get("/community")
 async def community(request: Request):
     return templates.TemplateResponse("community.html", {"request": request})
+
+
+@router.get("/jobs")
+async def jobs_board(request: Request):
+    return templates.TemplateResponse("jobs.html", {"request": request})
