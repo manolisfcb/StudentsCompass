@@ -516,8 +516,10 @@
       const logoutLink = document.getElementById('logout-link');
       logoutLink.addEventListener('click', (event) => {
         event.preventDefault();
-        localStorage.removeItem('bearer_token');
-        window.location.href = '/login';
+        if (confirm('¿Estás seguro que quieres salir?')) {
+          localStorage.removeItem('bearer_token');
+          window.location.href = '/login';
+        }
       });
     });
   </script>

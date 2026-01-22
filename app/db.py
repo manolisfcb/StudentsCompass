@@ -4,17 +4,12 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from fastapi import Depends
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-
-# PostgreSQL (Neon) async connection URL
-# Uses asyncpg driver for SQLAlchemy AsyncEngine
-DATABASE_URL = (
-    "postgresql+asyncpg://"
-    "neondb_owner:npg_ADpQzRkP2T6O"
-    "@ep-broad-mud-ah6lygvy-pooler.c-3.us-east-1.aws.neon.tech/neondb"
-)
-
+DATABASE_URL = os.getenv("DATABASE_URL")
 class Base(DeclarativeBase):
     pass
 
