@@ -13,6 +13,7 @@ from io import BytesIO
 import os
 import pickle
 import logging
+import asyncio
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class ResumeService:
     
     
     async def get_drive_service(self):
+        """Async method to get Google Drive service with non-blocking auth"""
         TOKEN_FILE = 'app/credentials/token.pickle'
         CLIENT_SECRET_FILE = 'app/credentials/google_oauth_client.json'
         
@@ -55,31 +57,51 @@ class ResumeService:
                 "Please download OAuth 2.0 credentials from Google Cloud Console."
             )
 
-        creds = None
+        loop = asyncio.get_event_loop()
         
-        # Load existing token if available
-        if os.path.exists(TOKEN_FILE):
-            with open(TOKEN_FILE, 'rb') as token:
-                creds = pickle.load(token)
+        # Load existing token if available (run in executor to avoid blocking)
+        def load_token():
+            if os.path.exists(TOKEN_FILE):
+                with open(TOKEN_FILE, 'rb') as token:
+                    return pickle.load(token)
+            return None
+        
+        creds = await loop.run_in_executor(None, load_token)
         
         # If no valid credentials, authenticate
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
+                # Refresh token (blocking HTTP call - run in executor)
+                LOGGER.info("Refreshing Google Drive credentials...")
+                def refresh_creds(credentials):
+                    credentials.refresh(Request())
+                    return credentials
+                creds = await loop.run_in_executor(None, refresh_creds, creds)
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    CLIENT_SECRET_FILE, SCOPES)
-                # Use fixed port 8080 (must match redirect URI in Google Console)
-                creds = flow.run_local_server(port=8080)
+                # This should rarely happen in production - requires manual auth
+                def run_oauth_flow():
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        CLIENT_SECRET_FILE, SCOPES)
+                    return flow.run_local_server(port=8080)
+                
+                creds = await loop.run_in_executor(None, run_oauth_flow)
             
-            # Save credentials for future use
-            with open(TOKEN_FILE, 'wb') as token:
-                pickle.dump(creds, token)
+            # Save credentials for future use (run in executor)
+            def save_token(credentials):
+                with open(TOKEN_FILE, 'wb') as token:
+                    pickle.dump(credentials, token)
+            
+            await loop.run_in_executor(None, save_token, creds)
 
-        service = build('drive', 'v3', credentials=creds)
+        # Build service (can be blocking, run in executor)
+        def build_service(credentials):
+            return build('drive', 'v3', credentials=credentials)
+        
+        service = await loop.run_in_executor(None, build_service, creds)
         return service
     
     async def upload_pdf_to_drive(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
+        """Async method to upload PDF to Google Drive"""
         service = await self.get_drive_service()
         
         file_metadata = {
@@ -93,12 +115,18 @@ class ResumeService:
             resumable=True
         )
         
-        file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields='id, webViewLink',
-            supportsAllDrives=True
-        ).execute()
+        # Run the upload in executor to avoid blocking
+        loop = asyncio.get_event_loop()
+        
+        def do_upload():
+            return service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id, webViewLink',
+                supportsAllDrives=True
+            ).execute()
+        
+        file = await loop.run_in_executor(None, do_upload)
         
         return {
             "file_id": file.get('id'),

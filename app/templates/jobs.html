@@ -405,7 +405,7 @@
             cvStatus.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <div style="width: 16px; height: 16px; border: 2px solid var(--primary-color); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <span>Analyzing your CV with AI...</span>
+                    <span>Starting CV analysis with AI...</span>
                 </div>
             `;
             modeAutoBtn.disabled = true;
@@ -413,23 +413,62 @@
             searchBtn.disabled = true;
             
             try {
-                const res = await fetch('/api/v1/jobs/keywords', {
+                // Start analysis job
+                const startRes = await fetch('/api/v1/jobs/keywords/analyze', {
+                    method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!res.ok) throw new Error('Failed');
-                const data = await res.json();
-                autoKeywords = data.keywords;
-                keywordsInput.value = autoKeywords;
                 
-                if (data.has_cv) {
-                    cvStatus.innerHTML = `📄 Keywords from your CV: <strong>"${data.keywords}"</strong>`;
-                    return true;
-                } else {
-                    cvStatus.innerHTML = `⚠️ No CV uploaded. Please <a href="/user-profile" style="color: var(--primary-color); text-decoration: underline;">upload your CV</a> to use auto mode.`;
-                    return false;
+                if (!startRes.ok) {
+                    const error = await startRes.json();
+                    throw new Error(error.detail || 'Failed to start analysis');
                 }
+                
+                const { job_id } = await startRes.json();
+                
+                // Poll for job status
+                let attempts = 0;
+                const maxAttempts = 60; // 60 seconds max
+                
+                while (attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+                    
+                    const statusRes = await fetch(`/api/v1/jobs/keywords/${job_id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!statusRes.ok) {
+                        throw new Error('Failed to check job status');
+                    }
+                    
+                    const jobData = await statusRes.json();
+                    
+                    if (jobData.status === 'completed') {
+                        // Success!
+                        autoKeywords = jobData.keywords;
+                        keywordsInput.value = autoKeywords;
+                        cvStatus.innerHTML = `📄 Keywords from your CV: <strong>"${jobData.keywords}"</strong>`;
+                        return true;
+                    } else if (jobData.status === 'failed') {
+                        throw new Error(jobData.error_message || 'Analysis failed');
+                    } else {
+                        // Still processing
+                        cvStatus.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="width: 16px; height: 16px; border: 2px solid var(--primary-color); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                                <span>Analyzing your CV (${attempts + 1}s)...</span>
+                            </div>
+                        `;
+                    }
+                    
+                    attempts++;
+                }
+                
+                throw new Error('Analysis timed out. Please try again.');
+                
             } catch (err) {
-                cvStatus.textContent = 'Could not load keywords. Use manual mode.';
+                console.error('Error analyzing CV:', err);
+                cvStatus.innerHTML = `⚠️ ${err.message}. <a href="#" onclick="location.reload()" style="color: var(--primary-color); text-decoration: underline;">Try again</a>`;
                 return false;
             } finally {
                 // Re-enable buttons

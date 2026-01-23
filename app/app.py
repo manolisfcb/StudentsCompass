@@ -19,6 +19,13 @@ from app.routes.questionnaireRoute import router as questionnaire_router
 from app.routes.resumeRoute import router as resume_router
 from app.routes.jobRoute import router as job_router
 
+# Import models to ensure they're registered with SQLAlchemy
+from app.models.userModel import User
+from app.models.postModel import PostModel
+from app.models.resumeModel import ResumeModel
+from app.models.jobAnalysisModel import JobAnalysisModel
+from app.models.questionnaireModel import UserQuestionnaire
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
