@@ -17,36 +17,99 @@
     <div class="auth-container">
         <div class="auth-card">
             <h2>Create Your Account</h2>
-            <p>Join StudentsCompass and start your academic journey.</p>
+            <p>Join StudentsCompass and start your journey.</p>
             <div id="error-message" style="color: red; margin-bottom: 1rem;"></div>
             <div id="success-message" style="color: green; margin-bottom: 1rem;"></div>
-            <form id="register-form">
+            
+            <!-- Account Type Selection -->
+            <div class="form-group">
+                <label>Account Type</label>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="account-type" value="student" checked style="margin-right: 0.5rem;">
+                        Student
+                    </label>
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="account-type" value="company" style="margin-right: 0.5rem;">
+                        Company
+                    </label>
+                </div>
+            </div>
+
+            <!-- Student Form -->
+            <form id="student-form" class="registration-form">
                 <div class="form-group">
-                    <label for="first_name">First Name</label>
-                    <input type="text" id="first_name" name="first_name" required>
+                    <label for="student_first_name">First Name</label>
+                    <input type="text" id="student_first_name" name="first_name" required>
                 </div>
                 <div class="form-group">
-                    <label for="last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" required>
+                    <label for="student_last_name">Last Name</label>
+                    <input type="text" id="student_last_name" name="last_name" required>
                 </div>
                 <div class="form-group">
-                    <label for="nickname">nickname</label>
-                    <input type="text" id="nickname" name="nickname" required>
+                    <label for="student_nickname">Nickname</label>
+                    <input type="text" id="student_nickname" name="nickname" required>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="student_email">Email</label>
+                    <input type="email" id="student_email" name="email" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <label for="student_password">Password</label>
+                    <input type="password" id="student_password" name="password" required>
                 </div>
                 <div class="form-group">
-                    <label for="confirm-password">Confirm Password</label>
-                    <input type="password" id="confirm-password" name="confirm-password" required>
+                    <label for="student_confirm_password">Confirm Password</label>
+                    <input type="password" id="student_confirm_password" name="confirm-password" required>
                 </div>
-                <button type="submit" class="cta-button auth-button">Sign Up</button>
+                <button type="submit" class="cta-button auth-button">Sign Up as Student</button>
             </form>
+
+            <!-- Company Form -->
+            <form id="company-form" class="registration-form" style="display: none;">
+                <div class="form-group">
+                    <label for="company_name">Company Name</label>
+                    <input type="text" id="company_name" name="company_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="company_industry">Industry</label>
+                    <input type="text" id="company_industry" name="industry">
+                </div>
+                <div class="form-group">
+                    <label for="company_contact_person">Contact Person</label>
+                    <input type="text" id="company_contact_person" name="contact_person">
+                </div>
+                <div class="form-group">
+                    <label for="company_email">Email</label>
+                    <input type="email" id="company_email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="company_phone">Phone</label>
+                    <input type="tel" id="company_phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="company_website">Website</label>
+                    <input type="url" id="company_website" name="website">
+                </div>
+                <div class="form-group">
+                    <label for="company_location">Location</label>
+                    <input type="text" id="company_location" name="location">
+                </div>
+                <div class="form-group">
+                    <label for="company_description">Description</label>
+                    <textarea id="company_description" name="description" rows="6" style="width: 100%; min-height: 120px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="company_password">Password</label>
+                    <input type="password" id="company_password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="company_confirm_password">Confirm Password</label>
+                    <input type="password" id="company_confirm_password" name="confirm-password" required>
+                </div>
+                <button type="submit" class="cta-button auth-button">Sign Up as Company</button>
+            </form>
+
             <div class="auth-links">
                 <p>Already have an account? <a href="/login">Login</a></p>
             </div>
@@ -54,29 +117,44 @@
     </div>
 
     <script>
-        document.getElementById('register-form').addEventListener('submit', async (event) => {
+        // Toggle between student and company forms
+        const accountTypeRadios = document.querySelectorAll('input[name="account-type"]');
+        const studentForm = document.getElementById('student-form');
+        const companyForm = document.getElementById('company-form');
+
+        accountTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'student') {
+                    studentForm.style.display = 'block';
+                    companyForm.style.display = 'none';
+                } else {
+                    studentForm.style.display = 'none';
+                    companyForm.style.display = 'block';
+                }
+            });
+        });
+
+        // Student form submission
+        document.getElementById('student-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const form = event.target;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const firstName = document.getElementById('first_name').value;
-            const lastName = document.getElementById('last_name').value;
-            const nickname = document.getElementById('nickname').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
+            const email = document.getElementById('student_email').value;
+            const password = document.getElementById('student_password').value;
+            const firstName = document.getElementById('student_first_name').value;
+            const lastName = document.getElementById('student_last_name').value;
+            const nickname = document.getElementById('student_nickname').value;
+            const confirmPassword = document.getElementById('student_confirm_password').value;
             const errorMessage = document.getElementById('error-message');
             const successMessage = document.getElementById('success-message');
 
             errorMessage.textContent = '';
             successMessage.textContent = '';
 
-            // Validar que las contraseñas coincidan
             if (password !== confirmPassword) {
                 errorMessage.textContent = 'Passwords do not match.';
                 return;
             }
 
-            // Validar que la contraseña tenga al menos 8 caracteres
             if (password.length < 8) {
                 errorMessage.textContent = 'Password must be at least 8 characters long.';
                 return;
@@ -98,7 +176,70 @@
                 });
 
                 if (response.ok) {
-                    successMessage.textContent = 'Account created successfully! Redirecting to login...';
+                    successMessage.textContent = 'Student account created successfully! Redirecting to login...';
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    const errorData = await response.json();
+                    errorMessage.textContent = errorData.detail || 'Registration failed. Please try again.';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An unexpected error occurred. Please try again.';
+            }
+        });
+
+        // Company form submission
+        document.getElementById('company-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const companyName = document.getElementById('company_name').value;
+            const industry = document.getElementById('company_industry').value;
+            const contactPerson = document.getElementById('company_contact_person').value;
+            const email = document.getElementById('company_email').value;
+            const phone = document.getElementById('company_phone').value;
+            const website = document.getElementById('company_website').value;
+            const location = document.getElementById('company_location').value;
+            const description = document.getElementById('company_description').value;
+            const password = document.getElementById('company_password').value;
+            const confirmPassword = document.getElementById('company_confirm_password').value;
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            errorMessage.textContent = '';
+            successMessage.textContent = '';
+
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            if (password.length < 8) {
+                errorMessage.textContent = 'Password must be at least 8 characters long.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/auth/company/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        company_name: companyName,
+                        industry: industry,
+                        contact_person: contactPerson,
+                        phone: phone,
+                        website: website,
+                        location: location,
+                        description: description
+                    })
+                });
+
+                if (response.ok) {
+                    successMessage.textContent = 'Company account created successfully! Redirecting to login...';
                     setTimeout(() => {
                         window.location.href = '/login';
                     }, 2000);

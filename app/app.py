@@ -18,9 +18,11 @@ from app.views.views import router as views_router
 from app.routes.questionnaireRoute import router as questionnaire_router
 from app.routes.resumeRoute import router as resume_router
 from app.routes.jobRoute import router as job_router
+from app.routes.companyRoute import router as company_router
 
 # Import models to ensure they're registered with SQLAlchemy
 from app.models.userModel import User
+from app.models.companyModel import Company
 from app.models.postModel import PostModel
 from app.models.resumeModel import ResumeModel
 from app.models.jobAnalysisModel import JobAnalysisModel
@@ -43,6 +45,7 @@ app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), pref
 app.include_router(fastapi_users.get_reset_password_router(), prefix="/api/v1/auth", tags=["auth"])
 app.include_router(fastapi_users.get_verify_router(UserRead), prefix="/api/v1/auth", tags=["auth"])
 app.include_router(fastapi_users.get_users_router(UserRead, UserUpdate), prefix="/api/v1/users", tags=["users"])
+app.include_router(company_router, prefix="/api/v1", tags=["companies"])
 app.include_router(views_router, tags=["views"])
 app.include_router(questionnaire_router, prefix="/api/v1", tags=["questionnaire"])
 app.include_router(resume_router, prefix="/api/v1", tags=["resume"])

@@ -30,6 +30,10 @@ async def register(request: Request):
 async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
+@router.get("/company-dashboard")
+async def company_dashboard(request: Request):
+    return templates.TemplateResponse("company-dashboard.html", {"request": request})
+
 @router.get("/questionnaire")
 async def questionnaire(request: Request):
     return templates.TemplateResponse("questionnaire.html", {"request": request})
