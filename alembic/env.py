@@ -11,6 +11,12 @@ from app.models.userModel import User  # 👈 AJUSTA este path
 from app.models.postModel import PostModel  # 👈 AJUSTA este path
 from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
+from app.models.resumeEmbeddingsModel import ResumeEmbedding
+from app.models.applicationModel import ApplicationModel
+from app.models.companyModel import Company
+from app.models.jobPostingModel import JobPosting
+from app.models.jobAnalysisModel import JobAnalysisModel
+
 
 
 

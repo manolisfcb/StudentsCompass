@@ -5,9 +5,12 @@ from app.schemas.resumeSchema import CreateResumeSchema, ResumeReadSchema
 from app.db import get_session
 from app.services.userService import current_active_user
 from app.models.userModel import User
+from app.services.embeddingService import generate_embedding, MODEL_NAME, EMBEDDING_DIMS
+from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf
 from uuid import UUID
 import os
 import logging
+import tempfile
 LOGGER = logging.getLogger(__name__)
 
 
@@ -37,6 +40,7 @@ async def upload_resume(
         file_bytes = await cv.read()
         file_info = await resume_service.upload_pdf_to_s3(file_bytes, cv.filename, cv.content_type)
         LOGGER.debug(f"File uploaded to S3: {file_info}")
+        
         # Save resume info to database
         resume_create = CreateResumeSchema(
             view_url=file_info["view_url"],
@@ -46,6 +50,42 @@ async def upload_resume(
             user_id=user.id
         )
         resume = await resume_service.create_resume(resume_create)
+        LOGGER.debug(f"Resume record created: {resume.id}")
+        
+        # Generate embeddings for the resume
+        try:
+            # Extract text from PDF
+            # Create a temporary file to extract text (PyMuPDF needs a file path)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+                tmp_file.write(file_bytes)
+                tmp_path = tmp_file.name
+            
+            try:
+                resume_text = await extract_text_from_pdf(tmp_path)
+                LOGGER.debug(f"Extracted text length: {len(resume_text)}")
+                
+                if resume_text.strip():
+                    # Generate embedding
+                    embedding = await generate_embedding(resume_text)
+                    
+                    # Save embedding to database
+                    await resume_service.create_resume_embedding(
+                        resume_id=resume.id,
+                        model_name=MODEL_NAME,
+                        dims=EMBEDDING_DIMS,
+                        embedding=embedding
+                    )
+                    LOGGER.info(f"Embedding created for resume {resume.id}")
+                else:
+                    LOGGER.warning(f"No text extracted from resume {resume.id}")
+            finally:
+                # Clean up temporary file
+                os.unlink(tmp_path)
+                
+        except Exception as e:
+            # Log but don't fail the upload if embedding generation fails
+            LOGGER.error(f"Failed to generate embedding for resume {resume.id}: {e}")
+        
         return {"file_url": file_info["view_url"], "resume_id": resume.id}
     except Exception as e:
         LOGGER.exception("Upload failed")

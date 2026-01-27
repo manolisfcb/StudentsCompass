@@ -4,9 +4,8 @@ from app.schemas.resumeSchema import CreateResumeSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from app.services.s3Service import S3Service
-import os
 import logging
-import asyncio
+from app.models.resumeEmbeddingsModel import ResumeEmbedding 
 from datetime import datetime
 
 LOGGER = logging.getLogger(__name__)
@@ -28,6 +27,18 @@ class ResumeService:
         await self.session.commit()
         await self.session.refresh(resume)
         return resume
+    
+    async def create_resume_embedding(self, resume_id: UUID, model_name: str, dims: int, embedding: list[float]) -> None:
+        resume_embedding = ResumeEmbedding(
+            resume_id=resume_id,
+            model_name=model_name,
+            dims=dims,
+            embedding=embedding
+        )
+        self.session.add(resume_embedding)
+        await self.session.commit()
+        await self.session.refresh(resume_embedding)
+        return resume_embedding
 
     async def list_user_resumes(self, user_id: UUID) -> list[ResumeModel]:
         result = await self.session.execute(
