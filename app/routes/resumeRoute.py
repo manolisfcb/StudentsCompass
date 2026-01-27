@@ -13,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 LOGGER.setLevel(logging.DEBUG)
 
-FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+BUCKET_NAME = os.getenv("BUCKET_NAME")
 
 router = APIRouter()
 
@@ -27,22 +27,22 @@ async def upload_resume(
     if cv.content_type not in {"application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"}:
         raise HTTPException(status_code=400, detail="Only PDF or DOC/DOCX files are allowed.")
     
-    if not FOLDER_ID:
-        LOGGER.error("GOOGLE_DRIVE_FOLDER_ID is not set")
-        raise HTTPException(status_code=500, detail="Server misconfiguration: missing drive folder id")
+    if not BUCKET_NAME:
+        LOGGER.error("BUCKET_NAME is not set")
+        raise HTTPException(status_code=500, detail="Server misconfiguration: missing S3 bucket name")
 
     try:
         LOGGER.debug("Initializing ResumeService")
         resume_service = ResumeService(session)
         file_bytes = await cv.read()
-        file_info = await resume_service.upload_pdf_to_drive(file_bytes, cv.filename, cv.content_type)
-        LOGGER.debug(f"File uploaded to Google Drive: {file_info}")
+        file_info = await resume_service.upload_pdf_to_s3(file_bytes, cv.filename, cv.content_type)
+        LOGGER.debug(f"File uploaded to S3: {file_info}")
         # Save resume info to database
         resume_create = CreateResumeSchema(
             view_url=file_info["view_url"],
             original_filename=cv.filename,
-            storage_file_id=file_info["file_id"],
-            folder_id=FOLDER_ID,
+            storage_file_id=file_info["file_key"],
+            folder_id=BUCKET_NAME,
             user_id=user.id
         )
         resume = await resume_service.create_resume(resume_create)

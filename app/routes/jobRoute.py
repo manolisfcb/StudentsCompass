@@ -130,16 +130,15 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, session_factory):
                 LOGGER.warning(f"No CV found for user {user_id}")
                 return
             
-            # Download CV from Google Drive
+            # Download CV from S3
             LOGGER.info(f"Downloading CV for job {job_id}: {resume.storage_file_id}")
             resume_service = ResumeService(session)
-            drive_service = await resume_service.get_drive_service()
             
-            loop = asyncio.get_event_loop()
-            request_obj = drive_service.files().get_media(fileId=resume.storage_file_id)
-            file_content = await loop.run_in_executor(None, request_obj.execute)
+            # Download file from S3
+            file_content = await resume_service.download_file_from_s3(resume.storage_file_id)
             
             # Save to temporary file
+            loop = asyncio.get_event_loop()
             def write_temp_file():
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
                     temp_file.write(file_content)
