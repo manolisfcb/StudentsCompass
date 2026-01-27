@@ -5,3 +5,10 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Credentials
+app/credentials/
+*.pickle
+google_drive.json
+google_oauth_client.json
+token.pickle
