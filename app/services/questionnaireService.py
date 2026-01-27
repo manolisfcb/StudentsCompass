@@ -6,7 +6,7 @@ from app.schemas.questionnaireSchema import QuestionnaireRead, QuestionnaireSubm
 from uuid import UUID
 
 # Path to your JSON file
-QUESTIONNAIRE_PATH = Path("app/data/questionnaires/v1/v1.json")
+QUESTIONNAIRE_PATH = Path("app/data/questionnaires/v1/v2.json")
 
 class QuestionnaireService:
     def __init__(self, session: AsyncSession):
