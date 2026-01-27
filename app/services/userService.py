@@ -12,11 +12,12 @@ from app.models.userModel import User
 import uuid
 import logging
 from app.models.userModel import get_user_db
+import os
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-SECRET = "SECRET_RANDOM_STRING"
+SECRET = os.getenv("SECRET_KEY", "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION")
 
 class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
     reset_password_token_secret = SECRET
