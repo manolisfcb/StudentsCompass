@@ -329,25 +329,25 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">📊</div>
-            <div class="stat-value">65%</div>
+            <div class="stat-value" id="overall-progress">0%</div>
             <div class="stat-label">Overall Progress</div>
           </div>
 
           <div class="stat-card applications">
             <div class="stat-icon">📝</div>
-            <div class="stat-value">12</div>
+            <div class="stat-value" id="total-applications">0</div>
             <div class="stat-label">Applications Sent</div>
           </div>
 
           <div class="stat-card interviews">
             <div class="stat-icon">🎯</div>
-            <div class="stat-value">2</div>
+            <div class="stat-value" id="interviews-scheduled">0</div>
             <div class="stat-label">Interviews Scheduled</div>
           </div>
 
           <div class="stat-card offers">
             <div class="stat-icon">🎉</div>
-            <div class="stat-value">0</div>
+            <div class="stat-value" id="offers-received">0</div>
             <div class="stat-label">Offers Received</div>
           </div>
         </div>
@@ -364,30 +364,30 @@
             <div class="progress-item">
               <div class="progress-label">
                 <strong>Resume Creation</strong>
-                <span class="progress-percentage">65%</span>
+                <span class="progress-percentage" id="resume-progress">0%</span>
               </div>
               <div class="progress-bar">
-                <div class="progress" style="width: 65%;"></div>
+                <div class="progress" id="resume-progress-bar" style="width: 0%;"></div>
               </div>
             </div>
 
             <div class="progress-item">
               <div class="progress-label">
                 <strong>LinkedIn Profile</strong>
-                <span class="progress-percentage">40%</span>
+                <span class="progress-percentage" id="linkedin-progress">0%</span>
               </div>
               <div class="progress-bar">
-                <div class="progress" style="width: 40%;"></div>
+                <div class="progress" id="linkedin-progress-bar" style="width: 0%;"></div>
               </div>
             </div>
 
             <div class="progress-item">
               <div class="progress-label">
                 <strong>Interview Preparation</strong>
-                <span class="progress-percentage">25%</span>
+                <span class="progress-percentage" id="interview-progress">0%</span>
               </div>
               <div class="progress-bar">
-                <div class="progress" style="width: 25%;"></div>
+                <div class="progress" id="interview-progress-bar" style="width: 0%;"></div>
               </div>
             </div>
 
@@ -404,19 +404,19 @@
             <ul class="status-list">
               <li class="status-item">
                 <strong>Applied</strong>
-                <span class="status-value">12 roles</span>
+                <span class="status-value" id="status-applied">0 roles</span>
               </li>
               <li class="status-item">
                 <strong>In Review</strong>
-                <span class="status-value">5 apps</span>
+                <span class="status-value" id="status-review">0 apps</span>
               </li>
               <li class="status-item">
                 <strong>Interviews</strong>
-                <span class="status-value">2 scheduled</span>
+                <span class="status-value" id="status-interviews">0 scheduled</span>
               </li>
               <li class="status-item">
                 <strong>Offers</strong>
-                <span class="status-value">0</span>
+                <span class="status-value" id="status-offers">0</span>
               </li>
             </ul>
 
@@ -495,32 +495,74 @@
       }
 
       try {
-        const response = await fetch('/api/v1/users/me', {
+        // Get user info
+        const userResponse = await fetch('/api/v1/users/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        if (response.ok) {
-          const user = await response.json();
+        if (userResponse.ok) {
+          const user = await userResponse.json();
           welcomeMessage.textContent = `Welcome Back, ${user.nickname || user.email}!`;
         } else {
           localStorage.removeItem('bearer_token');
           window.location.href = '/login';
+          return;
         }
+
+        // Get dashboard data
+        const dashboardResponse = await fetch('/api/v1/students_dashboard', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (dashboardResponse.ok) {
+          const data = await dashboardResponse.json();
+          
+          // Update stats
+          document.getElementById('overall-progress').textContent = `${data.stats.overall_progress}%`;
+          document.getElementById('total-applications').textContent = data.stats.total_applications;
+          document.getElementById('interviews-scheduled').textContent = data.stats.interviews_scheduled;
+          document.getElementById('offers-received').textContent = data.stats.offers_received;
+
+          // Update progress bars
+          document.getElementById('resume-progress').textContent = `${data.progress.resume}%`;
+          document.getElementById('resume-progress-bar').style.width = `${data.progress.resume}%`;
+          
+          document.getElementById('linkedin-progress').textContent = `${data.progress.linkedin}%`;
+          document.getElementById('linkedin-progress-bar').style.width = `${data.progress.linkedin}%`;
+          
+          document.getElementById('interview-progress').textContent = `${data.progress.interview_prep}%`;
+          document.getElementById('interview-progress-bar').style.width = `${data.progress.interview_prep}%`;
+
+          // Update application breakdown
+          document.getElementById('status-applied').textContent = `${data.application_breakdown.applied} roles`;
+          document.getElementById('status-review').textContent = `${data.application_breakdown.in_review} apps`;
+          document.getElementById('status-interviews').textContent = `${data.application_breakdown.interviews} scheduled`;
+          document.getElementById('status-offers').textContent = data.application_breakdown.offers;
+
+        } else {
+          console.error('Failed to load dashboard data');
+        }
+
       } catch (error) {
+        console.error('Error loading dashboard:', error);
         localStorage.removeItem('bearer_token');
         window.location.href = '/login';
       }
 
       const logoutLink = document.getElementById('logout-link');
-      logoutLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (confirm('¿Estás seguro que quieres salir?')) {
-          localStorage.removeItem('bearer_token');
-          window.location.href = '/login';
-        }
-      });
+      if (logoutLink) {
+        logoutLink.addEventListener('click', (event) => {
+          event.preventDefault();
+          if (confirm('¿Estás seguro que quieres salir?')) {
+            localStorage.removeItem('bearer_token');
+            window.location.href = '/login';
+          }
+        });
+      }
     });
   </script>
 </body>

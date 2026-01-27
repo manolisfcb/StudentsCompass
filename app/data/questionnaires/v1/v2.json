@@ -1,0 +1,267 @@
+{
+  "version": "v2",
+  "title": "What Type of Data Analyst Are You?",
+  "questions": [
+
+    {
+      "id": "data_energy",
+      "title": "What kind of data work excites you most?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "business_decisions",
+          "label": "Turning data into decisions for stakeholders",
+          "weights": { "Business Analyst": 3, "Product Analyst": 2 }
+        },
+        {
+          "id": "user_behavior",
+          "label": "Understanding user behavior and product usage",
+          "weights": { "Product Analyst": 4 }
+        },
+        {
+          "id": "dashboards",
+          "label": "Building dashboards and reports",
+          "weights": { "BI Analyst": 4, "Data Quality / Reporting Analyst": 2 }
+        },
+        {
+          "id": "growth",
+          "label": "Measuring growth, funnels, and campaigns",
+          "weights": { "Marketing / Growth Analyst": 4 }
+        },
+        {
+          "id": "numbers_accuracy",
+          "label": "Accuracy, numbers, and financial logic",
+          "weights": { "Financial / Risk Analyst": 4 }
+        },
+        {
+          "id": "data_modeling",
+          "label": "Preparing clean, reliable data for others",
+          "weights": { "Analytics Engineer": 4 }
+        }
+      ]
+    },
+
+    {
+      "id": "sql_level",
+      "title": "How strong do you want your SQL skills to be?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "basic",
+          "label": "Basic queries for reporting",
+          "weights": { "Business Analyst": 2, "Marketing / Growth Analyst": 2 }
+        },
+        {
+          "id": "advanced",
+          "label": "Complex joins, CTEs, performance tuning",
+          "weights": { "BI Analyst": 3, "Product Analyst": 2 }
+        },
+        {
+          "id": "expert",
+          "label": "Core skill — data modeling and transformations",
+          "weights": { "Analytics Engineer": 4 }
+        }
+      ]
+    },
+
+    {
+      "id": "stakeholder_contact",
+      "title": "How much do you want to interact with stakeholders?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "high",
+          "label": "Very often — meetings and discussions",
+          "weights": { "Business Analyst": 3, "Product Analyst": 2 }
+        },
+        {
+          "id": "medium",
+          "label": "Some interaction, but focused work too",
+          "weights": { "BI Analyst": 2, "Marketing / Growth Analyst": 2 }
+        },
+        {
+          "id": "low",
+          "label": "Minimal — I prefer working with data itself",
+          "weights": { "Analytics Engineer": 3, "Data Quality / Reporting Analyst": 2 }
+        }
+      ]
+    },
+
+    {
+      "id": "domain_interest",
+      "title": "Which domain sounds most interesting?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "product",
+          "label": "Apps, platforms, digital products",
+          "weights": { "Product Analyst": 3 }
+        },
+        {
+          "id": "business",
+          "label": "General business performance",
+          "weights": { "Business Analyst": 3 }
+        },
+        {
+          "id": "marketing",
+          "label": "Marketing, growth, acquisition",
+          "weights": { "Marketing / Growth Analyst": 3 }
+        },
+        {
+          "id": "finance",
+          "label": "Finance, risk, forecasting",
+          "weights": { "Financial / Risk Analyst": 3 }
+        },
+        {
+          "id": "operations",
+          "label": "Operations, logistics, efficiency",
+          "weights": { "Operations / Supply Chain Analyst": 3 }
+        }
+      ]
+    },
+
+    {
+      "id": "python_usage",
+      "title": "How do you want to use Python?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "light",
+          "label": "Occasionally for analysis",
+          "weights": { "Business Analyst": 1, "BI Analyst": 1 }
+        },
+        {
+          "id": "regular",
+          "label": "Frequent analysis and experimentation",
+          "weights": { "Product Analyst": 2, "Marketing / Growth Analyst": 2 }
+        },
+        {
+          "id": "core",
+          "label": "Core tool for pipelines and transformations",
+          "weights": { "Analytics Engineer": 3 }
+        }
+      ]
+    },
+
+    {
+      "id": "metrics_focus",
+      "title": "What type of metrics do you enjoy most?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "kpi",
+          "label": "KPIs and executive metrics",
+          "weights": { "Business Analyst": 3 }
+        },
+        {
+          "id": "product_metrics",
+          "label": "Retention, funnels, cohorts",
+          "weights": { "Product Analyst": 3 }
+        },
+        {
+          "id": "marketing_metrics",
+          "label": "CAC, LTV, ROI",
+          "weights": { "Marketing / Growth Analyst": 3 }
+        },
+        {
+          "id": "financial_metrics",
+          "label": "Costs, margins, forecasts",
+          "weights": { "Financial / Risk Analyst": 3 }
+        }
+      ]
+    },
+
+    {
+      "id": "visualization",
+      "title": "How important are dashboards and visuals?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "very",
+          "label": "Core part of my work",
+          "weights": { "BI Analyst": 4 }
+        },
+        {
+          "id": "some",
+          "label": "Useful but not central",
+          "weights": { "Business Analyst": 2, "Product Analyst": 1 }
+        },
+        {
+          "id": "low",
+          "label": "Not important",
+          "weights": { "Analytics Engineer": 2 }
+        }
+      ]
+    },
+
+    {
+      "id": "data_quality",
+      "title": "How do you feel about data quality checks?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "love",
+          "label": "I enjoy validating and cleaning data",
+          "weights": { "Data Quality / Reporting Analyst": 4, "Analytics Engineer": 2 }
+        },
+        {
+          "id": "ok",
+          "label": "Important but not exciting",
+          "weights": { "Business Analyst": 1, "BI Analyst": 1 }
+        },
+        {
+          "id": "avoid",
+          "label": "I prefer analysis over cleaning",
+          "weights": { "Product Analyst": 1, "Marketing / Growth Analyst": 1 }
+        }
+      ]
+    },
+
+    {
+      "id": "pace",
+      "title": "What work pace do you prefer?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "steady",
+          "label": "Steady and predictable",
+          "weights": { "Financial / Risk Analyst": 2, "Data Quality / Reporting Analyst": 2 }
+        },
+        {
+          "id": "dynamic",
+          "label": "Fast-paced and changing",
+          "weights": { "Product Analyst": 2, "Marketing / Growth Analyst": 2 }
+        },
+        {
+          "id": "project",
+          "label": "Project-based delivery",
+          "weights": { "BI Analyst": 2, "Analytics Engineer": 2 }
+        }
+      ]
+    },
+
+    {
+      "id": "career_growth",
+      "title": "Which growth path sounds better?",
+      "kind": "single",
+      "options": [
+        {
+          "id": "business_lead",
+          "label": "Influencing business decisions",
+          "weights": { "Business Analyst": 3 }
+        },
+        {
+          "id": "product_expert",
+          "label": "Deep product expertise",
+          "weights": { "Product Analyst": 3 }
+        },
+        {
+          "id": "technical",
+          "label": "More technical depth",
+          "weights": { "Analytics Engineer": 3 }
+        }
+      ]
+    }
+
+  ]
+}
