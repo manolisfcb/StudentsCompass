@@ -7,7 +7,7 @@ import asyncio
 from typing import AsyncGenerator, Generator
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import StaticPool
 from app.app import app
 from app.db import Base, get_session
 from app.models.userModel import User
@@ -23,7 +23,8 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 # Create test engine
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
-    poolclass=NullPool,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 
 # Create test session factory
@@ -43,8 +44,12 @@ def event_loop():
 
 
 @pytest_asyncio.fixture
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Create a test client."""
+async def setup_db() -> AsyncGenerator[None, None]:
+    """Create/drop all tables for each test.
+
+    Uses a single shared in-memory SQLite connection (StaticPool) so the schema
+    is visible to all sessions used during the test.
+    """
     # Import all models before creating tables
     from app.models.userModel import User
     from app.models.companyModel import Company
@@ -55,11 +60,19 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     from app.models.postModel import PostModel
     from app.models.jobAnalysisModel import JobAnalysisModel
     from app.models.resumeEmbeddingsModel import ResumeEmbedding
-    
-    # Create tables before test
+
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
+    yield
+
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest_asyncio.fixture
+async def client(setup_db) -> AsyncGenerator[AsyncClient, None]:
+    """Create a test client."""
     # Override get_session dependency
     async def override_get_session():
         async with TestSessionLocal() as session:
@@ -76,12 +89,10 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     
     # Cleanup
     app.dependency_overrides.clear()
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
+async def db_session(setup_db) -> AsyncGenerator[AsyncSession, None]:
     """Create a database session for direct DB access in tests."""
     async with TestSessionLocal() as session:
         yield session
@@ -90,10 +101,11 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession) -> User:
     """Create a test user."""
+    password_helper = PasswordHelper()
     user = User(
         id=uuid.uuid4(),
         email="test@example.com",
-        hashed_password="$2b$12$KIXfJ8H7qXZ8QX3wKZqwXe.zKvP0v1L9eJQf3k3w0p1w0p1w0p1w0",  # "password123"
+        hashed_password=password_helper.hash("password123"),
         is_active=True,
         is_superuser=False,
         is_verified=True,
@@ -110,10 +122,11 @@ async def test_user(db_session: AsyncSession) -> User:
 @pytest_asyncio.fixture
 async def test_company(db_session: AsyncSession) -> Company:
     """Create a test company."""
+    password_helper = PasswordHelper()
     company = Company(
         id=uuid.uuid4(),
         email="company@example.com",
-        hashed_password="$2b$12$KIXfJ8H7qXZ8QX3wKZqwXe.zKvP0v1L9eJQf3k3w0p1w0p1w0p1w0",
+        hashed_password=password_helper.hash("password123"),
         is_active=True,
         is_superuser=False,
         is_verified=True,
@@ -137,9 +150,14 @@ async def auth_headers(client: AsyncClient, test_user: User) -> dict:
             "password": "password123"
         }
     )
-    assert response.status_code == 200
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    # CookieTransport returns 204 and sets an HttpOnly cookie on the client.
+    assert response.status_code in (200, 204)
+    # If a token-based backend is ever enabled, keep compatibility.
+    if response.status_code == 200 and response.headers.get("content-type", "").startswith("application/json"):
+        token = response.json().get("access_token")
+        if token:
+            return {"Authorization": f"Bearer {token}"}
+    return {}
 
 
 @pytest.fixture

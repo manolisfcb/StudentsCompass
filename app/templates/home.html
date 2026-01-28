@@ -11,11 +11,12 @@
         <nav>
             <div class="container">
                 <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
-                <ul>
-                    <li><a href="#for-students">For Students</a></li>
-                    <li><a href="#for-companies">For Companies</a></li>
-                    <li><a href="#how-it-works">How It Works</a></li>
-                    <li><a href="/login">Login</a></li>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                <ul id="mobile-menu">
+                    <li><a href="#for-students" onclick="closeMobileMenu()">For Students</a></li>
+                    <li><a href="#for-companies" onclick="closeMobileMenu()">For Companies</a></li>
+                    <li><a href="#how-it-works" onclick="closeMobileMenu()">How It Works</a></li>
+                    <li><a href="/login" onclick="closeMobileMenu()">Login</a></li>
                 </ul>
             </div>
         </nav>
@@ -169,5 +170,26 @@
             </ul>
         </div>
     </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.remove('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobile-menu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            if (menu && !menu.contains(event.target) && !toggle.contains(event.target)) {
+                menu.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>

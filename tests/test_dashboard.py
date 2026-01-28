@@ -139,7 +139,8 @@ class TestDashboard:
             user_id=test_user.id,
             view_url="https://example.com/resume.pdf",
             original_filename="resume.pdf",
-            storage_file_id="test/resume.pdf"
+            storage_file_id="test/resume.pdf",
+            folder_id="test/"
         )
         db_session.add(resume)
         await db_session.commit()
