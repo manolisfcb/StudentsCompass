@@ -35,6 +35,8 @@ from app.models.jobPostingModel import JobPosting
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Avoid running Base.metadata.create_all on startup in production.
+    # Controlled via ENV/AUTO_CREATE_TABLES in app/db.py
     await create_db_and_tables()
     yield
 
