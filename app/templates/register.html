@@ -7,13 +7,6 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <script>
-        // If user is already logged in, redirect to dashboard
-        const existingToken = localStorage.getItem('bearer_token');
-        if (existingToken) {
-            window.location.href = '/dashboard';
-        }
-    </script>
     <div class="auth-container">
         <div class="auth-card">
             <h2>Create Your Account</h2>

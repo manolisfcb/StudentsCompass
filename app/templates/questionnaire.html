@@ -107,18 +107,14 @@
         // --- API ---
         async function fetchQuestionnaire() {
             try {
-                const token = localStorage.getItem('bearer_token');
-                if (!token) {
+                const res = await fetch('/api/v1/questionnaire', {
+                    credentials: 'include'
+                }); 
+                if (res.status === 401 || res.status === 403) {
                     window.location.href = '/login';
                     return;
                 }
-
-                const res = await fetch('/api/v1/questionnaire', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }); 
-                if (!res.ok) throw new Error('Error fetching data or unauthorized');
+                if (!res.ok) throw new Error('Error fetching data');
                 const data = await res.json();
                 questions = data.questions;
                 initQuiz();
@@ -143,15 +139,19 @@
             console.log('Total questions:', questions.length);
 
             try {
-                const token = localStorage.getItem('bearer_token');
                 const res = await fetch('/api/v1/questionnaire', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     },
+                    credentials: 'include',
                     body: JSON.stringify(payload)
                 });
+
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
                 
                 if (!res.ok) {
                     const errorData = await res.json();

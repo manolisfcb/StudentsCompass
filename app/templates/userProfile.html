@@ -233,22 +233,17 @@
     <script>
         async function loadProfile() {
             try {
-                const token = localStorage.getItem('bearer_token');
-                if (!token) {
-                    window.location.href = '/login';
-                    return;
-                }
-
                 // Get questionnaire data
                 const response = await fetch('/api/v1/questionnaire/profile', {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    credentials: 'include'
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = '/login';
+                        return;
+                    }
                     if (response.status === 404) {
                         showNoData();
                         return;
@@ -340,8 +335,6 @@
 
         // Fetch and render resumes list
         async function loadResumes() {
-            const token = localStorage.getItem('bearer_token');
-            if (!token) return;
             const emptyState = document.getElementById('cvListEmpty');
             const tableWrapper = document.getElementById('cvTableWrapper');
             const tbody = document.getElementById('cvTableBody');
@@ -351,8 +344,12 @@
             tbody.innerHTML = '';
             try {
                 const res = await fetch('/api/v1/profile/cv', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
                 if (!res.ok) throw new Error('Failed to load CVs');
                 const data = await res.json();
                 if (!data || data.length === 0) {
@@ -394,12 +391,15 @@
                     const resumeId = btn.getAttribute('data-resume-id');
                     btn.textContent = 'Deleting...';
                     btn.disabled = true;
-                    const token = localStorage.getItem('bearer_token');
                     try {
                         const res = await fetch(`/api/v1/profile/cv/${resumeId}`, {
                             method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
+                            credentials: 'include'
                         });
+                        if (res.status === 401 || res.status === 403) {
+                            window.location.href = '/login';
+                            return;
+                        }
                         if (!res.ok) throw new Error('Delete failed');
                         await loadResumes();
                     } catch (err) {
@@ -503,12 +503,9 @@
                 formData.append('cv', selectedFile);
 
                 try {
-                    const token = localStorage.getItem('bearer_token');
                     const response = await fetch('/api/v1/profile/cv/upload', {
                         method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        },
+                        credentials: 'include',
                         body: formData,
                         timeout: 30000
                     });
@@ -526,6 +523,10 @@
                         }, 2000);
                     } else {
                         console.error('Upload response:', response.status);
+                        if (response.status === 401 || response.status === 403) {
+                            window.location.href = '/login';
+                            return;
+                        }
                         uploadStatus.textContent = '❌ Upload failed. Please try again.';
                         uploadStatus.style.color = '#EF4444';
                         uploadBtn.disabled = false;

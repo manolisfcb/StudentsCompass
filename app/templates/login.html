@@ -58,26 +58,41 @@
             errorMessage.textContent = '';
 
             // Determine the login endpoint based on account type
-            const loginEndpoint = loginType === 'student' ? '/auth/jwt/login' : '/api/v1/auth/company/login';
-            const dashboardUrl = loginType === 'student' ? '/dashboard' : '/company-dashboard';
-            const tokenKey = loginType === 'student' ? 'bearer_token' : 'company_token';
+            const isStudent = loginType === 'student';
+            const loginEndpoint = isStudent ? '/auth/jwt/login' : '/api/v1/auth/company/login';
+            const dashboardUrl = isStudent ? '/dashboard' : '/company-dashboard';
 
             try {
                 const response = await fetch(loginEndpoint, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include' // Important: include cookies
                 });
 
+                console.log('Login response status:', response.status, 'OK:', response.ok);
+
                 if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem(tokenKey, data.access_token);
-                    localStorage.setItem('account_type', loginType);
-                    window.location.href = dashboardUrl;
+                    if (isStudent) {
+                        // Student auth uses HttpOnly cookie (CookieTransport)
+                        localStorage.removeItem('bearer_token');
+                        localStorage.removeItem('company_token');
+                        localStorage.removeItem('account_type');
+                        console.log('Redirecting to:', dashboardUrl);
+                        window.location.href = dashboardUrl;
+                    } else {
+                        // Company auth uses Bearer token (BearerTransport)
+                        const data = await response.json();
+                        localStorage.setItem('company_token', data.access_token);
+                        localStorage.setItem('account_type', 'company');
+                        console.log('Redirecting to:', dashboardUrl);
+                        window.location.href = dashboardUrl;
+                    }
                 } else {
                     const errorData = await response.json();
                     errorMessage.textContent = errorData.detail || 'Login failed. Please check your credentials.';
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 errorMessage.textContent = 'An unexpected error occurred. Please try again.';
             }
         });

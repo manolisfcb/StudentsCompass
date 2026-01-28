@@ -1,30 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Company Dashboard - StudentsCompass</title>
-  <link rel="stylesheet" href="/static/css/style.css">
   <style>
-    .dashboard-container {
-      padding: 2rem;
-    }
-
-    .dashboard-header {
-      margin-bottom: 2rem;
-    }
-
-    .dashboard-header h2 {
-      font-size: 2rem;
-      color: #0F172A;
-      margin-bottom: 0.5rem;
-    }
-
-    .dashboard-header p {
-      color: #475569;
-      font-size: 1.1rem;
-    }
 
     .stats-grid {
       display: grid;
@@ -310,7 +287,10 @@
     const accountType = localStorage.getItem('account_type');
     
     if (!companyToken || accountType !== 'company') {
+      localStorage.removeItem('company_token');
+      localStorage.removeItem('account_type');
       window.location.href = '/login';
+      return;
     }
 
     // Fetch company data
@@ -329,9 +309,11 @@
           // TODO: Load actual job postings and statistics
         } else {
           console.error('Failed to load company data');
-          if (response.status === 401) {
+          if (response.status === 401 || response.status === 403) {
             localStorage.removeItem('company_token');
+            localStorage.removeItem('account_type');
             window.location.href = '/login';
+            return;
           }
         }
       } catch (error) {

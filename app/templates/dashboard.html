@@ -486,36 +486,27 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      const token = localStorage.getItem('bearer_token');
       const welcomeMessage = document.getElementById('welcome-message');
-
-      if (!token) {
-        window.location.href = '/login';
-        return;
-      }
 
       try {
         // Get user info
         const userResponse = await fetch('/api/v1/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include'
         });
 
         if (userResponse.ok) {
           const user = await userResponse.json();
           welcomeMessage.textContent = `Welcome Back, ${user.nickname || user.email}!`;
-        } else {
-          localStorage.removeItem('bearer_token');
+        } else if (userResponse.status === 401 || userResponse.status === 403) {
           window.location.href = '/login';
           return;
+        } else {
+          console.error('Failed to load user info:', userResponse.status);
         }
 
         // Get dashboard data
         const dashboardResponse = await fetch('/api/v1/students_dashboard', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include'
         });
 
         if (dashboardResponse.ok) {
@@ -544,24 +535,16 @@
           document.getElementById('status-offers').textContent = data.application_breakdown.offers;
 
         } else {
-          console.error('Failed to load dashboard data');
+          if (dashboardResponse.status === 401 || dashboardResponse.status === 403) {
+            window.location.href = '/login';
+            return;
+          }
+          console.error('Failed to load dashboard data:', dashboardResponse.status);
         }
 
       } catch (error) {
         console.error('Error loading dashboard:', error);
-        localStorage.removeItem('bearer_token');
         window.location.href = '/login';
-      }
-
-      const logoutLink = document.getElementById('logout-link');
-      if (logoutLink) {
-        logoutLink.addEventListener('click', (event) => {
-          event.preventDefault();
-          if (confirm('¿Estás seguro que quieres salir?')) {
-            localStorage.removeItem('bearer_token');
-            window.location.href = '/login';
-          }
-        });
       }
     });
   </script>

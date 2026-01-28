@@ -395,12 +395,6 @@
         });
 
         async function loadAutoKeywords() {
-            const token = localStorage.getItem('bearer_token');
-            if (!token) {
-                cvStatus.textContent = 'Please log in to use auto mode';
-                return false;
-            }
-            
             // Show loading state
             cvStatus.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -416,8 +410,14 @@
                 // Start analysis job
                 const startRes = await fetch('/api/v1/jobs/keywords/analyze', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
+
+                if (startRes.status === 401 || startRes.status === 403) {
+                    cvStatus.textContent = 'Please log in to use auto mode';
+                    window.location.href = '/login';
+                    return false;
+                }
                 
                 if (!startRes.ok) {
                     const error = await startRes.json();
@@ -434,8 +434,13 @@
                     await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
                     
                     const statusRes = await fetch(`/api/v1/jobs/keywords/${job_id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        credentials: 'include'
                     });
+
+                    if (statusRes.status === 401 || statusRes.status === 403) {
+                        window.location.href = '/login';
+                        return false;
+                    }
                     
                     if (!statusRes.ok) {
                         throw new Error('Failed to check job status');
@@ -480,22 +485,20 @@
 
         // Check CV availability on page load
         async function checkCVAvailability() {
-            const token = localStorage.getItem('bearer_token');
-            if (!token) {
-                modeAutoBtn.disabled = true;
-                modeAutoBtn.style.opacity = '0.5';
-                modeAutoBtn.title = 'Log in to use this feature';
-                cvStatus.textContent = '🔒 Log in to use auto mode';
-                // Switch to manual mode
-                currentMode = 'manual';
-                modeManualBtn.click();
-                return;
-            }
-
             try {
                 const res = await fetch('/api/v1/jobs/keywords', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
+
+                if (res.status === 401 || res.status === 403) {
+                    modeAutoBtn.disabled = true;
+                    modeAutoBtn.style.opacity = '0.5';
+                    modeAutoBtn.title = 'Log in to use this feature';
+                    cvStatus.textContent = '🔒 Log in to use auto mode';
+                    currentMode = 'manual';
+                    modeManualBtn.click();
+                    return;
+                }
                 if (res.ok) {
                     const data = await res.json();
                     if (!data.has_cv) {
@@ -537,13 +540,6 @@
             const location = locationInput.value.trim();
             const limit = parseInt(limitSelect.value);
             const remote = remoteCheckbox.checked;
-            const token = localStorage.getItem('bearer_token');
-
-            if (!token) {
-                searchStatus.textContent = 'Inicia sesión para buscar';
-                searchStatus.style.color = '#EF4444';
-                return;
-            }
 
             if (!keywords) {
                 searchStatus.textContent = 'Please enter keywords';
@@ -566,8 +562,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         keywords,
                         location,
@@ -575,6 +571,11 @@
                         remote,
                     }),
                 });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error('Search failed');

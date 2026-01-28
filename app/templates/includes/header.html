@@ -3,11 +3,26 @@
 </header>
 
 <script>
-    document.getElementById('logout-link').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (confirm('¿Estás seguro que quieres salir?')) {
-            localStorage.removeItem('bearer_token');
-            window.location.href = '/login';
-        }
-    });
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (!confirm('¿Estás seguro que quieres salir?')) return;
+
+            try {
+                await fetch('/auth/jwt/logout', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
+            } catch (err) {
+                console.error('Logout error:', err);
+            } finally {
+                // Cleanup any legacy tokens to avoid client-side redirects
+                localStorage.removeItem('bearer_token');
+                localStorage.removeItem('company_token');
+                localStorage.removeItem('account_type');
+                window.location.href = '/login';
+            }
+        });
+    }
 </script>
