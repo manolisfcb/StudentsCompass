@@ -16,6 +16,7 @@ from app.models.applicationModel import ApplicationModel
 from app.models.companyModel import Company
 from app.models.jobPostingModel import JobPosting
 from app.models.jobAnalysisModel import JobAnalysisModel
+from app.models.userStatsModel import UserStatsModel
 
 
 

@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 from fastapi import Depends
 import os
 from dotenv import load_dotenv
@@ -24,7 +25,11 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_async_engine(DATABASE_URL, echo=SQLALCHEMY_ECHO)
+engine = create_async_engine(
+    DATABASE_URL, 
+    echo=SQLALCHEMY_ECHO,
+    poolclass=NullPool  # Serverless-friendly: abre/cierra conexión por request
+)
 async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 

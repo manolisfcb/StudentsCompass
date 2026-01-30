@@ -17,6 +17,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     questionnaires = relationship("UserQuestionnaire", back_populates="user")
     resumes = relationship("ResumeModel", back_populates="user")
     job_analyses = relationship("JobAnalysisModel", back_populates="user", lazy="dynamic")
+    stats = relationship("UserStatsModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
 
         

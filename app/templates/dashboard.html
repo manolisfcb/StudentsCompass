@@ -489,28 +489,16 @@
       const welcomeMessage = document.getElementById('welcome-message');
 
       try {
-        // Get user info
-        const userResponse = await fetch('/api/v1/users/me', {
-          credentials: 'include'
-        });
-
-        if (userResponse.ok) {
-          const user = await userResponse.json();
-          welcomeMessage.textContent = `Welcome Back, ${user.nickname || user.email}!`;
-        } else if (userResponse.status === 401 || userResponse.status === 403) {
-          window.location.href = '/login';
-          return;
-        } else {
-          console.error('Failed to load user info:', userResponse.status);
-        }
-
-        // Get dashboard data
         const dashboardResponse = await fetch('/api/v1/students_dashboard', {
           credentials: 'include'
         });
 
         if (dashboardResponse.ok) {
           const data = await dashboardResponse.json();
+
+          if (data.user) {
+            welcomeMessage.textContent = `Welcome Back, ${data.user.nickname || data.user.email || 'Student'}!`;
+          }
           
           // Update stats
           document.getElementById('overall-progress').textContent = `${data.stats.overall_progress}%`;

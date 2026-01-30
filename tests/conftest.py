@@ -60,6 +60,7 @@ async def setup_db() -> AsyncGenerator[None, None]:
     from app.models.postModel import PostModel
     from app.models.jobAnalysisModel import JobAnalysisModel
     from app.models.resumeEmbeddingsModel import ResumeEmbedding
+    from app.models.userStatsModel import UserStatsModel
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

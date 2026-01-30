@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.userModel import User
+from app.models.userStatsModel import UserStatsModel
 from app.models.resumeModel import ResumeModel
 from typing import Dict, List
 from uuid import UUID
@@ -38,8 +39,22 @@ class DashboardService:
             
             logger.info(f"Stats calculated - Total: {total_applications}, In Review: {in_review}, Interviews: {interviews}, Offers: {offers}")
             
-            # Calculate progress on-the-fly
-            progress_data = await DashboardService._calculate_progress(user_id, session)
+            # Get or create user stats (authoritative progress values)
+            user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
+
+            progress_data = {
+                "resume": user_stats.resume_progress,
+                "linkedin": user_stats.linkedin_progress,
+                "interview_prep": user_stats.interview_progress,
+                "portfolio": 0,
+            }
+
+            overall_progress = round(
+                (progress_data["resume"] + progress_data["linkedin"] + progress_data["interview_prep"]) / 3,
+                1,
+            )
+            progress_data["overall"] = overall_progress
+
             logger.info(f"Progress data: {progress_data}")
             
             # Get recent applications with company info
@@ -54,7 +69,18 @@ class DashboardService:
                     "notes": app.notes
                 })
             
+            # Fetch user info to avoid extra client calls
+            user_result = await session.execute(select(User).where(User.id == user_id))
+            user = user_result.scalar_one_or_none()
+
             dashboard_data = {
+                "user": {
+                    "id": str(user.id) if user else str(user_id),
+                    "email": user.email if user else None,
+                    "nickname": user.nickname if user else None,
+                    "first_name": user.first_name if user else None,
+                    "last_name": user.last_name if user else None,
+                },
                 "stats": {
                     "overall_progress": progress_data["overall"],
                     "total_applications": total_applications,
@@ -126,9 +152,18 @@ class DashboardService:
         interviews = sum(1 for app in applications if app.status == ApplicationStatus.INTERVIEW)
         offers = sum(1 for app in applications if app.status == ApplicationStatus.OFFER)
         
-        # Calculate progress percentage based on user activities
-        # This is a simple example - you can customize the logic
-        progress_data = await DashboardService._calculate_progress(user_id, session)
+        # Use saved stats as authoritative progress values
+        user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
+        progress_data = {
+            "resume": user_stats.resume_progress,
+            "linkedin": user_stats.linkedin_progress,
+            "interview_prep": user_stats.interview_progress,
+            "portfolio": 0,
+            "overall": round(
+                (user_stats.resume_progress + user_stats.linkedin_progress + user_stats.interview_progress) / 3,
+                1,
+            ),
+        }
         
         return {
             "stats": {
@@ -202,6 +237,27 @@ class DashboardService:
         except Exception as e:
             logger.error(f"Error calculating progress for user {user_id}: {str(e)}", exc_info=True)
             raise
+
+    @staticmethod
+    async def _get_or_create_user_stats(user_id: UUID, session: AsyncSession) -> UserStatsModel:
+        """Fetch user stats or create defaults using activity-based progress."""
+        result = await session.execute(select(UserStatsModel).where(UserStatsModel.user_id == user_id))
+        stats = result.scalar_one_or_none()
+
+        if stats:
+            return stats
+
+        progress = await DashboardService._calculate_progress(user_id, session)
+        stats = UserStatsModel(
+            user_id=user_id,
+            resume_progress=progress["resume"],
+            linkedin_progress=progress["linkedin"],
+            interview_progress=progress["interview_prep"],
+        )
+        session.add(stats)
+        await session.commit()
+        await session.refresh(stats)
+        return stats
     
     @staticmethod
     async def get_application_by_status(user_id: UUID, status: ApplicationStatus, session: AsyncSession) -> List[ApplicationModel]:
