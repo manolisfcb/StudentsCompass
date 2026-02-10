@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
+from app.models.jobPostingModel import JobPosting
 from app.db import Base
 from sqlalchemy.dialects.postgresql import UUID
 import uuid

@@ -22,17 +22,6 @@ from app.routes.jobRoute import router as job_router
 from app.routes.companyRoute import router as company_router
 from app.routes.dashboardRoute import router as dashboard_router
 
-# Import models to ensure they're registered with SQLAlchemy
-from app.models.userModel import User
-from app.models.companyModel import Company
-from app.models.postModel import PostModel
-from app.models.resumeModel import ResumeModel
-from app.models.jobAnalysisModel import JobAnalysisModel
-from app.models.questionnaireModel import UserQuestionnaire
-from app.models.applicationModel import ApplicationModel
-from app.models.jobPostingModel import JobPosting
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Avoid running Base.metadata.create_all on startup in production.
