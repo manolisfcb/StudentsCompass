@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>{{ resource.title }} - StudentsCompass</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/resources.css">
+</head>
+<body>
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <div class="resources-container">
+        <div class="resources-header">
+          <div class="resources-header-row">
+            <div>
+              <a href="/resources" style="display:inline-block;margin-bottom:.45rem;color:#0F766E;text-decoration:none;font-weight:600;">← Back to Resources Hub</a>
+              <h2>{{ resource.icon or '📚' }} {{ resource.title }}</h2>
+              <p>{{ resource.description }}</p>
+            </div>
+          </div>
+        </div>
+
+        <section class="resource-layout">
+          <aside class="panel left-panel">
+            <h3 class="panel-title">Course Material</h3>
+            <div>
+              {% for module in resource.modules %}
+              <div class="outline-module">
+                <button class="outline-module-btn" data-module-toggle="{{ module.id }}">
+                  {{ module.position }}. {{ module.title }}
+                </button>
+                <ul class="outline-lessons" data-module-lessons="{{ module.id }}">
+                  {% for lesson in module.lessons %}
+                  <li>
+                    <button class="outline-lesson-btn{% if selected_lesson_id and selected_lesson_id == lesson.id|string %} active{% endif %}" data-lesson-id="{{ lesson.id }}">
+                      {{ module.position }}.{{ lesson.position }} {{ lesson.title }}
+                    </button>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endfor %}
+            </div>
+          </aside>
+
+          <article class="panel content-panel">
+            <div class="lesson-head">
+              <h3 id="lesson-title" class="lesson-title">Loading lesson...</h3>
+              <div id="lesson-meta" class="lesson-subtitle"></div>
+            </div>
+            <div id="lesson-content" class="lesson-content"></div>
+          </article>
+
+          <aside class="panel right-panel">
+            <div class="meta-card">
+              <h4>Learning plan / Metadata</h4>
+              <ul class="meta-list">
+                <li><strong>Category:</strong> {{ resource.category }}</li>
+                <li><strong>Level:</strong> {{ resource.level or 'Not specified' }}</li>
+                <li><strong>Duration:</strong> {{ resource.estimated_duration_minutes or 'N/A' }} {% if resource.estimated_duration_minutes %}min{% endif %}</li>
+                <li><strong>Modules:</strong> {{ module_count }}</li>
+                <li><strong>Lessons:</strong> {{ lesson_count }}</li>
+              </ul>
+              {% if resource.external_url %}
+              <p style="margin-top:.8rem;"><a href="{{ resource.external_url }}" target="_blank" rel="noopener noreferrer" class="open-resource">Open resource</a></p>
+              {% endif %}
+            </div>
+
+            <div class="meta-card">
+              <h4>Course timeline</h4>
+              <ul class="meta-list">
+                <li><strong>Start:</strong> Today</li>
+                <li><strong>Estimated end:</strong> 2-4 weeks</li>
+                <li><strong>Cadence:</strong> 20-30 min / day</li>
+              </ul>
+            </div>
+
+            <div class="meta-card">
+              <h4>Tags</h4>
+              <div class="resource-tags">
+                {% for tag in resource.tags or [] %}
+                <span class="tag">{{ tag }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </aside>
+        </section>
+      </div>
+    </main>
+  </main>
+
+  {% include "includes/footer.html" %}
+  <script id="resource-payload-json" type="application/json">{{ resource_payload_json | safe }}</script>
+  <script src="/static/js/resource_detail.js"></script>
+</body>
+</html>

@@ -22,6 +22,7 @@ from app.routes.jobRoute import router as job_router
 from app.routes.companyRoute import router as company_router
 from app.routes.dashboardRoute import router as dashboard_router
 from app.routes.communityRoute import router as community_router
+from app.routes.resourceRoute import router as resource_router
 
 # Import models to ensure they're registered with SQLAlchemy
 from app.models.userModel import User
@@ -34,6 +35,7 @@ from app.models.applicationModel import ApplicationModel
 from app.models.jobPostingModel import JobPosting
 from app.models.communityModel import CommunityModel, CommunityMemberModel
 from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeModel, CommunityPostCommentModel
+from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
 
 
 @asynccontextmanager
@@ -71,3 +73,4 @@ app.include_router(resume_router, prefix="/api/v1", tags=["resume"])
 app.include_router(job_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(community_router, prefix="/api/v1", tags=["communities"])
+app.include_router(resource_router, prefix="/api/v1", tags=["resources"])

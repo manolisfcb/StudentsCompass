@@ -5,222 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Resources Hub - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
-  <style>
-    .resources-container {
-      padding: 2rem;
-    }
-
-    .resources-header {
-      margin-bottom: 2rem;
-    }
-
-    .resources-header h2 {
-      font-size: 2rem;
-      color: #0F172A;
-      margin-bottom: 0.5rem;
-    }
-
-    .resources-header p {
-      color: #475569;
-      font-size: 1.1rem;
-    }
-
-    .resources-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
-    }
-
-    .resource-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: pointer;
-    }
-
-    .resource-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    .resource-icon {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-      font-size: 2rem;
-    }
-
-    .resource-card.resume .resource-icon {
-      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
-    }
-
-    .resource-card.linkedin .resource-icon {
-      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
-    }
-
-    .resource-card.interview .resource-icon {
-      background: linear-gradient(135deg, #FB7185 0%, #FBBF24 100%);
-    }
-
-    .resource-card.portfolio .resource-icon {
-      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
-    }
-
-    .resource-card.courses .resource-icon {
-      background: linear-gradient(135deg, #5EEAD4 0%, #A7F3D0 100%);
-    }
-
-    .resource-card.networking .resource-icon {
-      background: linear-gradient(135deg, #FB7185 0%, #FCA5A5 100%);
-    }
-
-    .resource-card.salary .resource-icon {
-      background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 100%);
-    }
-
-    .resource-card.certifications .resource-icon {
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-    }
-
-    .resource-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #0F172A;
-      margin-bottom: 0.5rem;
-    }
-
-    .resource-description {
-      color: #475569;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: 1rem;
-    }
-
-    .resource-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .tag {
-      background: #E5E7EB;
-      color: #0F766E;
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .resource-link {
-      display: inline-block;
-      width: 100%;
-      padding: 0.75rem;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.3s ease;
-      text-align: center;
-      text-decoration: none;
-    }
-
-    .resource-link:hover {
-      opacity: 0.9;
-    }
-
-    .filter-section {
-      margin-bottom: 2rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      padding: 0.6rem 1.2rem;
-      border: 2px solid #0F766E;
-      background: white;
-      color: #0F766E;
-      border-radius: 8px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .filter-btn.active {
-      background: #0F766E;
-      color: white;
-    }
-
-    .filter-btn:hover {
-      background: #0F766E;
-      color: white;
-    }
-
-    .articles-section {
-      margin-top: 3rem;
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .articles-section h3 {
-      font-size: 1.5rem;
-      color: #0F172A;
-      margin-bottom: 1.5rem;
-    }
-
-    .article-item {
-      padding: 1rem;
-      border-bottom: 1px solid #e0e0e0;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      transition: background 0.3s ease;
-    }
-
-    .article-item:last-child {
-      border-bottom: none;
-    }
-
-    .article-item:hover {
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-
-    .article-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
-
-    .article-item a {
-      color: #0F172A;
-      text-decoration: none;
-      font-weight: 500;
-      flex: 1;
-    }
-
-    .article-item a:hover {
-      color: #0F766E;
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/resources.css">
 </head>
 <body>
   {% include "includes/header.html" %}
@@ -231,187 +16,67 @@
     <main class="dashboard">
       <div class="resources-container">
         <div class="resources-header">
-          <h2>Resources Hub</h2>
-          <p>Curated resources to help you progress in your career search and skill development</p>
-        </div>
-
-        <div class="filter-section">
-          <button class="filter-btn active" onclick="filterResources('all')">All</button>
-          <button class="filter-btn" onclick="filterResources('career')">Career</button>
-          <button class="filter-btn" onclick="filterResources('learning')">Learning</button>
-          <button class="filter-btn" onclick="filterResources('professional')">Professional</button>
-        </div>
-
-        <div class="resources-grid">
-          <!-- Resume Templates -->
-          <div class="resource-card resume" data-category="career">
-            <div class="resource-icon">📄</div>
-            <h3 class="resource-title">Resume Templates</h3>
-            <p class="resource-description">
-              ATS-friendly resume templates and examples tailored for tech and data roles. Stand out with professional designs.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Templates</span>
-              <span class="tag">ATS</span>
-              <span class="tag">Career</span>
+          <div class="resources-header-row">
+            <div>
+              <h2>Resources Hub</h2>
+              <p>Explore curated, read-only learning resources and career courses.</p>
             </div>
-            <a href="#" class="resource-link">View Templates</a>
-          </div>
-
-          <!-- LinkedIn Optimization -->
-          <div class="resource-card linkedin" data-category="professional">
-            <div class="resource-icon">💼</div>
-            <h3 class="resource-title">LinkedIn Optimization</h3>
-            <p class="resource-description">
-              Guides and examples to improve your LinkedIn headline, summary and experience sections for better visibility.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">LinkedIn</span>
-              <span class="tag">Profile</span>
-              <span class="tag">Networking</span>
-            </div>
-            <a href="#" class="resource-link">Improve Profile</a>
-          </div>
-
-          <!-- Interview Prep -->
-          <div class="resource-card interview" data-category="career">
-            <div class="resource-icon">🎯</div>
-            <h3 class="resource-title">Interview Preparation</h3>
-            <p class="resource-description">
-              Behavioral and technical question bank, plus tips to structure your answers using STAR method.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Interview</span>
-              <span class="tag">STAR Method</span>
-              <span class="tag">Practice</span>
-            </div>
-            <a href="#" class="resource-link">Start Practicing</a>
-          </div>
-
-          <!-- Portfolio Checklist -->
-          <div class="resource-card portfolio" data-category="career">
-            <div class="resource-icon">🎨</div>
-            <h3 class="resource-title">Portfolio Checklist</h3>
-            <p class="resource-description">
-              What to include in your portfolio to impress recruiters and hiring managers. Showcase your best work.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Portfolio</span>
-              <span class="tag">Projects</span>
-              <span class="tag">Showcase</span>
-            </div>
-            <a href="#" class="resource-link">See Checklist</a>
-          </div>
-
-          <!-- Online Courses -->
-          <div class="resource-card courses" data-category="learning">
-            <div class="resource-icon">📚</div>
-            <h3 class="resource-title">Online Courses</h3>
-            <p class="resource-description">
-              Curated list of online courses from Coursera, Udemy, and other platforms to boost your skills.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Courses</span>
-              <span class="tag">Learning</span>
-              <span class="tag">Skills</span>
-            </div>
-            <a href="#" class="resource-link">Browse Courses</a>
-          </div>
-
-          <!-- Networking Tips -->
-          <div class="resource-card networking" data-category="professional">
-            <div class="resource-icon">🤝</div>
-            <h3 class="resource-title">Networking Guide</h3>
-            <p class="resource-description">
-              Learn how to build meaningful professional relationships and expand your network effectively.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Networking</span>
-              <span class="tag">Events</span>
-              <span class="tag">Connections</span>
-            </div>
-            <a href="#" class="resource-link">Learn More</a>
-          </div>
-
-          <!-- Salary Negotiation -->
-          <div class="resource-card salary" data-category="career">
-            <div class="resource-icon">💰</div>
-            <h3 class="resource-title">Salary Negotiation</h3>
-            <p class="resource-description">
-              Master the art of negotiating your salary and benefits package with confidence and data.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Salary</span>
-              <span class="tag">Negotiation</span>
-              <span class="tag">Compensation</span>
-            </div>
-            <a href="#" class="resource-link">Negotiation Tips</a>
-          </div>
-
-          <!-- Certifications -->
-          <div class="resource-card certifications" data-category="learning">
-            <div class="resource-icon">🏆</div>
-            <h3 class="resource-title">Certifications Guide</h3>
-            <p class="resource-description">
-              Discover the most valuable certifications in tech and data that employers are looking for.
-            </p>
-            <div class="resource-tags">
-              <span class="tag">Certifications</span>
-              <span class="tag">Credentials</span>
-              <span class="tag">Career Growth</span>
-            </div>
-            <a href="#" class="resource-link">View Guide</a>
           </div>
         </div>
 
-        <div class="articles-section">
-          <h3>📖 Recommended Articles</h3>
-          <div class="article-item">
-            <div class="article-icon">📝</div>
-            <a href="#">How to pass an ATS in 2026</a>
-          </div>
-          <div class="article-item">
-            <div class="article-icon">💡</div>
-            <a href="#">10 projects to add to your portfolio</a>
-          </div>
-          <div class="article-item">
-            <div class="article-icon">💬</div>
-            <a href="#">Negotiating your first offer</a>
-          </div>
-          <div class="article-item">
-            <div class="article-icon">🚀</div>
-            <a href="#">Building a strong personal brand</a>
-          </div>
-          <div class="article-item">
-            <div class="article-icon">🎓</div>
-            <a href="#">Transitioning from student to professional</a>
-          </div>
+        <div class="filter-bar">
+          <button class="filter-chip active" data-category="all">All</button>
+          <button class="filter-chip" data-category="career">Career</button>
+          <button class="filter-chip" data-category="learning">Learning</button>
+          <button class="filter-chip" data-category="professional">Professional</button>
+        </div>
+
+        <div class="control-bar">
+          <input id="resource-search" type="text" placeholder="Search by title, description or tags..." aria-label="Search resources">
+          <select id="resource-sort" aria-label="Sort resources">
+            <option value="recent">Most recent</option>
+            <option value="name">Name A-Z</option>
+            <option value="duration">Shortest duration</option>
+          </select>
+        </div>
+
+        <div id="resources-grid" class="resources-grid">
+          {% for resource in resources %}
+          <article
+            class="resource-card"
+            data-category="{{ (resource.category or '') | lower }}"
+            data-title="{{ resource.title }}"
+            data-description="{{ resource.description }}"
+            data-tags="{{ (resource.tags or []) | join(' ') }}"
+            data-created-at="{{ resource.created_at.isoformat() }}"
+            data-duration="{{ resource.estimated_duration_minutes or '' }}"
+          >
+            <div class="resource-icon">{{ resource.icon or '📚' }}</div>
+            <h3 class="resource-title">{{ resource.title }}</h3>
+            <p class="resource-description">{{ resource.description }}</p>
+            <div class="resource-meta">
+              <span class="meta-pill">{{ resource.category }}</span>
+              {% if resource.level %}<span class="meta-pill">{{ resource.level }}</span>{% endif %}
+              {% if resource.estimated_duration_minutes %}<span class="meta-pill">{{ resource.estimated_duration_minutes }} min</span>{% endif %}
+            </div>
+            <div class="resource-tags">
+              {% for tag in resource.tags or [] %}
+              <span class="tag">{{ tag }}</span>
+              {% endfor %}
+            </div>
+            <a class="resource-open-btn" href="/resources/{{ resource.id }}">Open course</a>
+          </article>
+          {% endfor %}
+        </div>
+
+        <div id="resources-empty" class="empty-state" {% if resources|length > 0 %}style="display:none;"{% endif %}>
+          No resources found for this filter.
         </div>
       </div>
     </main>
   </main>
 
   {% include "includes/footer.html" %}
-
-  <script>
-    function filterResources(category) {
-      const cards = document.querySelectorAll('.resource-card');
-      const buttons = document.querySelectorAll('.filter-btn');
-
-      // Update active button
-      buttons.forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      // Filter cards
-      cards.forEach(card => {
-        if (category === 'all') {
-          card.style.display = 'block';
-        } else {
-          const cardCategory = card.getAttribute('data-category');
-          card.style.display = cardCategory === category ? 'block' : 'none';
-        }
-      });
-    }
-  </script>
+  <script src="/static/js/resources.js"></script>
 </body>
 </html>
