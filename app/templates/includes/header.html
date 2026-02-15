@@ -7,22 +7,73 @@
     if (logoutLink) {
         logoutLink.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (!confirm('Are you sure you want to log out?')) return;
+            
+            // Create a beautiful modal for logout confirmation
+            const modal = document.createElement('div');
+            modal.className = 'logout-modal';
+            modal.innerHTML = `
+                <div class="logout-modal-content">
+                    <div class="logout-modal-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FB7185" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <h2>See you later!</h2>
+                    <p>Are you sure you want to log out?</p>
+                    <div class="logout-modal-buttons">
+                        <button class="logout-btn-cancel">Cancel</button>
+                        <button class="logout-btn-confirm">Log Out</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
 
-            try {
-                await fetch('/auth/jwt/logout', {
-                    method: 'POST',
-                    credentials: 'include',
-                });
-            } catch (err) {
-                console.error('Logout error:', err);
-            } finally {
-                // Cleanup any legacy tokens to avoid client-side redirects
-                localStorage.removeItem('bearer_token');
-                localStorage.removeItem('company_token');
-                localStorage.removeItem('account_type');
-                window.location.href = '/login';
-            }
+            // Animation for modal appearance
+            requestAnimationFrame(() => {
+                modal.classList.add('active');
+            });
+
+            const cancelBtn = modal.querySelector('.logout-btn-cancel');
+            const confirmBtn = modal.querySelector('.logout-btn-confirm');
+
+            cancelBtn.addEventListener('click', () => {
+                modal.classList.remove('active');
+                setTimeout(() => modal.remove(), 300);
+            });
+
+            confirmBtn.addEventListener('click', async () => {
+                modal.classList.add('logging-out');
+                try {
+                    await fetch('/auth/jwt/logout', {
+                        method: 'POST',
+                        credentials: 'include',
+                    });
+                } catch (err) {
+                    console.error('Logout error:', err);
+                } finally {
+                    // Cleanup any legacy tokens to avoid client-side redirects
+                    localStorage.removeItem('bearer_token');
+                    localStorage.removeItem('company_token');
+                    localStorage.removeItem('account_type');
+                    
+                    // Fade out effect before redirect
+                    document.body.style.opacity = '0';
+                    document.body.style.transition = 'opacity 0.3s ease-out';
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 300);
+                }
+            });
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                    setTimeout(() => modal.remove(), 300);
+                }
+            });
         });
     }
 
