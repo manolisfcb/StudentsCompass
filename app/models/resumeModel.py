@@ -19,3 +19,4 @@ class ResumeModel(Base):
     
     
     user = relationship("User", back_populates="resumes")
+    job_analyses = relationship("JobAnalysisModel", back_populates="resume")

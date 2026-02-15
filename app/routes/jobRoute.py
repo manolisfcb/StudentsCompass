@@ -96,7 +96,7 @@ class JobStatusResponse(BaseModel):
     completed_at: Optional[str] = None
 
 
-async def process_cv_analysis(job_id: UUID, user_id: UUID, session_factory):
+async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, session_factory):
     """Background task to process CV and extract keywords"""
     # Create new session for background task
     async for session in session_factory():
@@ -113,11 +113,32 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, session_factory):
             job.status = JobStatus.PROCESSING
             await session.commit()
             
-            # Get user's latest CV
+            # Check if this resume has already been analyzed before (cache hit)
+            result = await session.execute(
+                select(JobAnalysisModel)
+                .where(JobAnalysisModel.user_id == user_id)
+                .where(JobAnalysisModel.resume_id == resume_id)
+                .where(JobAnalysisModel.status == JobStatus.COMPLETED)
+                .where(JobAnalysisModel.keywords.is_not(None))
+                .where(JobAnalysisModel.id != job_id)
+                .order_by(JobAnalysisModel.completed_at.desc())
+                .limit(1)
+            )
+            cached_job = result.scalar_one_or_none()
+
+            if cached_job and cached_job.keywords:
+                job.status = JobStatus.COMPLETED
+                job.keywords = cached_job.keywords
+                job.completed_at = datetime.utcnow()
+                await session.commit()
+                LOGGER.info(f"Job {job_id} completed from cache (resume_id={resume_id})")
+                return
+
+            # Get specific CV for this job
             result = await session.execute(
                 select(ResumeModel)
                 .where(ResumeModel.user_id == user_id)
-                .order_by(ResumeModel.created_at.desc())
+                .where(ResumeModel.id == resume_id)
                 .limit(1)
             )
             resume = result.scalar_one_or_none()
@@ -127,7 +148,7 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, session_factory):
                 job.error_message = "No CV found"
                 job.completed_at = datetime.utcnow()
                 await session.commit()
-                LOGGER.warning(f"No CV found for user {user_id}")
+                LOGGER.warning(f"No CV found for user {user_id} with resume_id {resume_id}")
                 return
             
             # Download CV from S3
@@ -223,9 +244,45 @@ async def start_cv_analysis(
         if not resume:
             raise HTTPException(status_code=404, detail="No CV found. Please upload your CV first.")
         
+        # If this resume has already been analyzed, return cached job directly
+        result = await session.execute(
+            select(JobAnalysisModel)
+            .where(JobAnalysisModel.user_id == user.id)
+            .where(JobAnalysisModel.resume_id == resume.id)
+            .where(JobAnalysisModel.status == JobStatus.COMPLETED)
+            .where(JobAnalysisModel.keywords.is_not(None))
+            .order_by(JobAnalysisModel.completed_at.desc())
+            .limit(1)
+        )
+        cached_job = result.scalar_one_or_none()
+        if cached_job and cached_job.keywords:
+            return JobInitResponse(
+                job_id=str(cached_job.id),
+                status=cached_job.status.value,
+                message="CV already analyzed. Using cached keywords."
+            )
+
+        # If there's already a running job for this same resume, reuse it
+        result = await session.execute(
+            select(JobAnalysisModel)
+            .where(JobAnalysisModel.user_id == user.id)
+            .where(JobAnalysisModel.resume_id == resume.id)
+            .where(JobAnalysisModel.status.in_([JobStatus.PENDING, JobStatus.PROCESSING]))
+            .order_by(JobAnalysisModel.created_at.desc())
+            .limit(1)
+        )
+        running_job = result.scalar_one_or_none()
+        if running_job:
+            return JobInitResponse(
+                job_id=str(running_job.id),
+                status=running_job.status.value,
+                message="CV analysis already in progress for this resume."
+            )
+
         # Create new job
         job = JobAnalysisModel(
             user_id=user.id,
+            resume_id=resume.id,
             status=JobStatus.PENDING
         )
         session.add(job)
@@ -236,7 +293,7 @@ async def start_cv_analysis(
         
         # Schedule background processing
         from app.db import get_session as get_session_factory
-        background_tasks.add_task(process_cv_analysis, job.id, user.id, get_session_factory)
+        background_tasks.add_task(process_cv_analysis, job.id, user.id, resume.id, get_session_factory)
         
         return JobInitResponse(
             job_id=str(job.id),
@@ -315,15 +372,27 @@ async def get_job_keywords(
                 has_cv=False,
             )
         
-        # Check if there's a recent completed job
+        # Check if there's a completed job for this exact resume
         result = await session.execute(
             select(JobAnalysisModel)
             .where(JobAnalysisModel.user_id == user.id)
+            .where(JobAnalysisModel.resume_id == resume.id)
             .where(JobAnalysisModel.status == JobStatus.COMPLETED)
             .order_by(JobAnalysisModel.completed_at.desc())
             .limit(1)
         )
         last_job = result.scalar_one_or_none()
+
+        # Backward compatibility: if old rows didn't store resume_id, fallback to latest completed
+        if not last_job:
+            result = await session.execute(
+                select(JobAnalysisModel)
+                .where(JobAnalysisModel.user_id == user.id)
+                .where(JobAnalysisModel.status == JobStatus.COMPLETED)
+                .order_by(JobAnalysisModel.completed_at.desc())
+                .limit(1)
+            )
+            last_job = result.scalar_one_or_none()
         
         if last_job and last_job.keywords:
             # Return cached keywords from last successful job
