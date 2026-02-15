@@ -13,7 +13,6 @@ Note: LinkedIn may change markup/endpoint; this scraper is best-effort.
 
 from dataclasses import dataclass
 from typing import List, Optional
-import math
 import time
 import urllib.parse
 import requests
@@ -81,8 +80,9 @@ def fetch_linkedin_jobs(
 	Scrape LinkedIn jobs (guest endpoint). Returns up to `limit` results.
 	"""
 	results: List[JobPosting] = []
+	seen_urls = set()
 	start = 0
-	page_size = 25  # LinkedIn returns ~25 per page
+	page_size = 25  # LinkedIn often returns 10-25 per page
 
 	while len(results) < limit:
 		url = _build_url(keywords, location, start, remote)
@@ -94,11 +94,21 @@ def fetch_linkedin_jobs(
 		if not batch:
 			break
 
-		results.extend(batch)
-		start += page_size
+		new_items = [j for j in batch if j.url and j.url not in seen_urls]
+		for job in new_items:
+			seen_urls.add(job.url)
+			results.append(job)
 
-		if len(batch) < page_size:
-			break  # no more pages
+		increment = len(batch)
+		if increment <= 0 or not new_items:
+			break
+
+		if increment != page_size:
+			page_size = increment
+		start += increment
+
+		if len(results) >= limit:
+			break
 
 		time.sleep(throttle_seconds)
 
