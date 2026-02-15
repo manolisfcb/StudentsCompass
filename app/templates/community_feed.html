@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Comunidad - StudentsCompass</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* ================================================================
+       Community Feed — LinkedIn / Facebook-style social wall
+       ================================================================ */
+
+    /* ── Vars ─────────────────────────────────────────────────── */
+    :root {
+      --clr-teal-dark: #0F766E;
+      --clr-teal-light: #5EEAD4;
+      --clr-bg: #F1F5F9;
+      --clr-card: #FFFFFF;
+      --clr-border: #E2E8F0;
+      --clr-text: #0F172A;
+      --clr-muted: #64748B;
+      --clr-subtle: #475569;
+      --grad: linear-gradient(135deg, var(--clr-teal-dark) 0%, var(--clr-teal-light) 100%);
+      --radius: 12px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    /* ── Page wrapper ────────────────────────────────────────── */
+    .feed-page {
+      padding: 1.5rem;
+      background: var(--clr-bg);
+      min-height: calc(100vh - 64px);
+    }
+
+    .feed-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Back link ───────────────────────────────────────────── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      color: var(--clr-teal-dark); font-weight: 600; font-size: .9rem;
+      text-decoration: none; margin-bottom: 1rem;
+      transition: opacity .2s;
+    }
+    .back-link:hover { opacity: .7; }
+    .back-link svg { width: 18px; height: 18px; }
+
+    /* ── Community banner / header ────────────────────────────── */
+    .community-banner {
+      background: var(--clr-card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--clr-border);
+      padding: 1.5rem; margin-bottom: 1.5rem;
+      display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+    }
+    .banner-icon {
+      width: 64px; height: 64px; border-radius: var(--radius);
+      background: var(--grad);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; flex-shrink: 0;
+    }
+    .banner-info { flex: 1; min-width: 200px; }
+    .banner-info h1 { font-size: 1.5rem; color: var(--clr-text); margin: 0 0 .25rem; }
+    .banner-desc { color: var(--clr-subtle); font-size: .92rem; line-height: 1.5; margin: 0 0 .5rem; }
+    .banner-meta { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; }
+    .banner-stat {
+      font-size: .82rem; color: var(--clr-muted);
+      display: flex; align-items: center; gap: .25rem;
+    }
+    .banner-stat svg { width: 15px; height: 15px; }
+    .banner-status {
+      font-size: .72rem; padding: .2rem .55rem; border-radius: 999px;
+      background: #E0F2F1; color: var(--clr-teal-dark); font-weight: 600;
+    }
+    .banner-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+    .tag {
+      background: #E5E7EB; color: var(--clr-teal-dark);
+      padding: .2rem .65rem; border-radius: 20px;
+      font-size: .75rem; font-weight: 600;
+    }
+    .banner-actions { display: flex; gap: .5rem; align-self: flex-start; flex-shrink: 0; }
+
+    .btn-leave {
+      padding: .6rem 1.2rem;
+      background: white; color: #DC2626;
+      border: 1px solid #FCA5A5; border-radius: 8px;
+      font-weight: 600; cursor: pointer; font-size: .9rem;
+      transition: background .2s, border-color .2s;
+    }
+    .btn-leave:hover { background: #FEF2F2; border-color: #DC2626; }
+    .btn-leave:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-join {
+      padding: .6rem 1.2rem; background: var(--grad);
+      color: white; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer; font-size: .9rem;
+      transition: opacity .2s;
+    }
+    .btn-join:hover { opacity: .9; }
+    .btn-join:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn-primary {
+      padding: .6rem 1.2rem; background: var(--grad);
+      color: white; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer; font-size: .9rem;
+      transition: opacity .2s;
+    }
+    .btn-primary:hover { opacity: .9; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-secondary {
+      padding: .5rem .9rem; border: 1px solid var(--clr-teal-dark);
+      background: white; color: var(--clr-teal-dark);
+      border-radius: 8px; font-weight: 600; cursor: pointer;
+      font-size: .85rem; transition: background .15s;
+    }
+    .btn-secondary:hover { background: #F0FDFA; }
+
+    .btn-ghost {
+      padding: .35rem .7rem; border: none; background: transparent;
+      color: var(--clr-muted); cursor: pointer; font-size: .85rem;
+      display: flex; align-items: center; gap: .3rem;
+      border-radius: 6px; transition: background .15s, color .15s;
+    }
+    .btn-ghost:hover { background: #F1F5F9; color: var(--clr-text); }
+    .btn-ghost.active { color: var(--clr-teal-dark); font-weight: 600; }
+    .btn-ghost svg { width: 18px; height: 18px; }
+
+    /* ── Composer ─────────────────────────────────────────────── */
+    .composer {
+      background: var(--clr-card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--clr-border);
+      padding: 1.25rem; margin-bottom: 1rem;
+    }
+    .composer-title {
+      width: 100%; border: 1px solid var(--clr-border); border-radius: 8px;
+      padding: .55rem .75rem; font-size: .9rem; background: #F8FAFC;
+      color: var(--clr-text); margin-bottom: .5rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .composer-title:focus {
+      border-color: var(--clr-teal-dark);
+      box-shadow: 0 0 0 3px rgba(15,118,110,.12); outline: none;
+    }
+    .composer-body {
+      width: 100%; border: 1px solid var(--clr-border); border-radius: 8px;
+      padding: .65rem .75rem; font-size: .9rem; background: #F8FAFC;
+      color: var(--clr-text); resize: vertical; min-height: 70px;
+      font-family: inherit;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .composer-body:focus {
+      border-color: var(--clr-teal-dark);
+      box-shadow: 0 0 0 3px rgba(15,118,110,.12); outline: none;
+    }
+    .composer-footer {
+      display: flex; justify-content: flex-end; margin-top: .6rem;
+    }
+
+    /* ── Post card ────────────────────────────────────────────── */
+    .post-card {
+      background: var(--clr-card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--clr-border);
+      margin-bottom: 1rem; overflow: hidden;
+    }
+    .post-card__body { padding: 1.25rem; }
+
+    .post-author {
+      display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem;
+    }
+    .post-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--grad);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: .9rem; flex-shrink: 0;
+    }
+    .post-author-info h4 {
+      margin: 0; font-size: .92rem; color: var(--clr-text);
+    }
+    .post-author-info time {
+      font-size: .78rem; color: var(--clr-muted);
+    }
+
+    .post-title {
+      font-size: 1.05rem; font-weight: 600;
+      color: var(--clr-text); margin: 0 0 .4rem;
+    }
+    .post-content {
+      color: var(--clr-subtle); font-size: .92rem;
+      line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* Counters bar */
+    .post-counters {
+      display: flex; justify-content: space-between;
+      padding: .4rem 1.25rem; font-size: .8rem; color: var(--clr-muted);
+      border-top: 1px solid var(--clr-border);
+    }
+
+    /* Actions bar */
+    .post-actions {
+      display: flex; border-top: 1px solid var(--clr-border);
+    }
+    .post-actions .btn-ghost {
+      flex: 1; justify-content: center; padding: .6rem;
+      border-radius: 0;
+    }
+    .post-actions .btn-ghost + .btn-ghost { border-left: 1px solid var(--clr-border); }
+
+    /* ── Comments section ────────────────────────────────────── */
+    .comments-section {
+      display: none; padding: 0 1.25rem 1rem;
+      border-top: 1px solid var(--clr-border);
+    }
+    .comments-section.open { display: block; }
+
+    .comment-item {
+      display: flex; gap: .5rem; padding: .6rem 0;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #E0F2F1; color: var(--clr-teal-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 700; flex-shrink: 0;
+    }
+    .comment-body { flex: 1; min-width: 0; }
+    .comment-body strong { font-size: .82rem; color: var(--clr-text); }
+    .comment-body time { font-size: .72rem; color: var(--clr-muted); margin-left: .4rem; }
+    .comment-body p { margin: .15rem 0 0; font-size: .85rem; color: var(--clr-subtle); }
+
+    .comment-form {
+      display: flex; gap: .5rem; margin-top: .5rem; padding-top: .5rem;
+      border-top: 1px solid #F1F5F9;
+    }
+    .comment-form input {
+      flex: 1; min-width: 0; border: 1px solid var(--clr-border);
+      border-radius: 20px; padding: .5rem .85rem; font-size: .85rem;
+      background: #F8FAFC; color: var(--clr-text);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .comment-form input:focus {
+      border-color: var(--clr-teal-dark);
+      box-shadow: 0 0 0 3px rgba(15,118,110,.12); outline: none;
+    }
+    .comment-form button {
+      padding: .5rem .9rem; background: var(--grad);
+      color: white; border: none; border-radius: 20px;
+      font-weight: 600; font-size: .82rem; cursor: pointer;
+      transition: opacity .2s;
+    }
+    .comment-form button:hover { opacity: .9; }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .feed-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+
+    .sidebar-card {
+      background: var(--clr-card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--clr-border);
+      padding: 1.1rem;
+    }
+    .sidebar-card h3 {
+      font-size: .95rem; color: var(--clr-text);
+      margin: 0 0 .6rem; display: flex; align-items: center; gap: .35rem;
+    }
+    .sidebar-card h3 svg { width: 17px; height: 17px; color: var(--clr-teal-dark); }
+    .sidebar-card p { font-size: .85rem; color: var(--clr-subtle); line-height: 1.5; margin: 0; }
+    .sidebar-card ul {
+      list-style: none; padding: 0; margin: .4rem 0 0;
+      font-size: .85rem; color: var(--clr-subtle);
+    }
+    .sidebar-card ul li { padding: .25rem 0; display: flex; align-items: center; gap: .3rem; }
+    .sidebar-card ul li::before { content: '•'; color: var(--clr-teal-dark); font-weight: 700; }
+    .sidebar-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+
+    /* ── Empty & loading states ───────────────────────────────── */
+    .empty-feed {
+      text-align: center; padding: 3rem 1.5rem;
+      background: var(--clr-card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--clr-border);
+    }
+    .empty-feed svg { width: 56px; height: 56px; color: #CBD5E1; margin-bottom: .8rem; }
+    .empty-feed h3 { font-size: 1.1rem; color: var(--clr-text); margin: 0 0 .3rem; }
+    .empty-feed p { font-size: .9rem; color: var(--clr-muted); }
+
+    .loading-state {
+      text-align: center; padding: 2rem;
+      color: var(--clr-muted); font-size: .95rem;
+    }
+
+    /* Gate (not-member view) */
+    .gate-card {
+      text-align: center; padding: 3rem 2rem;
+      background: var(--clr-card); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); border: 1px solid var(--clr-border);
+      max-width: 480px; margin: 3rem auto;
+    }
+    .gate-card svg { width: 64px; height: 64px; color: #CBD5E1; margin-bottom: 1rem; }
+    .gate-card h2 { font-size: 1.3rem; color: var(--clr-text); margin: 0 0 .5rem; }
+    .gate-card p { color: var(--clr-muted); font-size: .95rem; margin-bottom: 1.2rem; }
+
+    /* ── Toast ────────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--clr-text); color: white;
+      padding: .75rem 1.2rem; border-radius: 8px;
+      font-size: .88rem; box-shadow: var(--shadow-md);
+      opacity: 0; transform: translateY(12px);
+      transition: opacity .3s, transform .3s;
+      z-index: 100; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #DC2626; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .feed-layout { grid-template-columns: 1fr; }
+      .feed-sidebar { order: -1; }
+      .community-banner { flex-direction: column; }
+    }
+    @media (max-width: 480px) {
+      .feed-page { padding: .75rem; }
+    }
+  </style>
+</head>
+
+<body>
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <div class="feed-page">
+
+        <!-- Back link -->
+        <a href="/community" class="back-link" aria-label="Volver a comunidades">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Comunidades
+        </a>
+
+        <!-- Loading -->
+        <div id="loading" class="loading-state">Cargando comunidad…</div>
+
+        <!-- Main feed (hidden until loaded) -->
+        <div id="feed-wrapper" style="display:none;">
+
+          <!-- Banner -->
+          <div id="community-banner" class="community-banner">
+            <div id="banner-icon" class="banner-icon">👥</div>
+            <div class="banner-info">
+              <h1 id="banner-name">—</h1>
+              <p id="banner-desc" class="banner-desc"></p>
+              <div class="banner-meta">
+                <span id="banner-members" class="banner-stat">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 00-3.87-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+                  </svg>
+                  <span>0 miembros</span>
+                </span>
+                <span id="banner-status" class="banner-status">Active</span>
+              </div>
+              <div id="banner-tags" class="banner-tags"></div>
+            </div>
+            <div class="banner-actions">
+              <button id="banner-join-btn" class="btn-join" style="display:none;">Unirse</button>
+              <button id="banner-leave-btn" class="btn-leave" style="display:none;">Salir</button>
+            </div>
+          </div>
+
+          <!-- Gate CTA (non-member, shown below banner) -->
+          <div id="gate" style="display:none;">
+            <div class="gate-card">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+              </svg>
+              <h2>Únete a esta comunidad</h2>
+              <p>Participa en las conversaciones, publica y conecta con otros miembros.</p>
+              <button class="btn-primary" onclick="document.getElementById('banner-join-btn').click()">Unirse a la comunidad</button>
+            </div>
+          </div>
+
+          <!-- 2-column layout -->
+          <div id="feed-layout" class="feed-layout">
+            <div class="feed-main">
+              <!-- Composer -->
+              <div class="composer" id="composer">
+                <input type="text" id="compose-title" class="composer-title" placeholder="Título (opcional)" aria-label="Título del post">
+                <textarea id="compose-body" class="composer-body" placeholder="¿Qué quieres compartir con la comunidad?" rows="3" aria-label="Contenido del post"></textarea>
+                <div class="composer-footer">
+                  <button id="compose-submit" class="btn-primary" disabled>Publicar</button>
+                </div>
+              </div>
+
+              <!-- Feed list -->
+              <div id="feed-list"></div>
+
+              <!-- Empty feed -->
+              <div id="feed-empty" class="empty-feed" style="display:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+                </svg>
+                <h3>No hay publicaciones todavía</h3>
+                <p>¡Sé el primero en compartir algo con la comunidad!</p>
+              </div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="feed-sidebar">
+              <div class="sidebar-card">
+                <h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+                  </svg>
+                  Acerca de
+                </h3>
+                <p id="sidebar-about">—</p>
+              </div>
+
+              <div class="sidebar-card">
+                <h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                  </svg>
+                  Reglas
+                </h3>
+                <ul>
+                  <li>Sé respetuoso con todos los miembros</li>
+                  <li>No spam ni contenido ofensivo</li>
+                  <li>Comparte contenido relevante</li>
+                  <li>Ayuda y colabora con la comunidad</li>
+                </ul>
+              </div>
+
+              <div class="sidebar-card">
+                <h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/>
+                  </svg>
+                  Tags
+                </h3>
+                <div id="sidebar-tags" class="sidebar-tags"></div>
+              </div>
+            </aside>
+          </div>
+
+        </div><!-- /feed-wrapper -->
+
+      </div><!-- /feed-page -->
+    </main>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  {% include "includes/footer.html" %}
+
+  <script>
+    /* ================================================================
+       Community Feed — JS
+       ================================================================ */
+
+    /* ── Helpers ──────────────────────────────────────────────── */
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str ?? '';
+      return d.innerHTML;
+    }
+
+    function timeAgo(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1)  return 'Ahora mismo';
+      if (mins < 60) return `hace ${mins} min`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `hace ${hrs}h`;
+      const days = Math.floor(hrs / 24);
+      if (days < 7) return `hace ${days}d`;
+      return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function initials(name) {
+      return name.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    async function apiFetch(url, opts = {}) {
+      return fetch(url, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+        ...opts,
+      });
+    }
+
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      requestAnimationFrame(() => t.classList.add('show'));
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* ── Get community ID from URL ───────────────────────────── */
+    const pathParts = window.location.pathname.split('/');
+    const COMMUNITY_ID = pathParts[pathParts.length - 1];
+
+    /* ── DOM refs ─────────────────────────────────────────────── */
+    const $loading     = document.getElementById('loading');
+    const $gate        = document.getElementById('gate');
+    const $feedWrap    = document.getElementById('feed-wrapper');
+    const $bannerIcon  = document.getElementById('banner-icon');
+    const $bannerName  = document.getElementById('banner-name');
+    const $bannerDesc  = document.getElementById('banner-desc');
+    const $bannerMemb  = document.getElementById('banner-members');
+    const $bannerStat  = document.getElementById('banner-status');
+    const $bannerTags  = document.getElementById('banner-tags');
+    const $sideAbout   = document.getElementById('sidebar-about');
+    const $sideTags    = document.getElementById('sidebar-tags');
+    const $bannerJoin  = document.getElementById('banner-join-btn');
+    const $bannerLeave = document.getElementById('banner-leave-btn');
+    const $feedLayout  = document.getElementById('feed-layout');
+    const $composer    = document.getElementById('composer');
+    const $compTitle   = document.getElementById('compose-title');
+    const $compBody    = document.getElementById('compose-body');
+    const $compSubmit  = document.getElementById('compose-submit');
+    const $feedList    = document.getElementById('feed-list');
+    const $feedEmpty   = document.getElementById('feed-empty');
+
+    let communityData = null;
+    let isMember = false;
+
+    /* ── Init ────────────────────────────────────────────────── */
+    async function init() {
+      try {
+        /* 1) Load community info */
+        const cRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}`);
+        if (cRes.status === 401) { window.location.href = '/login'; return; }
+        if (!cRes.ok) { showToast('Comunidad no encontrada', true); return; }
+        communityData = await cRes.json();
+
+        /* 2) Check membership */
+        const mRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/membership`);
+        const mData = mRes.ok ? await mRes.json() : { is_member: false };
+        isMember = mData.is_member;
+
+        $loading.style.display = 'none';
+        renderBanner();
+        updateMembershipUI();
+
+        $feedWrap.style.display = 'block';
+        if (isMember) {
+          await loadFeed();
+        }
+
+      } catch (err) {
+        console.error(err);
+        showToast('Error al cargar la comunidad', true);
+      }
+    }
+
+    /* ── Render banner ───────────────────────────────────────── */
+    function renderBanner() {
+      const c = communityData;
+      document.title = `${c.name} - StudentsCompass`;
+      $bannerIcon.textContent = c.icon || '👥';
+      $bannerName.textContent = c.name;
+      $bannerDesc.textContent = c.description || '';
+      $bannerMemb.querySelector('span').textContent = `${c.member_count ?? 0} miembros`;
+      $bannerStat.textContent = c.activity_status || 'Active';
+
+      const tagsHtml = (c.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+      $bannerTags.innerHTML = tagsHtml;
+
+      /* Sidebar */
+      $sideAbout.textContent = c.description || 'Sin descripción disponible.';
+      $sideTags.innerHTML = tagsHtml || '<span style="color:#94A3B8;font-size:.85rem;">Sin tags</span>';
+    }
+
+    /* ── Membership UI ─────────────────────────────────────── */
+    function updateMembershipUI() {
+      if (isMember) {
+        $bannerJoin.style.display = 'none';
+        $bannerLeave.style.display = 'inline-flex';
+        $composer.style.display = '';
+        $gate.style.display = 'none';
+        $feedLayout.style.display = '';
+        /* hide leave for creator */
+        if (communityData && communityData.created_by === getCurrentUserId()) {
+          $bannerLeave.style.display = 'none';
+        }
+      } else {
+        $bannerJoin.style.display = 'inline-flex';
+        $bannerLeave.style.display = 'none';
+        $composer.style.display = 'none';
+        $feedEmpty.style.display = 'none';
+        $feedList.innerHTML = '';
+        $feedLayout.style.display = 'none';
+        $gate.style.display = 'block';
+      }
+    }
+
+    function getCurrentUserId() {
+      /* Best-effort: read from cookie or return empty so comparison fails */
+      return null;
+    }
+
+    /* Banner: Join */
+    $bannerJoin.addEventListener('click', async () => {
+      $bannerJoin.disabled = true;
+      $bannerJoin.textContent = 'Uniéndose…';
+      const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/join`, { method: 'POST' });
+      if (!res.ok && res.status !== 409) {
+        showToast('No se pudo unir a la comunidad', true);
+        $bannerJoin.disabled = false;
+        $bannerJoin.textContent = 'Unirse';
+        return;
+      }
+      isMember = true;
+      $bannerJoin.disabled = false;
+      $bannerJoin.textContent = 'Unirse';
+      /* Refresh community */
+      const cRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}`);
+      if (cRes.ok) { communityData = await cRes.json(); renderBanner(); }
+      updateMembershipUI();
+      showToast('¡Te uniste a la comunidad!');
+      await loadFeed();
+    });
+
+    /* Banner: Leave */
+    $bannerLeave.addEventListener('click', async () => {
+      if (!confirm('¿Estás seguro de que quieres salir de esta comunidad?')) return;
+      $bannerLeave.disabled = true;
+      $bannerLeave.textContent = 'Saliendo…';
+      const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/leave`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.detail || 'No se pudo salir de la comunidad', true);
+        $bannerLeave.disabled = false;
+        $bannerLeave.textContent = 'Salir';
+        return;
+      }
+      isMember = false;
+      $bannerLeave.disabled = false;
+      $bannerLeave.textContent = 'Salir';
+      /* Refresh community */
+      const cRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}`);
+      if (cRes.ok) { communityData = await cRes.json(); renderBanner(); }
+      updateMembershipUI();
+      showToast('Has salido de la comunidad');
+    });
+
+    /* ── Load feed ───────────────────────────────────────────── */
+    async function loadFeed() {
+      $feedList.innerHTML = '';
+      $feedEmpty.style.display = 'none';
+
+      const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/posts/enriched`);
+      if (!res.ok) { showToast('No se pudieron cargar los posts', true); return; }
+
+      const posts = await res.json();
+      if (!posts.length) { $feedEmpty.style.display = 'block'; return; }
+      posts.forEach(p => $feedList.appendChild(createPostCard(p)));
+    }
+
+    /* ── Create post card ────────────────────────────────────── */
+    function createPostCard(post) {
+      const card = document.createElement('article');
+      card.className = 'post-card';
+      card.setAttribute('aria-label', `Post de ${escapeHtml(post.author_name)}`);
+
+      const avatar = initials(post.author_name);
+      const liked = post.liked_by_me;
+
+      card.innerHTML = `
+        <div class="post-card__body">
+          <div class="post-author">
+            <div class="post-avatar">${escapeHtml(avatar)}</div>
+            <div class="post-author-info">
+              <h4>${escapeHtml(post.author_name)}</h4>
+              <time datetime="${post.created_at}">${timeAgo(post.created_at)}</time>
+            </div>
+          </div>
+          ${post.title ? `<h3 class="post-title">${escapeHtml(post.title)}</h3>` : ''}
+          <p class="post-content">${escapeHtml(post.content)}</p>
+        </div>
+        <div class="post-counters">
+          <span data-like-count>${post.like_count} me gusta</span>
+          <span data-comment-count>${post.comment_count} comentarios</span>
+        </div>
+        <div class="post-actions">
+          <button class="btn-ghost${liked ? ' active' : ''}" data-like aria-pressed="${liked}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="${liked ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3.06a.5.5 0 01.5-.55 2.234 2.234 0 012.013 1.262c.349.694.523 1.46.523 2.227 0 .753-.14 1.46-.397 2.106a.5.5 0 00.471.682h3.036c1.067 0 1.935.866 1.869 1.932a18.27 18.27 0 01-2.639 8.29c-.267.434-.713.692-1.2.692H13.5m-5.25 0A2.25 2.25 0 016 19.5H4.5A2.25 2.25 0 012.25 17.25V11.25A2.25 2.25 0 014.5 9h1.086c.53 0 1.04-.211 1.414-.586L8.25 7.17"/>
+            </svg>
+            Me gusta
+          </button>
+          <button class="btn-ghost" data-toggle-comments>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+            </svg>
+            Comentar
+          </button>
+        </div>
+        <div class="comments-section" data-comments-section>
+          <div data-comments-list></div>
+          <form class="comment-form" data-comment-form>
+            <input type="text" placeholder="Escribe un comentario…" required aria-label="Escribe un comentario">
+            <button type="submit">Enviar</button>
+          </form>
+        </div>
+      `;
+
+      /* Like toggle */
+      const likeBtn = card.querySelector('[data-like]');
+      const likeCountEl = card.querySelector('[data-like-count]');
+      let localLiked = liked;
+      let localLikeCount = post.like_count;
+
+      likeBtn.addEventListener('click', async () => {
+        const method = localLiked ? 'DELETE' : 'POST';
+        const res = await apiFetch(`/api/v1/community-posts/${post.id}/likes`, { method });
+        if (res.ok || res.status === 409) {
+          localLiked = !localLiked;
+          localLikeCount += localLiked ? 1 : -1;
+          likeBtn.classList.toggle('active', localLiked);
+          likeBtn.setAttribute('aria-pressed', String(localLiked));
+          likeBtn.querySelector('svg').setAttribute('fill', localLiked ? 'currentColor' : 'none');
+          likeCountEl.textContent = `${localLikeCount} me gusta`;
+        } else {
+          showToast('No se pudo procesar el like', true);
+        }
+      });
+
+      /* Toggle comments */
+      const toggleBtn = card.querySelector('[data-toggle-comments]');
+      const commentsSection = card.querySelector('[data-comments-section]');
+      const commentsList = card.querySelector('[data-comments-list]');
+      const commentForm = card.querySelector('[data-comment-form]');
+      const commentInput = commentForm.querySelector('input');
+      const commentCountEl = card.querySelector('[data-comment-count]');
+      let localCommentCount = post.comment_count;
+      let commentsLoaded = false;
+
+      toggleBtn.addEventListener('click', async () => {
+        const isOpen = commentsSection.classList.toggle('open');
+        if (isOpen && !commentsLoaded) {
+          await loadComments(post.id, commentsList);
+          commentsLoaded = true;
+        }
+      });
+
+      /* Submit comment */
+      commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = commentInput.value.trim();
+        if (!content) return;
+
+        const res = await apiFetch(`/api/v1/community-posts/${post.id}/comments`, {
+          method: 'POST',
+          body: JSON.stringify({ content }),
+        });
+        if (!res.ok) { showToast('No se pudo enviar el comentario', true); return; }
+
+        commentInput.value = '';
+        localCommentCount++;
+        commentCountEl.textContent = `${localCommentCount} comentarios`;
+        await loadComments(post.id, commentsList);
+      });
+
+      return card;
+    }
+
+    /* ── Load comments ───────────────────────────────────────── */
+    async function loadComments(postId, container) {
+      container.innerHTML = '<p style="font-size:.85rem;color:#94A3B8;padding:.5rem 0;">Cargando…</p>';
+
+      const res = await apiFetch(`/api/v1/community-posts/${postId}/comments/enriched`);
+      if (!res.ok) {
+        container.innerHTML = '<p style="font-size:.85rem;color:#DC2626;">Error al cargar comentarios.</p>';
+        return;
+      }
+
+      const comments = await res.json();
+      if (!comments.length) {
+        container.innerHTML = '<p style="font-size:.85rem;color:#94A3B8;padding:.4rem 0;">Sin comentarios aún.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      comments.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'comment-item';
+        el.innerHTML = `
+          <div class="comment-avatar">${escapeHtml(initials(c.author_name))}</div>
+          <div class="comment-body">
+            <strong>${escapeHtml(c.author_name)}</strong>
+            <time datetime="${c.created_at}">${timeAgo(c.created_at)}</time>
+            <p>${escapeHtml(c.content)}</p>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    /* ── Composer ─────────────────────────────────────────────── */
+    $compBody.addEventListener('input', () => {
+      $compSubmit.disabled = !$compBody.value.trim();
+    });
+
+    $compSubmit.addEventListener('click', async () => {
+      const content = $compBody.value.trim();
+      if (!content) return;
+      $compSubmit.disabled = true;
+
+      const title = $compTitle.value.trim();
+      const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/posts`, {
+        method: 'POST',
+        body: JSON.stringify({ title: title || null, content }),
+      });
+
+      if (!res.ok) {
+        showToast('No se pudo publicar', true);
+        $compSubmit.disabled = false;
+        return;
+      }
+
+      $compTitle.value = '';
+      $compBody.value = '';
+      $compSubmit.disabled = true;
+      showToast('¡Post publicado!');
+      await loadFeed();
+    });
+
+    /* ── Start ───────────────────────────────────────────────── */
+    init();
+  </script>
+</body>
+
+</html>

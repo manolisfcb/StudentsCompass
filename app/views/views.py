@@ -81,6 +81,13 @@ async def community(request: Request, user: Optional[User] = Depends(current_act
     return templates.TemplateResponse("community.html", {"request": request})
 
 
+@router.get("/community/{community_id}")
+async def community_feed(request: Request, community_id: str, user: Optional[User] = Depends(current_active_user_optional)):
+    if user is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("community_feed.html", {"request": request})
+
+
 @router.get("/jobs")
 async def jobs_board(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:

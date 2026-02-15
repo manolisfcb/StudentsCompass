@@ -14,6 +14,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     last_name = Column(String, nullable=True)
     
     post = relationship("PostModel", back_populates="user")
+    communities_created = relationship("CommunityModel", back_populates="creator")
+    community_memberships = relationship("CommunityMemberModel", back_populates="user", cascade="all, delete-orphan")
+    community_posts = relationship("CommunityPostModel", back_populates="user", cascade="all, delete-orphan")
+    community_post_likes = relationship("CommunityPostLikeModel", back_populates="user", cascade="all, delete-orphan")
+    community_post_comments = relationship("CommunityPostCommentModel", back_populates="user", cascade="all, delete-orphan")
     questionnaires = relationship("UserQuestionnaire", back_populates="user")
     resumes = relationship("ResumeModel", back_populates="user")
     job_analyses = relationship("JobAnalysisModel", back_populates="user", lazy="dynamic")
