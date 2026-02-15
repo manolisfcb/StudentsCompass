@@ -4,176 +4,260 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Community - StudentsCompass</title>
+  <title>Comunidades - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
-    .communities-container {
-      padding: 2rem;
+    /* ── Layout ──────────────────────────────────────────────── */
+    .communities-container { padding: 2rem; }
+
+    .communities-header { margin-bottom: 1.5rem; }
+    .communities-header h2 { font-size: 2rem; color: #0F172A; margin-bottom: 0.3rem; }
+    .communities-header p  { color: #475569; font-size: 1.05rem; }
+
+    .communities-header-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
     }
 
-    .communities-header {
-      margin-bottom: 2rem;
+    /* ── Search & filter bar ─────────────────────────────────── */
+    .filter-bar {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;
     }
-
-    .communities-header h2 {
-      font-size: 2rem;
-      color: #0F172A;
-      margin-bottom: 0.5rem;
+    .filter-bar input,
+    .filter-bar select {
+      padding: 0.6rem 0.9rem;
+      border: 1px solid #E2E8F0; border-radius: 10px;
+      font-size: 0.9rem; background: #F8FAFC; color: #0F172A;
+      transition: border-color .2s, box-shadow .2s;
     }
-
-    .communities-header p {
-      color: #475569;
-      font-size: 1.1rem;
+    .filter-bar input:focus,
+    .filter-bar select:focus {
+      border-color: #0F766E;
+      box-shadow: 0 0 0 3px rgba(15,118,110,.15);
+      outline: none;
     }
+    .filter-bar input { flex: 1; min-width: 200px; }
 
+    /* ── Grid de cards ───────────────────────────────────────── */
     .communities-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1.5rem;
-      margin-top: 2rem;
+      align-items: stretch;
     }
 
     .community-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background: white; border-radius: 12px; padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      border: 1px solid #E2E8F0;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      transition: transform .25s ease, box-shadow .25s ease;
       cursor: pointer;
     }
-
     .community-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,.1);
     }
 
     .community-icon {
-      width: 60px;
-      height: 60px;
+      width: 56px; height: 56px;
       background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-      font-size: 2rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; flex-shrink: 0;
     }
 
-    .community-card.python .community-icon {
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-    }
-
-    .community-card.r .community-icon {
-      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
-    }
-
-    .community-card.sql .community-icon {
-      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
-    }
-
-    .community-card.tableau .community-icon {
-      background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
-    }
-
-    .community-card.powerbi .community-icon {
-      background: linear-gradient(135deg, #FB7185 0%, #FBBF24 100%);
-    }
-
-    .community-card.excel .community-icon {
-      background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-    }
-
-    .community-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #0F172A;
-      margin-bottom: 0.5rem;
-    }
+    .community-title { font-size: 1.2rem; font-weight: 600; color: #0F172A; }
 
     .community-description {
-      color: #475569;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: 1rem;
+      color: #475569; font-size: 0.92rem; line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+      min-height: calc(2 * 1.5 * .92rem);
     }
 
-    .community-stats {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
+    .community-stats { display: flex; gap: 1rem; flex-wrap: wrap; }
     .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.85rem;
-      color: #475569;
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.85rem; color: #475569;
     }
-
-    .stat-item svg {
-      width: 16px;
-      height: 16px;
-    }
+    .stat-item svg { width: 16px; height: 16px; }
 
     .community-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      min-height: 1.6rem; max-height: 3.8rem; overflow: hidden;
     }
-
     .tag {
-      background: #E5E7EB;
-      color: #0F766E;
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
+      background: #E5E7EB; color: #0F766E;
+      padding: 0.25rem 0.7rem; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 600;
     }
 
     .join-btn {
-      width: 100%;
-      padding: 0.75rem;
+      width: 100%; padding: 0.7rem;
       background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.3s ease;
+      color: white; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer;
+      transition: opacity .2s;
+      margin-top: auto; flex-shrink: 0;
+    }
+    .join-btn:hover { opacity: .9; }
+    .join-btn.joined {
+      background: #E0F2F1; color: #0F766E;
+      cursor: default;
     }
 
-    .join-btn:hover {
-      opacity: 0.9;
+    .community-status {
+      font-size: .72rem; padding: .2rem .55rem;
+      border-radius: 999px; background: #E0F2F1;
+      color: #0F766E; font-weight: 600;
     }
 
-    .filter-section {
-      margin-bottom: 2rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
+    /* ── Empty state ─────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; color: #64748B; padding: 3rem 1rem;
+    }
+    .empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; color: #CBD5E1; }
+
+    /* ── Create button ───────────────────────────────────────── */
+    .create-community-btn {
+      padding: .7rem 1.2rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white; border: none; border-radius: 10px;
+      font-weight: 600; cursor: pointer;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .create-community-btn:hover { opacity: .9; }
+
+    /* ── Modal (crear comunidad) ─────────────────────────────── */
+    body.modal-open { overflow: hidden; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.6);
+      display: none; align-items: center; justify-content: center;
+      padding: 1.5rem; z-index: 50;
     }
 
-    .filter-btn {
-      padding: 0.6rem 1.2rem;
-      border: 2px solid #0F766E;
-      background: white;
-      color: #0F766E;
-      border-radius: 8px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .modal *, .modal *::before, .modal *::after { box-sizing: border-box; }
+
+    .modal {
+      background: white; border-radius: 16px;
+      padding: 0; width: 100%; max-width: 520px; max-height: 90vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(15,23,42,.2);
     }
 
-    .filter-btn.active {
-      background: #0F766E;
-      color: white;
+    .modal__header {
+      position: sticky; top: 0; background: white; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem; border-bottom: 1px solid #E2E8F0;
+    }
+    .modal__title { margin: 0; font-size: 1.25rem; color: #0F172A; }
+    .modal__close {
+      border: none; background: transparent;
+      font-size: 1.4rem; cursor: pointer; color: #475569;
     }
 
-    .filter-btn:hover {
-      background: #0F766E;
-      color: white;
+    .modal__body {
+      padding: 1rem 1.25rem 1.25rem;
+      flex: 1 1 auto; min-height: 0;
+      overflow-y: auto; overflow-x: hidden;
+    }
+
+    .modal__footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #E2E8F0;
+      background: white; flex-shrink: 0;
+    }
+    .modal__footer .primary-btn { width: 100%; }
+
+    .community-form { display: grid; gap: .75rem; }
+
+    .form__group { display: flex; flex-direction: column; gap: .4rem; }
+    .form__label { font-size: .9rem; font-weight: 600; color: #0F172A; }
+
+    .form__field {
+      display: block; width: 100%; max-width: 100%;
+      border: 1px solid #E2E8F0; border-radius: 12px;
+      padding: .75rem .9rem; font-size: .95rem;
+      background: #F8FAFC; color: #0F172A;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form__field:focus {
+      border-color: #0F766E;
+      box-shadow: 0 0 0 3px rgba(15,118,110,.15);
+      outline: none;
+    }
+
+    .primary-btn {
+      padding: .7rem 1rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer;
+    }
+
+    /* ── Icon Input Group ────────────────────────────────────── */
+    .icon-input { display: flex; flex-direction: column; gap: .5rem; }
+    .icon-input__group {
+      display: flex; align-items: stretch;
+      border: 1px solid #E2E8F0; border-radius: 12px;
+      background: #F8FAFC; overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .icon-input__group:focus-within {
+      border-color: #0F766E;
+      box-shadow: 0 0 0 3px rgba(15,118,110,.15);
+    }
+    .icon-input__preview {
+      width: 44px; flex-shrink: 0;
+      display: grid; place-items: center; font-size: 1.25rem;
+      background: #F1F5F9; border-right: 1px solid #E2E8F0;
+    }
+    .icon-input__field {
+      flex: 1; min-width: 0; border: none; background: transparent;
+      padding: .75rem .8rem; font-size: .95rem; color: #0F172A; outline: none;
+    }
+    .icon-input__field::placeholder { color: #94A3B8; }
+    .icon-input__button {
+      flex-shrink: 0; padding: 0 1rem; border: none;
+      border-left: 1px solid #E2E8F0; background: white;
+      color: #0F766E; font-weight: 600; font-size: .875rem;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s;
+    }
+    .icon-input__button:hover { background: #F0FDFA; }
+    .icon-input__button:focus-visible { outline: 2px solid #0F766E; outline-offset: -2px; }
+
+    /* ── Emoji picker ────────────────────────────────────────── */
+    .emoji-picker {
+      display: none; border: 1px solid #E2E8F0; border-radius: 12px;
+      background: white; box-shadow: 0 10px 30px rgba(15,23,42,.15); overflow: hidden;
+    }
+    .emoji-picker__header {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .6rem; border-bottom: 1px solid #E2E8F0;
+    }
+    .emoji-picker__search {
+      flex: 1; border: 1px solid #E2E8F0; border-radius: 10px; padding: .5rem .7rem;
+    }
+    .emoji-picker__search:focus { outline: 2px solid #38BDF8; outline-offset: 2px; }
+    .emoji-picker__close { border: none; background: transparent; font-size: 1.2rem; cursor: pointer; }
+    .emoji-picker__grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(36px,1fr));
+      gap: .4rem; padding: .6rem; max-height: 180px; overflow-y: auto;
+    }
+    .emoji-picker__item {
+      font-size: 1.2rem; border-radius: 8px; padding: .2rem;
+      text-align: center; cursor: pointer; border: none; background: transparent;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .communities-container { padding: 1rem; }
+      .communities-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -186,240 +270,310 @@
 
     <main class="dashboard">
       <div class="communities-container">
+        <!-- Header -->
         <div class="communities-header">
-          <h2>Data Analytics Communities</h2>
-          <p>Connect with students and professionals passionate about data analysis</p>
+          <div class="communities-header-row">
+            <div>
+              <h2>Comunidades</h2>
+              <p>Explora, crea y participa en comunidades con otros estudiantes.</p>
+            </div>
+            <button id="open-create-modal" class="create-community-btn">+ Crear comunidad</button>
+          </div>
         </div>
 
-        <div class="filter-section">
-          <button class="filter-btn active" onclick="filterCommunities('all')">All</button>
-          <button class="filter-btn" onclick="filterCommunities('programming')">Programming</button>
-          <button class="filter-btn" onclick="filterCommunities('visualization')">Visualization</button>
-          <button class="filter-btn" onclick="filterCommunities('database')">Databases</button>
+        <!-- Filters -->
+        <div class="filter-bar">
+          <input type="text" id="search-input" placeholder="Buscar comunidad..." aria-label="Buscar comunidad">
+          <select id="sort-select" aria-label="Ordenar por">
+            <option value="recent">Más recientes</option>
+            <option value="members">Más miembros</option>
+            <option value="name">Nombre A-Z</option>
+          </select>
         </div>
 
-        <div class="communities-grid">
-          <!-- Python for Data Analytics -->
-          <div class="community-card python" data-category="programming">
-            <div class="community-icon">🐍</div>
-            <h3 class="community-title">Python Data Analytics</h3>
-            <p class="community-description">
-              Learn to use Python for data analysis with pandas, NumPy, and matplotlib. Perfect for beginners and experts.
-            </p>
-            <div class="community-stats">
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>1,234 miembros</span>
-              </div>
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Very active</span>
-              </div>
-            </div>
-            <div class="community-tags">
-              <span class="tag">Python</span>
-              <span class="tag">Pandas</span>
-              <span class="tag">Data Science</span>
-            </div>
-            <button class="join-btn" onclick="joinCommunity('python')">Join</button>
-          </div>
+        <!-- Grid -->
+        <div id="communities-grid" class="communities-grid"></div>
 
-          <!-- R for Data Analytics -->
-          <div class="community-card r" data-category="programming">
-            <div class="community-icon">📊</div>
-            <h3 class="community-title">R Analytics Community</h3>
-            <p class="community-description">
-              Master R for statistical analysis and visualization. Community focused on tidyverse and ggplot2.
-            </p>
-            <div class="community-stats">
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>892 miembros</span>
-              </div>
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Active</span>
-              </div>
-            </div>
-            <div class="community-tags">
-              <span class="tag">R</span>
-              <span class="tag">Statistics</span>
-              <span class="tag">ggplot2</span>
-            </div>
-            <button class="join-btn" onclick="joinCommunity('r')">Join</button>
-          </div>
-
-          <!-- SQL for Data Analytics -->
-          <div class="community-card sql" data-category="database">
-            <div class="community-icon">🗄️</div>
-            <h3 class="community-title">SQL & Database Analytics</h3>
-            <p class="community-description">
-              Learn to query, manipulate and analyze data using SQL. From beginner to advanced queries.
-            </p>
-            <div class="community-stats">
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>1,567 miembros</span>
-              </div>
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Very active</span>
-              </div>
-            </div>
-            <div class="community-tags">
-              <span class="tag">SQL</span>
-              <span class="tag">PostgreSQL</span>
-              <span class="tag">MySQL</span>
-            </div>
-            <button class="join-btn" onclick="joinCommunity('sql')">Join</button>
-          </div>
-
-          <!-- Tableau Community -->
-          <div class="community-card tableau" data-category="visualization">
-            <div class="community-icon">📈</div>
-            <h3 class="community-title">Tableau Visualization</h3>
-            <p class="community-description">
-              Create impactful visualizations with Tableau. Share dashboards and learn advanced techniques.
-            </p>
-            <div class="community-stats">
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>756 miembros</span>
-              </div>
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Active</span>
-              </div>
-            </div>
-            <div class="community-tags">
-              <span class="tag">Tableau</span>
-              <span class="tag">Dashboards</span>
-              <span class="tag">Viz</span>
-            </div>
-            <button class="join-btn" onclick="joinCommunity('tableau')">Join</button>
-          </div>
-
-          <!-- Power BI Community -->
-          <div class="community-card powerbi" data-category="visualization">
-            <div class="community-icon">📉</div>
-            <h3 class="community-title">Power BI Analytics</h3>
-            <p class="community-description">
-              Master Power BI for Business Intelligence. From DAX to interactive visualizations.
-            </p>
-            <div class="community-stats">
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>1,089 miembros</span>
-              </div>
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Very active</span>
-              </div>
-            </div>
-            <div class="community-tags">
-              <span class="tag">Power BI</span>
-              <span class="tag">DAX</span>
-              <span class="tag">Business Intelligence</span>
-            </div>
-            <button class="join-btn" onclick="joinCommunity('powerbi')">Join</button>
-          </div>
-
-          <!-- Excel Analytics Community -->
-          <div class="community-card excel" data-category="programming">
-            <div class="community-icon">📑</div>
-            <h3 class="community-title">Excel Data Analytics</h3>
-            <p class="community-description">
-              Data analysis with Excel. Power Query, pivot tables, VBA and advanced formulas.
-            </p>
-            <div class="community-stats">
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>2,145 miembros</span>
-              </div>
-              <div class="stat-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>Very active</span>
-              </div>
-            </div>
-            <div class="community-tags">
-              <span class="tag">Excel</span>
-              <span class="tag">Power Query</span>
-              <span class="tag">VBA</span>
-            </div>
-            <button class="join-btn" onclick="joinCommunity('excel')">Join</button>
-          </div>
+        <!-- Empty state -->
+        <div id="community-list-empty" class="empty-state" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+          </svg>
+          <p>No hay comunidades aún. ¡Sé el primero en crear una!</p>
         </div>
       </div>
     </main>
   </main>
 
+  <!-- ── Modal: Crear comunidad ───────────────────────────────── -->
+  <div id="create-community-modal" class="modal-backdrop" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-community-title">
+      <div class="modal__header">
+        <h3 id="create-community-title" class="modal__title">Crear comunidad</h3>
+        <button class="modal__close" id="close-create-modal" aria-label="Cerrar modal">&times;</button>
+      </div>
+      <div class="modal__body" role="document">
+        <form id="create-community-form" class="community-form" novalidate>
+          <div class="form__group">
+            <label class="form__label" for="community-name">Título</label>
+            <input type="text" id="community-name" class="form__field" placeholder="Nombre de la comunidad" required>
+          </div>
+          <div class="form__group">
+            <label class="form__label" for="community-tags">Keywords (separadas por coma)</label>
+            <input type="text" id="community-tags" class="form__field" placeholder="python, datos, ml">
+          </div>
+          <div class="form__group">
+            <label class="form__label" for="community-description">Descripción</label>
+            <textarea id="community-description" class="form__field" rows="3" placeholder="¿De qué trata esta comunidad?"></textarea>
+          </div>
+          <div class="form__group">
+            <label class="form__label" for="community-icon">Icono (emoji opcional)</label>
+            <div class="icon-input">
+              <div class="icon-input__group">
+                <span id="emoji-preview" class="icon-input__preview" aria-hidden="true">👥</span>
+                <input type="text" id="community-icon" class="icon-input__field" placeholder="Pega un emoji aquí" aria-label="Icono emoji de la comunidad">
+                <button type="button" class="icon-input__button" id="emoji-trigger" aria-haspopup="dialog" aria-expanded="false" aria-label="Abrir selector de emojis">Elegir</button>
+              </div>
+            </div>
+            <div id="emoji-picker" class="emoji-picker" role="dialog" aria-label="Selector de emojis" aria-hidden="true">
+              <div class="emoji-picker__header">
+                <input type="text" id="emoji-search" class="emoji-picker__search" placeholder="Buscar emoji..." aria-label="Buscar emoji">
+                <button type="button" class="emoji-picker__close" id="emoji-close" aria-label="Cerrar selector">&times;</button>
+              </div>
+              <div id="emoji-grid" class="emoji-picker__grid" role="listbox" aria-label="Lista de emojis"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal__footer">
+        <button type="submit" form="create-community-form" class="primary-btn">Crear</button>
+      </div>
+    </div>
+  </div>
+
   {% include "includes/footer.html" %}
 
   <script>
-    function filterCommunities(category) {
-      const cards = document.querySelectorAll('.community-card');
-      const buttons = document.querySelectorAll('.filter-btn');
+    /* ── Helpers ──────────────────────────────────────────────── */
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
 
-      // Update active button
-      buttons.forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+    async function apiFetch(url, options = {}) {
+      const res = await fetch(url, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+      return res;
+    }
 
-      // Filter cards
-      cards.forEach(card => {
-        if (category === 'all') {
-          card.style.display = 'block';
-        } else {
-          const cardCategory = card.getAttribute('data-category');
-          card.style.display = cardCategory === category ? 'block' : 'none';
-        }
+    /* ── State ───────────────────────────────────────────────── */
+    let allCommunities = [];
+
+    /* ── DOM refs ─────────────────────────────────────────────── */
+    const gridEl       = document.getElementById('communities-grid');
+    const emptyEl      = document.getElementById('community-list-empty');
+    const searchInput  = document.getElementById('search-input');
+    const sortSelect   = document.getElementById('sort-select');
+
+    /* Modal refs */
+    const createModal       = document.getElementById('create-community-modal');
+    const openModalBtn      = document.getElementById('open-create-modal');
+    const closeModalBtn     = document.getElementById('close-create-modal');
+    const createForm        = document.getElementById('create-community-form');
+    const nameInput         = document.getElementById('community-name');
+    const descInput         = document.getElementById('community-description');
+    const tagsInput         = document.getElementById('community-tags');
+    const iconInput         = document.getElementById('community-icon');
+    const emojiPreview      = document.getElementById('emoji-preview');
+    const emojiTrigger      = document.getElementById('emoji-trigger');
+    const emojiPicker       = document.getElementById('emoji-picker');
+    const emojiGrid         = document.getElementById('emoji-grid');
+    const emojiSearch       = document.getElementById('emoji-search');
+    const emojiClose        = document.getElementById('emoji-close');
+
+    const emojiList = ['😀','😄','😊','😍','🤩','😎','🤓','🧠','📊','📈','💡','🚀','🐍','🗄️','📉','📚','🎯','🧩','🧪','💻','🌐','🤖','🎓','📝','🔬'];
+
+    /* ── Load & render ───────────────────────────────────────── */
+    async function loadCommunities() {
+      const res = await apiFetch('/api/v1/communities');
+      if (!res.ok) { allCommunities = []; renderGrid(); return; }
+      allCommunities = await res.json();
+      renderGrid();
+    }
+
+    function getFiltered() {
+      const q = searchInput.value.trim().toLowerCase();
+      let list = allCommunities;
+      if (q) {
+        list = list.filter(c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description || '').toLowerCase().includes(q) ||
+          (c.tags || []).some(t => t.toLowerCase().includes(q))
+        );
+      }
+      const sort = sortSelect.value;
+      if (sort === 'members') list.sort((a, b) => (b.member_count ?? 0) - (a.member_count ?? 0));
+      else if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
+      else list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      return list;
+    }
+
+    function renderGrid() {
+      const list = getFiltered();
+      gridEl.innerHTML = '';
+      if (!list.length) { emptyEl.style.display = 'block'; return; }
+      emptyEl.style.display = 'none';
+
+      list.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'community-card';
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'link');
+        card.setAttribute('aria-label', `Ir a ${escapeHtml(c.name)}`);
+
+        const tagsHtml = (c.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+        const members = c.member_count ?? 0;
+        const status = c.activity_status || 'Active';
+
+        card.innerHTML = `
+          <div class="community-icon">${escapeHtml(c.icon || '👥')}</div>
+          <h3 class="community-title">${escapeHtml(c.name)}</h3>
+          <p class="community-description">${escapeHtml(c.description || 'Sin descripción.')}</p>
+          <div class="community-stats">
+            <div class="stat-item">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3.87-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>${members} miembros</span>
+            </div>
+            <span class="community-status">${escapeHtml(status)}</span>
+          </div>
+          <div class="community-tags">${tagsHtml}</div>
+          <button class="join-btn" data-id="${c.id}">Ver comunidad</button>
+        `;
+
+        /* Click en card → ir al feed */
+        const navigate = () => { window.location.href = '/community/' + c.id; };
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('[data-id]')) return; /* el botón maneja su propio click */
+          navigate();
+        });
+        card.addEventListener('keydown', (e) => { if (e.key === 'Enter') navigate(); });
+
+        /* Botón "Ver comunidad" */
+        card.querySelector('[data-id]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          navigate();
+        });
+
+        gridEl.appendChild(card);
       });
     }
 
-    function joinCommunity(communityName) {
-      alert(`You'll soon be able to join the ${communityName} community! This feature will be available soon.`);
+    searchInput.addEventListener('input', renderGrid);
+    sortSelect.addEventListener('change', renderGrid);
+
+    /* ── Modal: crear comunidad ──────────────────────────────── */
+    function openModal() {
+      createModal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      nameInput.focus();
     }
+    function closeModal() {
+      createModal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      closeEmojiPicker();
+    }
+
+    openModalBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    createModal.addEventListener('click', (e) => { if (e.target === createModal) closeModal(); });
+
+    createForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      if (!name) return;
+      const description = descInput.value.trim();
+      const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+      const icon = iconInput.value.trim();
+
+      const res = await apiFetch('/api/v1/communities', {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          description: description || null,
+          tags: tags.length ? tags : null,
+          icon: icon || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'No se pudo crear la comunidad.');
+        return;
+      }
+      const created = await res.json();
+      nameInput.value = ''; descInput.value = ''; tagsInput.value = ''; iconInput.value = '';
+      emojiPreview.textContent = '👥';
+      closeModal();
+      /* Ir directo al feed de la nueva comunidad */
+      window.location.href = '/community/' + created.id;
+    });
+
+    /* ── Emoji picker ────────────────────────────────────────── */
+    function renderEmojis(filter = '') {
+      emojiGrid.innerHTML = '';
+      emojiList.filter(e => e.includes(filter)).forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'emoji-picker__item';
+        btn.textContent = emoji;
+        btn.addEventListener('click', () => {
+          emojiPreview.textContent = emoji; iconInput.value = emoji;
+          closeEmojiPicker();
+        });
+        emojiGrid.appendChild(btn);
+      });
+    }
+    function openEmojiPicker() {
+      emojiPicker.style.display = 'block';
+      emojiPicker.setAttribute('aria-hidden','false');
+      emojiTrigger.setAttribute('aria-expanded','true');
+      emojiSearch.focus();
+    }
+    function closeEmojiPicker() {
+      emojiPicker.style.display = 'none';
+      emojiPicker.setAttribute('aria-hidden','true');
+      emojiTrigger.setAttribute('aria-expanded','false');
+    }
+
+    emojiTrigger.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      emojiPicker.style.display === 'block' ? closeEmojiPicker() : openEmojiPicker();
+    });
+    emojiClose.addEventListener('click', closeEmojiPicker);
+    emojiSearch.addEventListener('input', (e) => renderEmojis(e.target.value));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (emojiPicker.style.display === 'block') { closeEmojiPicker(); return; }
+        if (createModal.style.display === 'flex') closeModal();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (emojiPicker.style.display === 'block' &&
+          !emojiPicker.contains(e.target) && !emojiTrigger.contains(e.target))
+        closeEmojiPicker();
+    });
+
+    /* ── Init ────────────────────────────────────────────────── */
+    renderEmojis();
+    loadCommunities();
   </script>
 </body>
 

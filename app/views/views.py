@@ -1,3 +1,6 @@
+import json
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import Request
 from fastapi.responses import RedirectResponse
@@ -5,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from app.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.userService import current_active_user_optional
+from app.services.resourceService import ResourceService
 from app.models.userModel import User
 from typing import Optional
 
@@ -61,10 +65,56 @@ async def user_profile(request: Request, user: Optional[User] = Depends(current_
 
 
 @router.get("/resources")
-async def resources(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
+async def resources(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: Optional[User] = Depends(current_active_user_optional),
+):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("resources.html", {"request": request})
+    service = ResourceService(session)
+    resources = await service.list_published_resources()
+    return templates.TemplateResponse("resources.html", {"request": request, "resources": resources})
+
+
+@router.get("/resources/{resource_id}")
+async def resource_detail(
+    request: Request,
+    resource_id: UUID,
+    lesson: str | None = None,
+    session: AsyncSession = Depends(get_session),
+    user: Optional[User] = Depends(current_active_user_optional),
+):
+    if user is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    service = ResourceService(session)
+    resource = await service.get_resource_with_outline(resource_id)
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+
+    payload = service.to_detail_payload(resource)
+
+    selected_lesson_id = lesson
+    if not selected_lesson_id:
+        for module in payload["modules"]:
+            if module["lessons"]:
+                selected_lesson_id = module["lessons"][0]["id"]
+                break
+
+    payload["selected_lesson_id"] = selected_lesson_id
+
+    return templates.TemplateResponse(
+        "resource_detail.html",
+        {
+            "request": request,
+            "resource": resource,
+            "resource_payload_json": json.dumps(payload),
+            "selected_lesson_id": selected_lesson_id,
+            "module_count": payload["module_count"],
+            "lesson_count": payload["lesson_count"],
+        },
+    )
 
 
 @router.get("/roadmap")
@@ -79,6 +129,13 @@ async def community(request: Request, user: Optional[User] = Depends(current_act
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("community.html", {"request": request})
+
+
+@router.get("/community/{community_id}")
+async def community_feed(request: Request, community_id: str, user: Optional[User] = Depends(current_active_user_optional)):
+    if user is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("community_feed.html", {"request": request})
 
 
 @router.get("/jobs")
