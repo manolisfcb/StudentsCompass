@@ -14,17 +14,27 @@
             <div id="error-message" style="color: red; margin-bottom: 1rem;"></div>
             <div id="success-message" style="color: green; margin-bottom: 1rem;"></div>
             
-            <!-- Account Type Selection -->
+            <!-- Account Type Selection - Modern Toggle -->
             <div class="form-group">
-                <label>Account Type</label>
-                <div class="option-group" style="margin-bottom: 1rem;">
-                    <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="account-type" value="student" checked style="margin-right: 0.5rem;">
-                        Student
+                <label style="font-size: 0.9rem; font-weight: 600; color: #0F172A; margin-bottom: 0.75rem; display: block;">Account Type</label>
+                <div class="account-type-toggle">
+                    <input type="radio" name="account-type" value="student" id="reg-type-student" checked hidden>
+                    <input type="radio" name="account-type" value="company" id="reg-type-company" hidden>
+                    
+                    <label for="reg-type-student" class="toggle-option toggle-active">
+                        <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span class="toggle-text">Student</span>
                     </label>
-                    <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="account-type" value="company" style="margin-right: 0.5rem;">
-                        Company
+                    
+                    <label for="reg-type-company" class="toggle-option">
+                        <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 4h2a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2h2m12 10v4M2 17v4"></path>
+                        </svg>
+                        <span class="toggle-text">Company</span>
                     </label>
                 </div>
             </div>
@@ -111,20 +121,23 @@
 
     <script>
         // Toggle between student and company forms
-        const accountTypeRadios = document.querySelectorAll('input[name="account-type"]');
+        const accountTypeStudentRadio = document.getElementById('reg-type-student');
+        const accountTypeCompanyRadio = document.getElementById('reg-type-company');
         const studentForm = document.getElementById('student-form');
         const companyForm = document.getElementById('company-form');
 
-        accountTypeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                if (e.target.value === 'student') {
-                    studentForm.style.display = 'block';
-                    companyForm.style.display = 'none';
-                } else {
-                    studentForm.style.display = 'none';
-                    companyForm.style.display = 'block';
-                }
-            });
+        accountTypeStudentRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                studentForm.style.display = 'block';
+                companyForm.style.display = 'none';
+            }
+        });
+
+        accountTypeCompanyRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                studentForm.style.display = 'none';
+                companyForm.style.display = 'block';
+            }
         });
 
         // Student form submission
@@ -245,5 +258,77 @@
             }
         });
     </script>
+
+    <style>
+        /* Account Type Toggle - Premium Design */
+        .account-type-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .toggle-option {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            background: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            color: #64748B;
+        }
+
+        .toggle-option:hover {
+            border-color: #0F766E;
+            background: #F0FDFA;
+            transform: translateY(-2px);
+        }
+
+        #reg-type-student:checked ~ label[for="reg-type-student"],
+        #reg-type-company:checked ~ label[for="reg-type-company"] {
+            border-color: #0F766E;
+            background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+            color: white;
+            box-shadow: 0 8px 16px rgba(15, 118, 110, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .toggle-icon {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        #reg-type-student:checked ~ label[for="reg-type-student"] .toggle-icon,
+        #reg-type-company:checked ~ label[for="reg-type-company"] .toggle-icon {
+            transform: scale(1.1);
+        }
+
+        .toggle-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        @media (max-width: 480px) {
+            .account-type-toggle {
+                gap: 0.5rem;
+            }
+
+            .toggle-option {
+                padding: 0.85rem 0.5rem;
+            }
+
+            .toggle-text {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </body>
 </html>
