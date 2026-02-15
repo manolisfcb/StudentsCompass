@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Comunidades - StudentsCompass</title>
+  <title>Communities - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
     /* ── Layout ──────────────────────────────────────────────── */
@@ -131,7 +131,7 @@
     }
     .create-community-btn:hover { opacity: .9; }
 
-    /* ── Modal (crear comunidad) ─────────────────────────────── */
+    /* ── Modal (create community) ────────────────────────────── */
     body.modal-open { overflow: hidden; }
 
     .modal-backdrop {
@@ -274,20 +274,20 @@
         <div class="communities-header">
           <div class="communities-header-row">
             <div>
-              <h2>Comunidades</h2>
-              <p>Explora, crea y participa en comunidades con otros estudiantes.</p>
+              <h2>Communities</h2>
+              <p>Explore, create, and join communities with other students.</p>
             </div>
-            <button id="open-create-modal" class="create-community-btn">+ Crear comunidad</button>
+            <button id="open-create-modal" class="create-community-btn">+ Create community</button>
           </div>
         </div>
 
         <!-- Filters -->
         <div class="filter-bar">
-          <input type="text" id="search-input" placeholder="Buscar comunidad..." aria-label="Buscar comunidad">
-          <select id="sort-select" aria-label="Ordenar por">
-            <option value="recent">Más recientes</option>
-            <option value="members">Más miembros</option>
-            <option value="name">Nombre A-Z</option>
+          <input type="text" id="search-input" placeholder="Search communities..." aria-label="Search communities">
+          <select id="sort-select" aria-label="Sort by">
+            <option value="recent">Most recent</option>
+            <option value="members">Most members</option>
+            <option value="name">Name A-Z</option>
           </select>
         </div>
 
@@ -299,54 +299,54 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
           </svg>
-          <p>No hay comunidades aún. ¡Sé el primero en crear una!</p>
+          <p>No communities yet. Be the first to create one!</p>
         </div>
       </div>
     </main>
   </main>
 
-  <!-- ── Modal: Crear comunidad ───────────────────────────────── -->
+  <!-- ── Modal: Create community ──────────────────────────────── -->
   <div id="create-community-modal" class="modal-backdrop" role="presentation">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-community-title">
       <div class="modal__header">
-        <h3 id="create-community-title" class="modal__title">Crear comunidad</h3>
-        <button class="modal__close" id="close-create-modal" aria-label="Cerrar modal">&times;</button>
+        <h3 id="create-community-title" class="modal__title">Create community</h3>
+        <button class="modal__close" id="close-create-modal" aria-label="Close modal">&times;</button>
       </div>
       <div class="modal__body" role="document">
         <form id="create-community-form" class="community-form" novalidate>
           <div class="form__group">
-            <label class="form__label" for="community-name">Título</label>
-            <input type="text" id="community-name" class="form__field" placeholder="Nombre de la comunidad" required>
+            <label class="form__label" for="community-name">Title</label>
+            <input type="text" id="community-name" class="form__field" placeholder="Community name" required>
           </div>
           <div class="form__group">
-            <label class="form__label" for="community-tags">Keywords (separadas por coma)</label>
-            <input type="text" id="community-tags" class="form__field" placeholder="python, datos, ml">
+            <label class="form__label" for="community-tags">Keywords (comma-separated)</label>
+            <input type="text" id="community-tags" class="form__field" placeholder="python, data, ml">
           </div>
           <div class="form__group">
-            <label class="form__label" for="community-description">Descripción</label>
-            <textarea id="community-description" class="form__field" rows="3" placeholder="¿De qué trata esta comunidad?"></textarea>
+            <label class="form__label" for="community-description">Description</label>
+            <textarea id="community-description" class="form__field" rows="3" placeholder="What is this community about?"></textarea>
           </div>
           <div class="form__group">
-            <label class="form__label" for="community-icon">Icono (emoji opcional)</label>
+            <label class="form__label" for="community-icon">Icon (optional emoji)</label>
             <div class="icon-input">
               <div class="icon-input__group">
                 <span id="emoji-preview" class="icon-input__preview" aria-hidden="true">👥</span>
-                <input type="text" id="community-icon" class="icon-input__field" placeholder="Pega un emoji aquí" aria-label="Icono emoji de la comunidad">
-                <button type="button" class="icon-input__button" id="emoji-trigger" aria-haspopup="dialog" aria-expanded="false" aria-label="Abrir selector de emojis">Elegir</button>
+                <input type="text" id="community-icon" class="icon-input__field" placeholder="Paste an emoji here" aria-label="Community emoji icon">
+                <button type="button" class="icon-input__button" id="emoji-trigger" aria-haspopup="dialog" aria-expanded="false" aria-label="Open emoji picker">Choose</button>
               </div>
             </div>
-            <div id="emoji-picker" class="emoji-picker" role="dialog" aria-label="Selector de emojis" aria-hidden="true">
+            <div id="emoji-picker" class="emoji-picker" role="dialog" aria-label="Emoji picker" aria-hidden="true">
               <div class="emoji-picker__header">
-                <input type="text" id="emoji-search" class="emoji-picker__search" placeholder="Buscar emoji..." aria-label="Buscar emoji">
-                <button type="button" class="emoji-picker__close" id="emoji-close" aria-label="Cerrar selector">&times;</button>
+                <input type="text" id="emoji-search" class="emoji-picker__search" placeholder="Search emoji..." aria-label="Search emoji">
+                <button type="button" class="emoji-picker__close" id="emoji-close" aria-label="Close picker">&times;</button>
               </div>
-              <div id="emoji-grid" class="emoji-picker__grid" role="listbox" aria-label="Lista de emojis"></div>
+              <div id="emoji-grid" class="emoji-picker__grid" role="listbox" aria-label="Emoji list"></div>
             </div>
           </div>
         </form>
       </div>
       <div class="modal__footer">
-        <button type="submit" form="create-community-form" class="primary-btn">Crear</button>
+        <button type="submit" form="create-community-form" class="primary-btn">Create</button>
       </div>
     </div>
   </div>
@@ -433,7 +433,7 @@
         card.className = 'community-card';
         card.setAttribute('tabindex', '0');
         card.setAttribute('role', 'link');
-        card.setAttribute('aria-label', `Ir a ${escapeHtml(c.name)}`);
+        card.setAttribute('aria-label', `Go to ${escapeHtml(c.name)}`);
 
         const tagsHtml = (c.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
         const members = c.member_count ?? 0;
@@ -442,7 +442,7 @@
         card.innerHTML = `
           <div class="community-icon">${escapeHtml(c.icon || '👥')}</div>
           <h3 class="community-title">${escapeHtml(c.name)}</h3>
-          <p class="community-description">${escapeHtml(c.description || 'Sin descripción.')}</p>
+          <p class="community-description">${escapeHtml(c.description || 'No description.')}</p>
           <div class="community-stats">
             <div class="stat-item">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -451,23 +451,23 @@
                 <path d="M23 21v-2a4 4 0 0 0-3.87-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
-              <span>${members} miembros</span>
+              <span>${members} members</span>
             </div>
             <span class="community-status">${escapeHtml(status)}</span>
           </div>
           <div class="community-tags">${tagsHtml}</div>
-          <button class="join-btn" data-id="${c.id}">Ver comunidad</button>
+          <button class="join-btn" data-id="${c.id}">View community</button>
         `;
 
-        /* Click en card → ir al feed */
+        /* Click on card → go to feed */
         const navigate = () => { window.location.href = '/community/' + c.id; };
         card.addEventListener('click', (e) => {
-          if (e.target.closest('[data-id]')) return; /* el botón maneja su propio click */
+          if (e.target.closest('[data-id]')) return; /* button handles its own click */
           navigate();
         });
         card.addEventListener('keydown', (e) => { if (e.key === 'Enter') navigate(); });
 
-        /* Botón "Ver comunidad" */
+        /* "View community" button */
         card.querySelector('[data-id]').addEventListener('click', (e) => {
           e.stopPropagation();
           navigate();
@@ -480,7 +480,7 @@
     searchInput.addEventListener('input', renderGrid);
     sortSelect.addEventListener('change', renderGrid);
 
-    /* ── Modal: crear comunidad ──────────────────────────────── */
+    /* ── Modal: create community ─────────────────────────────── */
     function openModal() {
       createModal.style.display = 'flex';
       document.body.classList.add('modal-open');
@@ -515,14 +515,14 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.detail || 'No se pudo crear la comunidad.');
+        alert(err.detail || 'Unable to create the community.');
         return;
       }
       const created = await res.json();
       nameInput.value = ''; descInput.value = ''; tagsInput.value = ''; iconInput.value = '';
       emojiPreview.textContent = '👥';
       closeModal();
-      /* Ir directo al feed de la nueva comunidad */
+      /* Go directly to the new community feed */
       window.location.href = '/community/' + created.id;
     });
 

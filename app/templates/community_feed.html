@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Comunidad - StudentsCompass</title>
+  <title>Community - StudentsCompass</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
     /* ================================================================
@@ -336,21 +336,19 @@
   {% include "includes/header.html" %}
 
   <main class="dashboard-layout">
-    {% include "includes/sidebar.html" %}
-
     <main class="dashboard">
       <div class="feed-page">
 
         <!-- Back link -->
-        <a href="/community" class="back-link" aria-label="Volver a comunidades">
+        <a href="/community" class="back-link" aria-label="Back to communities">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
-          Comunidades
+          Communities
         </a>
 
         <!-- Loading -->
-        <div id="loading" class="loading-state">Cargando comunidad…</div>
+        <div id="loading" class="loading-state">Loading community…</div>
 
         <!-- Main feed (hidden until loaded) -->
         <div id="feed-wrapper" style="display:none;">
@@ -367,15 +365,15 @@
                     <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 00-3.87-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
                   </svg>
-                  <span>0 miembros</span>
+                  <span>0 members</span>
                 </span>
                 <span id="banner-status" class="banner-status">Active</span>
               </div>
               <div id="banner-tags" class="banner-tags"></div>
             </div>
             <div class="banner-actions">
-              <button id="banner-join-btn" class="btn-join" style="display:none;">Unirse</button>
-              <button id="banner-leave-btn" class="btn-leave" style="display:none;">Salir</button>
+              <button id="banner-join-btn" class="btn-join" style="display:none;">Join</button>
+              <button id="banner-leave-btn" class="btn-leave" style="display:none;">Leave</button>
             </div>
           </div>
 
@@ -385,9 +383,9 @@
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
               </svg>
-              <h2>Únete a esta comunidad</h2>
-              <p>Participa en las conversaciones, publica y conecta con otros miembros.</p>
-              <button class="btn-primary" onclick="document.getElementById('banner-join-btn').click()">Unirse a la comunidad</button>
+              <h2>Join this community</h2>
+              <p>Join the conversation, post, and connect with other members.</p>
+              <button class="btn-primary" onclick="document.getElementById('banner-join-btn').click()">Join community</button>
             </div>
           </div>
 
@@ -396,10 +394,10 @@
             <div class="feed-main">
               <!-- Composer -->
               <div class="composer" id="composer">
-                <input type="text" id="compose-title" class="composer-title" placeholder="Título (opcional)" aria-label="Título del post">
-                <textarea id="compose-body" class="composer-body" placeholder="¿Qué quieres compartir con la comunidad?" rows="3" aria-label="Contenido del post"></textarea>
+                <input type="text" id="compose-title" class="composer-title" placeholder="Title (optional)" aria-label="Post title">
+                <textarea id="compose-body" class="composer-body" placeholder="What do you want to share with the community?" rows="3" aria-label="Post content"></textarea>
                 <div class="composer-footer">
-                  <button id="compose-submit" class="btn-primary" disabled>Publicar</button>
+                  <button id="compose-submit" class="btn-primary" disabled>Post</button>
                 </div>
               </div>
 
@@ -411,8 +409,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
                 </svg>
-                <h3>No hay publicaciones todavía</h3>
-                <p>¡Sé el primero en compartir algo con la comunidad!</p>
+                <h3>No posts yet</h3>
+                <p>Be the first to share something with the community!</p>
               </div>
             </div>
 
@@ -423,7 +421,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
                   </svg>
-                  Acerca de
+                  About
                 </h3>
                 <p id="sidebar-about">—</p>
               </div>
@@ -433,13 +431,13 @@
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
                   </svg>
-                  Reglas
+                  Rules
                 </h3>
                 <ul>
-                  <li>Sé respetuoso con todos los miembros</li>
-                  <li>No spam ni contenido ofensivo</li>
-                  <li>Comparte contenido relevante</li>
-                  <li>Ayuda y colabora con la comunidad</li>
+                  <li>Be respectful to all members</li>
+                  <li>No spam or offensive content</li>
+                  <li>Share relevant content</li>
+                  <li>Help and collaborate with the community</li>
                 </ul>
               </div>
 
@@ -482,13 +480,13 @@
     function timeAgo(iso) {
       const diff = Date.now() - new Date(iso).getTime();
       const mins = Math.floor(diff / 60000);
-      if (mins < 1)  return 'Ahora mismo';
-      if (mins < 60) return `hace ${mins} min`;
+      if (mins < 1)  return 'Just now';
+      if (mins < 60) return `${mins} min ago`;
       const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return `hace ${hrs}h`;
+      if (hrs < 24) return `${hrs}h ago`;
       const days = Math.floor(hrs / 24);
-      if (days < 7) return `hace ${days}d`;
-      return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+      if (days < 7) return `${days}d ago`;
+      return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
     }
 
     function initials(name) {
@@ -548,7 +546,7 @@
         /* 1) Load community info */
         const cRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}`);
         if (cRes.status === 401) { window.location.href = '/login'; return; }
-        if (!cRes.ok) { showToast('Comunidad no encontrada', true); return; }
+        if (!cRes.ok) { showToast('Community not found', true); return; }
         communityData = await cRes.json();
 
         /* 2) Check membership */
@@ -567,7 +565,7 @@
 
       } catch (err) {
         console.error(err);
-        showToast('Error al cargar la comunidad', true);
+        showToast('Error loading community', true);
       }
     }
 
@@ -578,15 +576,15 @@
       $bannerIcon.textContent = c.icon || '👥';
       $bannerName.textContent = c.name;
       $bannerDesc.textContent = c.description || '';
-      $bannerMemb.querySelector('span').textContent = `${c.member_count ?? 0} miembros`;
+      $bannerMemb.querySelector('span').textContent = `${c.member_count ?? 0} members`;
       $bannerStat.textContent = c.activity_status || 'Active';
 
       const tagsHtml = (c.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
       $bannerTags.innerHTML = tagsHtml;
 
       /* Sidebar */
-      $sideAbout.textContent = c.description || 'Sin descripción disponible.';
-      $sideTags.innerHTML = tagsHtml || '<span style="color:#94A3B8;font-size:.85rem;">Sin tags</span>';
+      $sideAbout.textContent = c.description || 'No description available.';
+      $sideTags.innerHTML = tagsHtml || '<span style="color:#94A3B8;font-size:.85rem;">No tags</span>';
     }
 
     /* ── Membership UI ─────────────────────────────────────── */
@@ -620,46 +618,46 @@
     /* Banner: Join */
     $bannerJoin.addEventListener('click', async () => {
       $bannerJoin.disabled = true;
-      $bannerJoin.textContent = 'Uniéndose…';
+      $bannerJoin.textContent = 'Joining…';
       const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/join`, { method: 'POST' });
       if (!res.ok && res.status !== 409) {
-        showToast('No se pudo unir a la comunidad', true);
+        showToast('Could not join the community', true);
         $bannerJoin.disabled = false;
-        $bannerJoin.textContent = 'Unirse';
+        $bannerJoin.textContent = 'Join';
         return;
       }
       isMember = true;
       $bannerJoin.disabled = false;
-      $bannerJoin.textContent = 'Unirse';
+      $bannerJoin.textContent = 'Join';
       /* Refresh community */
       const cRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}`);
       if (cRes.ok) { communityData = await cRes.json(); renderBanner(); }
       updateMembershipUI();
-      showToast('¡Te uniste a la comunidad!');
+      showToast('You joined the community!');
       await loadFeed();
     });
 
     /* Banner: Leave */
     $bannerLeave.addEventListener('click', async () => {
-      if (!confirm('¿Estás seguro de que quieres salir de esta comunidad?')) return;
+      if (!confirm('Are you sure you want to leave this community?')) return;
       $bannerLeave.disabled = true;
-      $bannerLeave.textContent = 'Saliendo…';
+      $bannerLeave.textContent = 'Leaving…';
       const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/leave`, { method: 'DELETE' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        showToast(err.detail || 'No se pudo salir de la comunidad', true);
+        showToast(err.detail || 'Could not leave the community', true);
         $bannerLeave.disabled = false;
-        $bannerLeave.textContent = 'Salir';
+        $bannerLeave.textContent = 'Leave';
         return;
       }
       isMember = false;
       $bannerLeave.disabled = false;
-      $bannerLeave.textContent = 'Salir';
+      $bannerLeave.textContent = 'Leave';
       /* Refresh community */
       const cRes = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}`);
       if (cRes.ok) { communityData = await cRes.json(); renderBanner(); }
       updateMembershipUI();
-      showToast('Has salido de la comunidad');
+      showToast('You left the community');
     });
 
     /* ── Load feed ───────────────────────────────────────────── */
@@ -668,7 +666,7 @@
       $feedEmpty.style.display = 'none';
 
       const res = await apiFetch(`/api/v1/communities/${COMMUNITY_ID}/posts/enriched`);
-      if (!res.ok) { showToast('No se pudieron cargar los posts', true); return; }
+      if (!res.ok) { showToast('Could not load posts', true); return; }
 
       const posts = await res.json();
       if (!posts.length) { $feedEmpty.style.display = 'block'; return; }
@@ -679,7 +677,7 @@
     function createPostCard(post) {
       const card = document.createElement('article');
       card.className = 'post-card';
-      card.setAttribute('aria-label', `Post de ${escapeHtml(post.author_name)}`);
+      card.setAttribute('aria-label', `Post by ${escapeHtml(post.author_name)}`);
 
       const avatar = initials(post.author_name);
       const liked = post.liked_by_me;
@@ -697,28 +695,28 @@
           <p class="post-content">${escapeHtml(post.content)}</p>
         </div>
         <div class="post-counters">
-          <span data-like-count>${post.like_count} me gusta</span>
-          <span data-comment-count>${post.comment_count} comentarios</span>
+          <span data-like-count>${post.like_count} likes</span>
+          <span data-comment-count>${post.comment_count} comments</span>
         </div>
         <div class="post-actions">
           <button class="btn-ghost${liked ? ' active' : ''}" data-like aria-pressed="${liked}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="${liked ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3.06a.5.5 0 01.5-.55 2.234 2.234 0 012.013 1.262c.349.694.523 1.46.523 2.227 0 .753-.14 1.46-.397 2.106a.5.5 0 00.471.682h3.036c1.067 0 1.935.866 1.869 1.932a18.27 18.27 0 01-2.639 8.29c-.267.434-.713.692-1.2.692H13.5m-5.25 0A2.25 2.25 0 016 19.5H4.5A2.25 2.25 0 012.25 17.25V11.25A2.25 2.25 0 014.5 9h1.086c.53 0 1.04-.211 1.414-.586L8.25 7.17"/>
             </svg>
-            Me gusta
+            Like
           </button>
           <button class="btn-ghost" data-toggle-comments>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
             </svg>
-            Comentar
+            Comment
           </button>
         </div>
         <div class="comments-section" data-comments-section>
           <div data-comments-list></div>
           <form class="comment-form" data-comment-form>
-            <input type="text" placeholder="Escribe un comentario…" required aria-label="Escribe un comentario">
-            <button type="submit">Enviar</button>
+            <input type="text" placeholder="Write a comment…" required aria-label="Write a comment">
+            <button type="submit">Send</button>
           </form>
         </div>
       `;
@@ -738,9 +736,9 @@
           likeBtn.classList.toggle('active', localLiked);
           likeBtn.setAttribute('aria-pressed', String(localLiked));
           likeBtn.querySelector('svg').setAttribute('fill', localLiked ? 'currentColor' : 'none');
-          likeCountEl.textContent = `${localLikeCount} me gusta`;
+          likeCountEl.textContent = `${localLikeCount} likes`;
         } else {
-          showToast('No se pudo procesar el like', true);
+          showToast('Could not process like', true);
         }
       });
 
@@ -772,11 +770,11 @@
           method: 'POST',
           body: JSON.stringify({ content }),
         });
-        if (!res.ok) { showToast('No se pudo enviar el comentario', true); return; }
+        if (!res.ok) { showToast('Could not send comment', true); return; }
 
         commentInput.value = '';
         localCommentCount++;
-        commentCountEl.textContent = `${localCommentCount} comentarios`;
+        commentCountEl.textContent = `${localCommentCount} comments`;
         await loadComments(post.id, commentsList);
       });
 
@@ -785,17 +783,17 @@
 
     /* ── Load comments ───────────────────────────────────────── */
     async function loadComments(postId, container) {
-      container.innerHTML = '<p style="font-size:.85rem;color:#94A3B8;padding:.5rem 0;">Cargando…</p>';
+      container.innerHTML = '<p style="font-size:.85rem;color:#94A3B8;padding:.5rem 0;">Loading…</p>';
 
       const res = await apiFetch(`/api/v1/community-posts/${postId}/comments/enriched`);
       if (!res.ok) {
-        container.innerHTML = '<p style="font-size:.85rem;color:#DC2626;">Error al cargar comentarios.</p>';
+        container.innerHTML = '<p style="font-size:.85rem;color:#DC2626;">Error loading comments.</p>';
         return;
       }
 
       const comments = await res.json();
       if (!comments.length) {
-        container.innerHTML = '<p style="font-size:.85rem;color:#94A3B8;padding:.4rem 0;">Sin comentarios aún.</p>';
+        container.innerHTML = '<p style="font-size:.85rem;color:#94A3B8;padding:.4rem 0;">No comments yet.</p>';
         return;
       }
 
@@ -832,7 +830,7 @@
       });
 
       if (!res.ok) {
-        showToast('No se pudo publicar', true);
+        showToast('Could not publish', true);
         $compSubmit.disabled = false;
         return;
       }
@@ -840,7 +838,7 @@
       $compTitle.value = '';
       $compBody.value = '';
       $compSubmit.disabled = true;
-      showToast('¡Post publicado!');
+      showToast('Post published!');
       await loadFeed();
     });
 

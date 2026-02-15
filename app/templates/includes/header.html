@@ -7,7 +7,7 @@
     if (logoutLink) {
         logoutLink.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (!confirm('¿Estás seguro que quieres salir?')) return;
+            if (!confirm('Are you sure you want to log out?')) return;
 
             try {
                 await fetch('/auth/jwt/logout', {
