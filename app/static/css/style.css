@@ -13,6 +13,12 @@
     --card-bg: #FFFFFF;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body,
 html {
     margin: 0;
@@ -21,6 +27,13 @@ html {
     background-color: var(--background-color);
     color: var(--text-color);
     scroll-behavior: smooth;
+}
+
+input,
+textarea,
+select {
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 img {
