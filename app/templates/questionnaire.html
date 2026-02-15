@@ -13,6 +13,91 @@
         }
         .option-card:hover { border-color: #4f46e5; background-color: #eef2ff; }
         .option-card.selected { border-color: #4f46e5; background-color: #eef2ff; ring: 2px solid #4f46e5; }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            .max-w-2xl {
+                max-width: 100%;
+            }
+            .p-8 {
+                padding: 1.5rem;
+            }
+            .px-8 {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+            .px-6 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .space-y-3 > * + * {
+                margin-top: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0.25rem;
+            }
+            .p-8 {
+                padding: 1rem;
+            }
+            .px-8 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .pt-6 {
+                padding-top: 1rem;
+            }
+            .px-4 {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .px-8.py-2\.5 {
+                padding: 0.5rem;
+            }
+            .rounded-2xl {
+                border-radius: 1rem;
+            }
+            .text-2xl {
+                font-size: 1.25rem;
+            }
+            .text-3xl {
+                font-size: 1.5rem;
+            }
+            .text-xs {
+                font-size: 0.7rem;
+            }
+            .text-sm {
+                font-size: 0.8rem;
+            }
+            .flex.gap-4 {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .px-6 {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            .py-2\.5 {
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+            .w-20 {
+                width: 3rem;
+            }
+            .h-20 {
+                width: 3rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans text-gray-800">

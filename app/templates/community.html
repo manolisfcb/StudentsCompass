@@ -10,9 +10,18 @@
     /* ── Layout ──────────────────────────────────────────────── */
     .communities-container { padding: 2rem; }
 
+    @media (max-width: 768px) {
+      .communities-container { padding: 1rem; }
+    }
+
     .communities-header { margin-bottom: 1.5rem; }
     .communities-header h2 { font-size: 2rem; color: #0F172A; margin-bottom: 0.3rem; }
     .communities-header p  { color: #475569; font-size: 1.05rem; }
+
+    @media (max-width: 768px) {
+      .communities-header h2 { font-size: 1.5rem; }
+      .communities-header p { font-size: 0.95rem; }
+    }
 
     .communities-header-row {
       display: flex; align-items: center;
@@ -30,6 +39,7 @@
       border: 1px solid #E2E8F0; border-radius: 10px;
       font-size: 0.9rem; background: #F8FAFC; color: #0F172A;
       transition: border-color .2s, box-shadow .2s;
+      box-sizing: border-box;
     }
     .filter-bar input:focus,
     .filter-bar select:focus {
@@ -37,7 +47,18 @@
       box-shadow: 0 0 0 3px rgba(15,118,110,.15);
       outline: none;
     }
-    .filter-bar input { flex: 1; min-width: 200px; }
+    .filter-bar input { flex: 1; min-width: 180px; }
+
+    @media (max-width: 768px) {
+      .filter-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .filter-bar input,
+      .filter-bar select {
+        width: 100%;
+      }
+    }
 
     /* ── Grid de cards ───────────────────────────────────────── */
     .communities-grid {

@@ -16,6 +16,15 @@
         @media (max-width: 1024px) {
             .job-board-container {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .job-board-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-bottom: 1rem;
             }
         }
 
@@ -27,6 +36,14 @@
             height: fit-content;
             position: sticky;
             top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .search-panel {
+                padding: 1rem;
+                position: static;
+                margin-bottom: 1.5rem;
+            }
         }
 
         .search-panel h3 {
@@ -46,6 +63,12 @@
             margin-bottom: 0.5rem;
             color: var(--text-color);
             font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-group label {
+                font-size: 0.9rem;
+            }
         }
 
         .form-group input,
@@ -93,6 +116,13 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .search-btn {
+                padding: 1rem;
+                font-size: 0.95rem;
+            }
         }
 
         .search-btn:hover {

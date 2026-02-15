@@ -189,13 +189,148 @@
       font-size: 0.9rem;
     }
 
+    @media (max-width: 1200px) {
+      .dashboard-container {
+        padding: 1.5rem;
+      }
+      .dashboard-header h2 {
+        font-size: 1.7rem;
+      }
+      .stats-grid {
+        gap: 1rem;
+      }
+    }
+
     @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 1rem;
+      }
+      .dashboard-header h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.25rem;
+      }
+      .dashboard-header p {
+        font-size: 0.95rem;
+      }
       .dashboard-content {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
       }
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      .stat-card {
+        padding: 1rem;
+      }
+      .stat-card h3 {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+      }
+      .stat-card .number {
+        font-size: 2rem;
+      }
+      .section-card {
+        padding: 1rem;
+      }
+      .section-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+      }
+      .job-item {
+        padding: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .job-title {
+        font-size: 0.95rem;
+      }
+      .job-info {
+        font-size: 0.85rem;
+      }
+      .job-status {
+        font-size: 0.8rem;
+      }
+      .action-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        width: 100%;
+      }
+      .quick-actions {
+        gap: 0.75rem;
+      }
+      .action-card {
+        padding: 0.75rem;
+      }
+      .action-card h4 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+      }
+      .action-card p {
+        font-size: 0.85rem;
+      }
+    }
 
+    @media (max-width: 480px) {
+      .dashboard-container {
+        padding: 0.75rem;
+      }
+      .dashboard-header h2 {
+        font-size: 1.2rem;
+      }
+      .dashboard-header p {
+        font-size: 0.9rem;
+      }
       .stats-grid {
         grid-template-columns: 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .stat-card {
+        padding: 0.75rem;
+      }
+      .stat-card h3 {
+        font-size: 0.8rem;
+      }
+      .stat-card .number {
+        font-size: 1.5rem;
+      }
+      .stat-card p {
+        font-size: 0.75rem;
+      }
+      .section-card {
+        padding: 0.75rem;
+      }
+      .section-card h3 {
+        font-size: 1rem;
+      }
+      .job-item {
+        padding: 0.5rem;
+        flex-direction: column;
+      }
+      .job-title {
+        font-size: 0.9rem;
+      }
+      .job-info {
+        font-size: 0.8rem;
+      }
+      .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+      }
+      .action-card {
+        padding: 0.5rem;
+      }
+      .action-card h4 {
+        font-size: 0.9rem;
+      }
+      .action-card p {
+        font-size: 0.8rem;
       }
     }
   </style>

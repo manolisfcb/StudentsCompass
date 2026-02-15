@@ -1,8 +1,18 @@
 /* Shared Resources Hub styles */
 .resources-container { padding: 2rem; }
+
+@media (max-width: 768px) {
+  .resources-container { padding: 1rem; }
+}
+
 .resources-header { margin-bottom: 1.5rem; }
 .resources-header h2 { font-size: 2rem; color: #0F172A; margin-bottom: 0.3rem; }
 .resources-header p { color: #475569; font-size: 1.05rem; }
+
+@media (max-width: 768px) {
+  .resources-header h2 { font-size: 1.5rem; }
+  .resources-header p { font-size: 0.95rem; }
+}
 
 .resources-header-row {
   display: flex;
@@ -53,9 +63,21 @@
   background: #F8FAFC;
   color: #0F172A;
   transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
 }
 
-.control-bar input { flex: 1; min-width: 220px; }
+.control-bar input { flex: 1; min-width: 200px; }
+
+@media (max-width: 768px) {
+  .control-bar {
+    flex-direction: column;
+  }
+  .control-bar input,
+  .control-bar select {
+    width: 100%;
+    font-size: 1rem;
+  }
+}
 
 .control-bar input:focus,
 .control-bar select:focus {
@@ -66,9 +88,30 @@
 
 .resources-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
   align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .resources-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .resources-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .resources-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
 }
 
 .resource-card {
@@ -189,6 +232,38 @@
   display: grid;
   grid-template-columns: minmax(250px, 320px) minmax(0, 1fr) minmax(250px, 320px);
   gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .resource-layout {
+    grid-template-columns: minmax(200px, 280px) minmax(0, 1fr) minmax(200px, 280px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .resource-layout {
+    grid-template-columns: 1fr;
+  }
+  .left-panel {
+    order: -1;
+  }
+  .right-panel {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .resource-layout {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .left-panel {
+    display: none;
+  }
+  .right-panel {
+    max-height: 600px;
+    overflow-y: auto;
+  }
 }
 
 .panel {
