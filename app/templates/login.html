@@ -82,21 +82,12 @@
                 console.log('Login response status:', response.status, 'OK:', response.ok);
 
                 if (response.ok) {
-                    if (isStudent) {
-                        // Student auth uses HttpOnly cookie (CookieTransport)
-                        localStorage.removeItem('bearer_token');
-                        localStorage.removeItem('company_token');
-                        localStorage.removeItem('account_type');
-                        console.log('Redirecting to:', dashboardUrl);
-                        window.location.href = dashboardUrl;
-                    } else {
-                        // Company auth uses Bearer token (BearerTransport)
-                        const data = await response.json();
-                        localStorage.setItem('company_token', data.access_token);
-                        localStorage.setItem('account_type', 'company');
-                        console.log('Redirecting to:', dashboardUrl);
-                        window.location.href = dashboardUrl;
-                    }
+                    // Both student and company now use HttpOnly cookie auth
+                    localStorage.removeItem('bearer_token');
+                    localStorage.removeItem('company_token');
+                    localStorage.removeItem('account_type');
+                    console.log('Redirecting to:', dashboardUrl);
+                    window.location.href = dashboardUrl;
                 } else {
                     const errorData = await response.json();
                     errorMessage.textContent = errorData.detail || 'Login failed. Please check your credentials.';

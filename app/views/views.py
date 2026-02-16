@@ -8,8 +8,10 @@ from fastapi.templating import Jinja2Templates
 from app.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.userService import current_active_user_optional
+from app.services.companyService import current_active_company_optional
 from app.services.resourceService import ResourceService
 from app.models.userModel import User
+from app.models.companyModel import Company
 from typing import Optional
 
 
@@ -46,8 +48,8 @@ async def dashboard(request: Request, user: Optional[User] = Depends(current_act
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 @router.get("/company-dashboard")
-async def company_dashboard(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
-    if user is None:
+async def company_dashboard(request: Request, company: Optional[Company] = Depends(current_active_company_optional)):
+    if company is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("company-dashboard.html", {"request": request})
 

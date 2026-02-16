@@ -46,10 +46,16 @@
             confirmBtn.addEventListener('click', async () => {
                 modal.classList.add('logging-out');
                 try {
-                    await fetch('/auth/jwt/logout', {
-                        method: 'POST',
-                        credentials: 'include',
-                    });
+                    await Promise.allSettled([
+                        fetch('/auth/jwt/logout', {
+                            method: 'POST',
+                            credentials: 'include',
+                        }),
+                        fetch('/api/v1/auth/company/logout', {
+                            method: 'POST',
+                            credentials: 'include',
+                        }),
+                    ]);
                 } catch (err) {
                     console.error('Logout error:', err);
                 } finally {

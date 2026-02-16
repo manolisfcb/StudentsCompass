@@ -2,7 +2,7 @@ from app.schemas.companySchema import CompanyCreate, CompanyRead, CompanyUpdate
 from fastapi_users import FastAPIUsers, models, BaseUserManager, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
-    BearerTransport,
+    CookieTransport,
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
@@ -12,11 +12,13 @@ from app.models.companyModel import Company
 import uuid
 import logging
 from app.models.companyModel import get_company_db
+import os
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-SECRET = "SECRET_RANDOM_STRING"
+SECRET = os.getenv("SECRET_KEY", "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION")
+ENV = os.getenv("ENV", "development").lower()
 
 class CompanyManager(UUIDIDMixin, BaseUserManager[Company, uuid.UUID]):
     reset_password_token_secret = SECRET
@@ -37,14 +39,20 @@ async def get_company_manager(company_db: SQLAlchemyUserDatabase = Depends(get_c
     yield CompanyManager(company_db)
     
 
-bearer_transport_company = BearerTransport(tokenUrl="auth/company/login")
+cookie_transport_company = CookieTransport(
+    cookie_name="studentscompass_company_auth",
+    cookie_max_age=3600,
+    cookie_secure=(ENV == "production"),
+    cookie_samesite="lax",
+)
+
 def get_jwt_strategy_company() -> JWTStrategy:
     return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
 
 
 auth_backend_company = AuthenticationBackend(
     name="jwt",
-    transport=bearer_transport_company,
+    transport=cookie_transport_company,
     get_strategy=get_jwt_strategy_company,
 )
 
@@ -53,3 +61,4 @@ fastapi_companies = FastAPIUsers[Company, uuid.UUID](
     auth_backends=[auth_backend_company]
 )
 current_active_company = fastapi_companies.current_user(active=True)
+current_active_company_optional = fastapi_companies.current_user(active=True, optional=True)
