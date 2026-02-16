@@ -82,15 +82,27 @@
                 console.log('Login response status:', response.status, 'OK:', response.ok);
 
                 if (response.ok) {
-                    // Both student and company now use HttpOnly cookie auth
-                    localStorage.removeItem('bearer_token');
-                    localStorage.removeItem('company_token');
-                    localStorage.removeItem('account_type');
+                    // Both student and company now use HttpOnly cookie auth.
+                    // Cleanup must not block redirect if storage is unavailable.
+                    try {
+                        localStorage.removeItem('bearer_token');
+                        localStorage.removeItem('company_token');
+                        localStorage.removeItem('account_type');
+                    } catch (storageError) {
+                        console.warn('Storage cleanup skipped:', storageError);
+                    }
                     console.log('Redirecting to:', dashboardUrl);
-                    window.location.href = dashboardUrl;
+                    window.location.assign(dashboardUrl);
+                    return;
                 } else {
-                    const errorData = await response.json();
-                    errorMessage.textContent = errorData.detail || 'Login failed. Please check your credentials.';
+                    let message = 'Login failed. Please check your credentials.';
+                    try {
+                        const errorData = await response.json();
+                        message = errorData.detail || message;
+                    } catch (_) {
+                        // Some auth backends return empty/non-JSON bodies
+                    }
+                    errorMessage.textContent = message;
                 }
             } catch (error) {
                 console.error('Login error:', error);
