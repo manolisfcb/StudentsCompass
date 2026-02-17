@@ -23,7 +23,7 @@ from app.routes.companyRoute import router as company_router
 from app.routes.dashboardRoute import router as dashboard_router
 from app.routes.communityRoute import router as community_router
 from app.routes.resourceRoute import router as resource_router
-
+from fastapi import Response
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Avoid running Base.metadata.create_all on startup in production.
@@ -42,6 +42,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+            <loc>https://studentscompass.ca/</loc>
+            <priority>1.0</priority>
+        </url>
+    </urlset>
+    """
+    return Response(content=xml_content, media_type="application/xml")
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots():
+    return Response(
+        content="User-agent: *\nAllow: /\nSitemap: https://studentscompass.ca/sitemap.xml",
+        media_type="text/plain"
+    )
+
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
