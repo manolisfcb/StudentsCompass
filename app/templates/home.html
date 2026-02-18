@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudentsCompass - Your Academic Guide</title>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-    <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% set page_title = "Career Platform in Canada" %}
+{% set page_description = "Student Compass helps students in Canada with AI resume analysis, job search, roadmaps, resources, and a supportive career community to become job-ready faster." %}
+{% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+{% endblock %}
+{% block content %}
     <header>
         <nav>
             <div class="container">
@@ -195,5 +189,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

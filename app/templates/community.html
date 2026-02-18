@@ -1,14 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Communities - StudentsCompass</title>
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-  <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% set page_title = "Communities" %}
+{% set page_description = "Discover student communities, join groups, and connect with peers to grow your career network and share progress inside Student Compass." %}
+{% block head_extra %}
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
     /* ── Layout ──────────────────────────────────────────────── */
@@ -285,9 +278,8 @@
       .communities-grid { grid-template-columns: 1fr; }
     }
   </style>
-</head>
-
-<body>
+{% endblock %}
+{% block content %}
   {% include "includes/header.html" %}
 
   <main class="dashboard-layout">
@@ -600,6 +592,4 @@
     renderEmojis();
     loadCommunities();
   </script>
-</body>
-
-</html>
+{% endblock %}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  {% set page_title_value = page_title | default("Career Platform in Canada") %}
+  {% set page_description_value = page_description | default("Student Compass is a structured 7-step digital career journey helping students in Canada become job-ready.") %}
+  {% if request is defined %}
+    {% set canonical_url = "https://studentscompass.ca" ~ request.url.path %}
+  {% else %}
+    {% set canonical_url = "https://studentscompass.ca/" %}
+  {% endif %}
+  <title>Student Compass | {{ page_title_value }}</title>
+  <meta name="description" content="{{ page_description_value }}">
+  <link rel="canonical" href="{{ canonical_url }}">
+  <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
+  <meta name="theme-color" content="#0F766E">
+  <meta property="og:site_name" content="Student Compass">
+  <meta property="og:title" content="Student Compass | {{ page_title_value }}">
+  <meta property="og:description" content="{{ page_description_value }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:type" content="website">
+  {% block head_extra %}{% endblock %}
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Organization","name":"Student Compass","url":"https://studentscompass.ca","logo":"https://studentscompass.ca/static/images/logo.png"}
+  </script>
+</head>
+<body class="{{ body_class | default('') }}">
+  {% block content %}{% endblock %}
+</body>
+</html>

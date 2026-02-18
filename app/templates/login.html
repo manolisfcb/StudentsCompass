@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Login - StudentsCompass</title>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-    <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% set page_title = "Login" %}
+{% set page_description = "Log in to Student Compass to access your personalized career roadmap, resume tools, job search insights, and community updates in one place." %}
+{% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+{% endblock %}
+{% block content %}
     <div class="auth-container">
         <div class="auth-card">
             <h2>Welcome Back!</h2>
@@ -186,5 +180,4 @@
             }
         }
     </style>
-</body>
-</html>
+{% endblock %}

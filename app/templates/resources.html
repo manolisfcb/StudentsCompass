@@ -1,17 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Resources Hub - StudentsCompass</title>
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-  <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% set page_title = "Resources Hub" %}
+{% set page_description = "Browse curated career courses, guides, and learning resources tailored to students on Student Compass, with filters and quick search." %}
+{% block head_extra %}
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/resources.css">
-</head>
-<body>
+{% endblock %}
+{% block content %}
   {% include "includes/header.html" %}
 
   <main class="dashboard-layout">
@@ -82,5 +76,4 @@
 
   {% include "includes/footer.html" %}
   <script src="/static/js/resources.js"></script>
-</body>
-</html>
+{% endblock %}

@@ -1,13 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Job Board</title>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-    <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% set page_title = "Job Search" %}
+{% set page_description = "Search curated job opportunities and internships tailored to your profile with Student Compass job search tools, filters, and AI keyword insights." %}
+{% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .job-board-container {
@@ -259,8 +253,8 @@
             opacity: 0.5;
         }
     </style>
-</head>
-<body>
+{% endblock %}
+{% block content %}
     {% include "includes/header.html" %}
 
     <main class="dashboard-layout">
@@ -686,5 +680,4 @@
             modeManualBtn.click();
         });
     </script>
-</body>
-</html>
+{% endblock %}

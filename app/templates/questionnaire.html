@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Discover Your Professional Profile</title>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-    <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% set page_title = "Career Questionnaire" %}
+{% set page_description = "Complete the Student Compass questionnaire to personalize your career roadmap, recommendations, and next steps based on your goals." %}
+{% set body_class = "bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans text-gray-800" %}
+{% block head_extra %}
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
@@ -103,8 +98,8 @@
             }
         }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans text-gray-800">
+{% endblock %}
+{% block content %}
 
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden relative min-h-[600px] flex flex-col">
         
@@ -350,5 +345,4 @@
         // Start
         fetchQuestionnaire();
     </script>
-</body>
-</html>
+{% endblock %}

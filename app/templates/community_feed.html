@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Community - StudentsCompass</title>
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" href="/static/images/icono.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
-  <meta name="theme-color" content="#0F766E">
+{% extends "base.html" %}
+{% if community is defined and community.name %}
+  {% set page_title = community.name ~ " Community" %}
+  {% set page_description = community.description or "Follow updates, posts, and discussions inside your Student Compass community space to stay connected, learn, and collaborate." %}
+{% else %}
+  {% set page_title = "Community Feed" %}
+  {% set page_description = "Follow updates, posts, and discussions inside your Student Compass community space to stay connected, learn, and collaborate." %}
+{% endif %}
+{% block head_extra %}
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
     /* ================================================================
@@ -361,9 +359,8 @@
       .feed-page { padding: .75rem; }
     }
   </style>
-</head>
-
-<body>
+{% endblock %}
+{% block content %}
   {% include "includes/header.html" %}
 
   <main class="dashboard-layout">
@@ -876,6 +873,4 @@
     /* ── Start ───────────────────────────────────────────────── */
     init();
   </script>
-</body>
-
-</html>
+{% endblock %}
