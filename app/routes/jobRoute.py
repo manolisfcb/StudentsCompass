@@ -258,9 +258,10 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, sess
 @router.post("/jobs/keywords/analyze", response_model=JobInitResponse)
 async def start_cv_analysis(
     background_tasks: BackgroundTasks,
+    request: Request,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
-    request: Request,
+
 ):
     """Start CV analysis job - returns immediately with job_id"""
     try:
