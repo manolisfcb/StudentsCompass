@@ -24,6 +24,7 @@ from app.routes.dashboardRoute import router as dashboard_router
 from app.routes.communityRoute import router as community_router
 from app.routes.resourceRoute import router as resource_router
 from fastapi import Response
+from fastapi.responses import FileResponse
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Avoid running Base.metadata.create_all on startup in production.
@@ -60,6 +61,10 @@ async def robots():
         content="User-agent: *\nAllow: /\nSitemap: https://studentscompass.ca/sitemap.xml",
         media_type="text/plain"
     )
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("app/static/images/icono.ico", media_type="image/x-icon")
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
