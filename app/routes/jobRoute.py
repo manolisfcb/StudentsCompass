@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,10 +19,41 @@ import tempfile
 import os
 from datetime import datetime
 from uuid import UUID
+from collections import deque
+from time import monotonic
 
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Rate limit LLM analysis: 5 requests per IP per minute
+LLM_RATE_LIMIT_PER_MINUTE = 5
+LLM_RATE_LIMIT_WINDOW_SECONDS = 60
+_llm_rate_limit_store: dict[str, deque[float]] = {}
+
+
+def _get_client_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_llm_rate_limit(request: Request) -> None:
+    ip = _get_client_ip(request)
+    now = monotonic()
+    timestamps = _llm_rate_limit_store.get(ip)
+    if timestamps is None:
+        timestamps = deque()
+        _llm_rate_limit_store[ip] = timestamps
+
+    while timestamps and now - timestamps[0] > LLM_RATE_LIMIT_WINDOW_SECONDS:
+        timestamps.popleft()
+
+    if len(timestamps) >= LLM_RATE_LIMIT_PER_MINUTE:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded for LLM calls")
+
+    timestamps.append(now)
 
 
 class JobSearchRequest(BaseModel):
@@ -229,6 +260,7 @@ async def start_cv_analysis(
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
+    request: Request,
 ):
     """Start CV analysis job - returns immediately with job_id"""
     try:
@@ -278,6 +310,8 @@ async def start_cv_analysis(
                 status=running_job.status.value,
                 message="CV analysis already in progress for this resume."
             )
+
+        _check_llm_rate_limit(request)
 
         # Create new job
         job = JobAnalysisModel(
