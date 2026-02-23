@@ -1,5 +1,12 @@
 """
 Create or promote a superuser.
+
+Usage:
+    # Create a NEW superuser
+    python scripts/create_superuser.py --email admin@example.com --password mysecretpass
+
+    # Promote an EXISTING user to superuser
+    python scripts/create_superuser.py --email existing@example.com --promote
 """
 
 import argparse
