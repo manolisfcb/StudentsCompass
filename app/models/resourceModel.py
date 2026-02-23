@@ -21,6 +21,7 @@ class ResourceModel(Base):
     estimated_duration_minutes = Column(Integer, nullable=True)
     external_url = Column(String(512), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_published = Column(Boolean, nullable=False, default=True)
 
     modules = relationship(
@@ -43,6 +44,8 @@ class ResourceModuleModel(Base):
     title = Column(String(180), nullable=False)
     position = Column(Integer, nullable=False)
     description = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     resource = relationship("ResourceModel", back_populates="modules")
     lessons = relationship(
@@ -64,5 +67,6 @@ class ResourceLessonModel(Base):
     content = Column(Text, nullable=False)
     reading_time_minutes = Column(Integer, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     module = relationship("ResourceModuleModel", back_populates="lessons")

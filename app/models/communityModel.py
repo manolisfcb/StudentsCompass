@@ -19,6 +19,7 @@ class CommunityModel(Base):
     tags = Column(JSONB, nullable=True)
     member_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     creator = relationship("User", back_populates="communities_created")
@@ -33,6 +34,7 @@ class CommunityMemberModel(Base):
     community_id = Column(UUID(as_uuid=True), ForeignKey("communities.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     joined_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     community = relationship("CommunityModel", back_populates="members")
     user = relationship("User", back_populates="community_memberships")

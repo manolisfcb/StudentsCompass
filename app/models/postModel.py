@@ -15,6 +15,7 @@ class PostModel(Base):
     file_type = Column(String(50), nullable=False)
     file_name = Column(String(255), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     

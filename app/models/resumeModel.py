@@ -16,6 +16,7 @@ class ResumeModel(Base):
     original_filename = Column(String(255), nullable=False)
     folder_id = Column(String(255), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     
     user = relationship("User", back_populates="resumes")

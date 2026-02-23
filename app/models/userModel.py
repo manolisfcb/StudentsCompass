@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from app.db import Base
 from app.db import get_session
@@ -12,6 +13,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     nickname: str = Column(String, unique=False, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
+
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     post = relationship("PostModel", back_populates="user")
     communities_created = relationship("CommunityModel", back_populates="creator")

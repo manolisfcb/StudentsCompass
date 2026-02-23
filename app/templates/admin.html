@@ -1,0 +1,932 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/admin.css">
+<style>
+    body {
+        background: var(--admin-bg) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-body">
+
+    <!-- Toast container -->
+    <div class="admin-toast-wrap" id="toastWrap"></div>
+
+    <!-- Confirm modal -->
+    <div id="confirmModal" class="admin-modal-overlay" style="display:none">
+        <div class="admin-modal">
+            <div class="admin-modal-title" id="confirmTitle">Confirm Action</div>
+            <div class="admin-modal-desc" id="confirmDesc">Are you sure?</div>
+            <div class="admin-modal-actions">
+                <button class="admin-btn admin-btn-ghost" onclick="closeConfirm()">Cancel</button>
+                <button class="admin-btn admin-btn-danger" id="confirmOk">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Resource Modal -->
+    <div id="resourceModal" class="admin-modal-overlay" style="display:none">
+        <div class="admin-modal" style="max-width: 500px;">
+            <div class="admin-modal-title">Create Resource</div>
+            <div class="admin-modal-desc">Fill in the details to publish a new resource.</div>
+
+            <form id="resourceForm" onsubmit="return handleCreateResource(event)">
+                <div class="admin-form-group">
+                    <label class="admin-form-label">Title</label>
+                    <input class="admin-form-input" id="resTitle" required placeholder="e.g. Master the STAR Method">
+                </div>
+                <div class="admin-form-group">
+                    <label class="admin-form-label">Description</label>
+                    <textarea class="admin-form-input" id="resDesc" required rows="3"
+                        placeholder="Brief description..."></textarea>
+                </div>
+                <div style="display:flex;gap:16px;">
+                    <div class="admin-form-group" style="flex:1;">
+                        <label class="admin-form-label">Category</label>
+                        <input class="admin-form-input" id="resCategory" required placeholder="e.g. Interview">
+                    </div>
+                    <div class="admin-form-group" style="flex:1;">
+                        <label class="admin-form-label">Level</label>
+                        <input class="admin-form-input" id="resLevel" placeholder="e.g. Beginner">
+                    </div>
+                </div>
+                <div style="display:flex;gap:16px;">
+                    <div class="admin-form-group" style="flex:1;">
+                        <label class="admin-form-label">Icon (Emoji)</label>
+                        <input class="admin-form-input" id="resIcon" placeholder="e.g. 🎯">
+                    </div>
+                    <div class="admin-form-group" style="flex:1;">
+                        <label class="admin-form-label">Duration (mins)</label>
+                        <input class="admin-form-input" type="number" id="resDuration" placeholder="e.g. 15">
+                    </div>
+                </div>
+                <div class="admin-form-group">
+                    <label class="admin-form-label">External URL (optional)</label>
+                    <input class="admin-form-input" type="url" id="resUrl" placeholder="https://...">
+                </div>
+
+                <div class="admin-modal-actions" style="margin-top:20px;">
+                    <button type="button" class="admin-btn admin-btn-ghost"
+                        onclick="closeResourceModal()">Cancel</button>
+                    <button type="submit" class="admin-btn admin-btn-primary" id="resSubmit">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="admin-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="admin-layout">
+
+        <!-- ─── Sidebar ──────────────────────────────────────── -->
+        <aside class="admin-sidebar" id="sidebar">
+            <div class="admin-sidebar-brand">
+                <div class="brand-icon">🧭</div>
+                <div class="brand-text">
+                    <span class="brand-title">Student Compass</span>
+                    <span class="brand-subtitle">Admin Panel</span>
+                </div>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <div class="admin-nav-section">
+                    <div class="admin-nav-label">Overview</div>
+                    <button class="admin-nav-item active" onclick="showSection('dashboard', this)">
+                        <span class="nav-icon">📊</span> Dashboard
+                    </button>
+                </div>
+
+                <div class="admin-nav-section">
+                    <div class="admin-nav-label">Manage</div>
+                    <button class="admin-nav-item" onclick="showSection('users', this)">
+                        <span class="nav-icon">👥</span> Users
+                        <span class="nav-badge" id="navBadgeUsers">—</span>
+                    </button>
+                    <button class="admin-nav-item" onclick="showSection('communities', this)">
+                        <span class="nav-icon">💬</span> Communities
+                    </button>
+                    <button class="admin-nav-item" onclick="showSection('resources', this)">
+                        <span class="nav-icon">📚</span> Resources
+                    </button>
+                    <button class="admin-nav-item" onclick="showSection('jobs', this)">
+                        <span class="nav-icon">💼</span> Job Postings
+                    </button>
+                    <button class="admin-nav-item" onclick="showSection('companies', this)">
+                        <span class="nav-icon">🏢</span> Companies
+                    </button>
+                    <button class="admin-nav-item" onclick="showSection('applications', this)">
+                        <span class="nav-icon">📋</span> Applications
+                    </button>
+                </div>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/">
+                    <span>🌐</span> Back to Site
+                </a>
+            </div>
+        </aside>
+
+        <!-- ─── Main ─────────────────────────────────────────── -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+                    <h2 class="admin-header-title" id="headerTitle">Dashboard</h2>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-header-user">
+                        <div class="admin-header-user-info">
+                            <div class="admin-header-user-name" id="adminName">Admin</div>
+                            <div class="admin-header-user-role">Super Admin</div>
+                        </div>
+                        <div class="admin-header-avatar" id="adminAvatar">A</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="admin-content">
+
+                <!-- ════════════════ DASHBOARD ════════════════ -->
+                <div class="admin-section active" id="section-dashboard">
+                    <div class="admin-stats-grid" id="statsGrid">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- ════════════════ USERS ════════════════════ -->
+                <div class="admin-section" id="section-users">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header">
+                            <div class="admin-panel-title"><span class="panel-icon">👥</span> Users</div>
+                            <div class="admin-panel-actions">
+                                <div class="admin-search">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" placeholder="Search users…" id="searchUsers"
+                                        oninput="filterTable('users')">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Role</th>
+                                        <th>Verified</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="admin-empty">
+                                                <div class="admin-empty-icon">⏳</div>
+                                                <div class="admin-empty-title">Loading users…</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════════════ COMMUNITIES ══════════════ -->
+                <div class="admin-section" id="section-communities">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header">
+                            <div class="admin-panel-title"><span class="panel-icon">💬</span> Communities</div>
+                            <div class="admin-panel-actions">
+                                <div class="admin-search">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" placeholder="Search communities…" id="searchCommunities"
+                                        oninput="filterTable('communities')">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Members</th>
+                                        <th>Status</th>
+                                        <th>Creator</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="communitiesTableBody">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="admin-empty">
+                                                <div class="admin-empty-icon">⏳</div>
+                                                <div class="admin-empty-title">Loading communities…</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════════════ RESOURCES ════════════════ -->
+                <div class="admin-section" id="section-resources">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header">
+                            <div class="admin-panel-title"><span class="panel-icon">📚</span> Resources</div>
+                            <div class="admin-panel-actions">
+                                <div class="admin-panel-actions">
+                                    <button class="admin-btn admin-btn-primary" onclick="openResourceModal()"
+                                        style="margin-right: 12px;">
+                                        ➕ New Resource
+                                    </button>
+                                    <div class="admin-search">
+                                        <span class="search-icon">🔍</span>
+                                        <input type="text" placeholder="Search resources…" id="searchResources"
+                                            oninput="filterTable('resources')">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Level</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resourcesTableBody">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="admin-empty">
+                                                <div class="admin-empty-icon">⏳</div>
+                                                <div class="admin-empty-title">Loading resources…</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════════════ JOBS ═════════════════════ -->
+                <div class="admin-section" id="section-jobs">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header">
+                            <div class="admin-panel-title"><span class="panel-icon">💼</span> Job Postings</div>
+                            <div class="admin-panel-actions">
+                                <div class="admin-search">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" placeholder="Search jobs…" id="searchJobs"
+                                        oninput="filterTable('jobs')">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Company</th>
+                                        <th>Location</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="jobsTableBody">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="admin-empty">
+                                                <div class="admin-empty-icon">⏳</div>
+                                                <div class="admin-empty-title">Loading jobs…</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════════════ COMPANIES ════════════════ -->
+                <div class="admin-section" id="section-companies">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header">
+                            <div class="admin-panel-title"><span class="panel-icon">🏢</span> Companies</div>
+                            <div class="admin-panel-actions">
+                                <div class="admin-search">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" placeholder="Search companies…" id="searchCompanies"
+                                        oninput="filterTable('companies')">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Industry</th>
+                                        <th>Location</th>
+                                        <th>Website</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="companiesTableBody">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="admin-empty">
+                                                <div class="admin-empty-icon">⏳</div>
+                                                <div class="admin-empty-title">Loading companies…</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════════════ APPLICATIONS ═════════════ -->
+                <div class="admin-section" id="section-applications">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header">
+                            <div class="admin-panel-title"><span class="panel-icon">📋</span> Applications</div>
+                            <div class="admin-panel-actions">
+                                <div class="admin-search">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" placeholder="Search applications…" id="searchApplications"
+                                        oninput="filterTable('applications')">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Applicant</th>
+                                        <th>Company</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsTableBody">
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="admin-empty">
+                                                <div class="admin-empty-icon">⏳</div>
+                                                <div class="admin-empty-title">Loading applications…</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- admin-content -->
+        </main>
+    </div><!-- admin-layout -->
+</div><!-- admin-body -->
+
+<script>
+    /* ============================================================
+       Admin Panel – Client-side Logic
+       ============================================================ */
+
+    const API = '/api/v1/admin';
+
+    // ── Helpers ───────────────────────────────────────────────────
+    function esc(str) {
+        if (!str) return '—';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    function formatDate(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function avatarColor(email) {
+        let hash = 0;
+        for (let i = 0; i < (email || '').length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash);
+        const colors = ['#6366f1', '#14b8a6', '#f59e0b', '#f43f5e', '#0ea5e9', '#8b5cf6', '#10b981', '#ec4899'];
+        return colors[Math.abs(hash) % colors.length];
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────
+    function toast(msg, type = 'success') {
+        const wrap = document.getElementById('toastWrap');
+        const icons = { success: '✅', error: '❌', warning: '⚠️' };
+        const el = document.createElement('div');
+        el.className = `admin-toast ${type}`;
+        el.innerHTML = `<span>${icons[type] || ''}</span> ${esc(msg)}`;
+        wrap.appendChild(el);
+        setTimeout(() => {
+            el.style.animation = 'toastSlideOut 0.3s ease-out forwards';
+            setTimeout(() => el.remove(), 300);
+        }, 3500);
+    }
+
+    // ── Confirm Modal ─────────────────────────────────────────────
+    let confirmCallback = null;
+    function openConfirm(title, desc, cb) {
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmDesc').textContent = desc;
+        document.getElementById('confirmModal').style.display = '';
+        confirmCallback = cb;
+    }
+    function closeConfirm() {
+        document.getElementById('confirmModal').style.display = 'none';
+        confirmCallback = null;
+    }
+    document.getElementById('confirmOk').onclick = async () => {
+        if (confirmCallback) { await confirmCallback(); }
+        closeConfirm();
+    };
+
+    // ── Sidebar ───────────────────────────────────────────────────
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    // ── Section Switching ─────────────────────────────────────────
+    const sectionLoaded = {};
+
+    function showSection(name, btn) {
+        document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`section-${name}`).classList.add('active');
+        if (btn) btn.classList.add('active');
+
+        const titles = {
+            dashboard: 'Dashboard', users: 'Users', communities: 'Communities',
+            resources: 'Resources', jobs: 'Job Postings', companies: 'Companies',
+            applications: 'Applications'
+        };
+        document.getElementById('headerTitle').textContent = titles[name] || name;
+
+        // Lazy-load data
+        if (!sectionLoaded[name]) {
+            sectionLoaded[name] = true;
+            loaders[name]?.();
+        }
+
+        // Close mobile sidebar
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
+    }
+
+    // ── Data loaders ──────────────────────────────────────────────
+    const loaders = {
+        dashboard: loadDashboard,
+        users: loadUsers,
+        communities: loadCommunities,
+        resources: loadResources,
+        jobs: loadJobs,
+        companies: loadCompanies,
+        applications: loadApplications,
+    };
+
+    // -- Dashboard Stats --
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API}/stats`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            const cards = [
+                { icon: '👥', cls: 'users', label: 'Total Users', value: d.total_users },
+                { icon: '🏢', cls: 'companies', label: 'Companies', value: d.total_companies },
+                { icon: '💬', cls: 'communities', label: 'Communities', value: d.total_communities },
+                { icon: '📚', cls: 'resources', label: 'Resources', value: d.total_resources },
+                { icon: '💼', cls: 'jobs', label: 'Job Postings', value: d.total_jobs },
+                { icon: '📋', cls: 'applications', label: 'Applications', value: d.total_applications },
+                { icon: '📄', cls: 'resumes', label: 'Resumes', value: d.total_resumes },
+                { icon: '📝', cls: 'questionnaires', label: 'Questionnaires', value: d.total_questionnaires },
+            ];
+            document.getElementById('statsGrid').innerHTML = cards.map(c => `
+      <div class="admin-stat-card">
+        <div class="admin-stat-header">
+          <div class="admin-stat-icon ${c.cls}">${c.icon}</div>
+        </div>
+        <div class="admin-stat-value">${c.value.toLocaleString()}</div>
+        <div class="admin-stat-label">${c.label}</div>
+      </div>
+    `).join('');
+            document.getElementById('navBadgeUsers').textContent = d.total_users;
+        } catch { toast('Failed to load stats', 'error'); }
+    }
+
+    // -- Users --
+    let allUsers = [];
+    async function loadUsers() {
+        try {
+            const res = await fetch(`${API}/users?limit=200`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            allUsers = d.users;
+            renderUsers(allUsers);
+        } catch { toast('Failed to load users', 'error'); }
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+        if (!users.length) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">👥</div><div class="admin-empty-title">No users found</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = users.map(u => {
+            const initial = (u.first_name || u.email || '?')[0].toUpperCase();
+            const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || '—';
+            return `<tr data-search="${(u.email + ' ' + name).toLowerCase()}">
+      <td>
+        <div class="admin-user-cell">
+          <div class="admin-user-mini-avatar" style="background:${avatarColor(u.email)}">${initial}</div>
+          <span>${esc(u.email)}</span>
+        </div>
+      </td>
+      <td>${esc(name)}</td>
+      <td><span class="admin-badge ${u.is_active ? 'active' : 'inactive'}">${u.is_active ? '● Active' : '● Inactive'}</span></td>
+      <td>${u.is_superuser ? '<span class="admin-badge admin">⚡ Admin</span>' : 'User'}</td>
+      <td>${u.is_verified ? '✅' : '❌'}</td>
+      <td>
+        <div class="admin-actions-cell">
+          <button class="admin-btn-icon" title="Toggle active" onclick="toggleActive('${u.id}')">
+            ${u.is_active ? '🔒' : '🔓'}
+          </button>
+          <button class="admin-btn-icon" title="Toggle admin" onclick="toggleSuperuser('${u.id}')">
+            ⚡
+          </button>
+          <button class="admin-btn-icon danger" title="Delete" onclick="deleteUser('${u.id}', '${esc(u.email)}')">
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>`;
+        }).join('');
+    }
+
+    async function toggleActive(id) {
+        try {
+            const res = await fetch(`${API}/users/${id}/toggle-active`, { method: 'PATCH', credentials: 'include' });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+            const u = await res.json();
+            toast(`User ${u.email} is now ${u.is_active ? 'active' : 'inactive'}`);
+            await loadUsers();
+        } catch (e) { toast(e.message || 'Failed', 'error'); }
+    }
+
+    async function toggleSuperuser(id) {
+        openConfirm('Toggle Admin Role', 'Are you sure you want to change this user\'s admin privileges?', async () => {
+            try {
+                const res = await fetch(`${API}/users/${id}/toggle-superuser`, { method: 'PATCH', credentials: 'include' });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+                const u = await res.json();
+                toast(`User ${u.email} is now ${u.is_superuser ? 'an admin' : 'a regular user'}`);
+                await loadUsers();
+            } catch (e) { toast(e.message || 'Failed', 'error'); }
+        });
+    }
+
+    async function deleteUser(id, email) {
+        openConfirm('Delete User', `Are you sure you want to permanently delete "${email}"? This action cannot be undone.`, async () => {
+            try {
+                const res = await fetch(`${API}/users/${id}`, { method: 'DELETE', credentials: 'include' });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+                toast(`User ${email} deleted`);
+                await loadUsers();
+                loadDashboard();
+            } catch (e) { toast(e.message || 'Failed', 'error'); }
+        });
+    }
+
+    // -- Communities --
+    let allCommunities = [];
+    async function loadCommunities() {
+        try {
+            const res = await fetch(`${API}/communities?limit=200`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            allCommunities = d.communities;
+            renderCommunities(allCommunities);
+        } catch { toast('Failed to load communities', 'error'); }
+    }
+
+    function renderCommunities(items) {
+        const tbody = document.getElementById('communitiesTableBody');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">💬</div><div class="admin-empty-title">No communities yet</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(c => `<tr data-search="${(c.name + ' ' + (c.creator_email || '')).toLowerCase()}">
+    <td><strong>${c.icon || ''} ${esc(c.name)}</strong></td>
+    <td>${c.member_count}</td>
+    <td><span class="admin-badge ${c.activity_status === 'active' ? 'active' : 'draft'}">${esc(c.activity_status) || '—'}</span></td>
+    <td>${esc(c.creator_email)}</td>
+    <td>${formatDate(c.created_at)}</td>
+    <td>
+      <div class="admin-actions-cell">
+        <button class="admin-btn-icon danger" title="Delete" onclick="deleteCommunity('${c.id}','${esc(c.name)}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+    }
+
+    async function deleteCommunity(id, name) {
+        openConfirm('Delete Community', `Delete community "${name}" and all its posts? This cannot be undone.`, async () => {
+            try {
+                const res = await fetch(`${API}/communities/${id}`, { method: 'DELETE', credentials: 'include' });
+                if (!res.ok) throw new Error();
+                toast(`Community "${name}" deleted`);
+                await loadCommunities();
+                loadDashboard();
+            } catch { toast('Failed to delete', 'error'); }
+        });
+    }
+
+    // -- Resources --
+    function openResourceModal() {
+        document.getElementById('resourceForm').reset();
+        document.getElementById('resourceModal').style.display = '';
+    }
+
+    function closeResourceModal() {
+        document.getElementById('resourceModal').style.display = 'none';
+    }
+
+    async function handleCreateResource(e) {
+        e.preventDefault();
+        const btn = document.getElementById('resSubmit');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        const payload = {
+            title: document.getElementById('resTitle').value,
+            description: document.getElementById('resDesc').value,
+            category: document.getElementById('resCategory').value,
+            level: document.getElementById('resLevel').value || null,
+            icon: document.getElementById('resIcon').value || null,
+            estimated_duration_minutes: parseInt(document.getElementById('resDuration').value) || null,
+            external_url: document.getElementById('resUrl').value || null,
+            is_published: true
+        };
+
+        try {
+            const res = await fetch(`${API}/resources`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                credentials: 'include'
+            });
+
+            if (!res.ok) throw new Error();
+            toast('Resource created successfully!');
+            closeResourceModal();
+            await loadResources();
+            loadDashboard();
+        } catch {
+            toast('Failed to create resource', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Create';
+        }
+    }
+
+    let allResources = [];
+    async function loadResources() {
+        try {
+            const res = await fetch(`${API}/resources?limit=200`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            allResources = d.resources;
+            renderResources(allResources);
+        } catch { toast('Failed to load resources', 'error'); }
+    }
+
+    function renderResources(items) {
+        const tbody = document.getElementById('resourcesTableBody');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">📚</div><div class="admin-empty-title">No resources yet</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(r => `<tr data-search="${(r.title + ' ' + r.category).toLowerCase()}">
+    <td><strong>${esc(r.title)}</strong></td>
+    <td>${esc(r.category)}</td>
+    <td>${esc(r.level) || '—'}</td>
+    <td><span class="admin-badge ${r.is_published ? 'published' : 'draft'}">${r.is_published ? '● Published' : '● Draft'}</span></td>
+    <td>${formatDate(r.created_at)}</td>
+    <td>
+      <div class="admin-actions-cell">
+        <button class="admin-btn-icon" title="Toggle publish" onclick="toggleResourcePublished('${r.id}')">
+          ${r.is_published ? '📤' : '📥'}
+        </button>
+        <button class="admin-btn-icon danger" title="Delete" onclick="deleteResource('${r.id}','${esc(r.title)}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+    }
+
+    async function toggleResourcePublished(id) {
+        try {
+            const res = await fetch(`${API}/resources/${id}/toggle-published`, { method: 'PATCH', credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            toast(`Resource is now ${d.is_published ? 'published' : 'unpublished'}`);
+            await loadResources();
+        } catch { toast('Failed', 'error'); }
+    }
+
+    async function deleteResource(id, title) {
+        openConfirm('Delete Resource', `Delete "${title}" and all its modules/lessons? This cannot be undone.`, async () => {
+            try {
+                const res = await fetch(`${API}/resources/${id}`, { method: 'DELETE', credentials: 'include' });
+                if (!res.ok) throw new Error();
+                toast(`Resource deleted`);
+                await loadResources();
+                loadDashboard();
+            } catch { toast('Failed to delete', 'error'); }
+        });
+    }
+
+    // -- Jobs --
+    let allJobs = [];
+    async function loadJobs() {
+        try {
+            const res = await fetch(`${API}/jobs?limit=200`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            allJobs = d.jobs;
+            renderJobs(allJobs);
+        } catch { toast('Failed to load jobs', 'error'); }
+    }
+
+    function renderJobs(items) {
+        const tbody = document.getElementById('jobsTableBody');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">💼</div><div class="admin-empty-title">No job postings yet</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(j => `<tr data-search="${(j.title + ' ' + j.company_name + ' ' + (j.location || '')).toLowerCase()}">
+    <td><strong>${esc(j.title)}</strong></td>
+    <td>${esc(j.company_name)}</td>
+    <td>${esc(j.location)}</td>
+    <td>${esc(j.job_type)}</td>
+    <td><span class="admin-badge ${j.is_active ? 'active' : 'inactive'}">${j.is_active ? '● Active' : '● Inactive'}</span></td>
+    <td>
+      <div class="admin-actions-cell">
+        <button class="admin-btn-icon" title="Toggle active" onclick="toggleJobActive('${j.id}')">
+          ${j.is_active ? '🔒' : '🔓'}
+        </button>
+        <button class="admin-btn-icon danger" title="Delete" onclick="deleteJob('${j.id}','${esc(j.title)}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+    }
+
+    async function toggleJobActive(id) {
+        try {
+            const res = await fetch(`${API}/jobs/${id}/toggle-active`, { method: 'PATCH', credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            toast(`Job is now ${d.is_active ? 'active' : 'inactive'}`);
+            await loadJobs();
+        } catch { toast('Failed', 'error'); }
+    }
+
+    async function deleteJob(id, title) {
+        openConfirm('Delete Job Posting', `Delete "${title}"? This cannot be undone.`, async () => {
+            try {
+                const res = await fetch(`${API}/jobs/${id}`, { method: 'DELETE', credentials: 'include' });
+                if (!res.ok) throw new Error();
+                toast(`Job deleted`);
+                await loadJobs();
+                loadDashboard();
+            } catch { toast('Failed to delete', 'error'); }
+        });
+    }
+
+    // -- Companies --
+    let allCompanies = [];
+    async function loadCompanies() {
+        try {
+            const res = await fetch(`${API}/companies?limit=200`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            allCompanies = d.companies;
+            renderCompanies(allCompanies);
+        } catch { toast('Failed to load companies', 'error'); }
+    }
+
+    function renderCompanies(items) {
+        const tbody = document.getElementById('companiesTableBody');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">🏢</div><div class="admin-empty-title">No companies yet</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(c => `<tr data-search="${(c.company_name + ' ' + (c.industry || '')).toLowerCase()}">
+    <td><strong>${esc(c.company_name)}</strong></td>
+    <td>${esc(c.industry)}</td>
+    <td>${esc(c.location)}</td>
+    <td>${c.website ? `<a href="${esc(c.website)}" target="_blank" style="color:var(--admin-primary)">${esc(c.website)}</a>` : '—'}</td>
+    <td>${esc(c.email)}</td>
+    <td>
+      <div class="admin-actions-cell">
+        <button class="admin-btn-icon danger" title="Delete" onclick="deleteCompany('${c.id}','${esc(c.company_name)}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+    }
+
+    async function deleteCompany(id, name) {
+        openConfirm('Delete Company', `Delete "${name}" and all its job postings? This cannot be undone.`, async () => {
+            try {
+                const res = await fetch(`${API}/companies/${id}`, { method: 'DELETE', credentials: 'include' });
+                if (!res.ok) throw new Error();
+                toast(`Company deleted`);
+                await loadCompanies();
+                loadDashboard();
+            } catch { toast('Failed to delete', 'error'); }
+        });
+    }
+
+    // -- Applications --
+    let allApplications = [];
+    async function loadApplications() {
+        try {
+            const res = await fetch(`${API}/applications?limit=200`, { credentials: 'include' });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            allApplications = d.applications;
+            renderApplications(allApplications);
+        } catch { toast('Failed to load applications', 'error'); }
+    }
+
+    function renderApplications(items) {
+        const tbody = document.getElementById('applicationsTableBody');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">📋</div><div class="admin-empty-title">No applications yet</div></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(a => `<tr data-search="${(a.job_title + ' ' + (a.user_email || '') + ' ' + (a.company_name || '')).toLowerCase()}">
+    <td><strong>${esc(a.job_title)}</strong></td>
+    <td>${esc(a.user_email)}</td>
+    <td>${esc(a.company_name)}</td>
+    <td><span class="admin-badge status-${a.status || 'applied'}">${esc(a.status ? a.status.replace('_', ' ') : 'applied')}</span></td>
+    <td>${formatDate(a.application_date)}</td>
+  </tr>`).join('');
+    }
+
+    // ── Table Search / Filter ─────────────────────────────────────
+    function filterTable(section) {
+        const input = document.getElementById(`search${section.charAt(0).toUpperCase() + section.slice(1)}`);
+        const q = (input?.value || '').toLowerCase();
+        const tbody = document.getElementById(`${section}TableBody`);
+        tbody.querySelectorAll('tr[data-search]').forEach(tr => {
+            tr.style.display = (tr.dataset.search || '').includes(q) ? '' : 'none';
+        });
+    }
+
+    // ── Identify admin user ───────────────────────────────────────
+    async function loadAdminInfo() {
+        try {
+            const res = await fetch('/api/v1/users/me', { credentials: 'include' });
+            if (res.ok) {
+                const u = await res.json();
+                const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
+                document.getElementById('adminName').textContent = name;
+                document.getElementById('adminAvatar').textContent = (name[0] || 'A').toUpperCase();
+            }
+        } catch { }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        sectionLoaded['dashboard'] = true;
+        loadDashboard();
+        loadAdminInfo();
+    });
+</script>
+{% endblock %}

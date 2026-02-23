@@ -21,6 +21,18 @@ class ResourceRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ResourceCreate(BaseModel):
+    title: str
+    description: str
+    category: str
+    icon: Optional[str] = None
+    level: Optional[str] = None
+    tags: Optional[list[str]] = None
+    estimated_duration_minutes: Optional[int] = None
+    external_url: Optional[str] = None
+    is_published: bool = True
+
+
 class ResourceLessonRead(BaseModel):
     id: UUID
     module_id: UUID

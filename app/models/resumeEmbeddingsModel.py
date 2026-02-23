@@ -31,6 +31,12 @@ class ResumeEmbedding(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     __table_args__ = (
         # Índice para no guardar duplicados del mismo resume + modelo (opcional)

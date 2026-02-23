@@ -17,6 +17,9 @@ from app.models.companyModel import Company
 from app.models.jobPostingModel import JobPosting
 from app.models.jobAnalysisModel import JobAnalysisModel
 from app.models.userStatsModel import UserStatsModel
+from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
+from app.models.communityModel import CommunityModel, CommunityMemberModel
+from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeModel, CommunityPostCommentModel
 
 
 

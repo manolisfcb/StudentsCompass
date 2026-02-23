@@ -19,5 +19,6 @@ class UserQuestionnaire(Base):
     results = Column(JSON, nullable=False)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship("User", back_populates="questionnaires")

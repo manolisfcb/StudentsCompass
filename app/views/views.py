@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.userService import current_active_user_optional
 from app.services.companyService import current_active_company_optional
 from app.services.resourceService import ResourceService
+from app.services.adminService import current_admin_user
 from app.models.userModel import User
 from app.models.companyModel import Company
 from typing import Optional
@@ -145,3 +146,22 @@ async def jobs_board(request: Request, user: Optional[User] = Depends(current_ac
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("jobs.html", {"request": request})
+
+
+# ── Admin Panel ────────────────────────────────────────────────────────────
+
+@router.get("/admin/login")
+async def admin_login_page(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request, "page_title": "Admin Login"})
+
+
+@router.get("/admin")
+async def admin_panel(
+    request: Request,
+    user: Optional[User] = Depends(current_active_user_optional),
+):
+    if user is None:
+        return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)
+    if not user.is_superuser:
+        return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("admin.html", {"request": request, "page_title": "Admin Panel", "body_class": "admin-body"})

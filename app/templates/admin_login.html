@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="admin-login-page">
+  <div class="admin-login-card">
+    <div class="admin-login-header">
+      <div class="admin-login-icon">🛡️</div>
+      <h1 class="admin-login-title">Admin Panel</h1>
+      <p class="admin-login-subtitle">Sign in with your admin credentials</p>
+    </div>
+
+    <div id="loginError" class="admin-login-error">
+      Invalid credentials or insufficient privileges.
+    </div>
+
+    <form id="adminLoginForm" onsubmit="return handleAdminLogin(event)">
+      <div class="admin-form-group">
+        <label class="admin-form-label" for="adminEmail">Email address</label>
+        <input class="admin-form-input" type="email" id="adminEmail" name="email"
+               placeholder="admin@studentscompass.ca" required autocomplete="email">
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label" for="adminPassword">Password</label>
+        <input class="admin-form-input" type="password" id="adminPassword" name="password"
+               placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="admin-login-btn" id="loginBtn">
+        Sign In
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errBox = document.getElementById('loginError');
+  errBox.classList.remove('visible');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  const email = document.getElementById('adminEmail').value;
+  const password = document.getElementById('adminPassword').value;
+
+  try {
+    // 1. Log in with FastAPI-Users cookie auth
+    const loginRes = await fetch('/auth/jwt/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username: email, password }),
+      credentials: 'include',
+    });
+
+    if (!loginRes.ok) {
+      throw new Error('Invalid credentials');
+    }
+
+    // 2. Verify admin privileges by hitting the admin stats endpoint
+    const checkRes = await fetch('/api/v1/admin/stats', {
+      credentials: 'include',
+    });
+
+    if (!checkRes.ok) {
+      throw new Error('Not an admin account');
+    }
+
+    // 3. Success – redirect to the admin panel
+    window.location.href = '/admin';
+  } catch (err) {
+    errBox.textContent = err.message === 'Not an admin account'
+      ? 'This account does not have admin privileges.'
+      : 'Invalid email or password.';
+    errBox.classList.add('visible');
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+</script>
+{% endblock %}

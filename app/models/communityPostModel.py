@@ -17,6 +17,7 @@ class CommunityPostModel(Base):
     title = Column(String(200), nullable=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     community = relationship("CommunityModel", back_populates="posts")
     user = relationship("User", back_populates="community_posts")
@@ -31,6 +32,7 @@ class CommunityPostLikeModel(Base):
     post_id = Column(UUID(as_uuid=True), ForeignKey("community_posts.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     post = relationship("CommunityPostModel", back_populates="likes")
     user = relationship("User", back_populates="community_post_likes")
@@ -48,6 +50,7 @@ class CommunityPostCommentModel(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     post = relationship("CommunityPostModel", back_populates="comments")
     user = relationship("User", back_populates="community_post_comments")
