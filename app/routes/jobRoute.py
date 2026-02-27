@@ -9,7 +9,7 @@ from app.services.userService import current_active_user
 from app.models.userModel import User
 from app.models.resumeModel import ResumeModel
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
-from sqlalchemy import select
+from sqlalchemy import select, func
 import logging
 from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf
 from app.core.ResumeAnalizer.llm_model import ask_llm_model
@@ -17,7 +17,7 @@ from app.services.resumeService import ResumeService
 import io
 import tempfile
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 from collections import deque
 from time import monotonic
@@ -30,6 +30,65 @@ router = APIRouter()
 LLM_RATE_LIMIT_PER_MINUTE = 5
 LLM_RATE_LIMIT_WINDOW_SECONDS = 60
 _llm_rate_limit_store: dict[str, deque[float]] = {}
+LLM_DAILY_LIMIT_PER_USER = 2
+
+DAILY_LIMIT_MESSAGE = (
+    f"You reached your daily limit of {LLM_DAILY_LIMIT_PER_USER} AI CV analyses. "
+    "Please try again tomorrow or use Manual mode."
+)
+LLM_QUOTA_MESSAGE = (
+    "Our AI analyzer has reached its provider limit right now. "
+    "Please try again later or continue with Manual mode."
+)
+LLM_TIMEOUT_MESSAGE = (
+    "AI analysis is taking longer than expected. Please try again in a few minutes."
+)
+LLM_GENERAL_FAILURE_MESSAGE = (
+    "We could not analyze your CV right now. Please try again later or use Manual mode."
+)
+
+
+def _today_utc_bounds() -> tuple[datetime, datetime]:
+    now = datetime.utcnow()
+    start = datetime(now.year, now.month, now.day)
+    end = start + timedelta(days=1)
+    return start, end
+
+
+async def _check_llm_daily_limit(session: AsyncSession, user_id: UUID) -> None:
+    start, end = _today_utc_bounds()
+    result = await session.execute(
+        select(func.count(JobAnalysisModel.id)).where(
+            JobAnalysisModel.user_id == user_id,
+            JobAnalysisModel.created_at >= start,
+            JobAnalysisModel.created_at < end,
+        )
+    )
+    requests_today = int(result.scalar_one() or 0)
+    if requests_today >= LLM_DAILY_LIMIT_PER_USER:
+        raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE)
+
+
+def _friendly_analysis_error_message(error: Exception) -> str:
+    raw = str(error or "").strip().lower()
+
+    quota_markers = (
+        "quota",
+        "credit",
+        "resource_exhausted",
+        "insufficient",
+        "billing",
+        "rate limit",
+        "429",
+    )
+    if any(marker in raw for marker in quota_markers):
+        return LLM_QUOTA_MESSAGE
+
+    timeout_markers = ("timeout", "timed out", "deadline exceeded")
+    if any(marker in raw for marker in timeout_markers):
+        return LLM_TIMEOUT_MESSAGE
+
+    return LLM_GENERAL_FAILURE_MESSAGE
 
 
 def _get_client_ip(request: Request) -> str:
@@ -246,7 +305,7 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, sess
                 job = result.scalar_one_or_none()
                 if job:
                     job.status = JobStatus.FAILED
-                    job.error_message = str(e)
+                    job.error_message = _friendly_analysis_error_message(e)
                     job.completed_at = datetime.utcnow()
                     await session.commit()
             except Exception as commit_error:
@@ -312,6 +371,7 @@ async def start_cv_analysis(
                 message="CV analysis already in progress for this resume."
             )
 
+        await _check_llm_daily_limit(session, user.id)
         _check_llm_rate_limit(request)
 
         # Create new job
@@ -338,9 +398,9 @@ async def start_cv_analysis(
         
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Failed to start CV analysis")
-        raise HTTPException(status_code=500, detail=f"Failed to start analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=LLM_GENERAL_FAILURE_MESSAGE)
 
 
 @router.get("/jobs/keywords/{job_id}", response_model=JobStatusResponse)
@@ -372,9 +432,9 @@ async def get_job_status(
         
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Failed to get job status")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Could not fetch analysis status right now. Please retry.")
 
 
 @router.get("/jobs/keywords", response_model=KeywordsResponse)

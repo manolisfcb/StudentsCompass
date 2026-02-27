@@ -388,6 +388,44 @@
         let currentMode = 'auto'; // 'auto' or 'manual'
         let autoKeywords = '';
 
+        async function readErrorDetail(response, fallbackMessage) {
+            try {
+                const data = await response.json();
+                if (typeof data?.detail === 'string' && data.detail.trim()) {
+                    return data.detail.trim();
+                }
+            } catch (_) {
+                // Ignore parse errors and use fallback
+            }
+            return fallbackMessage;
+        }
+
+        function userFriendlyAutoModeError(message) {
+            const raw = (message || '').toLowerCase();
+            if (!raw) return 'We could not analyze your CV right now.';
+
+            if (raw.includes('daily limit') || raw.includes('429')) {
+                return 'You reached your daily AI analysis limit. Please try again tomorrow or use Manual mode.';
+            }
+            if (
+                raw.includes('quota') ||
+                raw.includes('credit') ||
+                raw.includes('resource_exhausted') ||
+                raw.includes('billing') ||
+                raw.includes('rate limit')
+            ) {
+                return 'AI credits are temporarily exhausted. Please try again later or use Manual mode.';
+            }
+            if (raw.includes('timeout') || raw.includes('timed out')) {
+                return 'AI analysis took too long. Please try again in a few minutes.';
+            }
+            if (raw.includes('no cv')) {
+                return 'No CV found. Please upload your CV first.';
+            }
+
+            return 'We could not analyze your CV right now. Please try again later or use Manual mode.';
+        }
+
         // Mode switcher
         modeAutoBtn.addEventListener('click', () => {
             currentMode = 'auto';
@@ -448,8 +486,8 @@
                 }
                 
                 if (!startRes.ok) {
-                    const error = await startRes.json();
-                    throw new Error(error.detail || 'Failed to start analysis');
+                    const detail = await readErrorDetail(startRes, 'Failed to start analysis');
+                    throw new Error(detail);
                 }
                 
                 const { job_id } = await startRes.json();
@@ -471,7 +509,8 @@
                     }
                     
                     if (!statusRes.ok) {
-                        throw new Error('Failed to check job status');
+                        const detail = await readErrorDetail(statusRes, 'Failed to check job status');
+                        throw new Error(detail);
                     }
                     
                     const jobData = await statusRes.json();
@@ -501,7 +540,8 @@
                 
             } catch (err) {
                 console.error('Error analyzing CV:', err);
-                cvStatus.innerHTML = `⚠️ ${err.message}. <a href="#" onclick="location.reload()" style="color: var(--primary-color); text-decoration: underline;">Try again</a>`;
+                const safeMessage = userFriendlyAutoModeError(err?.message || '');
+                cvStatus.innerHTML = `⚠️ ${escapeHtml(safeMessage)} <a href="#" onclick="location.reload()" style="color: var(--primary-color); text-decoration: underline;">Try again</a>`;
                 return false;
             } finally {
                 // Re-enable buttons

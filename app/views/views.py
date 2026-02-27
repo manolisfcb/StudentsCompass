@@ -18,6 +18,7 @@ from typing import Optional
 router = APIRouter()
 
 templates = Jinja2Templates(directory="app/templates")
+RESOURCE_DETAIL_ACCESS_ENABLED = False
 
 @router.get("/")
 async def root(request: Request):
@@ -76,7 +77,15 @@ async def resources(
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     service = ResourceService(session)
     resources = await service.list_published_resources()
-    return templates.TemplateResponse("resources.html", {"request": request, "resources": resources})
+    return templates.TemplateResponse(
+        "resources.html",
+        {
+            "request": request,
+            "resources": resources,
+            "resource_detail_access_enabled": RESOURCE_DETAIL_ACCESS_ENABLED,
+            "locked_notice": request.query_params.get("locked") == "1",
+        },
+    )
 
 
 @router.get("/resources/{resource_id}")
@@ -89,6 +98,8 @@ async def resource_detail(
 ):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    if not RESOURCE_DETAIL_ACCESS_ENABLED:
+        return RedirectResponse(url="/resources?locked=1", status_code=status.HTTP_303_SEE_OTHER)
 
     service = ResourceService(session)
     resource = await service.get_resource_with_outline(resource_id)
