@@ -9,6 +9,7 @@ injected into any route that should be admin-only.
 from __future__ import annotations
 
 import uuid
+import os
 from datetime import datetime
 from typing import Optional, Sequence
 
@@ -20,13 +21,14 @@ from sqlalchemy.orm import selectinload
 from app.db import get_session
 from app.models.userModel import User
 from app.models.communityModel import CommunityModel, CommunityMemberModel
-from app.models.resourceModel import ResourceModel
+from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
 from app.models.jobPostingModel import JobPosting
 from app.models.companyModel import Company
 from app.models.applicationModel import ApplicationModel
 from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
 from app.models.userStatsModel import UserStatsModel
+from app.services.s3Service import S3Service
 from app.services.userService import current_active_user
 from app.schemas.resourceSchema import ResourceCreate
 
@@ -163,6 +165,29 @@ class AdminService:
             is_published=payload.is_published,
         )
         self.session.add(resource)
+        await self.session.flush()
+
+        for module_index, module_data in enumerate(payload.modules or [], start=1):
+            module = ResourceModuleModel(
+                resource_id=resource.id,
+                title=module_data.title,
+                position=module_index,
+                description=module_data.description,
+            )
+            self.session.add(module)
+            await self.session.flush()
+
+            for lesson_index, lesson_data in enumerate(module_data.lessons or [], start=1):
+                lesson = ResourceLessonModel(
+                    module_id=module.id,
+                    title=lesson_data.title,
+                    position=lesson_index,
+                    content_type=lesson_data.content_type,
+                    content=lesson_data.content,
+                    reading_time_minutes=lesson_data.reading_time_minutes,
+                )
+                self.session.add(lesson)
+
         await self.session.commit()
         await self.session.refresh(resource)
         return resource
@@ -189,6 +214,32 @@ class AdminService:
         await self.session.delete(resource)
         await self.session.commit()
         return True
+
+    async def upload_resource_file(
+        self,
+        *,
+        file_bytes: bytes,
+        file_name: str,
+        content_type: str,
+    ) -> dict:
+        safe_name = file_name.rsplit("/", 1)[-1].rsplit("\\", 1)[-1] or "resource_file"
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        unique_name = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_name}"
+
+        resources_bucket = os.getenv("RESOURCES_BUCKET_NAME") or os.getenv("BUCKET_NAME")
+        s3_service = S3Service(bucket_name=resources_bucket)
+        upload_result = await s3_service.upload_file(
+            file_bytes=file_bytes,
+            file_name=unique_name,
+            content_type=content_type or "application/octet-stream",
+            folder="resources",
+        )
+        return {
+            "file_key": upload_result["file_key"],
+            "file_url": upload_result["file_url"],
+            "original_filename": safe_name,
+            "content_type": content_type or "application/octet-stream",
+        }
 
     # ── Jobs ───────────────────────────────────────────────────────────
     async def list_jobs(self, skip: int = 0, limit: int = 50) -> Sequence[JobPosting]:

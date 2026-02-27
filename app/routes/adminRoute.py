@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.models.userModel import User
 from app.services.adminService import AdminService, current_admin_user
+from app.services.resourceService import ResourceService
 from app.schemas.resourceSchema import ResourceCreate
 
 router = APIRouter()
@@ -115,6 +116,17 @@ async def delete_user(
     return {"ok": True}
 
 
+@router.get("/users/{user_id}/resource-progress")
+async def user_resource_progress(
+    user_id: uuid.UUID,
+    admin: User = Depends(current_admin_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = ResourceService(session)
+    progress = await service.list_user_enrollment_progress(user_id)
+    return {"user_id": str(user_id), "resources": progress}
+
+
 # ---------------------------------------------------------------------------
 # Communities
 # ---------------------------------------------------------------------------
@@ -195,6 +207,28 @@ async def create_resource(
         "title": resource.title,
         "is_published": resource.is_published,
     }
+
+
+@router.post("/resources/upload-file")
+async def upload_resource_file(
+    file: UploadFile = File(...),
+    admin: User = Depends(current_admin_user),
+    svc: AdminService = Depends(_get_service),
+):
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        return await svc.upload_resource_file(
+            file_bytes=file_bytes,
+            file_name=file.filename or "resource_file",
+            content_type=file.content_type or "application/octet-stream",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
 
 @router.patch("/resources/{resource_id}/toggle-published")

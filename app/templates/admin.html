@@ -6,6 +6,150 @@
     body {
         background: var(--admin-bg) !important;
     }
+
+    .resource-create-modal {
+        max-width: 920px;
+        max-height: 90vh;
+        overflow-y: auto;
+        color: #0f172a;
+    }
+
+    #resourceModal .admin-modal-title,
+    #resourceModal .admin-modal-desc,
+    #resourceModal .admin-form-label,
+    #resourceModal .resource-structure-title,
+    #resourceModal .resource-structure-note,
+    #resourceModal .resource-module-title,
+    #resourceModal .resource-item-label,
+    #resourceModal .module-resources-title,
+    #resourceModal .resource-upload-status {
+        color: #0f172a !important;
+    }
+
+    #resourceModal .admin-form-input {
+        color: #ffffff;
+    }
+
+    #resourceModal .admin-form-input::placeholder {
+        color: #cbd5e1;
+        opacity: 1;
+    }
+
+    .resource-structure {
+        margin-top: 16px;
+        border-top: 1px solid var(--admin-border);
+        padding-top: 16px;
+    }
+
+    .resource-structure-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .resource-structure-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--admin-text);
+    }
+
+    .resource-structure-note {
+        margin: 0 0 12px;
+        font-size: 0.88rem;
+        color: #0f172a;
+    }
+
+    .resource-module-block {
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 14px;
+        background: #fff;
+    }
+
+    .resource-module-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .resource-module-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    .resource-items-wrap {
+        margin-top: 10px;
+    }
+
+    .resource-item-row {
+        border: 1px dashed var(--admin-border);
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: #fcfcfd;
+    }
+
+    .resource-item-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .resource-item-label {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .module-resources-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .resource-upload-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .resource-upload-status {
+        min-height: 18px;
+        font-size: 0.82rem;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+
+    #resourceModal .lesson-content-view[readonly] {
+        opacity: 0.95;
+    }
+
+    @media (max-width: 768px) {
+        .resource-create-modal {
+            max-width: 96vw;
+        }
+
+        .resource-structure-header,
+        .resource-module-head,
+        .resource-item-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .resource-upload-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -29,9 +173,9 @@
 
     <!-- Create Resource Modal -->
     <div id="resourceModal" class="admin-modal-overlay" style="display:none">
-        <div class="admin-modal" style="max-width: 500px;">
+        <div class="admin-modal resource-create-modal">
             <div class="admin-modal-title">Create Resource</div>
-            <div class="admin-modal-desc">Fill in the details to publish a new resource.</div>
+            <div class="admin-modal-desc">Fill in the details and build the course structure.</div>
 
             <form id="resourceForm" onsubmit="return handleCreateResource(event)">
                 <div class="admin-form-group">
@@ -66,6 +210,19 @@
                 <div class="admin-form-group">
                     <label class="admin-form-label">External URL (optional)</label>
                     <input class="admin-form-input" type="url" id="resUrl" placeholder="https://...">
+                </div>
+
+                <div class="resource-structure">
+                    <div class="resource-structure-header">
+                        <h4 class="resource-structure-title">Course Structure (chapters/modules)</h4>
+                        <button type="button" class="admin-btn admin-btn-ghost" onclick="addModuleBlock()">
+                            + Add Chapter/Module
+                        </button>
+                    </div>
+                    <p class="resource-structure-note">
+                        Add modules and then add resources inside each module (video, PPT/link, text, etc.).
+                    </p>
+                    <div id="resourceModulesBuilder"></div>
                 </div>
 
                 <div class="admin-modal-actions" style="margin-top:20px;">
@@ -668,13 +825,306 @@
     }
 
     // -- Resources --
+    let moduleDraftCounter = 0;
+    let resourceDraftCounter = 0;
+
+    function resetResourceStructureBuilder() {
+        moduleDraftCounter = 0;
+        resourceDraftCounter = 0;
+        document.getElementById('resourceModulesBuilder').innerHTML = '';
+    }
+
     function openResourceModal() {
         document.getElementById('resourceForm').reset();
+        resetResourceStructureBuilder();
+        addModuleBlock();
         document.getElementById('resourceModal').style.display = '';
     }
 
     function closeResourceModal() {
         document.getElementById('resourceModal').style.display = 'none';
+    }
+
+    function addModuleBlock(prefill = null) {
+        moduleDraftCounter += 1;
+        const moduleId = moduleDraftCounter;
+        const moduleWrap = document.getElementById('resourceModulesBuilder');
+        const moduleEl = document.createElement('div');
+        moduleEl.className = 'resource-module-block';
+        moduleEl.dataset.moduleId = String(moduleId);
+        moduleEl.innerHTML = `
+      <div class="resource-module-head">
+        <h5 class="resource-module-title">Module ${moduleId}</h5>
+        <button type="button" class="admin-btn admin-btn-danger" onclick="removeModuleBlock(${moduleId})">Remove module</button>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Module title</label>
+        <input class="admin-form-input module-title" placeholder="e.g. Chapter 1: Fundamentals" required>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Module description (optional)</label>
+        <textarea class="admin-form-input module-description" rows="2" placeholder="What will students learn in this module?"></textarea>
+      </div>
+      <div class="resource-items-wrap">
+        <div class="resource-structure-header" style="margin-bottom:8px;">
+          <span class="module-resources-title">Module resources</span>
+          <button type="button" class="admin-btn admin-btn-ghost" onclick="addResourceBlock(${moduleId})">+ Add resource</button>
+        </div>
+        <div id="moduleResources-${moduleId}"></div>
+      </div>
+    `;
+        moduleWrap.appendChild(moduleEl);
+
+        if (prefill?.title) moduleEl.querySelector('.module-title').value = prefill.title;
+        if (prefill?.description) moduleEl.querySelector('.module-description').value = prefill.description;
+
+        if (prefill?.lessons?.length) {
+            prefill.lessons.forEach((lesson) => addResourceBlock(moduleId, lesson));
+        } else {
+            addResourceBlock(moduleId);
+        }
+
+        reindexModuleLabels();
+    }
+
+    function removeModuleBlock(moduleId) {
+        const el = document.querySelector(`.resource-module-block[data-module-id="${moduleId}"]`);
+        if (!el) return;
+        el.remove();
+        reindexModuleLabels();
+    }
+
+    function reindexModuleLabels() {
+        document.querySelectorAll('.resource-module-block').forEach((moduleEl, idx) => {
+            const title = moduleEl.querySelector('.resource-module-title');
+            if (title) title.textContent = `Module ${idx + 1}`;
+        });
+    }
+
+    function addResourceBlock(moduleId, prefill = null) {
+        const list = document.getElementById(`moduleResources-${moduleId}`);
+        if (!list) return;
+
+        resourceDraftCounter += 1;
+        const resourceId = resourceDraftCounter;
+        const row = document.createElement('div');
+        row.className = 'resource-item-row';
+        row.dataset.resourceId = String(resourceId);
+        row.innerHTML = `
+      <div class="resource-item-head">
+        <span class="resource-item-label">Resource item</span>
+        <button type="button" class="admin-btn admin-btn-danger" onclick="removeResourceBlock(${moduleId}, ${resourceId})">Remove</button>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Resource title</label>
+        <input class="admin-form-input lesson-title" placeholder="e.g. Intro video" required>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div class="admin-form-group" style="flex:1;">
+          <label class="admin-form-label">Type</label>
+          <select class="admin-form-input lesson-type">
+            <option value="external_link">External link</option>
+            <option value="pdf_url">PDF</option>
+            <option value="ppt_url">PPT/PPTX</option>
+            <option value="video_url">Video</option>
+          </select>
+        </div>
+        <div class="admin-form-group" style="flex:1;">
+          <label class="admin-form-label">Reading time (mins)</label>
+          <input type="number" min="1" class="admin-form-input lesson-reading-time" placeholder="e.g. 8">
+        </div>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Stored URL (auto)</label>
+        <input class="admin-form-input lesson-content-view" placeholder="Upload a file to generate URL" readonly>
+        <input type="hidden" class="lesson-content">
+      </div>
+      <div class="resource-upload-row">
+        <div class="admin-form-group" style="flex:1;margin-bottom:0;">
+          <label class="admin-form-label">Upload file to S3</label>
+          <input type="file" class="admin-form-input lesson-file">
+        </div>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="uploadLessonFile(${moduleId}, ${resourceId})">
+          Upload file
+        </button>
+      </div>
+      <div class="resource-upload-status" aria-live="polite"></div>
+    `;
+        list.appendChild(row);
+
+        if (prefill?.title) row.querySelector('.lesson-title').value = prefill.title;
+        if (prefill?.content_type) row.querySelector('.lesson-type').value = prefill.content_type;
+        if (prefill?.reading_time_minutes) row.querySelector('.lesson-reading-time').value = prefill.reading_time_minutes;
+        if (prefill?.content) {
+            row.querySelector('.lesson-content').value = prefill.content;
+            row.querySelector('.lesson-content-view').value = prefill.content;
+        }
+
+        reindexResourceLabels(moduleId);
+    }
+
+    function getResourceRow(moduleId, resourceId) {
+        const moduleEl = document.querySelector(`.resource-module-block[data-module-id="${moduleId}"]`);
+        if (!moduleEl) return null;
+        return moduleEl.querySelector(`.resource-item-row[data-resource-id="${resourceId}"]`);
+    }
+
+    function detectLessonTypeFromFile(fileName = '', mimeType = '') {
+        const name = String(fileName || '').toLowerCase();
+        const mime = String(mimeType || '').toLowerCase();
+        const ext = name.includes('.') ? name.split('.').pop() : '';
+
+        if (mime.startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov', 'm4v'].includes(ext)) {
+            return 'video_url';
+        }
+        if (mime === 'application/pdf' || ext === 'pdf') {
+            return 'pdf_url';
+        }
+        if (
+            mime.includes('powerpoint') ||
+            mime.includes('presentation') ||
+            ['ppt', 'pptx', 'pps', 'ppsx'].includes(ext)
+        ) {
+            return 'ppt_url';
+        }
+        return 'external_link';
+    }
+
+    async function uploadLessonFile(moduleId, resourceId) {
+        const row = getResourceRow(moduleId, resourceId);
+        if (!row) {
+            toast('Resource item not found', 'error');
+            return;
+        }
+
+        const fileInput = row.querySelector('.lesson-file');
+        const uploadStatus = row.querySelector('.resource-upload-status');
+        const contentField = row.querySelector('.lesson-content');
+        const contentViewField = row.querySelector('.lesson-content-view');
+        const typeField = row.querySelector('.lesson-type');
+        const uploadBtn = row.querySelector('button[onclick*="uploadLessonFile"]');
+        const file = fileInput?.files?.[0];
+
+        if (!file) {
+            toast('Select a file first', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        if (uploadStatus) uploadStatus.textContent = 'Uploading...';
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+        }
+
+        try {
+            const res = await fetch(`${API}/resources/upload-file`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            if (!res.ok) {
+                let message = 'Failed to upload file';
+                try {
+                    const data = await res.json();
+                    message = data?.detail || message;
+                } catch { }
+                throw new Error(message);
+            }
+
+            const data = await res.json();
+            contentField.value = data.file_url || '';
+            if (contentViewField) contentViewField.value = data.file_url || '';
+            if (typeField) {
+                typeField.value = detectLessonTypeFromFile(
+                    data.original_filename || file.name,
+                    data.content_type || file.type
+                );
+            }
+            if (uploadStatus) uploadStatus.textContent = `Uploaded: ${data.original_filename || file.name}`;
+            if (fileInput) fileInput.value = '';
+            toast('File uploaded and URL attached');
+        } catch (err) {
+            if (uploadStatus) uploadStatus.textContent = err?.message || 'Upload failed';
+            toast(err?.message || 'Failed to upload file', 'error');
+        } finally {
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload file';
+            }
+        }
+    }
+
+    function removeResourceBlock(moduleId, resourceId) {
+        const moduleEl = document.querySelector(`.resource-module-block[data-module-id="${moduleId}"]`);
+        if (!moduleEl) return;
+        const row = moduleEl.querySelector(`.resource-item-row[data-resource-id="${resourceId}"]`);
+        if (!row) return;
+        row.remove();
+        reindexResourceLabels(moduleId);
+    }
+
+    function reindexResourceLabels(moduleId) {
+        const moduleEl = document.querySelector(`.resource-module-block[data-module-id="${moduleId}"]`);
+        if (!moduleEl) return;
+        moduleEl.querySelectorAll('.resource-item-row').forEach((row, idx) => {
+            const label = row.querySelector('.resource-item-label');
+            if (label) label.textContent = `Resource item ${idx + 1}`;
+        });
+    }
+
+    function buildModulesPayload() {
+        const moduleEls = Array.from(document.querySelectorAll('.resource-module-block'));
+        if (!moduleEls.length) {
+            throw new Error('Add at least one module.');
+        }
+
+        return moduleEls.map((moduleEl, moduleIndex) => {
+            const moduleTitle = moduleEl.querySelector('.module-title')?.value.trim() || '';
+            const moduleDescription = moduleEl.querySelector('.module-description')?.value.trim() || '';
+            if (!moduleTitle) {
+                throw new Error(`Module ${moduleIndex + 1} needs a title.`);
+            }
+
+            const lessonEls = Array.from(moduleEl.querySelectorAll('.resource-item-row'));
+            if (!lessonEls.length) {
+                throw new Error(`Module "${moduleTitle}" must include at least one resource item.`);
+            }
+
+            const lessons = lessonEls.map((lessonEl, lessonIndex) => {
+                const title = lessonEl.querySelector('.lesson-title')?.value.trim() || '';
+                const contentType = lessonEl.querySelector('.lesson-type')?.value || 'text';
+                const content = lessonEl.querySelector('.lesson-content')?.value.trim() || '';
+                const readingTimeRaw = lessonEl.querySelector('.lesson-reading-time')?.value;
+                const readingTime = readingTimeRaw ? parseInt(readingTimeRaw, 10) : null;
+
+                if (!title) {
+                    throw new Error(`Resource item ${lessonIndex + 1} in module "${moduleTitle}" needs a title.`);
+                }
+                if (!content) {
+                    const hasPendingFile = Boolean(lessonEl.querySelector('.lesson-file')?.files?.length);
+                    if (hasPendingFile) {
+                        throw new Error(`Upload the selected file for "${title}" before creating the resource.`);
+                    }
+                    throw new Error(`Resource item "${title}" in module "${moduleTitle}" needs an uploaded file.`);
+                }
+
+                return {
+                    title,
+                    content_type: contentType,
+                    content,
+                    reading_time_minutes: Number.isFinite(readingTime) ? readingTime : null
+                };
+            });
+
+            return {
+                title: moduleTitle,
+                description: moduleDescription || null,
+                lessons
+            };
+        });
     }
 
     async function handleCreateResource(e) {
@@ -683,18 +1133,19 @@
         btn.disabled = true;
         btn.textContent = 'Creating...';
 
-        const payload = {
-            title: document.getElementById('resTitle').value,
-            description: document.getElementById('resDesc').value,
-            category: document.getElementById('resCategory').value,
-            level: document.getElementById('resLevel').value || null,
-            icon: document.getElementById('resIcon').value || null,
-            estimated_duration_minutes: parseInt(document.getElementById('resDuration').value) || null,
-            external_url: document.getElementById('resUrl').value || null,
-            is_published: true
-        };
-
         try {
+            const payload = {
+                title: document.getElementById('resTitle').value.trim(),
+                description: document.getElementById('resDesc').value.trim(),
+                category: document.getElementById('resCategory').value.trim(),
+                level: document.getElementById('resLevel').value.trim() || null,
+                icon: document.getElementById('resIcon').value.trim() || null,
+                estimated_duration_minutes: parseInt(document.getElementById('resDuration').value, 10) || null,
+                external_url: document.getElementById('resUrl').value.trim() || null,
+                is_published: true,
+                modules: buildModulesPayload()
+            };
+
             const res = await fetch(`${API}/resources`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -702,13 +1153,20 @@
                 credentials: 'include'
             });
 
-            if (!res.ok) throw new Error();
+            if (!res.ok) {
+                let message = 'Failed to create resource';
+                try {
+                    const data = await res.json();
+                    message = data?.detail || message;
+                } catch { }
+                throw new Error(message);
+            }
             toast('Resource created successfully!');
             closeResourceModal();
             await loadResources();
             loadDashboard();
-        } catch {
-            toast('Failed to create resource', 'error');
+        } catch (err) {
+            toast(err?.message || 'Failed to create resource', 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Create';

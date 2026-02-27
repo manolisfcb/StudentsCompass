@@ -11,10 +11,10 @@ LOGGER = logging.getLogger(__name__)
 class S3Service:
     """Service for handling S3 file operations"""
     
-    def __init__(self):
+    def __init__(self, bucket_name: Optional[str] = None):
         self.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         self.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-        self.bucket_name = os.getenv("BUCKET_NAME")
+        self.bucket_name = bucket_name or os.getenv("BUCKET_NAME")
         self.aws_region = os.getenv("AWS_REGION", "us-east-1")
         
         if not all([self.aws_access_key_id, self.aws_secret_access_key, self.bucket_name]):
@@ -27,7 +27,13 @@ class S3Service:
             region_name=self.aws_region
         )
     
-    async def upload_file(self, file_bytes: bytes, file_name: str, content_type: str = "application/pdf") -> dict:
+    async def upload_file(
+        self,
+        file_bytes: bytes,
+        file_name: str,
+        content_type: str = "application/pdf",
+        folder: str = "resumes",
+    ) -> dict:
         """
         Upload a file to S3 bucket
         
@@ -35,6 +41,7 @@ class S3Service:
             file_bytes: File content as bytes
             file_name: Name of the file to store in S3
             content_type: MIME type of the file
+            folder: S3 folder/prefix where file will be stored
             
         Returns:
             dict with file_key and file_url
@@ -42,8 +49,9 @@ class S3Service:
         try:
             loop = asyncio.get_event_loop()
             
-            # Generate unique file key (you can customize this pattern)
-            file_key = f"resumes/{file_name}"
+            safe_folder = (folder or "resumes").strip("/") or "resumes"
+            safe_name = os.path.basename(file_name or "file")
+            file_key = f"{safe_folder}/{safe_name}"
             
             # Upload to S3 (run in executor to avoid blocking)
             def do_upload():

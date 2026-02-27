@@ -96,7 +96,10 @@ async def resource_detail(
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
 
-    payload = service.to_detail_payload(resource)
+    # Auto-enroll on first open so each user/resource relation is persisted.
+    await service.enroll_user_in_resource(user.id, resource_id)
+
+    payload = await service.to_detail_payload(resource)
 
     selected_lesson_id = lesson
     if not selected_lesson_id:
