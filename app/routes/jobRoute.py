@@ -110,7 +110,10 @@ def _check_llm_rate_limit(request: Request) -> None:
         timestamps.popleft()
 
     if len(timestamps) >= LLM_RATE_LIMIT_PER_MINUTE:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded for LLM calls")
+        raise HTTPException(
+            status_code=429,
+            detail="Too many analysis requests right now. Please wait a minute and try again.",
+        )
 
     timestamps.append(now)
 

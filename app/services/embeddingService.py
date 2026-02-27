@@ -3,17 +3,24 @@ import logging
 import asyncio
 from typing import List
 from concurrent.futures import ThreadPoolExecutor
+import os
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
+logging.getLogger("transformers.modeling_utils").setLevel(logging.ERROR)
 
 # Thread pool for CPU-bound embedding generation
 _embedding_executor = ThreadPoolExecutor(max_workers=3)
 
 # Modelo de embeddings - se carga una vez y se reutiliza
 _model = None
-MODEL_NAME = "all-MiniLM-L6-v2"
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIMS = 384
+
+# Keep compatibility with users setting only HUGGINGFACE_HUB_TOKEN in .env.
+HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN")
+if HF_TOKEN and not os.getenv("HF_TOKEN"):
+    os.environ["HF_TOKEN"] = HF_TOKEN
 
 
 def _get_model():
@@ -21,7 +28,7 @@ def _get_model():
     global _model
     if _model is None:
         LOGGER.info(f"Loading embedding model: {MODEL_NAME}")
-        _model = SentenceTransformer(MODEL_NAME)
+        _model = SentenceTransformer(MODEL_NAME, token=HF_TOKEN)
     return _model
 
 
