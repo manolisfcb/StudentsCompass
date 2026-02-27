@@ -24,7 +24,7 @@ from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeM
 SEED_COMMUNITIES = [
     {
         "name": "Python Data Analytics",
-        "description": "Aprende Python para análisis de datos con pandas, NumPy y matplotlib.",
+        "description": "Learn Python for data analysis with pandas, NumPy, and matplotlib.",
         "icon": "🐍",
         "activity_status": "Very active",
         "tags": ["Python", "Pandas", "Data Science"],
@@ -32,7 +32,7 @@ SEED_COMMUNITIES = [
     },
     {
         "name": "R Analytics Community",
-        "description": "Domina R para análisis estadístico y visualización con tidyverse y ggplot2.",
+        "description": "Master R for statistical analysis and visualization with tidyverse and ggplot2.",
         "icon": "📊",
         "activity_status": "Active",
         "tags": ["R", "Statistics", "ggplot2"],
@@ -40,7 +40,7 @@ SEED_COMMUNITIES = [
     },
     {
         "name": "SQL & Database Analytics",
-        "description": "Consultas SQL para análisis de datos: desde lo básico a lo avanzado.",
+        "description": "Use SQL queries for data analysis, from the basics to advanced techniques.",
         "icon": "🗄️",
         "activity_status": "Very active",
         "tags": ["SQL", "PostgreSQL", "MySQL"],
@@ -48,7 +48,7 @@ SEED_COMMUNITIES = [
     },
     {
         "name": "Tableau Visualization",
-        "description": "Crea visualizaciones impactantes y comparte dashboards en Tableau.",
+        "description": "Build impactful visualizations and share dashboards in Tableau.",
         "icon": "📈",
         "activity_status": "Active",
         "tags": ["Tableau", "Dashboards", "Viz"],
@@ -56,7 +56,7 @@ SEED_COMMUNITIES = [
     },
     {
         "name": "Power BI Analytics",
-        "description": "Aprende Power BI y DAX para inteligencia de negocio.",
+        "description": "Learn Power BI and DAX for business intelligence.",
         "icon": "📉",
         "activity_status": "Very active",
         "tags": ["Power BI", "DAX", "Business Intelligence"],
@@ -64,7 +64,7 @@ SEED_COMMUNITIES = [
     },
     {
         "name": "Excel Data Analytics",
-        "description": "Análisis de datos en Excel con Power Query, tablas dinámicas y VBA.",
+        "description": "Analyze data in Excel using Power Query, pivot tables, and VBA.",
         "icon": "📑",
         "activity_status": "Low activity",
         "tags": ["Excel", "Power Query", "VBA"],
@@ -114,6 +114,12 @@ async def seed_communities(seed_data: Iterable[dict]):
             )
             existing = result.scalar_one_or_none()
             if existing:
+                existing.description = data.get("description")
+                existing.icon = data.get("icon")
+                existing.activity_status = data.get("activity_status")
+                existing.tags = data.get("tags")
+                existing.member_count = data.get("member_count", existing.member_count)
+                await _ensure_creator_membership(session, existing.id, user.id)
                 continue
 
             community = CommunityModel(
