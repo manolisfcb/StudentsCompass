@@ -23,6 +23,11 @@ from app.routes.companyRoute import router as company_router
 from app.routes.dashboardRoute import router as dashboard_router
 from app.routes.communityRoute import router as community_router
 from app.routes.resourceRoute import router as resource_router
+from app.routers.roadmaps import api_router as roadmap_api_router
+from app.routers.roadmaps import view_router as roadmap_view_router
+from app.routers.progress import router as roadmap_progress_router
+from app.routers.projects import router as roadmap_projects_router
+from app.services.roadmapSeedService import seed_roadmaps_on_startup_if_dev
 from fastapi import Response
 from fastapi.responses import FileResponse
 @asynccontextmanager
@@ -30,6 +35,7 @@ async def lifespan(app: FastAPI):
     # Avoid running Base.metadata.create_all on startup in production.
     # Controlled via ENV/AUTO_CREATE_TABLES in app/db.py
     await create_db_and_tables()
+    await seed_roadmaps_on_startup_if_dev()
     yield
 
 
@@ -84,3 +90,7 @@ app.include_router(job_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(community_router, prefix="/api/v1", tags=["communities"])
 app.include_router(resource_router, prefix="/api/v1", tags=["resources"])
+app.include_router(roadmap_api_router, prefix="/api/v1", tags=["roadmaps"])
+app.include_router(roadmap_progress_router, prefix="/api/v1", tags=["roadmaps"])
+app.include_router(roadmap_projects_router, prefix="/api/v1", tags=["roadmaps"])
+app.include_router(roadmap_view_router, tags=["views"])

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% set page_title = "Web Developer Roadmaps" %}
+{% set page_description = "Browse in-demand career roadmaps and track your progress stage by stage." %}
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/roadmaps.css">
+{% endblock %}
+{% block content %}
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <section class="roadmaps-page">
+        <header class="roadmaps-hero">
+          <h2>Web Developer Roadmaps</h2>
+          <p>Follow practical, project-driven learning plans and measure your progress week by week.</p>
+        </header>
+
+        <div class="roadmaps-toolbar">
+          <form method="get" action="/roadmaps" class="toolbar-form">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search roadmaps..." class="toolbar-input">
+            <select name="sort" class="toolbar-select">
+              <option value="most_saved" {% if sort == 'most_saved' %}selected{% endif %}>Most saved</option>
+              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+            </select>
+            <button type="submit" class="toolbar-button">Apply</button>
+          </form>
+        </div>
+
+        {% if schema_not_ready %}
+          <div class="schema-warning">
+            <strong>Roadmaps database tables are not created yet.</strong>
+            <p>Run <code>alembic upgrade head</code> and reload this page.</p>
+          </div>
+        {% endif %}
+
+        <section class="roadmaps-section">
+          <div class="section-heading">
+            <h3>My Roadmaps</h3>
+            <p>Saved tracks you are actively following.</p>
+          </div>
+          <div id="my-roadmaps-container">
+            {% if saved_roadmaps %}
+              <div class="saved-grid">
+                {% for item in saved_roadmaps %}
+                  {% set roadmap = item.roadmap %}
+                  <article class="saved-card roadmap-clickable" data-href="/roadmaps/{{ roadmap.slug }}" tabindex="0" role="link">
+                    <div class="saved-card-top">
+                      <h4>{{ roadmap.title }}</h4>
+                      <span class="progress-chip">{{ roadmap.overall_progress_percent }}%</span>
+                    </div>
+                    <p>{{ roadmap.duration_weeks_min }}-{{ roadmap.duration_weeks_max }} weeks • {{ roadmap.difficulty }}</p>
+                    <div class="progress-track">
+                      <span style="width: {{ roadmap.overall_progress_percent }}%"></span>
+                    </div>
+                    <small>{{ roadmap.completed_tasks }}/{{ roadmap.total_tasks }} tasks completed</small>
+                    <a href="/roadmaps/{{ roadmap.slug }}" class="card-link">Continue roadmap</a>
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty-state">
+                <h4>No saved roadmaps yet</h4>
+                <p>Save a roadmap from below to keep it in your workspace.</p>
+              </div>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="roadmaps-section">
+          <div class="section-heading">
+            <h3>Most In-Demand</h3>
+            <p>Roadmaps sorted by learner saves and hiring momentum.</p>
+          </div>
+
+          {% set icons = {
+            'web-developer': '💻',
+            'data-scientist': '📊',
+            'product-manager': '🎯'
+          } %}
+
+          <div class="demand-grid">
+            {% for roadmap in roadmaps[:3] %}
+              <article class="demand-card roadmap-clickable" data-href="/roadmaps/{{ roadmap.slug }}" tabindex="0" role="link">
+                <div class="demand-header">
+                  <span class="icon-pill">{{ icons.get(roadmap.slug, '🧭') }}</span>
+                  <span class="save-count">{{ roadmap.popularity }} saves</span>
+                </div>
+                <h4>{{ roadmap.title }}</h4>
+                <p>{{ roadmap.description }}</p>
+                <div class="meta-row">
+                  <span>{{ roadmap.duration_weeks_min }}-{{ roadmap.duration_weeks_max }} weeks</span>
+                  <span>{{ roadmap.difficulty }}</span>
+                </div>
+                <a href="/roadmaps/{{ roadmap.slug }}" class="card-link">View roadmap</a>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="roadmaps-section">
+          <div class="section-heading">
+            <h3>Explore All</h3>
+            <p>Browse every available roadmap.</p>
+          </div>
+
+          <div class="demand-grid">
+            {% for roadmap in roadmaps %}
+              <article class="demand-card roadmap-clickable" data-href="/roadmaps/{{ roadmap.slug }}" tabindex="0" role="link">
+                <div class="demand-header">
+                  <span class="save-count">{{ roadmap.popularity }} saves</span>
+                  {% if roadmap.is_saved %}
+                    <span class="saved-indicator">Saved</span>
+                  {% endif %}
+                </div>
+                <h4>{{ roadmap.title }}</h4>
+                <p>{{ roadmap.description }}</p>
+                <div class="meta-row">
+                  <span>{{ roadmap.duration_weeks_min }}-{{ roadmap.duration_weeks_max }} weeks</span>
+                  <span>{{ roadmap.overall_progress_percent }}% progress</span>
+                </div>
+                <a href="/roadmaps/{{ roadmap.slug }}" class="card-link">Open roadmap</a>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      </section>
+    </main>
+  </main>
+
+  {% include "includes/footer.html" %}
+  <script>
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function bindRoadmapCardClicks() {
+      document.querySelectorAll(".roadmap-clickable").forEach((card) => {
+        if (card.dataset.bound === "1") return;
+        card.dataset.bound = "1";
+        const href = card.dataset.href;
+        if (!href) return;
+
+        card.addEventListener("click", (event) => {
+          if (event.target.closest("a, button, input, select, textarea, label")) {
+            return;
+          }
+          window.location.href = href;
+        });
+
+        card.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            window.location.href = href;
+          }
+        });
+      });
+    }
+
+    function renderSavedRoadmaps(items) {
+      const container = document.getElementById("my-roadmaps-container");
+      if (!container) return;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h4>No saved roadmaps yet</h4>
+            <p>Save a roadmap from below to keep it in your workspace.</p>
+          </div>
+        `;
+        bindRoadmapCardClicks();
+        return;
+      }
+
+      const cards = items.map((item) => {
+        const roadmap = item.roadmap || {};
+        const slug = escapeHtml(roadmap.slug || "");
+        const title = escapeHtml(roadmap.title || "");
+        const difficulty = escapeHtml(roadmap.difficulty || "");
+        const minWeeks = Number(roadmap.duration_weeks_min || 0);
+        const maxWeeks = Number(roadmap.duration_weeks_max || 0);
+        const progress = Number(roadmap.overall_progress_percent || 0);
+        const completed = Number(roadmap.completed_tasks || 0);
+        const total = Number(roadmap.total_tasks || 0);
+
+        return `
+          <article class="saved-card roadmap-clickable" data-href="/roadmaps/${slug}" tabindex="0" role="link">
+            <div class="saved-card-top">
+              <h4>${title}</h4>
+              <span class="progress-chip">${progress}%</span>
+            </div>
+            <p>${minWeeks}-${maxWeeks} weeks • ${difficulty}</p>
+            <div class="progress-track"><span style="width: ${progress}%"></span></div>
+            <small>${completed}/${total} tasks completed</small>
+            <a href="/roadmaps/${slug}" class="card-link">Continue roadmap</a>
+          </article>
+        `;
+      }).join("");
+
+      container.innerHTML = `<div class="saved-grid">${cards}</div>`;
+      bindRoadmapCardClicks();
+    }
+
+    async function refreshSavedRoadmaps() {
+      try {
+        const response = await fetch("/api/v1/me/roadmaps", { headers: { "Accept": "application/json" } });
+        if (!response.ok) return;
+        const data = await response.json();
+        renderSavedRoadmaps(data);
+      } catch (error) {
+        // keep server-rendered fallback
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      bindRoadmapCardClicks();
+      refreshSavedRoadmaps();
+    });
+
+    window.addEventListener("pageshow", () => {
+      refreshSavedRoadmaps();
+    });
+  </script>
+{% endblock %}

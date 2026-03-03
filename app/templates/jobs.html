@@ -252,6 +252,45 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+
+        .keyword-group {
+            background-color: var(--white);
+            border: 1px solid var(--light-gray);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .keyword-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            background-color: #f8fafc;
+            list-style: none;
+        }
+
+        .keyword-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .keyword-title {
+            font-weight: 700;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .keyword-meta {
+            color: var(--gray);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .keyword-content {
+            padding: 1rem;
+        }
     </style>
 {% endblock %}
 {% block content %}
@@ -311,7 +350,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="limit">Number of Jobs</label>
+                            <label for="limit">Number of Jobs (per keyword)</label>
                             <select id="limit">
                                 <option value="10">10</option>
                                 <option value="25" selected>25</option>
@@ -603,28 +642,30 @@
             if (e.key === 'Enter') performSearch();
         });
 
-        async function performSearch() {
-            const keywords = keywordsInput.value.trim();
-            const location = locationInput.value.trim();
-            const limit = parseInt(limitSelect.value);
-            const remote = remoteCheckbox.checked;
+        function splitKeywords(rawKeywords) {
+            const cleaned = (rawKeywords || '').trim();
+            if (!cleaned) return [];
 
-            if (!keywords) {
-                searchStatus.textContent = 'Please enter keywords';
-                searchStatus.style.color = '#EF4444';
-                return;
+            const parts = cleaned
+                .split(/[,;\n]+/)
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+            const values = parts.length > 0 ? parts : [cleaned];
+            const seen = new Set();
+            const unique = [];
+
+            for (const value of values) {
+                const key = value.toLowerCase();
+                if (seen.has(key)) continue;
+                seen.add(key);
+                unique.push(value);
             }
 
-            searchBtn.disabled = true;
-            searchStatus.textContent = 'Searching...';
-            searchStatus.style.color = 'var(--gray)';
-            jobsList.innerHTML = `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Finding jobs for you...</p>
-                </div>
-            `;
+            return unique.slice(0, 10);
+        }
 
+        async function fetchJobsForKeyword(keyword, location, limit, remote) {
             try {
                 const response = await fetch('/api/v1/jobs/search', {
                     method: 'POST',
@@ -633,7 +674,7 @@
                     },
                     credentials: 'include',
                     body: JSON.stringify({
-                        keywords,
+                        keywords: keyword,
                         location,
                         limit,
                         remote,
@@ -642,15 +683,49 @@
 
                 if (response.status === 401 || response.status === 403) {
                     window.location.href = '/login';
-                    return;
+                    return { keyword, jobs: [], error: 'Unauthorized' };
                 }
 
                 if (!response.ok) {
-                    throw new Error('Search failed');
+                    const detail = await readErrorDetail(response, 'Search failed');
+                    return { keyword, jobs: [], error: detail };
                 }
 
                 const jobs = await response.json();
-                displayJobs(jobs);
+                return { keyword, jobs, error: null };
+            } catch (_) {
+                return { keyword, jobs: [], error: 'Request failed' };
+            }
+        }
+
+        async function performSearch() {
+            const rawKeywords = keywordsInput.value.trim();
+            const location = locationInput.value.trim();
+            const limit = parseInt(limitSelect.value);
+            const remote = remoteCheckbox.checked;
+            const keywordList = splitKeywords(rawKeywords);
+
+            if (keywordList.length === 0) {
+                searchStatus.textContent = 'Please enter keywords';
+                searchStatus.style.color = '#EF4444';
+                return;
+            }
+
+            searchBtn.disabled = true;
+            searchStatus.textContent = `Searching ${keywordList.length} keyword${keywordList.length !== 1 ? 's' : ''}...`;
+            searchStatus.style.color = 'var(--gray)';
+            jobsList.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Finding jobs by keyword...</p>
+                </div>
+            `;
+
+            try {
+                const groups = await Promise.all(
+                    keywordList.map((keyword) => fetchJobsForKeyword(keyword, location, limit, remote))
+                );
+                displayGroupedJobs(groups);
                 searchStatus.textContent = '';
             } catch (error) {
                 jobsList.innerHTML = `
@@ -665,38 +740,49 @@
             }
         }
 
-        function displayJobs(jobs) {
-            jobsCount.textContent = `${jobs.length} position${jobs.length !== 1 ? 's' : ''} found`;
+        function displayGroupedJobs(groups) {
+            const totalJobs = groups.reduce((sum, group) => sum + group.jobs.length, 0);
+            const totalGroups = groups.length;
 
-            if (jobs.length === 0) {
-                jobsList.innerHTML = `
-                    <div class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        <h3>No jobs found</h3>
-                        <p>Try adjusting your search filters</p>
-                    </div>
+            jobsCount.textContent = `${totalJobs} position${totalJobs !== 1 ? 's' : ''} in ${totalGroups} keyword group${totalGroups !== 1 ? 's' : ''}`;
+
+            jobsList.innerHTML = groups.map((group, index) => {
+                const jobsMarkup = group.jobs.length > 0
+                    ? group.jobs.map((job) => `
+                        <div class="job-card">
+                            <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="job-title">${escapeHtml(job.title)}</a>
+                            <p class="job-company">${escapeHtml(job.company)}</p>
+                            <div class="job-location">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                ${escapeHtml(job.location || 'Location not specified')}
+                            </div>
+                            ${job.listed_at ? `<p class="job-time">Posted: ${formatDate(job.listed_at)}</p>` : ''}
+                        </div>
+                    `).join('')
+                    : `<div class="empty-state" style="padding: 1.5rem 0.5rem;">
+                        <h3 style="margin-bottom: 0.5rem;">No jobs found for this keyword</h3>
+                        <p style="margin: 0;">Try another keyword or location.</p>
+                    </div>`;
+
+                const statusLabel = group.error
+                    ? `0 positions • ${escapeHtml(group.error)}`
+                    : `${group.jobs.length} position${group.jobs.length !== 1 ? 's' : ''}`;
+
+                return `
+                    <details class="keyword-group" ${index === 0 ? 'open' : ''}>
+                        <summary class="keyword-summary">
+                            <span class="keyword-title">${escapeHtml(group.keyword)}</span>
+                            <span class="keyword-meta">${statusLabel}</span>
+                        </summary>
+                        <div class="keyword-content">
+                            ${jobsMarkup}
+                        </div>
+                    </details>
                 `;
-                return;
-            }
-
-            jobsList.innerHTML = jobs.map(job => `
-                <div class="job-card">
-                    <a href="${job.url}" target="_blank" class="job-title">${escapeHtml(job.title)}</a>
-                    <p class="job-company">${escapeHtml(job.company)}</p>
-                    <div class="job-location">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        ${escapeHtml(job.location || 'Location not specified')}
-                    </div>
-                    ${job.listed_at ? `<p class="job-time">Posted: ${formatDate(job.listed_at)}</p>` : ''}
-                </div>
-            `).join('');
+            }).join('');
         }
 
         function formatDate(dateStr) {

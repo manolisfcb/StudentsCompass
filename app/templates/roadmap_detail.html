@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% set page_title = roadmap.title %}
+{% set page_description = roadmap.description %}
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/roadmaps.css">
+{% endblock %}
+{% block content %}
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard">
+      <section class="roadmap-detail-page">
+        <div class="detail-topbar">
+          <div>
+            <p class="eyebrow">{{ roadmap.role_target }}</p>
+            <h2>{{ roadmap.title }}</h2>
+            <p>{{ roadmap.description }}</p>
+          </div>
+          <div class="topbar-actions">
+            <button id="save-toggle-btn" class="save-button" data-saved="{{ 1 if roadmap.is_saved else 0 }}">
+              {{ "Unsave roadmap" if roadmap.is_saved else "Save roadmap" }}
+            </button>
+            <span class="save-counter"><strong id="save-counter-value">{{ roadmap.popularity }}</strong> saves</span>
+          </div>
+        </div>
+
+        <div class="overall-progress">
+          <div class="progress-head">
+            <span>Overall progress</span>
+            <span id="overall-progress-label">{{ roadmap.overall_progress_percent }}%</span>
+          </div>
+          <div class="progress-track">
+            <span id="overall-progress-bar" style="width: {{ roadmap.overall_progress_percent }}%"></span>
+          </div>
+          <small id="overall-progress-count">{{ roadmap.completed_tasks }}/{{ roadmap.total_tasks }} tasks completed</small>
+        </div>
+
+        <div class="detail-layout">
+          <section class="stages-column">
+            {% for stage in roadmap.stages %}
+              {% set grouped = grouped_tasks.get(stage.id | string, {}) %}
+              <article class="stage-card {% if not loop.first %}collapsed{% endif %}" data-stage-id="{{ stage.id }}">
+                <button class="stage-header" type="button" data-stage-toggle>
+                  <div>
+                    <h3>Stage {{ stage.order_index }}: {{ stage.title }}</h3>
+                    <p>{{ stage.duration_weeks }} weeks</p>
+                  </div>
+                  <div class="stage-progress-wrap">
+                    <span id="stage-progress-label-{{ stage.id }}">{{ stage.progress_percent }}%</span>
+                    <div class="progress-track stage-track">
+                      <span id="stage-progress-bar-{{ stage.id }}" style="width: {{ stage.progress_percent }}%"></span>
+                    </div>
+                  </div>
+                </button>
+
+                <div class="stage-body">
+                  <p class="stage-objective">{{ stage.objective }}</p>
+
+                  {% for task_type, tasks in grouped.items() %}
+                    <div class="task-group">
+                      <h4>{{ task_type.replace('_', ' ') | title }}</h4>
+                      <ul class="task-list">
+                        {% for task in tasks %}
+                          <li class="task-item" data-task-id="{{ task.id }}">
+                            <div class="task-main">
+                              <input
+                                type="checkbox"
+                                class="task-checkbox"
+                                data-task-id="{{ task.id }}"
+                                {% if task.status.value == 'completed' %}checked{% endif %}
+                              >
+                              <button type="button" class="task-open" data-item-id="{{ task.id }}">
+                                {{ task.title }}
+                              </button>
+                            </div>
+                            <div class="task-meta">
+                              <span>{{ task.estimated_hours }}h</span>
+                              <select class="task-status" data-task-id="{{ task.id }}">
+                                <option value="not_started" {% if task.status.value == 'not_started' %}selected{% endif %}>Not started</option>
+                                <option value="in_progress" {% if task.status.value == 'in_progress' %}selected{% endif %}>In progress</option>
+                                <option value="completed" {% if task.status.value == 'completed' %}selected{% endif %}>Completed</option>
+                              </select>
+                            </div>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  {% endfor %}
+
+                  {% if stage.projects %}
+                    {% set project = stage.projects[0] %}
+                    <div class="project-card">
+                      <div>
+                        <p class="project-label">Milestone Project</p>
+                        <h4>{{ project.title }}</h4>
+                        <p>{{ project.estimated_hours }}h estimate</p>
+                      </div>
+                      <button type="button" class="project-open" data-item-id="{{ project.id }}">Open details</button>
+                    </div>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </section>
+
+          <aside class="details-panel">
+            <p class="panel-kicker" id="details-kind">Task details</p>
+            <h3 id="details-title">Select an item</h3>
+            <p id="details-stage" class="details-stage"></p>
+            <p id="details-description" class="details-description"></p>
+
+            <div id="details-resource" class="details-resource"></div>
+
+            <div id="criteria-block" class="details-block hidden">
+              <h4>Acceptance Criteria</h4>
+              <ul id="criteria-list"></ul>
+            </div>
+
+            <div id="rubric-block" class="details-block hidden">
+              <h4>Rubric</h4>
+              <ul id="rubric-list"></ul>
+            </div>
+
+            <form id="submission-form" class="submission-form hidden" onsubmit="return false;">
+              <h4>Project Submission</h4>
+              <input id="submission-repo" type="url" placeholder="Repository URL (optional)">
+              <input id="submission-live" type="url" placeholder="Live URL (optional)">
+              <textarea id="submission-notes" rows="4" placeholder="Notes"></textarea>
+              <select id="submission-status">
+                <option value="draft">Draft</option>
+                <option value="submitted">Submitted</option>
+                <option value="reviewed">Reviewed</option>
+              </select>
+              <button id="submission-button" type="button">Save submission</button>
+              <small id="submission-feedback"></small>
+            </form>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </main>
+
+  {% include "includes/footer.html" %}
+
+  <script>
+    const detailItems = {{ detail_items_json | safe }};
+    const firstItemId = {{ (first_item_id | tojson) if first_item_id else 'null' }};
+    const roadmapSlug = {{ roadmap.slug | tojson }};
+
+    const detailsKindEl = document.getElementById('details-kind');
+    const detailsTitleEl = document.getElementById('details-title');
+    const detailsStageEl = document.getElementById('details-stage');
+    const detailsDescriptionEl = document.getElementById('details-description');
+    const detailsResourceEl = document.getElementById('details-resource');
+    const criteriaBlockEl = document.getElementById('criteria-block');
+    const criteriaListEl = document.getElementById('criteria-list');
+    const rubricBlockEl = document.getElementById('rubric-block');
+    const rubricListEl = document.getElementById('rubric-list');
+
+    const submissionFormEl = document.getElementById('submission-form');
+    const submissionRepoEl = document.getElementById('submission-repo');
+    const submissionLiveEl = document.getElementById('submission-live');
+    const submissionNotesEl = document.getElementById('submission-notes');
+    const submissionStatusEl = document.getElementById('submission-status');
+    const submissionButtonEl = document.getElementById('submission-button');
+    const submissionFeedbackEl = document.getElementById('submission-feedback');
+
+    const saveToggleBtn = document.getElementById('save-toggle-btn');
+    const saveCounterValue = document.getElementById('save-counter-value');
+
+    let activeProjectId = null;
+
+    function renderDetails(itemId) {
+      const item = detailItems[itemId];
+      if (!item) return;
+
+      detailsKindEl.textContent = item.kind === 'project' ? 'Project details' : 'Task details';
+      detailsTitleEl.textContent = item.title;
+      detailsStageEl.textContent = item.stage_title ? `Stage: ${item.stage_title}` : '';
+      detailsDescriptionEl.textContent = item.description || '';
+
+      detailsResourceEl.innerHTML = '';
+      if (item.resource_url) {
+        const link = document.createElement('a');
+        link.href = item.resource_url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = item.resource_title || 'Open resource';
+        detailsResourceEl.appendChild(link);
+      }
+
+      criteriaListEl.innerHTML = '';
+      rubricListEl.innerHTML = '';
+
+      if (item.kind === 'project') {
+        criteriaBlockEl.classList.remove('hidden');
+        rubricBlockEl.classList.remove('hidden');
+        submissionFormEl.classList.remove('hidden');
+
+        (item.acceptance_criteria || []).forEach((line) => {
+          const li = document.createElement('li');
+          li.textContent = line;
+          criteriaListEl.appendChild(li);
+        });
+
+        const rubric = item.rubric || {};
+        Object.keys(rubric).forEach((key) => {
+          const li = document.createElement('li');
+          li.textContent = `${key.replace('_', ' ')}: ${rubric[key]}`;
+          rubricListEl.appendChild(li);
+        });
+
+        activeProjectId = itemId;
+        submissionRepoEl.value = item.submission?.repo_url || '';
+        submissionLiveEl.value = item.submission?.live_url || '';
+        submissionNotesEl.value = item.submission?.notes || '';
+        submissionStatusEl.value = item.submission?.status || 'draft';
+        submissionFeedbackEl.textContent = '';
+      } else {
+        criteriaBlockEl.classList.add('hidden');
+        rubricBlockEl.classList.add('hidden');
+        submissionFormEl.classList.add('hidden');
+        activeProjectId = null;
+      }
+    }
+
+    async function patchTaskProgress(taskId, status) {
+      const response = await fetch(`/api/v1/tasks/${taskId}/progress`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task status');
+      }
+
+      const payload = await response.json();
+      document.getElementById('overall-progress-label').textContent = `${payload.roadmap_progress_percent}%`;
+      document.getElementById('overall-progress-bar').style.width = `${payload.roadmap_progress_percent}%`;
+      document.getElementById('overall-progress-count').textContent = `${payload.completed_tasks}/${payload.total_tasks} tasks completed`;
+
+      const stageLabel = document.getElementById(`stage-progress-label-${payload.stage_id}`);
+      const stageBar = document.getElementById(`stage-progress-bar-${payload.stage_id}`);
+      if (stageLabel) stageLabel.textContent = `${payload.stage_progress_percent}%`;
+      if (stageBar) stageBar.style.width = `${payload.stage_progress_percent}%`;
+    }
+
+    document.querySelectorAll('.task-status').forEach((select) => {
+      select.addEventListener('change', async (event) => {
+        const taskId = event.target.dataset.taskId;
+        const status = event.target.value;
+        const checkbox = document.querySelector(`.task-checkbox[data-task-id="${taskId}"]`);
+        if (checkbox) {
+          checkbox.checked = status === 'completed';
+        }
+
+        try {
+          await patchTaskProgress(taskId, status);
+        } catch (error) {
+          event.target.value = checkbox && checkbox.checked ? 'completed' : 'not_started';
+          alert('Could not update progress. Please try again.');
+        }
+      });
+    });
+
+    document.querySelectorAll('.task-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', async (event) => {
+        const taskId = event.target.dataset.taskId;
+        const status = event.target.checked ? 'completed' : 'not_started';
+        const select = document.querySelector(`.task-status[data-task-id="${taskId}"]`);
+        if (select) {
+          select.value = status;
+        }
+
+        try {
+          await patchTaskProgress(taskId, status);
+        } catch (error) {
+          event.target.checked = !event.target.checked;
+          if (select) {
+            select.value = event.target.checked ? 'completed' : 'not_started';
+          }
+          alert('Could not update progress. Please try again.');
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-item-id]').forEach((button) => {
+      button.addEventListener('click', () => renderDetails(button.dataset.itemId));
+    });
+
+    document.querySelectorAll('[data-stage-toggle]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.stage-card');
+        card.classList.toggle('collapsed');
+      });
+    });
+
+    saveToggleBtn.addEventListener('click', async () => {
+      const saved = saveToggleBtn.dataset.saved === '1';
+      const method = saved ? 'DELETE' : 'POST';
+      const response = await fetch(`/api/v1/roadmaps/${roadmapSlug}/save`, { method });
+
+      if (!response.ok) {
+        alert('Could not update saved state.');
+        return;
+      }
+
+      const payload = await response.json();
+      saveToggleBtn.dataset.saved = payload.saved ? '1' : '0';
+      saveToggleBtn.textContent = payload.saved ? 'Unsave roadmap' : 'Save roadmap';
+      saveCounterValue.textContent = payload.popularity;
+    });
+
+    submissionButtonEl.addEventListener('click', async () => {
+      if (!activeProjectId) return;
+
+      submissionFeedbackEl.textContent = 'Saving...';
+      const body = {
+        repo_url: submissionRepoEl.value || null,
+        live_url: submissionLiveEl.value || null,
+        notes: submissionNotesEl.value || null,
+        status: submissionStatusEl.value,
+      };
+
+      const response = await fetch(`/api/v1/projects/${activeProjectId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        submissionFeedbackEl.textContent = 'Save failed. Try again.';
+        return;
+      }
+
+      const payload = await response.json();
+      detailItems[activeProjectId].submission = payload;
+      submissionFeedbackEl.textContent = 'Submission saved.';
+    });
+
+    if (firstItemId) {
+      renderDetails(firstItemId);
+    }
+  </script>
+{% endblock %}

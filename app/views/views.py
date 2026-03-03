@@ -134,7 +134,7 @@ async def resource_detail(
 async def roadmap(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("roadmap.html", {"request": request})
+    return RedirectResponse(url="/roadmaps", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 
 @router.get("/community")
