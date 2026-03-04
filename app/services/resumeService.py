@@ -29,16 +29,9 @@ class ResumeService:
         return resume
     
     async def create_resume_embedding(self, resume_id: UUID, model_name: str, dims: int, embedding: list[float]) -> None:
-        resume_embedding = ResumeEmbedding(
-            resume_id=resume_id,
-            model_name=model_name,
-            dims=dims,
-            embedding=embedding
-        )
-        self.session.add(resume_embedding)
-        await self.session.commit()
-        await self.session.refresh(resume_embedding)
-        return resume_embedding
+        # Desactivado: No guardar embeddings
+        LOGGER.info("create_resume_embedding called, but embedding generation is disabled. No embedding will be saved.")
+        return None
 
     async def list_user_resumes(self, user_id: UUID) -> list[ResumeModel]:
         result = await self.session.execute(

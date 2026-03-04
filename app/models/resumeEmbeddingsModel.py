@@ -24,7 +24,8 @@ class ResumeEmbedding(Base):
     dims: Mapped[int] = mapped_column(Integer, nullable=False, default=384)
 
     # Vector pgvector (debe coincidir dims con el modelo)
-    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=False)
+    # Desactivado: embedding puede ser nulo
+    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -9,7 +9,7 @@ class CreateResumeEmbeddingSchema(BaseModel):
     resume_id:uuid.UUID
     model_name: str
     dims: int
-    embedding: list[float]
+    embedding: Optional[list[float]] = None
     created_at: Optional[str] = None
     
 
@@ -19,7 +19,7 @@ class ReadResumeEmbeddingSchema(BaseModel):
     resume_id:uuid.UUID
     model_name: str
     dims: int
-    embedding: list[float]
+    embedding: Optional[list[float]] = None
     created_at: Optional[str] = None
     
     class Config:
