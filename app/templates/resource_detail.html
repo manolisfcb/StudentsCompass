@@ -11,80 +11,86 @@
   <main class="dashboard-layout">
     <main class="dashboard">
       <div class="resources-container">
-        <div class="resources-header">
-          <div class="resources-header-row">
-            <div>
-              <a href="/resources" style="display:inline-block;margin-bottom:.45rem;color:#0F766E;text-decoration:none;font-weight:600;">← Back to Resources Hub</a>
+        <section class="resource-course-shell">
+          <aside class="panel course-sidebar">
+            <div class="course-sidebar-header">
+              <a href="/resources" class="course-back-link">← Back to Resources Hub</a>
               <h2>{{ resource.icon or '📚' }} {{ resource.title }}</h2>
               <p>{{ resource.description }}</p>
+              <label for="lesson-search" class="course-search-wrap">
+                <span class="sr-only">Search lessons</span>
+                <input id="lesson-search" type="text" placeholder="Search titles, descriptions" autocomplete="off">
+              </label>
             </div>
-          </div>
-        </div>
-
-        <section class="resource-layout">
-          <aside class="panel left-panel">
-            <h3 class="panel-title">Course Material</h3>
-            <div>
+            <div class="course-outline">
               {% for module in resource.modules %}
-              <div class="outline-module">
-                <button class="outline-module-btn" data-module-toggle="{{ module.id }}">
-                  {{ module.position }}. {{ module.title }}
+              <section class="course-module" data-module>
+                <button class="course-module-btn" type="button" data-module-toggle="{{ module.id }}" aria-expanded="true">
+                  <span class="course-module-caret" aria-hidden="true">▾</span>
+                  <span class="course-module-copy">
+                    <span class="course-module-title">Module {{ module.position }}: {{ module.title }}</span>
+                    <span class="course-module-progress">{{ module.lessons|length }}/{{ module.lessons|length }} Completed</span>
+                  </span>
                 </button>
-                <ul class="outline-lessons" data-module-lessons="{{ module.id }}">
+                <ul class="course-lessons" data-module-lessons="{{ module.id }}">
                   {% for lesson in module.lessons %}
-                  <li>
-                    <button class="outline-lesson-btn{% if selected_lesson_id and selected_lesson_id == lesson.id|string %} active{% endif %}" data-lesson-id="{{ lesson.id }}">
-                      {{ module.position }}.{{ lesson.position }} {{ lesson.title }}
+                  <li class="course-lesson-row" data-lesson-item data-lesson-title="{{ lesson.title|lower }}" data-module-title="{{ module.title|lower }}">
+                    <button
+                      class="outline-lesson-btn course-lesson-btn{% if selected_lesson_id and selected_lesson_id == lesson.id|string %} active{% endif %}"
+                      type="button"
+                      data-lesson-id="{{ lesson.id }}"
+                      data-module-name="{{ module.title }}"
+                      data-module-position="{{ module.position }}"
+                    >
+                      <span class="course-lesson-icon" aria-hidden="true">📄</span>
+                      <span class="course-lesson-copy">
+                        <span class="course-lesson-title">{{ lesson.title }}</span>
+                        <span class="course-lesson-meta">
+                          {% if lesson.reading_time_minutes %}
+                            {{ lesson.reading_time_minutes }} min read
+                          {% else %}
+                            Lesson {{ module.position }}.{{ lesson.position }}
+                          {% endif %}
+                        </span>
+                      </span>
                     </button>
                   </li>
                   {% endfor %}
                 </ul>
-              </div>
+              </section>
               {% endfor %}
             </div>
+            <p id="lesson-search-empty" class="lesson-search-empty" hidden>No lessons found for this search.</p>
           </aside>
 
-          <article class="panel content-panel">
-            <div class="lesson-head">
-              <h3 id="lesson-title" class="lesson-title">Loading lesson...</h3>
-              <div id="lesson-meta" class="lesson-subtitle"></div>
-            </div>
-            <div id="lesson-content" class="lesson-content"></div>
-          </article>
-
-          <aside class="panel right-panel">
-            <div class="meta-card">
-              <h4>Learning plan / Metadata</h4>
-              <ul class="meta-list">
-                <li><strong>Category:</strong> {{ resource.category }}</li>
-                <li><strong>Level:</strong> {{ resource.level or 'Not specified' }}</li>
-                <li><strong>Duration:</strong> {{ resource.estimated_duration_minutes or 'N/A' }} {% if resource.estimated_duration_minutes %}min{% endif %}</li>
-                <li><strong>Modules:</strong> {{ module_count }}</li>
-                <li><strong>Lessons:</strong> {{ lesson_count }}</li>
-              </ul>
-              {% if resource.external_url %}
-              <p style="margin-top:.8rem;"><a href="{{ resource.external_url }}" target="_blank" rel="noopener noreferrer" class="open-resource">Open resource</a></p>
-              {% endif %}
+          <article class="panel course-main">
+            <div class="course-main-toolbar" aria-hidden="true">
+              <span class="course-tool-icon">⤓</span>
+              <span class="course-tool-icon">↗</span>
+              <span class="course-tool-icon">⤢</span>
             </div>
 
-            <div class="meta-card">
-              <h4>Course timeline</h4>
-              <ul class="meta-list">
-                <li><strong>Start:</strong> Today</li>
-                <li><strong>Estimated end:</strong> 2-4 weeks</li>
-                <li><strong>Cadence:</strong> 20-30 min / day</li>
-              </ul>
-            </div>
-
-            <div class="meta-card">
-              <h4>Tags</h4>
-              <div class="resource-tags">
-                {% for tag in resource.tags or [] %}
-                <span class="tag">{{ tag }}</span>
-                {% endfor %}
+            <div class="course-main-body">
+              <div class="lesson-head">
+                <h3 id="lesson-title" class="lesson-title">Loading lesson...</h3>
+                <div id="lesson-meta" class="lesson-subtitle"></div>
               </div>
+              <div id="lesson-content" class="lesson-content"></div>
+
+              <section class="course-info-strip">
+                <ul class="meta-list">
+                  <li><strong>Category:</strong> {{ resource.category }}</li>
+                  <li><strong>Level:</strong> {{ resource.level or 'Not specified' }}</li>
+                  <li><strong>Duration:</strong> {{ resource.estimated_duration_minutes or 'N/A' }} {% if resource.estimated_duration_minutes %}min{% endif %}</li>
+                  <li><strong>Modules:</strong> {{ module_count }}</li>
+                  <li><strong>Lessons:</strong> {{ lesson_count }}</li>
+                </ul>
+                {% if resource.external_url %}
+                <a href="{{ resource.external_url }}" target="_blank" rel="noopener noreferrer" class="open-resource">Open resource</a>
+                {% endif %}
+              </section>
             </div>
-          </aside>
+          </article>
         </section>
       </div>
     </main>

@@ -18,7 +18,7 @@ from typing import Optional
 router = APIRouter()
 
 templates = Jinja2Templates(directory="app/templates")
-RESOURCE_DETAIL_ACCESS_ENABLED = False
+RESOURCE_DETAIL_ACCESS_ENABLED = True
 
 @router.get("/")
 async def root(request: Request):
