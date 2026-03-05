@@ -110,21 +110,33 @@ nav a:hover {
 
     nav ul {
         display: none;
+        flex-direction: column;
+        gap: 0.5rem;
         position: absolute;
         top: 100%;
         left: auto;
         right: 10px;
         background: var(--primary-color);
-        padding: 1rem 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        align-items: flex-end;
-        text-align: right;
-        width: max-content;
-        max-width: calc(100vw - 20px);
+        padding: 0.75rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        align-items: stretch;
+        width: min(220px, calc(100vw - 20px));
+        box-sizing: border-box;
+    }
+
+    nav ul li {
+        width: 100%;
     }
 
     nav ul.active {
         display: flex;
+    }
+
+    .nav-btn {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        justify-content: flex-start !important;
     }
 }
 
