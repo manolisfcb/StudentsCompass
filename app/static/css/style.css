@@ -1185,3 +1185,331 @@ main.dashboard {
         margin-right: 0.5rem;
     }
 }
+
+/* ========================================
+   About Page Styles
+   ======================================== */
+
+.about-page {
+    background-color: var(--background-color);
+}
+
+/* About Hero */
+.about-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0d9488 50%, var(--secondary-color) 100%);
+    color: var(--white);
+    text-align: center;
+    padding: 5rem 0 4rem;
+}
+
+.about-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.5px;
+}
+
+.about-tagline {
+    font-size: 1.35rem;
+    opacity: 0.9;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* About Sections */
+.about-section {
+    padding: 4rem 0;
+}
+
+.about-section-alt {
+    background-color: #f1f5f9;
+}
+
+.about-section h2 {
+    font-size: 2rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.about-section .section-intro {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto 2.5rem;
+}
+
+.about-section p {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.about-section blockquote {
+    background: linear-gradient(135deg, var(--primary-color), #0d9488);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    font-style: italic;
+    text-align: center;
+    max-width: 600px;
+    margin: 2rem auto;
+    box-shadow: 0 4px 20px rgba(15, 118, 110, 0.2);
+}
+
+/* About Steps Grid */
+.about-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.about-step-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-step-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+.about-step-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.about-step-card h3 {
+    font-size: 1.15rem;
+    color: var(--text-color);
+    margin: 0 0 0.5rem;
+}
+
+.about-step-card p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    text-align: left;
+}
+
+/* About Features Grid */
+.about-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.about-feature {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+    text-align: center;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.about-feature:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.about-feature-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.about-feature h3 {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin: 0 0 0.5rem;
+}
+
+.about-feature p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Philosophy Section */
+.about-philosophy {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.philosophy-item {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+}
+
+.philosophy-item h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin: 0 0 1rem;
+    text-align: center;
+}
+
+.philosophy-item ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.philosophy-item ul li {
+    padding: 0.5rem 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.philosophy-positive {
+    border-top: 3px solid var(--primary-color);
+}
+
+.philosophy-negative {
+    border-top: 3px solid var(--accent-color);
+}
+
+/* Outcomes Section */
+.about-outcomes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.outcome-item {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease;
+}
+
+.outcome-item:hover {
+    transform: translateY(-3px);
+}
+
+.outcome-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.outcome-item p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+}
+
+/* About CTA */
+.about-cta {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0d9488 100%);
+    color: var(--white);
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.about-cta h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    color: var(--white);
+}
+
+.about-cta p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0 0 2rem;
+}
+
+/* Active link in nav */
+.active-link {
+    opacity: 0.85;
+    border-bottom: 2px solid var(--white);
+    padding-bottom: 2px;
+}
+
+/* About Page Responsive */
+@media (max-width: 768px) {
+    .about-hero {
+        padding: 3rem 0 2.5rem;
+    }
+
+    .about-hero h1 {
+        font-size: 2rem;
+    }
+
+    .about-tagline {
+        font-size: 1.1rem;
+    }
+
+    .about-section {
+        padding: 2.5rem 0;
+    }
+
+    .about-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .about-steps-grid,
+    .about-features-grid,
+    .about-philosophy,
+    .about-outcomes {
+        grid-template-columns: 1fr;
+    }
+
+    .about-cta {
+        padding: 3rem 0;
+    }
+
+    .about-cta h2 {
+        font-size: 1.5rem;
+    }
+}

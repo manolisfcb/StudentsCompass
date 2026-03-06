@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% set page_title = "About Us" %}
+{% set page_description = "Learn about Student Compass — a career navigation platform helping students in Canada gain clarity, confidence, and direction in their professional journey." %}
+{% block head_extra %}
+    <link rel="stylesheet" href="/static/css/style.css">
+{% endblock %}
+{% block content %}
+    <header>
+        <nav>
+            <div class="container">
+                <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                <ul id="mobile-menu">
+                    <li><a href="/#for-students" onclick="closeMobileMenu()">For Students</a></li>
+                    <li><a href="/#for-companies" onclick="closeMobileMenu()">For Companies</a></li>
+                    <li><a href="/#how-it-works" onclick="closeMobileMenu()">How It Works</a></li>
+                    <li><a href="/about" onclick="closeMobileMenu()" class="active-link">About</a></li>
+                    <li><a href="/login" onclick="closeMobileMenu()">Login</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="about-page">
+        <!-- Hero Section -->
+        <section class="about-hero">
+            <div class="container">
+                <h1>About Student Compass</h1>
+                <p class="about-tagline">Your Career. Your Direction.</p>
+            </div>
+        </section>
+
+        <!-- Mission Section -->
+        <section class="about-section">
+            <div class="container">
+                <h2>🧭 Our Mission</h2>
+                <p>
+                    Student Compass is a career navigation platform designed to help students gain clarity, 
+                    confidence, and direction in their professional journey — especially within the Canadian job market.
+                </p>
+                <p>
+                    Rather than acting as a job board, Student Compass focuses on <strong>self-discovery, preparation, 
+                    and strategic positioning</strong>, empowering students to pursue the right opportunities with intention.
+                </p>
+                <blockquote>
+                    We don't sell jobs. We cultivate careers.
+                </blockquote>
+            </div>
+        </section>
+
+        <!-- The Journey Section -->
+        <section class="about-section about-section-alt">
+            <div class="container">
+                <h2>🚀 The 7-Step Journey</h2>
+                <p class="section-intro">Our structured journey is designed to build on each step. There are no right or wrong answers — the goal is clarity, not evaluation.</p>
+                <div class="about-steps-grid">
+                    <div class="about-step-card">
+                        <div class="step-number">1</div>
+                        <h3>Discover Yourself</h3>
+                        <p>Understand who you are, what you value, and how your preferences align with real opportunities. Using AI, we build your personal profile and suggest aligned roles.</p>
+                    </div>
+                    <div class="about-step-card">
+                        <div class="step-number">2</div>
+                        <h3>Resume & CV Alignment</h3>
+                        <p>Align your job search with your profile using the Canadian resume format and the STAR method. Focus on achievements, not just tasks.</p>
+                    </div>
+                    <div class="about-step-card">
+                        <div class="step-number">3</div>
+                        <h3>LinkedIn Optimization</h3>
+                        <p>Turn your LinkedIn profile into a discovery tool — not just a static resume. Position yourself where recruiters are already looking.</p>
+                    </div>
+                    <div class="about-step-card">
+                        <div class="step-number">4</div>
+                        <h3>Build Your Network</h3>
+                        <p>Shift from searching to being discovered. Build real professional relationships and attract recruiters and hiring leaders.</p>
+                    </div>
+                    <div class="about-step-card">
+                        <div class="step-number">5</div>
+                        <h3>Interview Preparation</h3>
+                        <p>Prepare with confidence using our AI Coach. Practice common questions, use real examples, and maintain a professional tone.</p>
+                    </div>
+                    <div class="about-step-card">
+                        <div class="step-number">6</div>
+                        <h3>Strategic Job Hunting</h3>
+                        <p>Apply strategically — not randomly. Access curated job sources and learn where and how to search effectively.</p>
+                    </div>
+                    <div class="about-step-card">
+                        <div class="step-number">7</div>
+                        <h3>Become a Thought Leader</h3>
+                        <p>Access the hidden job market — up to 70% of roles are never publicly posted. Share insights, publish content, and let recruiters come to you.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- What We Offer Section -->
+        <section class="about-section">
+            <div class="container">
+                <h2>💡 What We Offer</h2>
+                <div class="about-features-grid">
+                    <div class="about-feature">
+                        <span class="about-feature-icon">📝</span>
+                        <h3>AI-Powered Resume Analysis</h3>
+                        <p>Optimize your resume with personalized, AI-driven recommendations tailored to your target roles.</p>
+                    </div>
+                    <div class="about-feature">
+                        <span class="about-feature-icon">💼</span>
+                        <h3>Smart Job Search</h3>
+                        <p>Find opportunities tailored to your profile, career goals, and the Canadian job market.</p>
+                    </div>
+                    <div class="about-feature">
+                        <span class="about-feature-icon">🎯</span>
+                        <h3>Personalized Roadmaps</h3>
+                        <p>Create a step-by-step academic and professional plan adapted to your unique goals and progress.</p>
+                    </div>
+                    <div class="about-feature">
+                        <span class="about-feature-icon">📚</span>
+                        <h3>Curated Resources</h3>
+                        <p>Access study materials, career advice, and specialized resources to accelerate your growth.</p>
+                    </div>
+                    <div class="about-feature">
+                        <span class="about-feature-icon">👥</span>
+                        <h3>Supportive Community</h3>
+                        <p>Connect with other students, share experiences, and grow together in a collaborative environment.</p>
+                    </div>
+                    <div class="about-feature">
+                        <span class="about-feature-icon">📊</span>
+                        <h3>Goal Tracking</h3>
+                        <p>Monitor your academic and professional progress in real-time with intuitive dashboards.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Philosophy Section -->
+        <section class="about-section about-section-alt">
+            <div class="container">
+                <h2>🧠 Our Philosophy</h2>
+                <div class="about-philosophy">
+                    <div class="philosophy-item philosophy-positive">
+                        <h3>What We Believe</h3>
+                        <ul>
+                            <li>✅ Every student deserves clarity on their career direction</li>
+                            <li>✅ Self-discovery is the foundation of a meaningful career</li>
+                            <li>✅ Preparation beats random applications every time</li>
+                            <li>✅ Students should feel confident — not overwhelmed</li>
+                        </ul>
+                    </div>
+                    <div class="philosophy-item philosophy-negative">
+                        <h3>What We Are Not</h3>
+                        <ul>
+                            <li>❌ A job board</li>
+                            <li>❌ An applicant tracking system</li>
+                            <li>❌ A testing or ranking platform</li>
+                            <li>❌ A place that forces career paths</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Outcome Section -->
+        <section class="about-section">
+            <div class="container">
+                <h2>🏁 What Students Achieve</h2>
+                <p class="section-intro">By the end of the Student Compass journey, students:</p>
+                <div class="about-outcomes">
+                    <div class="outcome-item">
+                        <span class="outcome-icon">🔍</span>
+                        <p>Have clarity on their career direction</p>
+                    </div>
+                    <div class="outcome-item">
+                        <span class="outcome-icon">🎯</span>
+                        <p>Know what to work on — and what not to</p>
+                    </div>
+                    <div class="outcome-item">
+                        <span class="outcome-icon">💪</span>
+                        <p>Feel confident navigating the job market</p>
+                    </div>
+                    <div class="outcome-item">
+                        <span class="outcome-icon">✨</span>
+                        <p>Are prepared — not overwhelmed</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="about-cta">
+            <div class="container">
+                <h2>Ready to Start Your Journey?</h2>
+                <p>Join thousands of students who are navigating their careers with clarity and confidence.</p>
+                <a href="/register" class="cta-button">Get Started for Free</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
+            <ul>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.remove('active');
+        }
+
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobile-menu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            if (menu && !menu.contains(event.target) && !toggle.contains(event.target)) {
+                menu.classList.remove('active');
+            }
+        });
+    </script>
+{% endblock %}

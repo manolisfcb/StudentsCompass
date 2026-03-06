@@ -46,6 +46,11 @@ async def home(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
 
 
+@router.get("/about")
+async def about(request: Request):
+    return templates.TemplateResponse("about.html", {"request": request})
+
+
 @router.get("/login")
 async def login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
