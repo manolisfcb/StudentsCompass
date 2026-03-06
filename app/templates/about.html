@@ -298,6 +298,7 @@
             <h3 class="ref-modal__title" id="refModalTitle"></h3>
             <div class="ref-modal__body" id="refModalBody"></div>
             <div class="ref-modal__footer">
+                <a class="ref-modal__link" id="refModalLink" href="#" target="_blank" rel="noopener noreferrer">View Original Source ↗</a>
                 <button class="ref-modal__btn" onclick="closeRefModal()">Close</button>
             </div>
         </div>
@@ -334,16 +335,20 @@
         /* ── Reference modal data ── */
         const refData = [
             {
-                title: '49% of Hiring Managers Report Lack of Relevant Experience',
-                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>Survey of 504 hiring decision-makers across Canada.</p><p>"Lack of relevant experience" cited as a major hiring barrier for entry-level candidates.</p>',
+                title: '49% — Lack of Relevant Experience in Entry-Level Hiring',
+                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>Survey of 504 hiring decision-makers across Canada. 45% of companies say candidates don\'t have relevant experience; 54% say it\'s difficult to find the right candidates.</p><p>"Lack of relevant experience" cited as a top hiring barrier for entry-level positions.</p>',
+                url: 'https://www.expresspros.ca/newsroom/news-releases/news-releases/2025/02/canadian-companies-say-worsening-skills-gap-and-navigating-ai-top-challenges-in-2025'
             },
             {
-                title: '$30,680 Average Cost of Employee Turnover in Canada',
-                body: '<p><strong>Express Employment Professionals Workforce Report (2026)</strong></p><p>Average cost of employee turnover per employee in Canada including recruiting, training, and lost productivity.</p>',
+                title: '$30,680 — Average Cost of Employee Turnover in Canada',
+                body: '<p><strong>Express Employment Professionals — Canadian Hiring Outlook (2026)</strong></p><p>Average cost of employee turnover per employee in Canada, including recruiting, training, and lost productivity. Hiring outlook dampened due to skills gaps and technological shifts.</p><p><strong>Robert Half Canada (2025)</strong></p><p>33% of Canadian professionals plan to search for a new job in 2026, signaling significant workforce rotation and compounding turnover costs for employers.</p>',
+                url: 'https://www.expresspros.ca/newsroom/news-releases/news-releases/2025/12/canadian-hiring-outlook-dampens-in-first-half-of-2026',
+                url2: 'https://press.roberthalf.ca/2025-12-10-Survey-One-third-of-Canadian-professionals-plan-to-search-for-a-new-job-in-2026'
             },
             {
-                title: '82% Say Resumes Misrepresent Skills',
-                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>82% of hiring managers report resumes sometimes or often misrepresent candidate skills, with AI-generated content making exaggeration even easier to produce.</p>',
+                title: '82% — Resumes Misrepresent Candidate Skills',
+                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>82% of hiring managers report that resumes sometimes or often misrepresent candidate skills. AI-generated content is making exaggeration even easier to produce at scale.</p><p>Data sourced from the Express Job Insights Canada survey program.</p>',
+                url: 'https://www.expresspros.com/jobinsights-canada'
             }
         ];
 
@@ -354,7 +359,16 @@
             if (!d) return;
             _prevFocus = document.activeElement;
             document.getElementById('refModalTitle').textContent = d.title;
-            document.getElementById('refModalBody').innerHTML = d.body;
+
+            let bodyHtml = d.body;
+            if (d.url2) {
+                bodyHtml += '<p style="margin-top:0.5rem"><a href="' + d.url2 + '" target="_blank" rel="noopener noreferrer" class="ref-modal__inline-link">View additional source (Robert Half) ↗</a></p>';
+            }
+            document.getElementById('refModalBody').innerHTML = bodyHtml;
+
+            const link = document.getElementById('refModalLink');
+            link.href = d.url;
+
             const backdrop = document.getElementById('refModalBackdrop');
             backdrop.setAttribute('aria-hidden', 'false');
             backdrop.classList.add('active');

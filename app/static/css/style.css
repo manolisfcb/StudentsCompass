@@ -1481,7 +1481,44 @@ main.dashboard {
     padding-top: 1rem;
     border-top: 1px solid var(--border);
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ref-modal__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--primary-color);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.ref-modal__link:hover {
+    color: #0d9488;
+    transform: translateX(2px);
+}
+
+.ref-modal__link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.ref-modal__inline-link {
+    color: var(--primary-color);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.ref-modal__inline-link:hover {
+    color: #0d9488;
+    text-decoration: underline;
 }
 
 .ref-modal__btn {
