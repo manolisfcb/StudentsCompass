@@ -1205,15 +1205,35 @@ main.dashboard {
 .about-hero h1 {
     font-size: 3rem;
     font-weight: 800;
-    margin: 0 0 0.75rem;
+    margin: 0 0 1rem;
     letter-spacing: -0.5px;
+    line-height: 1.2;
 }
 
 .about-tagline {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     opacity: 0.9;
     font-weight: 400;
-    margin: 0;
+    margin: 0 auto 2rem;
+    max-width: 650px;
+    line-height: 1.6;
+}
+
+.hero-dual-cta {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-button-outline {
+    background: transparent !important;
+    border: 2px solid var(--white) !important;
+    color: var(--white) !important;
+}
+
+.cta-button-outline:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
 }
 
 /* About Sections */
@@ -1238,6 +1258,7 @@ main.dashboard {
     font-size: 1.1rem;
     max-width: 700px;
     margin: 0 auto 2.5rem;
+    line-height: 1.7;
 }
 
 .about-section p {
@@ -1263,6 +1284,237 @@ main.dashboard {
     max-width: 600px;
     margin: 2rem auto;
     box-shadow: 0 4px 20px rgba(15, 118, 110, 0.2);
+}
+
+/* ---- Problem / Stats Section ---- */
+.about-problem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2.5rem 0 2rem;
+}
+
+.problem-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.problem-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.problem-stat {
+    display: block;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.problem-card p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.problem-conclusion {
+    font-size: 1.15rem !important;
+    font-weight: 600;
+    color: var(--text-color) !important;
+    margin-top: 1.5rem !important;
+}
+
+/* ---- Employer Section ---- */
+.about-section-employer {
+    background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 100%);
+    border-top: 3px solid var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.employer-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary-color), #0d9488);
+    color: var(--white);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    margin: 0 auto 1.25rem;
+    text-align: center;
+}
+
+.about-section-employer .container,
+.about-section .container .employer-badge,
+.about-section .container .student-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.about-section-employer .container {
+    align-items: center;
+}
+
+.student-badge {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+}
+
+.employer-value-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    width: 100%;
+}
+
+.employer-value-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 2rem;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.employer-value-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.employer-value-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.employer-value-card:hover::after {
+    opacity: 1;
+}
+
+.evc-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.employer-value-card h3 {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin: 0 0 0.5rem;
+}
+
+.employer-value-card p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
+    text-align: left;
+}
+
+/* ---- ROI Comparison Section ---- */
+.about-roi {
+    background: #0f172a;
+    padding: 4.5rem 0;
+}
+
+.about-roi h2 {
+    color: var(--white) !important;
+    margin-bottom: 2.5rem;
+}
+
+.roi-comparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.roi-column {
+    border-radius: 16px;
+    padding: 2.25rem 2rem;
+    position: relative;
+}
+
+.roi-traditional {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.roi-compass {
+    background: linear-gradient(145deg, rgba(15, 118, 110, 0.25), rgba(94, 234, 212, 0.1));
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 40px rgba(15, 118, 110, 0.2);
+}
+
+.roi-recommended {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--primary-color), #0d9488);
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.roi-column h3 {
+    color: var(--white);
+    font-size: 1.2rem;
+    margin: 0 0 1.25rem;
+    text-align: center;
+}
+
+.roi-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.roi-column ul li {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    padding: 0.6rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    line-height: 1.5;
+}
+
+.roi-x {
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.roi-check {
+    color: var(--secondary-color);
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 /* About Steps Grid */
@@ -1333,6 +1585,7 @@ main.dashboard {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-top: 2rem;
+    width: 100%;
 }
 
 .about-feature {
@@ -1421,6 +1674,16 @@ main.dashboard {
     margin-top: 2rem;
 }
 
+.employer-outcomes .outcome-item {
+    text-align: left;
+    padding: 1.75rem;
+}
+
+.employer-outcomes .outcome-item p {
+    text-align: left;
+    margin: 0;
+}
+
 .outcome-item {
     background: var(--white);
     border-radius: 12px;
@@ -1448,7 +1711,52 @@ main.dashboard {
     font-weight: 500;
 }
 
-/* About CTA */
+/* ---- Dual CTA Section ---- */
+.about-dual-cta {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 4.5rem 0;
+}
+
+.dual-cta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.dual-cta-card {
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+}
+
+.dual-cta-employer {
+    background: linear-gradient(145deg, rgba(15, 118, 110, 0.2), rgba(94, 234, 212, 0.08));
+    border: 1px solid rgba(15, 118, 110, 0.3);
+}
+
+.dual-cta-student {
+    background: linear-gradient(145deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.dual-cta-card h2 {
+    color: var(--white);
+    font-size: 1.5rem;
+    margin: 0 0 0.75rem;
+}
+
+.dual-cta-card p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 1.5rem;
+}
+
+.dual-cta-card .cta-button {
+    display: inline-block;
+}
+
+/* About CTA (legacy) */
 .about-cta {
     background: linear-gradient(135deg, var(--primary-color) 0%, #0d9488 100%);
     color: var(--white);
@@ -1483,11 +1791,17 @@ main.dashboard {
     }
 
     .about-hero h1 {
-        font-size: 2rem;
+        font-size: 1.85rem;
+        line-height: 1.25;
     }
 
     .about-tagline {
-        font-size: 1.1rem;
+        font-size: 1rem;
+    }
+
+    .hero-dual-cta {
+        flex-direction: column;
+        align-items: center;
     }
 
     .about-section {
@@ -1501,15 +1815,31 @@ main.dashboard {
     .about-steps-grid,
     .about-features-grid,
     .about-philosophy,
-    .about-outcomes {
+    .about-outcomes,
+    .about-problem-grid,
+    .employer-value-grid,
+    .roi-comparison,
+    .dual-cta-grid {
         grid-template-columns: 1fr;
     }
 
-    .about-cta {
+    .about-roi {
         padding: 3rem 0;
     }
 
-    .about-cta h2 {
-        font-size: 1.5rem;
+    .about-dual-cta {
+        padding: 3rem 0;
+    }
+
+    .problem-stat {
+        font-size: 2.2rem;
+    }
+
+    .dual-cta-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .dual-cta-card h2 {
+        font-size: 1.3rem;
     }
 }
