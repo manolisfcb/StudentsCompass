@@ -1205,9 +1205,9 @@ main.dashboard {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.85rem 2rem;
+    padding: 1rem 2.5rem;
     border-radius: 10px;
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
@@ -1221,13 +1221,13 @@ main.dashboard {
     background: var(--white);
     color: var(--primary-color);
     border-color: var(--white);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
 }
 
 .about-btn--primary:hover {
     background: #f0fdfa;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
     color: var(--primary-color);
 }
 
@@ -1239,8 +1239,8 @@ main.dashboard {
 
 .about-btn--ghost:hover {
     border-color: var(--white);
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-3px);
     color: var(--white);
 }
 
@@ -1248,13 +1248,13 @@ main.dashboard {
     background: var(--white);
     color: #0f172a;
     border-color: var(--white);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .about-btn--white:hover {
     background: #f8fafc;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
     color: #0f172a;
 }
 
@@ -1267,11 +1267,25 @@ main.dashboard {
     letter-spacing: 2.5px;
     text-transform: uppercase;
     color: var(--primary-color);
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.section-eyebrow::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 2px;
+    background: var(--primary-color);
+    margin: 0.5rem auto 0;
+    border-radius: 1px;
 }
 
 .section-eyebrow--light {
     color: var(--secondary-color);
+}
+
+.section-eyebrow--light::after {
+    background: var(--secondary-color);
 }
 
 /* ---- Consistent Icon Circles ---- */
@@ -1310,9 +1324,9 @@ main.dashboard {
 }
 
 .outcome-icon-wrap {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     background: #f0fdfa;
     display: flex;
     align-items: center;
@@ -1321,7 +1335,7 @@ main.dashboard {
 }
 
 .outcome-icon {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
     line-height: 1;
 }
 
@@ -1371,7 +1385,7 @@ main.dashboard {
     font-size: 2.15rem;
     font-weight: 800;
     color: var(--text-color);
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     text-align: center;
     letter-spacing: -0.3px;
     line-height: 1.25;
@@ -1380,7 +1394,7 @@ main.dashboard {
 .about-section .section-intro {
     text-align: center;
     color: var(--text-secondary);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     max-width: 640px;
     margin: 0 auto 2.5rem;
     line-height: 1.7;
@@ -1738,7 +1752,7 @@ main.dashboard {
 }
 
 .employer-value-card h3 {
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-color);
     margin-bottom: 0.5rem;
@@ -1811,7 +1825,7 @@ main.dashboard {
 
 .roi-column h3 {
     color: var(--white);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
     margin: 0 0 1.5rem;
     text-align: center;
@@ -1859,6 +1873,7 @@ main.dashboard {
 /* ========== FRAMEWORK OUTCOMES ========== */
 .about-section--framework {
     border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 100%);
 }
 
 .about-section--framework .container {
@@ -1895,7 +1910,7 @@ main.dashboard {
 }
 
 .framework-card h3 {
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-color);
     margin-bottom: 0.5rem;
@@ -1929,7 +1944,7 @@ main.dashboard {
 .about-outcomes {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin-top: 2.5rem;
 }
 
@@ -1977,7 +1992,7 @@ main.dashboard {
 .about-features-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin-top: 2.5rem;
     width: 100%;
 }
@@ -1992,27 +2007,29 @@ main.dashboard {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .about-feature:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    border-color: rgba(15, 118, 110, 0.2);
 }
 
 .about-feature h3 {
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-color);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
     line-height: 1.3;
 }
 
 .about-feature p {
     font-size: 0.92rem;
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: 1.65;
     margin: 0;
+    text-align: left;
 }
 
 /* ========== PHILOSOPHY ========== */
@@ -2036,7 +2053,7 @@ main.dashboard {
 }
 
 .philosophy-item h3 {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-color);
     margin-bottom: 1.25rem;
@@ -2062,6 +2079,12 @@ main.dashboard {
 
 .philosophy-negative {
     border-left: 3px solid var(--accent-color);
+}
+
+/* ========== STUDENTS SECTION ========== */
+.about-section--students {
+    background: linear-gradient(180deg, #f5f3ff 0%, #f8fafc 100%);
+    border-top: 3px solid #8b5cf6;
 }
 
 /* ========== DUAL CTA ========== */
@@ -2129,6 +2152,12 @@ main.dashboard {
 
 .dual-cta-card .about-btn {
     align-self: flex-start;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+}
+
+.dual-cta-card .about-btn:hover {
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.25);
+    transform: translateY(-3px);
 }
 
 /* Active link in nav */
