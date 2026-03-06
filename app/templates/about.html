@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set page_title = "About Us" %}
-{% set page_description = "Student Compass connects employers with career-ready graduates in Canada. Our 7-step AI-powered program delivers pre-vetted, motivated talent — saving your company time, cost, and hiring risk." %}
+{% set page_description = "Student Compass connects employers with career-ready graduates in Canada. Our proprietary AI-powered framework delivers pre-vetted, motivated talent — saving your company time, cost, and hiring risk." %}
 {% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
 {% endblock %}
@@ -29,15 +29,16 @@
                 <h1>We Don't Sell Jobs.<br>We Deliver Job-Ready Talent.</h1>
                 <p class="about-tagline">Student Compass prepares the next generation of professionals so your company hires with confidence — not with crossed fingers.</p>
                 <div class="hero-dual-cta">
-                    <a href="/register" class="cta-button">I'm a Student</a>
-                    <a href="#for-employers" class="cta-button cta-button-outline">I'm an Employer</a>
+                    <a href="/register" class="about-btn about-btn--primary">Get Started Free</a>
+                    <a href="#for-employers" class="about-btn about-btn--ghost">I'm an Employer ↓</a>
                 </div>
             </div>
         </section>
 
         <!-- ========== THE PROBLEM WE SOLVE ========== -->
-        <section class="about-section">
+        <section class="about-section about-section--stats">
             <div class="container">
+                <span class="section-eyebrow">The Data</span>
                 <h2>The Hiring Problem No One Talks About</h2>
                 <div class="about-problem-grid">
                     <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 49% statistic" onclick="openRefModal(0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(0)}">
@@ -69,32 +70,32 @@
 
                 <div class="employer-value-grid">
                     <div class="employer-value-card">
-                        <div class="evc-icon">🎯</div>
+                        <div class="evc-icon-wrap"><span class="evc-icon">🎯</span></div>
                         <h3>Pre-Vetted & Career-Aligned</h3>
                         <p>Our AI matches students to roles based on self-discovery, skills, and real career goals — not random applications. You receive candidates who <em>actually want</em> your type of role.</p>
                     </div>
                     <div class="employer-value-card">
-                        <div class="evc-icon">📝</div>
+                        <div class="evc-icon-wrap"><span class="evc-icon">📝</span></div>
                         <h3>STAR-Method Trained Resumes</h3>
                         <p>Every resume has been analyzed by AI and refined using the STAR method. Candidates present achievements, not task lists — making your screening 3× faster.</p>
                     </div>
                     <div class="employer-value-card">
-                        <div class="evc-icon">🎤</div>
+                        <div class="evc-icon-wrap"><span class="evc-icon">🎤</span></div>
                         <h3>Interview-Ready Candidates</h3>
                         <p>Students practice with our AI Coach before they ever reach you. They research your company, prepare thoughtful questions, and communicate with clarity.</p>
                     </div>
                     <div class="employer-value-card">
-                        <div class="evc-icon">💡</div>
+                        <div class="evc-icon-wrap"><span class="evc-icon">💡</span></div>
                         <h3>LinkedIn-Optimized Profiles</h3>
                         <p>Candidates arrive with professional LinkedIn presence. Your recruiters can verify their background, content, and engagement before the first call.</p>
                     </div>
                     <div class="employer-value-card">
-                        <div class="evc-icon">📊</div>
+                        <div class="evc-icon-wrap"><span class="evc-icon">📊</span></div>
                         <h3>Company Dashboard</h3>
                         <p>Post positions, manage applications, and track candidates — all from a centralized panel designed for efficiency, not complexity.</p>
                     </div>
                     <div class="employer-value-card">
-                        <div class="evc-icon">🤝</div>
+                        <div class="evc-icon-wrap"><span class="evc-icon">🤝</span></div>
                         <h3>Employer Branding to Gen Z</h3>
                         <p>Position your company where the next generation is looking. Build your employer brand among motivated, career-focused students across Canada.</p>
                     </div>
@@ -105,6 +106,7 @@
         <!-- ========== THE ROI SECTION ========== -->
         <section class="about-section about-roi">
             <div class="container">
+                <span class="section-eyebrow section-eyebrow--light">Why It Works</span>
                 <h2>The Business Case Is Simple</h2>
                 <div class="roi-comparison">
                     <div class="roi-column roi-traditional">
@@ -133,69 +135,57 @@
         </section>
 
         <!-- ========== HOW WE PREPARE TALENT ========== -->
-        <section class="about-section about-section-alt">
+        <section class="about-section about-section-alt about-section--framework">
             <div class="container">
-                <h2>How We Prepare Your Future Hires</h2>
-                <p class="section-intro">Our 7-step career readiness journey transforms students from "looking for any job" into professionals who know exactly what they bring to the table.</p>
-                <div class="about-steps-grid">
-                    <div class="about-step-card">
-                        <div class="step-number">1</div>
-                        <h3>Self-Discovery</h3>
-                        <p>AI-powered profiling of values, strengths, work styles, and motivations — so candidates apply to roles they're genuinely aligned with.</p>
+                <span class="section-eyebrow">Our Framework</span>
+                <h2>How We Prepare Employer-Ready Talent</h2>
+                <p class="section-intro">Our proprietary career readiness framework prepares students to arrive confident, aligned, and ready to contribute from day one.</p>
+                <div class="framework-grid">
+                    <div class="framework-card">
+                        <div class="evc-icon-wrap"><span class="evc-icon">🔍</span></div>
+                        <h3>Career Clarity</h3>
+                        <p>Students develop a clear professional identity and understand the value they bring to organizations.</p>
                     </div>
-                    <div class="about-step-card">
-                        <div class="step-number">2</div>
-                        <h3>Resume & CV Alignment</h3>
-                        <p>Canadian-format resumes built with the STAR method. Achievement-focused, tailored to target roles — not generic templates.</p>
+                    <div class="framework-card">
+                        <div class="evc-icon-wrap"><span class="evc-icon">📋</span></div>
+                        <h3>Employer-Ready Profiles</h3>
+                        <p>Resumes and LinkedIn profiles aligned with Canadian hiring expectations and recruiter discovery.</p>
                     </div>
-                    <div class="about-step-card">
-                        <div class="step-number">3</div>
-                        <h3>LinkedIn Optimization</h3>
-                        <p>Professional profiles positioned for recruiter discovery. Active presence, relevant content, and clear role targeting.</p>
+                    <div class="framework-card">
+                        <div class="evc-icon-wrap"><span class="evc-icon">🎤</span></div>
+                        <h3>Interview Confidence</h3>
+                        <p>Candidates learn to communicate their experience, impact, and potential effectively.</p>
                     </div>
-                    <div class="about-step-card">
-                        <div class="step-number">4</div>
-                        <h3>Network Building</h3>
-                        <p>Strategic relationship-building with industry professionals. Candidates learn to be discovered, not just to search.</p>
-                    </div>
-                    <div class="about-step-card">
-                        <div class="step-number">5</div>
-                        <h3>Interview Readiness</h3>
-                        <p>AI-coached practice sessions. Company research, STAR-method answers, professional communication — before they ever reach your desk.</p>
-                    </div>
-                    <div class="about-step-card">
-                        <div class="step-number">6</div>
-                        <h3>Strategic Job Search</h3>
-                        <p>No spray-and-pray. Candidates learn to apply with intention, targeting roles that match their profile and career goals.</p>
-                    </div>
-                    <div class="about-step-card">
-                        <div class="step-number">7</div>
-                        <h3>Thought Leadership</h3>
-                        <p>The best candidates don't just apply — they get noticed. Publishing, engaging, and building a professional voice in their field.</p>
+                    <div class="framework-card">
+                        <div class="evc-icon-wrap"><span class="evc-icon">🎯</span></div>
+                        <h3>Strategic Job Targeting</h3>
+                        <p>Students apply with intention, focusing on roles aligned with their strengths and career trajectory.</p>
                     </div>
                 </div>
+                <p class="framework-disclaimer">Our full candidate development framework is shared exclusively with our employer partners.</p>
             </div>
         </section>
 
         <!-- ========== WHAT EMPLOYERS GET ========== -->
-        <section class="about-section">
+        <section class="about-section about-section--outcomes">
             <div class="container">
+                <span class="section-eyebrow">Employer Benefits</span>
                 <h2>What You Get When You Hire From Our Pipeline</h2>
                 <div class="about-outcomes employer-outcomes">
                     <div class="outcome-item">
-                        <span class="outcome-icon">🎯</span>
+                        <div class="outcome-icon-wrap"><span class="outcome-icon">🎯</span></div>
                         <p>Candidates who applied because they <strong>want</strong> your role — not because they're mass-applying</p>
                     </div>
                     <div class="outcome-item">
-                        <span class="outcome-icon">📄</span>
+                        <div class="outcome-icon-wrap"><span class="outcome-icon">📄</span></div>
                         <p>Polished, achievement-based resumes you can trust to reflect real capabilities</p>
                     </div>
                     <div class="outcome-item">
-                        <span class="outcome-icon">🗣️</span>
+                        <div class="outcome-icon-wrap"><span class="outcome-icon">🗣️</span></div>
                         <p>Interview-ready professionals who communicate clearly and research your company</p>
                     </div>
                     <div class="outcome-item">
-                        <span class="outcome-icon">💎</span>
+                        <div class="outcome-icon-wrap"><span class="outcome-icon">💎</span></div>
                         <p>Lower cost-per-hire, faster time-to-fill, and dramatically better retention rates</p>
                     </div>
                 </div>
@@ -210,32 +200,32 @@
                 <p class="section-intro">Student Compass isn't a job board — it's your personal career GPS. We help you understand who you are, what you want, and how to get there with confidence.</p>
                 <div class="about-features-grid">
                     <div class="about-feature">
-                        <span class="about-feature-icon">📝</span>
+                        <div class="about-feature-icon-wrap"><span class="about-feature-icon">📝</span></div>
                         <h3>AI-Powered Resume Analysis</h3>
                         <p>Get personalized, AI-driven feedback to optimize your resume for the roles you actually want.</p>
                     </div>
                     <div class="about-feature">
-                        <span class="about-feature-icon">💼</span>
+                        <div class="about-feature-icon-wrap"><span class="about-feature-icon">💼</span></div>
                         <h3>Smart Job Matching</h3>
                         <p>Find opportunities aligned with your profile, skills, and career goals in the Canadian market.</p>
                     </div>
                     <div class="about-feature">
-                        <span class="about-feature-icon">🎯</span>
+                        <div class="about-feature-icon-wrap"><span class="about-feature-icon">🎯</span></div>
                         <h3>Personalized Roadmaps</h3>
                         <p>A step-by-step plan built around your goals — not someone else's idea of where you should go.</p>
                     </div>
                     <div class="about-feature">
-                        <span class="about-feature-icon">📚</span>
+                        <div class="about-feature-icon-wrap"><span class="about-feature-icon">📚</span></div>
                         <h3>Curated Resources</h3>
                         <p>Study materials, career advice, and specialized content to accelerate your professional growth.</p>
                     </div>
                     <div class="about-feature">
-                        <span class="about-feature-icon">👥</span>
+                        <div class="about-feature-icon-wrap"><span class="about-feature-icon">👥</span></div>
                         <h3>Student Community</h3>
                         <p>Connect with peers, share experiences, and grow together in a supportive environment.</p>
                     </div>
                     <div class="about-feature">
-                        <span class="about-feature-icon">📊</span>
+                        <div class="about-feature-icon-wrap"><span class="about-feature-icon">📊</span></div>
                         <h3>Progress Tracking</h3>
                         <p>Monitor every milestone of your career readiness journey in real-time with intuitive dashboards.</p>
                     </div>
@@ -244,9 +234,10 @@
         </section>
 
         <!-- ========== PHILOSOPHY ========== -->
-        <section class="about-section">
+        <section class="about-section about-section--philosophy">
             <div class="container">
-                <h2>🧠 Our Philosophy</h2>
+                <span class="section-eyebrow">Our DNA</span>
+                <h2>Our Philosophy</h2>
                 <p class="section-intro">We sit at the intersection of two markets that need each other — and we make sure both sides win.</p>
                 <div class="about-philosophy">
                     <div class="philosophy-item philosophy-positive">
@@ -272,18 +263,20 @@
         </section>
 
         <!-- ========== DUAL CTA ========== -->
-        <section class="about-cta about-dual-cta">
+        <section class="about-dual-cta">
             <div class="container">
                 <div class="dual-cta-grid">
                     <div class="dual-cta-card dual-cta-employer">
+                        <span class="dual-cta-label">For Employers</span>
                         <h2>Ready to Hire Smarter?</h2>
                         <p>Access a pipeline of career-ready graduates who chose your company on purpose — not by accident.</p>
-                        <a href="/register" class="cta-button">Start Hiring →</a>
+                        <a href="/register" class="about-btn about-btn--white">Start Hiring →</a>
                     </div>
                     <div class="dual-cta-card dual-cta-student">
+                        <span class="dual-cta-label">For Students</span>
                         <h2>Ready to Launch Your Career?</h2>
                         <p>Join the journey. Gain clarity, build confidence, and become the candidate companies compete for.</p>
-                        <a href="/register" class="cta-button">Get Started Free →</a>
+                        <a href="/register" class="about-btn about-btn--white">Get Started Free →</a>
                     </div>
                 </div>
             </div>
