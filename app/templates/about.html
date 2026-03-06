@@ -40,17 +40,20 @@
             <div class="container">
                 <h2>The Hiring Problem No One Talks About</h2>
                 <div class="about-problem-grid">
-                    <div class="problem-card">
-                        <span class="problem-stat">72%</span>
-                        <p>of employers say entry-level candidates are <strong>not adequately prepared</strong> for the workforce</p>
+                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 49% statistic" onclick="openRefModal(0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(0)}">
+                        <span class="problem-stat">49%</span>
+                        <p>of hiring managers say applicants lack relevant experience — a major barrier for entry-level candidates entering the workforce.</p>
+                        <span class="problem-card__source-hint">Click to view source ↗</span>
                     </div>
-                    <div class="problem-card">
-                        <span class="problem-stat">$4,700</span>
-                        <p>average cost-per-hire in Canada — even more when a bad hire doesn't last 90 days</p>
+                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for $30,680 statistic" onclick="openRefModal(1)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(1)}">
+                        <span class="problem-stat">$30,680</span>
+                        <p>average cost of employee turnover in Canada — and bad hires that leave early can cost significantly more.</p>
+                        <span class="problem-card__source-hint">Click to view source ↗</span>
                     </div>
-                    <div class="problem-card">
-                        <span class="problem-stat">52%</span>
-                        <p>of hiring managers report that <strong>resumes don't reflect actual candidate ability</strong></p>
+                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 82% statistic" onclick="openRefModal(2)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(2)}">
+                        <span class="problem-stat">82%</span>
+                        <p>of Canadian hiring managers say resumes don't match candidates' real skills — with AI making exaggeration easier.</p>
+                        <span class="problem-card__source-hint">Click to view source ↗</span>
                     </div>
                 </div>
                 <p class="problem-conclusion">Traditional job boards give you <strong>volume</strong>. Student Compass gives you <strong>quality</strong>.</p>
@@ -287,6 +290,19 @@
         </section>
     </main>
 
+    <!-- Reference Modal -->
+    <div class="ref-modal-backdrop" id="refModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="refModalTitle" aria-hidden="true">
+        <div class="ref-modal">
+            <button class="ref-modal__close" aria-label="Close modal" onclick="closeRefModal()">&times;</button>
+            <div class="ref-modal__badge">Source & Reference</div>
+            <h3 class="ref-modal__title" id="refModalTitle"></h3>
+            <div class="ref-modal__body" id="refModalBody"></div>
+            <div class="ref-modal__footer">
+                <button class="ref-modal__btn" onclick="closeRefModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div class="container">
             <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
@@ -298,21 +314,87 @@
     </footer>
 
     <script>
+        /* ── Mobile menu ── */
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('active');
         }
-
         function closeMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.remove('active');
         }
-
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('mobile-menu');
             const toggle = document.querySelector('.mobile-menu-toggle');
             if (menu && !menu.contains(event.target) && !toggle.contains(event.target)) {
                 menu.classList.remove('active');
+            }
+        });
+
+        /* ── Reference modal data ── */
+        const refData = [
+            {
+                title: '49% of Hiring Managers Report Lack of Relevant Experience',
+                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>Survey of 504 hiring decision-makers across Canada.</p><p>"Lack of relevant experience" cited as a major hiring barrier for entry-level candidates.</p>',
+            },
+            {
+                title: '$30,680 Average Cost of Employee Turnover in Canada',
+                body: '<p><strong>Express Employment Professionals Workforce Report (2026)</strong></p><p>Average cost of employee turnover per employee in Canada including recruiting, training, and lost productivity.</p>',
+            },
+            {
+                title: '82% Say Resumes Misrepresent Skills',
+                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>82% of hiring managers report resumes sometimes or often misrepresent candidate skills, with AI-generated content making exaggeration even easier to produce.</p>',
+            }
+        ];
+
+        let _prevFocus = null;
+
+        function openRefModal(index) {
+            const d = refData[index];
+            if (!d) return;
+            _prevFocus = document.activeElement;
+            document.getElementById('refModalTitle').textContent = d.title;
+            document.getElementById('refModalBody').innerHTML = d.body;
+            const backdrop = document.getElementById('refModalBackdrop');
+            backdrop.setAttribute('aria-hidden', 'false');
+            backdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            backdrop.querySelector('.ref-modal__close').focus();
+        }
+
+        function closeRefModal() {
+            const backdrop = document.getElementById('refModalBackdrop');
+            backdrop.classList.remove('active');
+            backdrop.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (_prevFocus) _prevFocus.focus();
+        }
+
+        /* Close on backdrop click */
+        document.getElementById('refModalBackdrop').addEventListener('click', function(e) {
+            if (e.target === this) closeRefModal();
+        });
+
+        /* Close on ESC */
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const backdrop = document.getElementById('refModalBackdrop');
+                if (backdrop.classList.contains('active')) closeRefModal();
+            }
+        });
+
+        /* Focus trap */
+        document.getElementById('refModalBackdrop').addEventListener('keydown', function(e) {
+            if (e.key !== 'Tab') return;
+            const modal = this.querySelector('.ref-modal');
+            const focusable = modal.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
             }
         });
     </script>

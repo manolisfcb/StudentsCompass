@@ -1304,9 +1304,44 @@ main.dashboard {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.problem-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+.problem-card--clickable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.problem-card--clickable:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 12px 36px rgba(0, 0, 0, 0.1),
+        0 0 0 2px rgba(15, 118, 110, 0.15);
+}
+
+.problem-card--clickable:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.problem-card--clickable:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 3px;
+}
+
+.problem-card__source-hint {
+    display: block;
+    margin-top: 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    letter-spacing: 0.3px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.problem-card--clickable:hover .problem-card__source-hint {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .problem-stat {
@@ -1330,6 +1365,149 @@ main.dashboard {
     font-weight: 600;
     color: var(--text-color) !important;
     margin-top: 1.5rem !important;
+}
+
+/* ---- Reference Modal ---- */
+.ref-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.ref-modal-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.25s ease, visibility 0s linear 0s;
+}
+
+.ref-modal {
+    background: var(--white);
+    border-radius: 16px;
+    max-width: 500px;
+    width: calc(100% - 2rem);
+    padding: 2rem 2rem 1.5rem;
+    box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.18),
+        0 8px 24px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transform: scale(0.92) translateY(12px);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ref-modal-backdrop.active .ref-modal {
+    transform: scale(1) translateY(0);
+}
+
+.ref-modal__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.85rem;
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    color: var(--muted);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ref-modal__close:hover {
+    background: #f1f5f9;
+    color: var(--text-color);
+}
+
+.ref-modal__close:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.ref-modal__badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary-color), #0d9488);
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    padding: 0.3rem 0.9rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.ref-modal__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0 0 1rem;
+    line-height: 1.4;
+    padding-right: 1.5rem;
+}
+
+.ref-modal__body {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.ref-modal__body p {
+    margin: 0 0 0.6rem;
+    text-align: left;
+}
+
+.ref-modal__body p:last-child {
+    margin-bottom: 0;
+}
+
+.ref-modal__body strong {
+    color: var(--text-color);
+}
+
+.ref-modal__footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ref-modal__btn {
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 0.55rem 1.4rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.ref-modal__btn:hover {
+    background: #0d9488;
+    transform: translateY(-1px);
+}
+
+.ref-modal__btn:active {
+    transform: translateY(0);
+}
+
+.ref-modal__btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 3px;
 }
 
 /* ---- Employer Section ---- */
