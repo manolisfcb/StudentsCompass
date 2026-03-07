@@ -24,21 +24,22 @@
             </div>
             <div class="course-outline">
               {% for module in resource.modules %}
-              <section class="course-module" data-module>
+              <section class="course-module" data-module data-module-id="{{ module.id }}">
                 <button class="course-module-btn" type="button" data-module-toggle="{{ module.id }}" aria-expanded="true">
                   <span class="course-module-caret" aria-hidden="true">▾</span>
                   <span class="course-module-copy">
                     <span class="course-module-title">Module {{ module.position }}: {{ module.title }}</span>
-                    <span class="course-module-progress">{{ module.lessons|length }}/{{ module.lessons|length }} Completed</span>
+                    <span class="course-module-progress" data-module-progress="{{ module.id }}">0/{{ module.lessons|length }} Completed</span>
                   </span>
                 </button>
                 <ul class="course-lessons" data-module-lessons="{{ module.id }}">
                   {% for lesson in module.lessons %}
-                  <li class="course-lesson-row" data-lesson-item data-lesson-title="{{ lesson.title|lower }}" data-module-title="{{ module.title|lower }}">
+                  <li class="course-lesson-row" data-lesson-item data-module-id="{{ module.id }}" data-lesson-title="{{ lesson.title|lower }}" data-module-title="{{ module.title|lower }}">
                     <button
                       class="outline-lesson-btn course-lesson-btn{% if selected_lesson_id and selected_lesson_id == lesson.id|string %} active{% endif %}"
                       type="button"
                       data-lesson-id="{{ lesson.id }}"
+                      data-module-id="{{ module.id }}"
                       data-module-name="{{ module.title }}"
                       data-module-position="{{ module.position }}"
                     >
@@ -84,6 +85,7 @@
                   <li><strong>Duration:</strong> {{ resource.estimated_duration_minutes or 'N/A' }} {% if resource.estimated_duration_minutes %}min{% endif %}</li>
                   <li><strong>Modules:</strong> {{ module_count }}</li>
                   <li><strong>Lessons:</strong> {{ lesson_count }}</li>
+                  <li><strong>Progress:</strong> <span id="resource-progress-value">0%</span></li>
                 </ul>
                 {% if resource.external_url %}
                 <a href="{{ resource.external_url }}" target="_blank" rel="noopener noreferrer" class="open-resource">Open resource</a>

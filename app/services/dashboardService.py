@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import bindparam, select, text
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.userModel import User
 from app.models.userStatsModel import UserStatsModel
@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardService:
+    CORE_RESOURCE_TITLES = {
+        "resume": "Resume Templates",
+        "linkedin": "LinkedIn Optimization",
+        "interview_prep": "Interview Preparation",
+    }
     
     @staticmethod
     async def get_student_dashboard(user_id: UUID, session: AsyncSession) -> Dict:
@@ -41,6 +46,7 @@ class DashboardService:
             
             # Get or create user stats (authoritative progress values)
             user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
+            user_stats = await DashboardService._sync_user_stats_with_resource_progress(user_id, session, user_stats)
 
             progress_data = {
                 "resume": user_stats.resume_progress,
@@ -154,6 +160,7 @@ class DashboardService:
         
         # Use saved stats as authoritative progress values
         user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
+        user_stats = await DashboardService._sync_user_stats_with_resource_progress(user_id, session, user_stats)
         progress_data = {
             "resume": user_stats.resume_progress,
             "linkedin": user_stats.linkedin_progress,
@@ -255,6 +262,100 @@ class DashboardService:
             interview_progress=progress["interview_prep"],
         )
         session.add(stats)
+        await session.commit()
+        await session.refresh(stats)
+        return stats
+
+    @staticmethod
+    def _percent(completed: int, total: int) -> int:
+        if total <= 0:
+            return 0
+        return round((completed / total) * 100)
+
+    @staticmethod
+    async def _get_core_resource_progress(user_id: UUID, session: AsyncSession) -> Dict[str, int]:
+        title_to_key = {title: key for key, title in DashboardService.CORE_RESOURCE_TITLES.items()}
+        target_titles = list(title_to_key.keys())
+
+        titles_bind = bindparam("titles", expanding=True)
+        totals_sql = text(
+            """
+            SELECT r.title, COUNT(l.id) AS total_lessons
+            FROM resources r
+            JOIN resource_modules m ON m.resource_id = r.id
+            JOIN resource_lessons l ON l.module_id = m.id
+            WHERE r.title IN :titles
+              AND r.is_published = TRUE
+            GROUP BY r.title
+            """
+        ).bindparams(titles_bind)
+
+        completed_sql = text(
+            """
+            SELECT r.title, COUNT(p.id) AS completed_lessons
+            FROM resources r
+            JOIN resource_modules m ON m.resource_id = r.id
+            JOIN resource_lessons l ON l.module_id = m.id
+            JOIN resource_lesson_progress p ON p.lesson_id = l.id
+            WHERE p.user_id = :user_id
+              AND r.title IN :titles
+              AND r.is_published = TRUE
+            GROUP BY r.title
+            """
+        ).bindparams(titles_bind)
+
+        try:
+            total_rows = await session.execute(totals_sql, {"titles": target_titles})
+            totals_by_title = {title: count for title, count in total_rows.all()}
+        except Exception:
+            return {}
+
+        has_course_content = any(totals_by_title.get(title, 0) > 0 for title in target_titles)
+        if not has_course_content:
+            return {}
+
+        try:
+            completed_rows = await session.execute(
+                completed_sql,
+                {"user_id": user_id, "titles": target_titles},
+            )
+            completed_by_title = {title: count for title, count in completed_rows.all()}
+        except Exception:
+            return {}
+
+        return {
+            key: DashboardService._percent(
+                completed_by_title.get(title, 0),
+                totals_by_title.get(title, 0),
+            )
+            for title, key in title_to_key.items()
+        }
+
+    @staticmethod
+    async def _sync_user_stats_with_resource_progress(
+        user_id: UUID,
+        session: AsyncSession,
+        stats: UserStatsModel,
+    ) -> UserStatsModel:
+        resource_progress = await DashboardService._get_core_resource_progress(user_id, session)
+        if not resource_progress:
+            return stats
+
+        resume_progress = resource_progress.get("resume", 0)
+        linkedin_progress = resource_progress.get("linkedin", 0)
+        interview_progress = resource_progress.get("interview_prep", 0)
+
+        changed = (
+            stats.resume_progress != resume_progress
+            or stats.linkedin_progress != linkedin_progress
+            or stats.interview_progress != interview_progress
+        )
+        if not changed:
+            return stats
+
+        stats.resume_progress = resume_progress
+        stats.linkedin_progress = linkedin_progress
+        stats.interview_progress = interview_progress
         await session.commit()
         await session.refresh(stats)
         return stats

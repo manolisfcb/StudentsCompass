@@ -127,7 +127,11 @@ async def resource_detail(
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
 
-    payload = service.to_detail_payload(resource)
+    completed_lesson_ids = await service.get_completed_lesson_ids_for_resource(
+        resource_id=resource.id,
+        user_id=user.id,
+    )
+    payload = service.to_detail_payload(resource, completed_lesson_ids=completed_lesson_ids)
 
     selected_lesson_id = lesson
     if not selected_lesson_id:

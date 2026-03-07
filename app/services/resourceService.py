@@ -1,16 +1,36 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Iterable
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 
-from app.models.resourceModel import ResourceModel, ResourceModuleModel
+from app.models.resourceModel import (
+    ResourceLessonModel,
+    ResourceLessonProgressModel,
+    ResourceModel,
+    ResourceModuleModel,
+)
 
 
 class ResourceService:
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    @staticmethod
+    def _percent(completed: int, total: int) -> int:
+        if total <= 0:
+            return 0
+        return round((completed / total) * 100)
+
+    @staticmethod
+    def _normalize_completed_ids(completed_lesson_ids: Iterable[UUID] | None) -> set[UUID]:
+        if not completed_lesson_ids:
+            return set()
+        return set(completed_lesson_ids)
 
     async def list_published_resources(
         self,
@@ -65,13 +85,95 @@ class ResourceService:
 
         return resource
 
-    def to_detail_payload(self, resource: ResourceModel) -> dict:
+    async def get_completed_lesson_ids_for_resource(self, resource_id: UUID, user_id: UUID) -> set[UUID]:
+        result = await self.session.execute(
+            select(ResourceLessonProgressModel.lesson_id)
+            .join(ResourceLessonModel, ResourceLessonModel.id == ResourceLessonProgressModel.lesson_id)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .where(
+                ResourceLessonProgressModel.user_id == user_id,
+                ResourceModuleModel.resource_id == resource_id,
+            )
+        )
+        return {row[0] for row in result.all()}
+
+    async def set_lesson_progress(
+        self,
+        *,
+        user_id: UUID,
+        lesson_id: UUID,
+        completed: bool,
+    ) -> dict | None:
+        lesson_result = await self.session.execute(
+            select(ResourceLessonModel, ResourceModuleModel.resource_id)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .join(ResourceModel, ResourceModel.id == ResourceModuleModel.resource_id)
+            .where(
+                ResourceLessonModel.id == lesson_id,
+                ResourceModel.is_published.is_(True),
+            )
+        )
+        lesson_row = lesson_result.first()
+        if not lesson_row:
+            return None
+
+        _, resource_id = lesson_row
+
+        progress_result = await self.session.execute(
+            select(ResourceLessonProgressModel).where(
+                ResourceLessonProgressModel.user_id == user_id,
+                ResourceLessonProgressModel.lesson_id == lesson_id,
+            )
+        )
+        progress = progress_result.scalar_one_or_none()
+        now = datetime.utcnow()
+
+        if completed:
+            if progress:
+                progress.last_opened_at = now
+            else:
+                self.session.add(
+                    ResourceLessonProgressModel(
+                        user_id=user_id,
+                        lesson_id=lesson_id,
+                        completed_at=now,
+                        last_opened_at=now,
+                    )
+                )
+        elif progress:
+            await self.session.delete(progress)
+
+        await self.session.commit()
+        return await self.get_resource_progress(resource_id=resource_id, user_id=user_id)
+
+    async def get_resource_progress(self, *, resource_id: UUID, user_id: UUID) -> dict | None:
+        resource = await self.get_resource_with_outline(resource_id)
+        if not resource:
+            return None
+        completed_ids = await self.get_completed_lesson_ids_for_resource(resource_id=resource.id, user_id=user_id)
+        return self.to_progress_payload(resource, completed_ids)
+
+    def to_detail_payload(
+        self,
+        resource: ResourceModel,
+        completed_lesson_ids: Iterable[UUID] | None = None,
+    ) -> dict:
+        completed_ids = self._normalize_completed_ids(completed_lesson_ids)
         modules = []
+        module_progress = []
         total_lessons = 0
+        completed_lessons = 0
+
         for module in resource.modules:
             lessons = []
+            module_completed = 0
+
             for lesson in module.lessons:
                 total_lessons += 1
+                is_completed = lesson.id in completed_ids
+                if is_completed:
+                    completed_lessons += 1
+                    module_completed += 1
                 lessons.append(
                     {
                         "id": str(lesson.id),
@@ -82,9 +184,19 @@ class ResourceService:
                         "content": lesson.content,
                         "reading_time_minutes": lesson.reading_time_minutes,
                         "created_at": lesson.created_at.isoformat(),
+                        "is_completed": is_completed,
                     }
                 )
 
+            module_total = len(module.lessons)
+            module_progress.append(
+                {
+                    "module_id": str(module.id),
+                    "completed_lessons": module_completed,
+                    "total_lessons": module_total,
+                    "progress_percent": self._percent(module_completed, module_total),
+                }
+            )
             modules.append(
                 {
                     "id": str(module.id),
@@ -92,6 +204,9 @@ class ResourceService:
                     "title": module.title,
                     "position": module.position,
                     "description": module.description,
+                    "completed_lessons": module_completed,
+                    "total_lessons": module_total,
+                    "progress_percent": self._percent(module_completed, module_total),
                     "lessons": lessons,
                 }
             )
@@ -108,7 +223,25 @@ class ResourceService:
             "external_url": resource.external_url,
             "created_at": resource.created_at.isoformat(),
             "modules": modules,
+            "module_progress": module_progress,
             "module_count": len(modules),
             "lesson_count": total_lessons,
-            # TODO(progress): when progress table exists, include completed lessons percentage here.
+            "completed_lesson_ids": sorted(str(lesson_id) for lesson_id in completed_ids),
+            "completed_lessons": completed_lessons,
+            "progress_percent": self._percent(completed_lessons, total_lessons),
+        }
+
+    def to_progress_payload(
+        self,
+        resource: ResourceModel,
+        completed_lesson_ids: Iterable[UUID] | None = None,
+    ) -> dict:
+        detail_payload = self.to_detail_payload(resource, completed_lesson_ids=completed_lesson_ids)
+        return {
+            "resource_id": detail_payload["id"],
+            "completed_lesson_ids": detail_payload["completed_lesson_ids"],
+            "completed_lessons": detail_payload["completed_lessons"],
+            "total_lessons": detail_payload["lesson_count"],
+            "progress_percent": detail_payload["progress_percent"],
+            "modules": detail_payload["module_progress"],
         }

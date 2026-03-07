@@ -47,3 +47,23 @@ class ResourceModuleRead(BaseModel):
 
 class ResourceDetailRead(ResourceRead):
     modules: list[ResourceModuleRead] = []
+
+
+class ResourceLessonProgressUpdate(BaseModel):
+    completed: bool = True
+
+
+class ResourceModuleProgressRead(BaseModel):
+    module_id: UUID
+    completed_lessons: int
+    total_lessons: int
+    progress_percent: int
+
+
+class ResourceProgressRead(BaseModel):
+    resource_id: UUID
+    completed_lesson_ids: list[UUID]
+    completed_lessons: int
+    total_lessons: int
+    progress_percent: int
+    modules: list[ResourceModuleProgressRead]

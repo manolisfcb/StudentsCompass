@@ -9,8 +9,12 @@
   const lessonButtons = Array.from(document.querySelectorAll('[data-lesson-id]'));
   const moduleButtons = Array.from(document.querySelectorAll('[data-module-toggle]'));
   const moduleSections = Array.from(document.querySelectorAll('[data-module]'));
+  const moduleProgressLabels = Array.from(document.querySelectorAll('[data-module-progress]'));
+  const resourceProgressValue = document.getElementById('resource-progress-value');
   const searchInput = document.getElementById('lesson-search');
   const searchEmpty = document.getElementById('lesson-search-empty');
+  const completedLessonIds = new Set((payload.completed_lesson_ids || []).map((id) => String(id)));
+  const progressRequestsInFlight = new Set();
   let currentLessonId = null;
 
   function sanitizeHtml(html) {
@@ -114,6 +118,86 @@
     return null;
   }
 
+  function updateLessonUrl(lessonId) {
+    if (!lessonId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('lesson', lessonId);
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  function countModuleProgress(moduleId) {
+    const module = (payload.modules || []).find((item) => item.id === moduleId);
+    if (!module) return { completed: 0, total: 0, percent: 0 };
+
+    const lessons = module.lessons || [];
+    const total = lessons.length;
+    let completed = 0;
+    lessons.forEach((lesson) => {
+      if (completedLessonIds.has(String(lesson.id))) completed += 1;
+    });
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { completed, total, percent };
+  }
+
+  function countResourceProgress() {
+    const total = Number(payload.lesson_count || 0);
+    const completed = completedLessonIds.size;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { completed, total, percent };
+  }
+
+  function refreshProgressUI() {
+    lessonButtons.forEach((btn) => {
+      const lessonId = String(btn.dataset.lessonId || '');
+      const isCompleted = completedLessonIds.has(lessonId);
+      btn.classList.toggle('is-completed', isCompleted);
+
+      const icon = btn.querySelector('.course-lesson-icon');
+      if (icon) icon.textContent = isCompleted ? '✅' : '📄';
+    });
+
+    moduleProgressLabels.forEach((label) => {
+      const moduleId = String(label.dataset.moduleProgress || '');
+      const stats = countModuleProgress(moduleId);
+      label.textContent = `${stats.completed}/${stats.total} Completed`;
+    });
+
+    if (resourceProgressValue) {
+      const stats = countResourceProgress();
+      resourceProgressValue.textContent = `${stats.percent}%`;
+    }
+  }
+
+  function applyProgressPayload(progressPayload) {
+    if (!progressPayload || !Array.isArray(progressPayload.completed_lesson_ids)) return;
+
+    completedLessonIds.clear();
+    progressPayload.completed_lesson_ids.forEach((id) => completedLessonIds.add(String(id)));
+    refreshProgressUI();
+  }
+
+  async function markLessonCompleted(lessonId) {
+    const id = String(lessonId || '');
+    if (!id || completedLessonIds.has(id) || progressRequestsInFlight.has(id)) return;
+
+    progressRequestsInFlight.add(id);
+    try {
+      const response = await fetch(`/api/v1/resources/lessons/${id}/progress`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: true }),
+      });
+      if (!response.ok) return;
+      const progressPayload = await response.json();
+      applyProgressPayload(progressPayload);
+    } catch (error) {
+      console.error('Failed to persist lesson progress', error);
+    } finally {
+      progressRequestsInFlight.delete(id);
+    }
+  }
+
   function firstLessonId() {
     for (const module of payload.modules || []) {
       if (module.lessons && module.lessons.length) return module.lessons[0].id;
@@ -170,6 +254,8 @@
       metaParts.push(readableType(lesson.content_type));
     }
     lessonMeta.textContent = metaParts.join(' · ');
+    updateLessonUrl(lesson.id);
+    markLessonCompleted(lesson.id);
 
     if (lesson.content_type === 'video_url') {
       const parsedVideo = parseVideoContent(lesson.content);
@@ -202,10 +288,6 @@
     } else {
       lessonContent.textContent = lesson.content;
     }
-
-    const url = new URL(window.location.href);
-    url.searchParams.set('lesson', lesson.id);
-    window.history.replaceState({}, '', url.toString());
   }
 
   lessonButtons.forEach((btn) => {
@@ -266,5 +348,6 @@
     });
   }
 
+  refreshProgressUI();
   renderLesson(payload.selected_lesson_id || firstLessonId());
 })();

@@ -476,6 +476,24 @@
   color: #1E3A8A;
 }
 
+.outline-lesson-btn.course-lesson-btn.is-completed {
+  border-color: #16A34A;
+  background: #F0FDF4;
+  color: #166534;
+}
+
+.outline-lesson-btn.course-lesson-btn.is-completed:hover {
+  border-color: #15803D;
+  background: #DCFCE7;
+}
+
+.outline-lesson-btn.course-lesson-btn.active.is-completed {
+  border-color: #15803D;
+  box-shadow: inset 0 0 0 1px #15803D;
+  background: #DCFCE7;
+  color: #14532D;
+}
+
 .course-lesson-icon {
   line-height: 1.2;
 }

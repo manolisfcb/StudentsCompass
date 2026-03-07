@@ -25,8 +25,18 @@ SEED_RESOURCES = [
                 "title": "Resume Foundations",
                 "description": "Understand structure and recruiter expectations.",
                 "lessons": [
-                    ("What recruiters scan in 15 seconds", "text", "Recruiters first scan title, skills, and impact. Keep key achievements at the top."),
-                    ("ATS-friendly formatting", "text", "Use a single column, simple headings, and standard fonts."),
+                    (
+                        "What recruiters scan in 15 seconds",
+                        "video_url",
+                        "https://youtu.be/veFlfYjRo1Y\nLearn exactly what recruiters prioritize in the first 15 seconds of your resume review.",
+                        8,
+                    ),
+                    (
+                        "ATS-friendly formatting",
+                        "video_url",
+                        "https://youtu.be/6HPs3i2Nth0\nApply ATS-friendly formatting rules to keep your resume readable by both software and recruiters.",
+                        8,
+                    ),
                     ("Strong bullet writing", "text", "Use action + context + measurable impact in each bullet."),
                 ],
             },
@@ -48,8 +58,8 @@ SEED_RESOURCES = [
         "category": "Professional",
         "tags": ["LinkedIn", "Networking", "Brand"],
         "level": "Intermediate",
-        "estimated_duration_minutes": 80,
-        "external_url": "https://www.linkedin.com/",
+        "estimated_duration_minutes": 92,
+        "external_url": "https://www.youtube.com/playlist?list=PLo8NAACn2jVz5cU9BOhKDGtErVGA8ZVsn",
         "modules": [
             {
                 "title": "Profile Positioning",

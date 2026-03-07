@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
@@ -66,3 +66,23 @@ class ResourceLessonModel(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     module = relationship("ResourceModuleModel", back_populates="lessons")
+    progress_records = relationship(
+        "ResourceLessonProgressModel",
+        back_populates="lesson",
+        cascade="all, delete-orphan",
+    )
+
+
+class ResourceLessonProgressModel(Base):
+    __tablename__ = "resource_lesson_progress"
+    __table_args__ = (
+        UniqueConstraint("user_id", "lesson_id", name="uq_resource_lesson_progress_user_lesson"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    lesson_id = Column(UUID(as_uuid=True), ForeignKey("resource_lessons.id", ondelete="CASCADE"), nullable=False)
+    completed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    last_opened_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    lesson = relationship("ResourceLessonModel", back_populates="progress_records")

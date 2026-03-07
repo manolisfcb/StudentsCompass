@@ -5,7 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.models.userModel import User
-from app.schemas.resourceSchema import ResourceDetailRead, ResourceRead
+from app.schemas.resourceSchema import (
+    ResourceDetailRead,
+    ResourceLessonProgressUpdate,
+    ResourceProgressRead,
+    ResourceRead,
+)
 from app.services.resourceService import ResourceService
 from app.services.userService import current_active_user
 
@@ -48,3 +53,34 @@ async def get_resource_outline(
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
     return service.to_detail_payload(resource)
+
+
+@router.get("/resources/{resource_id}/progress", response_model=ResourceProgressRead)
+async def get_resource_progress(
+    resource_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = ResourceService(session)
+    progress = await service.get_resource_progress(resource_id=resource_id, user_id=user.id)
+    if not progress:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return progress
+
+
+@router.patch("/resources/lessons/{lesson_id}/progress", response_model=ResourceProgressRead)
+async def patch_lesson_progress(
+    lesson_id: UUID,
+    payload: ResourceLessonProgressUpdate,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = ResourceService(session)
+    progress = await service.set_lesson_progress(
+        user_id=user.id,
+        lesson_id=lesson_id,
+        completed=payload.completed,
+    )
+    if not progress:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    return progress
