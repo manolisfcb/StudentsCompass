@@ -19,7 +19,7 @@ SEED_RESOURCES = [
         "category": "Career",
         "tags": ["Resume", "ATS", "Career"],
         "level": "Beginner",
-        "estimated_duration_minutes": 95,
+        "estimated_duration_minutes": 110,
         "modules": [
             {
                 "title": "Resume Foundations",
@@ -47,6 +47,18 @@ SEED_RESOURCES = [
                     ("Headline and summary", "text", "Write a 2-line summary with domain, strengths, and role target."),
                     ("Experience and projects", "text", "Show scope, tools, and outcomes for each role/project."),
                     ("Skills and certifications", "text", "Group technical, analytical, and soft skills clearly."),
+                ],
+            },
+            {
+                "title": "Final Resume Challenge",
+                "description": "Submit your improved resume once you complete the previous lessons.",
+                "lessons": [
+                    (
+                        "Upload your final resume for AI review",
+                        "resume_upload",
+                        "Upload your updated resume based on everything learned in this course. In the next phase we will analyze it, score it from 0 to 10, and share targeted feedback if your score is below 8.",
+                        10,
+                    ),
                 ],
             },
         ],

@@ -1,16 +1,19 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.resumeService import ResumeService
-from app.schemas.resumeSchema import CreateResumeSchema, ResumeReadSchema
+from app.services.resumeCourseAuditService import ResumeCourseAuditService
+from app.schemas.resumeSchema import (
+    CreateResumeSchema,
+    ResumeCourseAuditAttemptsRead,
+    ResumeCourseAuditRead,
+    ResumeReadSchema,
+)
 from app.db import get_session
 from app.services.userService import current_active_user
 from app.models.userModel import User
-from app.services.embeddingService import generate_embedding, MODEL_NAME, EMBEDDING_DIMS
-from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf
 from uuid import UUID
 import os
 import logging
-import tempfile
 LOGGER = logging.getLogger(__name__)
 
 
@@ -57,6 +60,52 @@ async def upload_resume(
     except Exception as e:
         LOGGER.exception("Upload failed")
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+
+@router.post("/profile/cv/course-audit-upload", response_model=ResumeCourseAuditRead)
+async def upload_resume_for_course_audit(
+    cv: UploadFile = File(..., alias="cv"),
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    LOGGER.debug(f"Course audit upload received: {cv.filename}, type={cv.content_type}")
+    valid_types = {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+    if cv.content_type not in valid_types:
+        raise HTTPException(status_code=400, detail="Only PDF or DOCX files are allowed for AI audit.")
+
+    if not BUCKET_NAME:
+        raise HTTPException(status_code=500, detail="Server misconfiguration: missing S3 bucket name")
+
+    audit_service = ResumeCourseAuditService(session)
+    await audit_service.ensure_daily_limit(user.id)
+
+    file_bytes = await cv.read()
+    payload, _ = await audit_service.upload_and_evaluate_resume(
+        user_id=user.id,
+        bucket_name=BUCKET_NAME,
+        file_bytes=file_bytes,
+        filename=cv.filename,
+        content_type=cv.content_type,
+    )
+    return ResumeCourseAuditRead(**payload)
+
+
+@router.get("/profile/cv/course-audit-attempts", response_model=ResumeCourseAuditAttemptsRead)
+async def get_course_audit_attempts(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    audit_service = ResumeCourseAuditService(session)
+    attempts_today = await audit_service.get_daily_attempts(user.id)
+    daily_limit = audit_service.DAILY_LIMIT
+    return ResumeCourseAuditAttemptsRead(
+        attempts_today=attempts_today,
+        daily_limit=daily_limit,
+        attempts_remaining=max(0, daily_limit - attempts_today),
+    )
 
 
 @router.get("/profile/cv", response_model=list[ResumeReadSchema])

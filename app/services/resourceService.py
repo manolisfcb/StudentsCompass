@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Iterable
 
 from sqlalchemy import select
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid import UUID
@@ -13,6 +14,10 @@ from app.models.resourceModel import (
     ResourceLessonProgressModel,
     ResourceModel,
     ResourceModuleModel,
+)
+from app.models.resumeCourseEvaluationModel import (
+    ResumeCourseEvaluationModel,
+    ResumeCourseEvaluationStatus,
 )
 
 
@@ -93,9 +98,40 @@ class ResourceService:
             .where(
                 ResourceLessonProgressModel.user_id == user_id,
                 ResourceModuleModel.resource_id == resource_id,
+                ResourceLessonModel.content_type != "resume_upload",
             )
         )
-        return {row[0] for row in result.all()}
+        completed_ids = {row[0] for row in result.all()}
+
+        resume_upload_lessons = await self.session.execute(
+            select(ResourceLessonModel.id)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .where(
+                ResourceModuleModel.resource_id == resource_id,
+                ResourceLessonModel.content_type == "resume_upload",
+            )
+        )
+        resume_upload_lesson_ids = [row[0] for row in resume_upload_lessons.all()]
+        if not resume_upload_lesson_ids:
+            return completed_ids
+
+        try:
+            passed_eval = await self.session.execute(
+                select(ResumeCourseEvaluationModel.id).where(
+                    ResumeCourseEvaluationModel.user_id == user_id,
+                    ResumeCourseEvaluationModel.status == ResumeCourseEvaluationStatus.COMPLETED,
+                    ResumeCourseEvaluationModel.pass_status.is_(True),
+                ).limit(1)
+            )
+        except ProgrammingError as exc:
+            # Backward compatibility while DB migration is being rolled out.
+            if "resume_course_evaluations" in str(exc):
+                return completed_ids
+            raise
+        if passed_eval.scalar_one_or_none():
+            completed_ids.update(resume_upload_lesson_ids)
+
+        return completed_ids
 
     async def set_lesson_progress(
         self,
@@ -117,7 +153,12 @@ class ResourceService:
         if not lesson_row:
             return None
 
-        _, resource_id = lesson_row
+        lesson, resource_id = lesson_row
+
+        # This lesson is managed exclusively by the resume-audit backend flow.
+        # Ignore manual patch attempts from the generic lesson endpoint.
+        if (lesson.content_type or "").strip().lower() == "resume_upload":
+            return await self.get_resource_progress(resource_id=resource_id, user_id=user_id)
 
         progress_result = await self.session.execute(
             select(ResourceLessonProgressModel).where(

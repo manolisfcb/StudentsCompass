@@ -40,10 +40,21 @@
     return (value || '').toString().trim().toLowerCase();
   }
 
+  function escapeHtml(value) {
+    return (value || '')
+      .toString()
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function readableType(type) {
     const key = normalize(type);
     if (key === 'video_url') return 'Video lesson';
     if (key === 'external_link') return 'External resource';
+    if (key === 'resume_upload') return 'Resume challenge';
     if (key === 'html') return 'HTML lesson';
     return 'Text lesson';
   }
@@ -108,6 +119,14 @@
 
     const description = lines.filter((line) => line !== firstUrlLine).join(' ');
     return { url: firstUrlLine, description };
+  }
+
+  function parseResumeUploadContent(rawContent) {
+    const text = (rawContent || '').trim();
+    if (!text) {
+      return 'Upload your resume after completing previous lessons. We will review it in the next phase.';
+    }
+    return text;
   }
 
   function getLessonContextById(lessonId) {
@@ -198,6 +217,397 @@
     }
   }
 
+  function getPrerequisiteProgress(currentLessonId) {
+    const prerequisiteIds = [];
+    (payload.modules || []).forEach((module) => {
+      (module.lessons || []).forEach((lesson) => {
+        if (String(lesson.id) !== String(currentLessonId)) {
+          prerequisiteIds.push(String(lesson.id));
+        }
+      });
+    });
+
+    const completed = prerequisiteIds.filter((id) => completedLessonIds.has(id)).length;
+    const total = prerequisiteIds.length;
+    return {
+      completed,
+      total,
+      unlocked: completed >= total,
+    };
+  }
+
+  async function fetchCourseAuditAttempts() {
+    const response = await fetch('/api/v1/profile/cv/course-audit-attempts', { credentials: 'include' });
+    if (response.status === 401 || response.status === 403) {
+      window.location.href = '/login';
+      return null;
+    }
+    if (!response.ok) throw new Error('Failed to load daily attempts');
+    return response.json();
+  }
+
+  async function fetchResourceProgress() {
+    if (!payload?.id) return null;
+    const response = await fetch(`/api/v1/resources/${payload.id}/progress`, {
+      credentials: 'include',
+    });
+    if (response.status === 401 || response.status === 403) {
+      window.location.href = '/login';
+      return null;
+    }
+    if (!response.ok) return null;
+    return response.json();
+  }
+
+  function formatFileSize(bytes) {
+    if (!Number.isFinite(bytes)) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
+  function renderResumeUploadLesson(lesson) {
+    let maxAttemptsPerDay = 3;
+    const prerequisite = getPrerequisiteProgress(lesson.id);
+    const helperText = parseResumeUploadContent(lesson.content);
+
+    lessonContent.innerHTML = `
+      <section class="resume-upload-lesson">
+        <div class="resume-upload-head">
+          <h4>Final Resume Submission Challenge</h4>
+          <p id="resume-upload-helper"></p>
+        </div>
+
+        <div class="resume-upload-meta">
+          <span class="resume-upload-pill">Daily limit: <strong id="resume-upload-attempts">0/${maxAttemptsPerDay}</strong></span>
+          <span class="resume-upload-pill">Format: PDF, DOCX</span>
+        </div>
+
+        <div id="resume-upload-lock" class="resume-upload-lock" hidden></div>
+
+        <div id="resume-upload-widget" class="resume-upload-widget">
+          <label id="resume-upload-dropzone" class="resume-upload-dropzone" for="resume-upload-input">
+            <span class="resume-upload-icon">📤</span>
+            <strong>Click to upload or drag and drop</strong>
+            <small>Max size 5MB</small>
+          </label>
+          <input id="resume-upload-input" type="file" accept=".pdf,.docx" hidden />
+
+          <div id="resume-upload-preview" class="resume-upload-preview" hidden>
+            <div>
+              <strong id="resume-upload-filename"></strong>
+              <small id="resume-upload-filesize"></small>
+            </div>
+            <button id="resume-upload-remove" class="resume-upload-remove-btn" type="button">Remove</button>
+          </div>
+
+          <button id="resume-upload-submit" class="resume-upload-submit-btn" type="button" disabled>
+            Upload resume
+          </button>
+          <div id="resume-upload-analyzing" class="resume-upload-analyzing" hidden aria-live="polite">
+            <span class="resume-upload-spinner" aria-hidden="true"></span>
+            <span>Compass esta analizando tu resume...</span>
+          </div>
+          <p id="resume-upload-status" class="resume-upload-status"></p>
+          <section id="resume-upload-feedback" class="resume-audit-feedback" hidden></section>
+        </div>
+      </section>
+    `;
+
+    const helper = document.getElementById('resume-upload-helper');
+    const attemptsNode = document.getElementById('resume-upload-attempts');
+    const lockNode = document.getElementById('resume-upload-lock');
+    const widgetNode = document.getElementById('resume-upload-widget');
+    const dropzone = document.getElementById('resume-upload-dropzone');
+    const input = document.getElementById('resume-upload-input');
+    const preview = document.getElementById('resume-upload-preview');
+    const fileName = document.getElementById('resume-upload-filename');
+    const fileSize = document.getElementById('resume-upload-filesize');
+    const removeBtn = document.getElementById('resume-upload-remove');
+    const submitBtn = document.getElementById('resume-upload-submit');
+    const analyzingNode = document.getElementById('resume-upload-analyzing');
+    const statusNode = document.getElementById('resume-upload-status');
+    const feedbackNode = document.getElementById('resume-upload-feedback');
+
+    if (helper) helper.textContent = helperText;
+    if (analyzingNode) analyzingNode.hidden = true;
+
+    let selectedFile = null;
+    let attemptsToday = 0;
+    let isAnalyzing = false;
+    const defaultSubmitLabel = submitBtn?.textContent?.trim() || 'Upload resume';
+
+    function setStatus(message, tone = 'neutral') {
+      if (!statusNode) return;
+      statusNode.textContent = message;
+      statusNode.dataset.tone = tone;
+    }
+
+    function setAttempts(count) {
+      attemptsToday = count;
+      if (attemptsNode) attemptsNode.textContent = `${attemptsToday}/${maxAttemptsPerDay}`;
+    }
+
+    function setDailyLimit(limit) {
+      const parsed = Number(limit);
+      if (!Number.isFinite(parsed) || parsed <= 0) return;
+      maxAttemptsPerDay = Math.round(parsed);
+      if (attemptsNode) attemptsNode.textContent = `${attemptsToday}/${maxAttemptsPerDay}`;
+    }
+
+    function disableWidget(reason) {
+      widgetNode?.classList.add('is-disabled');
+      submitBtn.disabled = true;
+      input.disabled = true;
+      if (removeBtn) removeBtn.disabled = true;
+      if (reason) setStatus(reason, 'warning');
+    }
+
+    function enableWidget() {
+      if (isAnalyzing) return;
+      widgetNode?.classList.remove('is-disabled');
+      input.disabled = false;
+      if (removeBtn) removeBtn.disabled = false;
+      submitBtn.disabled = !selectedFile;
+    }
+
+    function setAnalyzing(active) {
+      isAnalyzing = Boolean(active);
+      if (analyzingNode) analyzingNode.hidden = !isAnalyzing;
+      if (widgetNode) widgetNode.classList.toggle('is-analyzing', isAnalyzing);
+      if (dropzone) dropzone.classList.toggle('is-disabled', isAnalyzing);
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = isAnalyzing ? 'Analizando...' : defaultSubmitLabel;
+      }
+      if (input) input.disabled = isAnalyzing;
+      if (removeBtn) removeBtn.disabled = isAnalyzing;
+    }
+
+    function renderAuditFeedback(result) {
+      if (!feedbackNode) return;
+      const score = Number(result?.overall_score || 0);
+      const confidence = Number(result?.llm_confidence || 0);
+      const passed = Boolean(result?.pass_status);
+      const reason = (result?.reason_for_score || '').trim();
+      const weaknesses = Array.isArray(result?.main_weaknesses) ? result.main_weaknesses : [];
+      const improvements = Array.isArray(result?.improvements) ? result.improvements : [];
+      const scores = result?.scores && typeof result.scores === 'object' ? result.scores : {};
+
+      const scoreLabels = [
+        ['ats', 'ATS Compatibility'],
+        ['canadian_format', 'Canadian Format'],
+        ['keywords', 'Keyword Strength'],
+        ['achievements', 'Achievement Quality'],
+        ['readability', 'Recruiter Readability'],
+        ['ai_risk', 'Human Tone (AI Risk)'],
+        ['differentiation', 'Differentiation'],
+        ['formatting', 'Formatting'],
+      ];
+
+      const scoreRows = scoreLabels.map(([key, label]) => {
+        const value = Number(scores[key] || 0);
+        const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 0;
+        const percent = Math.round((safeValue / 10) * 100);
+        return `
+          <div class="resume-audit-score-row">
+            <div class="resume-audit-score-head">
+              <span>${escapeHtml(label)}</span>
+              <strong>${safeValue.toFixed(1)}/10</strong>
+            </div>
+            <div class="resume-audit-score-track">
+              <span class="resume-audit-score-fill" style="width:${percent}%"></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const weaknessItems = (weaknesses.length ? weaknesses : ['No major weaknesses were listed.'])
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join('');
+
+      const improvementItems = (improvements.length ? improvements : ['No specific improvements were listed.'])
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join('');
+
+      feedbackNode.innerHTML = `
+        <div class="resume-audit-summary ${passed ? 'is-pass' : 'is-fail'}">
+          <p class="resume-audit-kicker">${passed ? 'PASS' : 'NOT PASSING YET'}</p>
+          <h5>${score.toFixed(1)}/10</h5>
+          <p>Confidence: ${confidence.toFixed(2)} · Target: 8.0+</p>
+        </div>
+
+        <div class="resume-audit-card">
+          <h6>Why this score</h6>
+          <p>${escapeHtml(reason || 'No detailed explanation provided by the evaluator.')}</p>
+        </div>
+
+        <div class="resume-audit-grid">
+          <div class="resume-audit-card">
+            <h6>What is hurting your score</h6>
+            <ul>${weaknessItems}</ul>
+          </div>
+          <div class="resume-audit-card">
+            <h6>How to push this to 10/10</h6>
+            <ul>${improvementItems}</ul>
+          </div>
+        </div>
+
+        <div class="resume-audit-card">
+          <h6>Score breakdown</h6>
+          <div class="resume-audit-score-list">${scoreRows}</div>
+        </div>
+      `;
+      feedbackNode.hidden = false;
+    }
+
+    function resetFileSelection() {
+      selectedFile = null;
+      if (input) input.value = '';
+      if (preview) preview.hidden = true;
+      submitBtn.disabled = true;
+    }
+
+    function handleSelectedFile(file) {
+      const validTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+      const maxSize = 5 * 1024 * 1024;
+
+      if (!validTypes.includes(file.type)) {
+        setStatus('Only PDF or DOCX files are allowed.', 'error');
+        return;
+      }
+      if (file.size > maxSize) {
+        setStatus('File size must be under 5MB.', 'error');
+        return;
+      }
+
+      selectedFile = file;
+      if (fileName) fileName.textContent = file.name;
+      if (fileSize) fileSize.textContent = formatFileSize(file.size);
+      if (preview) preview.hidden = false;
+      submitBtn.disabled = false;
+      setStatus('');
+    }
+
+    if (!prerequisite.unlocked) {
+      if (lockNode) {
+        lockNode.hidden = false;
+        lockNode.textContent = `Complete previous lessons first (${prerequisite.completed}/${prerequisite.total}) to unlock this upload challenge.`;
+      }
+      disableWidget('Upload is locked until you finish earlier lessons.');
+      return;
+    }
+
+    fetchCourseAuditAttempts()
+      .then((meta) => {
+        const count = Number(meta?.attempts_today || 0);
+        setDailyLimit(meta?.daily_limit);
+        setAttempts(count);
+        if (count >= maxAttemptsPerDay) {
+          disableWidget(`You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge.`);
+        } else {
+          enableWidget();
+        }
+      })
+      .catch(() => {
+        setStatus('Could not load upload attempts right now.', 'warning');
+      });
+
+    dropzone?.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      if (input.disabled) return;
+      dropzone.classList.add('is-dragover');
+    });
+
+    dropzone?.addEventListener('dragleave', () => {
+      dropzone.classList.remove('is-dragover');
+    });
+
+    dropzone?.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('is-dragover');
+      if (input.disabled) return;
+      const files = event.dataTransfer?.files;
+      if (files?.length) handleSelectedFile(files[0]);
+    });
+
+    input?.addEventListener('change', (event) => {
+      const files = event.target?.files;
+      if (files?.length) handleSelectedFile(files[0]);
+    });
+
+    removeBtn?.addEventListener('click', resetFileSelection);
+
+    submitBtn?.addEventListener('click', async () => {
+      if (!selectedFile || submitBtn.disabled) return;
+      if (attemptsToday >= maxAttemptsPerDay) {
+        disableWidget(`You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge.`);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      setAnalyzing(true);
+      setStatus('Compass esta analizando tu resume...', 'neutral');
+      if (feedbackNode) feedbackNode.hidden = true;
+
+      const formData = new FormData();
+      formData.append('cv', selectedFile);
+
+      try {
+        const response = await fetch('/api/v1/profile/cv/course-audit-upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          setAnalyzing(false);
+          window.location.href = '/login';
+          return;
+        }
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const result = await response.json();
+        const score = Number(result?.overall_score || 0);
+        const confidence = Number(result?.llm_confidence || 0);
+        const passed = Boolean(result?.pass_status);
+
+        const nextAttempts = attemptsToday + 1;
+        const persistedAttempts = Number(result?.attempts_today || nextAttempts);
+        setDailyLimit(result?.daily_limit);
+        setAttempts(persistedAttempts);
+        renderAuditFeedback(result);
+        if (passed) {
+          setStatus(`Great work. Score: ${score.toFixed(1)}/10 (confidence ${confidence.toFixed(2)}). You passed this challenge.`, 'success');
+          const updatedProgress = await fetchResourceProgress();
+          applyProgressPayload(updatedProgress);
+        } else {
+          setStatus(
+            `Score: ${score.toFixed(1)}/10 (confidence ${confidence.toFixed(2)}). You need at least 8.0. Review the feedback below and try again.`,
+            'warning',
+          );
+        }
+        resetFileSelection();
+        setAnalyzing(false);
+
+        if (persistedAttempts >= maxAttemptsPerDay) {
+          disableWidget(`You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge.`);
+        } else {
+          enableWidget();
+        }
+      } catch (error) {
+        setAnalyzing(false);
+        setStatus('Upload failed. Please try again.', 'error');
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
   function firstLessonId() {
     for (const module of payload.modules || []) {
       if (module.lessons && module.lessons.length) return module.lessons[0].id;
@@ -255,6 +665,12 @@
     }
     lessonMeta.textContent = metaParts.join(' · ');
     updateLessonUrl(lesson.id);
+
+    if (lesson.content_type === 'resume_upload') {
+      renderResumeUploadLesson(lesson);
+      return;
+    }
+
     markLessonCompleted(lesson.id);
 
     if (lesson.content_type === 'video_url') {
