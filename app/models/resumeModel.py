@@ -21,4 +21,4 @@ class ResumeModel(Base):
     
     user = relationship("User", back_populates="resumes")
     job_analyses = relationship("JobAnalysisModel", back_populates="resume")
-    course_evaluations = relationship("ResumeCourseEvaluationModel", cascade="all, delete-orphan")
+    course_evaluations = relationship("ResumeCourseEvaluationModel", back_populates="resume", cascade="all, delete-orphan")

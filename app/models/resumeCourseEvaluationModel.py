@@ -44,5 +44,5 @@ class ResumeCourseEvaluationModel(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
 
-    user = relationship("User")
-    resume = relationship("ResumeModel")
+    user = relationship("User", back_populates="resume_course_evaluations")
+    resume = relationship("ResumeModel", back_populates="course_evaluations")

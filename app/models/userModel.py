@@ -31,7 +31,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         "ResourceLessonProgressModel",
         cascade="all, delete-orphan",
     )
-    resume_course_evaluations = relationship("ResumeCourseEvaluationModel", cascade="all, delete-orphan")
+    resume_course_evaluations = relationship("ResumeCourseEvaluationModel", back_populates="user", cascade="all, delete-orphan")
     
 
         
