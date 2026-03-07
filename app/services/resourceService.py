@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-import os
-import mimetypes
 from datetime import datetime
-from urllib.parse import urlparse, unquote, quote
+from typing import Iterable
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import select
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 
 from app.models.resourceModel import (
-    ResourceEnrollmentModel,
     ResourceLessonModel,
     ResourceLessonProgressModel,
     ResourceModel,
     ResourceModuleModel,
 )
-from app.services.s3Service import S3Service
+from app.models.resumeCourseEvaluationModel import (
+    ResumeCourseEvaluationModel,
+    ResumeCourseEvaluationStatus,
+)
 
 
 class ResourceService:
@@ -28,6 +29,18 @@ class ResourceService:
             self.s3_service = S3Service(bucket_name=self.resources_bucket) if self.resources_bucket else None
         except Exception:
             self.s3_service = None
+
+    @staticmethod
+    def _percent(completed: int, total: int) -> int:
+        if total <= 0:
+            return 0
+        return round((completed / total) * 100)
+
+    @staticmethod
+    def _normalize_completed_ids(completed_lesson_ids: Iterable[UUID] | None) -> set[UUID]:
+        if not completed_lesson_ids:
+            return set()
+        return set(completed_lesson_ids)
 
     async def list_published_resources(
         self,
@@ -82,288 +95,131 @@ class ResourceService:
 
         return resource
 
-    async def _get_or_create_enrollment(self, user_id: UUID, resource_id: UUID) -> ResourceEnrollmentModel:
+    async def get_completed_lesson_ids_for_resource(self, resource_id: UUID, user_id: UUID) -> set[UUID]:
         result = await self.session.execute(
-            select(ResourceEnrollmentModel).where(
-                ResourceEnrollmentModel.user_id == user_id,
-                ResourceEnrollmentModel.resource_id == resource_id,
+            select(ResourceLessonProgressModel.lesson_id)
+            .join(ResourceLessonModel, ResourceLessonModel.id == ResourceLessonProgressModel.lesson_id)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .where(
+                ResourceLessonProgressModel.user_id == user_id,
+                ResourceModuleModel.resource_id == resource_id,
+                ResourceLessonModel.content_type != "resume_upload",
             )
         )
-        enrollment = result.scalar_one_or_none()
-        if enrollment:
-            return enrollment
+        completed_ids = {row[0] for row in result.all()}
 
-        enrollment = ResourceEnrollmentModel(user_id=user_id, resource_id=resource_id)
-        self.session.add(enrollment)
-        await self.session.flush()
-        return enrollment
+        resume_upload_lessons = await self.session.execute(
+            select(ResourceLessonModel.id)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .where(
+                ResourceModuleModel.resource_id == resource_id,
+                ResourceLessonModel.content_type == "resume_upload",
+            )
+        )
+        resume_upload_lesson_ids = [row[0] for row in resume_upload_lessons.all()]
+        if not resume_upload_lesson_ids:
+            return completed_ids
 
-    async def _get_or_create_lesson_progress(
+        try:
+            passed_eval = await self.session.execute(
+                select(ResumeCourseEvaluationModel.id).where(
+                    ResumeCourseEvaluationModel.user_id == user_id,
+                    ResumeCourseEvaluationModel.status == ResumeCourseEvaluationStatus.COMPLETED,
+                    ResumeCourseEvaluationModel.pass_status.is_(True),
+                ).limit(1)
+            )
+        except ProgrammingError as exc:
+            # Backward compatibility while DB migration is being rolled out.
+            if "resume_course_evaluations" in str(exc):
+                return completed_ids
+            raise
+        if passed_eval.scalar_one_or_none():
+            completed_ids.update(resume_upload_lesson_ids)
+
+        return completed_ids
+
+    async def set_lesson_progress(
         self,
+        *,
         user_id: UUID,
-        resource_id: UUID,
         lesson_id: UUID,
-    ) -> ResourceLessonProgressModel:
-        result = await self.session.execute(
+        completed: bool,
+    ) -> dict | None:
+        lesson_result = await self.session.execute(
+            select(ResourceLessonModel, ResourceModuleModel.resource_id)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .join(ResourceModel, ResourceModel.id == ResourceModuleModel.resource_id)
+            .where(
+                ResourceLessonModel.id == lesson_id,
+                ResourceModel.is_published.is_(True),
+            )
+        )
+        lesson_row = lesson_result.first()
+        if not lesson_row:
+            return None
+
+        lesson, resource_id = lesson_row
+
+        # This lesson is managed exclusively by the resume-audit backend flow.
+        # Ignore manual patch attempts from the generic lesson endpoint.
+        if (lesson.content_type or "").strip().lower() == "resume_upload":
+            return await self.get_resource_progress(resource_id=resource_id, user_id=user_id)
+
+        progress_result = await self.session.execute(
             select(ResourceLessonProgressModel).where(
                 ResourceLessonProgressModel.user_id == user_id,
                 ResourceLessonProgressModel.lesson_id == lesson_id,
             )
         )
-        progress = result.scalar_one_or_none()
-        if progress:
-            return progress
+        progress = progress_result.scalar_one_or_none()
+        now = datetime.utcnow()
 
-        progress = ResourceLessonProgressModel(
-            user_id=user_id,
-            resource_id=resource_id,
-            lesson_id=lesson_id,
-        )
-        self.session.add(progress)
-        await self.session.flush()
-        return progress
+        if completed:
+            if progress:
+                progress.last_opened_at = now
+            else:
+                self.session.add(
+                    ResourceLessonProgressModel(
+                        user_id=user_id,
+                        lesson_id=lesson_id,
+                        completed_at=now,
+                        last_opened_at=now,
+                    )
+                )
+        elif progress:
+            await self.session.delete(progress)
 
-    async def _validate_resource_and_lesson(
-        self,
-        resource_id: UUID,
-        lesson_id: UUID,
-    ) -> tuple[ResourceModel, ResourceLessonModel]:
-        resource_result = await self.session.execute(
-            select(ResourceModel).where(
-                ResourceModel.id == resource_id,
-                ResourceModel.is_published.is_(True),
-            )
-        )
-        resource = resource_result.scalar_one_or_none()
-        if not resource:
-            raise ValueError("Resource not found")
+        await self.session.commit()
+        return await self.get_resource_progress(resource_id=resource_id, user_id=user_id)
 
-        lesson_result = await self.session.execute(
-            select(ResourceLessonModel)
-            .join(ResourceModuleModel, ResourceLessonModel.module_id == ResourceModuleModel.id)
-            .where(
-                ResourceLessonModel.id == lesson_id,
-                ResourceModuleModel.resource_id == resource_id,
-            )
-        )
-        lesson = lesson_result.scalar_one_or_none()
-        if not lesson:
-            raise ValueError("Lesson not found in this resource")
-
-        return resource, lesson
-
-    async def _total_lessons_map(self, resource_ids: list[UUID]) -> dict[UUID, int]:
-        if not resource_ids:
-            return {}
-
-        result = await self.session.execute(
-            select(ResourceModuleModel.resource_id, func.count(ResourceLessonModel.id))
-            .join(ResourceLessonModel, ResourceLessonModel.module_id == ResourceModuleModel.id)
-            .where(ResourceModuleModel.resource_id.in_(resource_ids))
-            .group_by(ResourceModuleModel.resource_id)
-        )
-        return {resource_id: int(total or 0) for resource_id, total in result.all()}
-
-    async def _completed_lessons_map(self, user_id: UUID, resource_ids: list[UUID]) -> dict[UUID, int]:
-        if not resource_ids:
-            return {}
-
-        result = await self.session.execute(
-            select(ResourceLessonProgressModel.resource_id, func.count(ResourceLessonProgressModel.id))
-            .where(
-                ResourceLessonProgressModel.user_id == user_id,
-                ResourceLessonProgressModel.resource_id.in_(resource_ids),
-                or_(
-                    ResourceLessonProgressModel.completed_at.is_not(None),
-                    ResourceLessonProgressModel.last_opened_at.is_not(None),
-                ),
-            )
-            .group_by(ResourceLessonProgressModel.resource_id)
-        )
-        return {resource_id: int(total or 0) for resource_id, total in result.all()}
-
-    def _build_enrollment_progress_payload(
-        self,
-        enrollment: ResourceEnrollmentModel,
-        total_lessons: int,
-        completed_lessons: int,
-    ) -> dict:
-        progress_percent = round((completed_lessons / total_lessons) * 100, 2) if total_lessons else 0.0
-        resource = enrollment.resource
-        return {
-            "resource_id": enrollment.resource_id,
-            "title": resource.title if resource else "",
-            "category": resource.category if resource else "",
-            "level": resource.level if resource else None,
-            "icon": resource.icon if resource else None,
-            "enrolled_at": enrollment.enrolled_at,
-            "last_opened_lesson_id": enrollment.last_opened_lesson_id,
-            "total_lessons": total_lessons,
-            "completed_lessons": completed_lessons,
-            "progress_percent": progress_percent,
-            "is_completed": total_lessons > 0 and completed_lessons >= total_lessons,
-        }
-
-    async def enroll_user_in_resource(self, user_id: UUID, resource_id: UUID) -> dict:
+    async def get_resource_progress(self, *, resource_id: UUID, user_id: UUID) -> dict | None:
         resource = await self.get_resource_with_outline(resource_id)
         if not resource:
-            raise ValueError("Resource not found")
-
-        enrollment = await self._get_or_create_enrollment(user_id=user_id, resource_id=resource_id)
-        await self.session.commit()
-
-        enrollment_result = await self.session.execute(
-            select(ResourceEnrollmentModel)
-            .where(
-                ResourceEnrollmentModel.user_id == user_id,
-                ResourceEnrollmentModel.resource_id == resource_id,
-            )
-            .options(selectinload(ResourceEnrollmentModel.resource))
-        )
-        enrollment = enrollment_result.scalar_one()
-
-        totals = await self._total_lessons_map([resource_id])
-        completed = await self._completed_lessons_map(user_id, [resource_id])
-        return self._build_enrollment_progress_payload(
-            enrollment=enrollment,
-            total_lessons=totals.get(resource_id, 0),
-            completed_lessons=completed.get(resource_id, 0),
-        )
-
-    async def mark_lesson_opened(
-        self,
-        user_id: UUID,
-        resource_id: UUID,
-        lesson_id: UUID,
-    ) -> dict:
-        _, lesson = await self._validate_resource_and_lesson(resource_id=resource_id, lesson_id=lesson_id)
-
-        enrollment = await self._get_or_create_enrollment(user_id=user_id, resource_id=resource_id)
-        progress = await self._get_or_create_lesson_progress(
-            user_id=user_id,
-            resource_id=resource_id,
-            lesson_id=lesson.id,
-        )
-        now = datetime.utcnow()
-        progress.last_opened_at = now
-        enrollment.last_opened_lesson_id = lesson.id
-        await self.session.commit()
-        return await self.get_user_resource_progress(user_id=user_id, resource_id=resource_id)
-
-    async def set_lesson_completion(
-        self,
-        user_id: UUID,
-        resource_id: UUID,
-        lesson_id: UUID,
-        completed: bool = True,
-    ) -> dict:
-        _, lesson = await self._validate_resource_and_lesson(resource_id=resource_id, lesson_id=lesson_id)
-
-        enrollment = await self._get_or_create_enrollment(user_id=user_id, resource_id=resource_id)
-        progress = await self._get_or_create_lesson_progress(
-            user_id=user_id,
-            resource_id=resource_id,
-            lesson_id=lesson.id,
-        )
-        now = datetime.utcnow()
-        progress.last_opened_at = now
-        progress.completed_at = now if completed else None
-        enrollment.last_opened_lesson_id = lesson.id
-        await self.session.commit()
-        return await self.get_user_resource_progress(user_id=user_id, resource_id=resource_id)
-
-    async def list_user_enrollment_progress(self, user_id: UUID) -> list[dict]:
-        result = await self.session.execute(
-            select(ResourceEnrollmentModel)
-            .where(ResourceEnrollmentModel.user_id == user_id)
-            .options(selectinload(ResourceEnrollmentModel.resource))
-            .order_by(ResourceEnrollmentModel.enrolled_at.desc())
-        )
-        enrollments = list(result.scalars().all())
-        if not enrollments:
-            return []
-
-        resource_ids = [e.resource_id for e in enrollments]
-        totals = await self._total_lessons_map(resource_ids)
-        completed = await self._completed_lessons_map(user_id, resource_ids)
-
-        return [
-            self._build_enrollment_progress_payload(
-                enrollment=e,
-                total_lessons=totals.get(e.resource_id, 0),
-                completed_lessons=completed.get(e.resource_id, 0),
-            )
-            for e in enrollments
-        ]
-
-    async def get_user_resource_progress(self, user_id: UUID, resource_id: UUID) -> dict:
-        result = await self.session.execute(
-            select(ResourceEnrollmentModel)
-            .where(
-                ResourceEnrollmentModel.user_id == user_id,
-                ResourceEnrollmentModel.resource_id == resource_id,
-            )
-            .options(selectinload(ResourceEnrollmentModel.resource))
-        )
-        enrollment = result.scalar_one_or_none()
-        if not enrollment:
-            raise ValueError("User is not enrolled in this resource")
-
-        totals = await self._total_lessons_map([resource_id])
-        completed = await self._completed_lessons_map(user_id, [resource_id])
-        return self._build_enrollment_progress_payload(
-            enrollment=enrollment,
-            total_lessons=totals.get(resource_id, 0),
-            completed_lessons=completed.get(resource_id, 0),
-        )
-
-    def _extract_s3_key(self, content_url: str) -> str | None:
-        if not content_url or not self.resources_bucket:
             return None
-        try:
-            parsed = urlparse(content_url)
-            if parsed.scheme not in {"http", "https"}:
-                return None
-            host = parsed.netloc.lower()
-            bucket_host_prefix = f"{self.resources_bucket.lower()}.s3."
-            if not host.startswith(bucket_host_prefix):
-                return None
-            key = unquote(parsed.path.lstrip("/"))
-            return key or None
-        except Exception:
-            return None
+        completed_ids = await self.get_completed_lesson_ids_for_resource(resource_id=resource.id, user_id=user_id)
+        return self.to_progress_payload(resource, completed_ids)
 
-    async def _resolve_lesson_content_url(self, content_type: str, content: str) -> str:
-        signable_types = {"video_url", "external_link", "pdf_url", "ppt_url", "document_url"}
-        if content_type not in signable_types:
-            return content
-
-        key = self._extract_s3_key(content)
-        if not key:
-            return content
-
-        return f"/api/v1/resources/file?key={quote(key, safe='')}"
-
-    async def download_resource_file(self, key: str) -> tuple[bytes, str, str]:
-        if not self.s3_service:
-            raise ValueError("S3 is not configured")
-        if not key or not key.startswith("resources/"):
-            raise ValueError("Invalid resource key")
-
-        file_bytes = await self.s3_service.download_file(key)
-        media_type, _ = mimetypes.guess_type(key)
-        media_type = media_type or "application/octet-stream"
-        filename = key.rsplit("/", 1)[-1] or "resource_file"
-        return file_bytes, media_type, filename
-
-    async def to_detail_payload(self, resource: ResourceModel) -> dict:
+    def to_detail_payload(
+        self,
+        resource: ResourceModel,
+        completed_lesson_ids: Iterable[UUID] | None = None,
+    ) -> dict:
+        completed_ids = self._normalize_completed_ids(completed_lesson_ids)
         modules = []
+        module_progress = []
         total_lessons = 0
+        completed_lessons = 0
+
         for module in resource.modules:
             lessons = []
+            module_completed = 0
+
             for lesson in module.lessons:
                 total_lessons += 1
-                content = await self._resolve_lesson_content_url(lesson.content_type, lesson.content)
+                is_completed = lesson.id in completed_ids
+                if is_completed:
+                    completed_lessons += 1
+                    module_completed += 1
                 lessons.append(
                     {
                         "id": str(lesson.id),
@@ -374,9 +230,19 @@ class ResourceService:
                         "content": content,
                         "reading_time_minutes": lesson.reading_time_minutes,
                         "created_at": lesson.created_at.isoformat(),
+                        "is_completed": is_completed,
                     }
                 )
 
+            module_total = len(module.lessons)
+            module_progress.append(
+                {
+                    "module_id": str(module.id),
+                    "completed_lessons": module_completed,
+                    "total_lessons": module_total,
+                    "progress_percent": self._percent(module_completed, module_total),
+                }
+            )
             modules.append(
                 {
                     "id": str(module.id),
@@ -384,6 +250,9 @@ class ResourceService:
                     "title": module.title,
                     "position": module.position,
                     "description": module.description,
+                    "completed_lessons": module_completed,
+                    "total_lessons": module_total,
+                    "progress_percent": self._percent(module_completed, module_total),
                     "lessons": lessons,
                 }
             )
@@ -400,7 +269,25 @@ class ResourceService:
             "external_url": resource.external_url,
             "created_at": resource.created_at.isoformat(),
             "modules": modules,
+            "module_progress": module_progress,
             "module_count": len(modules),
             "lesson_count": total_lessons,
-            # TODO(progress): when progress table exists, include completed lessons percentage here.
+            "completed_lesson_ids": sorted(str(lesson_id) for lesson_id in completed_ids),
+            "completed_lessons": completed_lessons,
+            "progress_percent": self._percent(completed_lessons, total_lessons),
+        }
+
+    def to_progress_payload(
+        self,
+        resource: ResourceModel,
+        completed_lesson_ids: Iterable[UUID] | None = None,
+    ) -> dict:
+        detail_payload = self.to_detail_payload(resource, completed_lesson_ids=completed_lesson_ids)
+        return {
+            "resource_id": detail_payload["id"],
+            "completed_lesson_ids": detail_payload["completed_lesson_ids"],
+            "completed_lessons": detail_payload["completed_lessons"],
+            "total_lessons": detail_payload["lesson_count"],
+            "progress_percent": detail_payload["progress_percent"],
+            "modules": detail_payload["module_progress"],
         }

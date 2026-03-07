@@ -12,10 +12,7 @@ from app.core.ResumeAnalizer.resume_feature import ResumeFeatureRequest
 load_dotenv()
 
 API_KEY = os.getenv("GENAI_API_KEY")
-if not API_KEY:
-    raise RuntimeError("Missing GENAI_API_KEY in environment (.env).")
-
-client = genai.Client(api_key=API_KEY)
+client: Optional[genai.Client] = genai.Client(api_key=API_KEY) if API_KEY else None
 
 # Limitar concurrencia: máximo 10 llamadas simultáneas a Gemini
 LLM_SEMAPHORE = asyncio.Semaphore(10)
@@ -102,6 +99,9 @@ async def ask_llm_model(
         RuntimeError: If response cannot be validated as ResumeFeatureRequest
         Exception: Any other API/client error
     """
+    if client is None:
+        raise RuntimeError("LLM service is not configured (missing GENAI_API_KEY).")
+
     prompt = build_resume_prompt(resume_text)
     schema = ResumeFeatureRequest.model_json_schema()
 

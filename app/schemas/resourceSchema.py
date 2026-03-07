@@ -72,22 +72,24 @@ class ResourceModuleRead(BaseModel):
 
 
 class ResourceDetailRead(ResourceRead):
-    modules: list[ResourceModuleRead] = Field(default_factory=list)
+    modules: list[ResourceModuleRead] = []
 
 
-class ResourceEnrollmentProgressRead(BaseModel):
-    resource_id: UUID
-    title: str
-    category: str
-    level: Optional[str] = None
-    icon: Optional[str] = None
-    enrolled_at: datetime
-    last_opened_lesson_id: Optional[UUID] = None
-    total_lessons: int
-    completed_lessons: int
-    progress_percent: float
-    is_completed: bool
-
-
-class LessonCompletionUpdate(BaseModel):
+class ResourceLessonProgressUpdate(BaseModel):
     completed: bool = True
+
+
+class ResourceModuleProgressRead(BaseModel):
+    module_id: UUID
+    completed_lessons: int
+    total_lessons: int
+    progress_percent: int
+
+
+class ResourceProgressRead(BaseModel):
+    resource_id: UUID
+    completed_lesson_ids: list[UUID]
+    completed_lessons: int
+    total_lessons: int
+    progress_percent: int
+    modules: list[ResourceModuleProgressRead]

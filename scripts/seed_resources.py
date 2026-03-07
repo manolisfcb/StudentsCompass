@@ -19,14 +19,24 @@ SEED_RESOURCES = [
         "category": "Career",
         "tags": ["Resume", "ATS", "Career"],
         "level": "Beginner",
-        "estimated_duration_minutes": 95,
+        "estimated_duration_minutes": 110,
         "modules": [
             {
                 "title": "Resume Foundations",
                 "description": "Understand structure and recruiter expectations.",
                 "lessons": [
-                    ("What recruiters scan in 15 seconds", "text", "Recruiters first scan title, skills, and impact. Keep key achievements at the top."),
-                    ("ATS-friendly formatting", "text", "Use a single column, simple headings, and standard fonts."),
+                    (
+                        "What recruiters scan in 15 seconds",
+                        "video_url",
+                        "https://youtu.be/veFlfYjRo1Y\nLearn exactly what recruiters prioritize in the first 15 seconds of your resume review.",
+                        8,
+                    ),
+                    (
+                        "ATS-friendly formatting",
+                        "video_url",
+                        "https://youtu.be/6HPs3i2Nth0\nApply ATS-friendly formatting rules to keep your resume readable by both software and recruiters.",
+                        8,
+                    ),
                     ("Strong bullet writing", "text", "Use action + context + measurable impact in each bullet."),
                 ],
             },
@@ -39,6 +49,18 @@ SEED_RESOURCES = [
                     ("Skills and certifications", "text", "Group technical, analytical, and soft skills clearly."),
                 ],
             },
+            {
+                "title": "Final Resume Challenge",
+                "description": "Submit your improved resume once you complete the previous lessons.",
+                "lessons": [
+                    (
+                        "Upload your final resume for AI review",
+                        "resume_upload",
+                        "Upload your updated resume based on everything learned in this course. In the next phase we will analyze it, score it from 0 to 10, and share targeted feedback if your score is below 8.",
+                        10,
+                    ),
+                ],
+            },
         ],
     },
     {
@@ -48,23 +70,89 @@ SEED_RESOURCES = [
         "category": "Professional",
         "tags": ["LinkedIn", "Networking", "Brand"],
         "level": "Intermediate",
-        "estimated_duration_minutes": 80,
-        "external_url": "https://www.linkedin.com/",
+        "estimated_duration_minutes": 92,
+        "external_url": "https://www.youtube.com/playlist?list=PLo8NAACn2jVz5cU9BOhKDGtErVGA8ZVsn",
         "modules": [
             {
                 "title": "Profile Positioning",
                 "lessons": [
-                    ("High-converting headline", "text", "Use role + skills + value proposition."),
-                    ("About section framework", "text", "Present your story, strengths, and call-to-action."),
-                    ("Featured section examples", "text", "Pin your strongest projects, CV, and portfolio links."),
+                    (
+                        "LinkedIn profile picture Hacks: Get more views and job offers!",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=uNmKhJDQmT4\nLearn profile picture improvements that increase recruiter clicks and profile trust.",
+                        7,
+                    ),
+                    (
+                        "FIX Your LinkedIn Banner NOW and Get Noticed!",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=QQ8btp0n8Bs\nBuild a banner that communicates your value and makes your profile instantly clearer.",
+                        6,
+                    ),
+                    (
+                        "Ex-Recruiter Reveals The Best LinkedIn Headline Formula To Land Jobs!",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=l7e9yBFafXE\nApply a headline formula that boosts discoverability in recruiter searches.",
+                        12,
+                    ),
+                    (
+                        "Stop Writing Boring LinkedIn About Sections (Do This Instead)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=kJ-MCZcxcFY\nStructure your About section with impact-focused storytelling and clear outcomes.",
+                        11,
+                    ),
+                    (
+                        "How I’d Use The LinkedIn Featured Section as a Job Seeker",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=BMGBO7bo3Ts\nChoose featured content that proves skills, projects, and real-world results.",
+                        7,
+                    ),
+                    (
+                        "How to Write the Perfect LinkedIn Experience Section (Recruiter Tips)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=sP2Ltn8CyZc\nTurn responsibilities into achievement bullets recruiters can scan in seconds.",
+                        12,
+                    ),
                 ],
             },
             {
                 "title": "Engagement Strategy",
                 "lessons": [
-                    ("Connection request templates", "text", "Personalize each note with context and intent."),
-                    ("Weekly posting cadence", "text", "Share one insight, one project, and one reflection weekly."),
-                    ("Networking follow-ups", "text", "Use value-driven follow-ups, not generic asks."),
+                    (
+                        "The LinkedIn Hack That Boosted My Recruiter Views 5000%",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=njQQAmzOpsE\nUse profile and activity tactics that increase recruiter visibility at scale.",
+                        8,
+                    ),
+                    (
+                        "How to Get Strong LinkedIn Recommendations (That Get Results)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=OlREBavotjI\nRequest recommendations with the right prompt so they highlight your strengths.",
+                        7,
+                    ),
+                    (
+                        "How to Optimize Your LinkedIn Education Section for Impact",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=6Bal8gTI0V0\nFormat your education section to support your target role and credibility.",
+                        4,
+                    ),
+                    (
+                        "Ex-Recruiter EXPOSES LinkedIn Open to Work Banner HACK",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=IB45IDhS6SQ\nSet Open to Work strategically to signal intent without weakening positioning.",
+                        7,
+                    ),
+                    (
+                        "How to Customize Your LinkedIn URL in Just a Few Clicks",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=HT5cnjHVQQo\nClean your public profile URL to look more professional and easier to share.",
+                        3,
+                    ),
+                    (
+                        "Making Your LinkedIn Profile Recruiter-Ready (Step-by-Step Instructions)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=qWk3CMGyXyk\nFollow an end-to-end checklist to make your full profile recruiter-ready.",
+                        8,
+                    ),
                 ],
             },
         ],
@@ -268,14 +356,15 @@ async def seed_resources() -> None:
                 await session.flush()
 
                 for lesson_index, lesson_data in enumerate(module_data["lessons"], start=1):
-                    title, content_type, content = lesson_data
+                    title, content_type, content = lesson_data[:3]
+                    reading_time_minutes = lesson_data[3] if len(lesson_data) > 3 else 8
                     lesson = ResourceLessonModel(
                         module_id=module.id,
                         title=title,
                         position=lesson_index,
                         content_type=content_type,
                         content=content,
-                        reading_time_minutes=8,
+                        reading_time_minutes=reading_time_minutes,
                     )
                     session.add(lesson)
 

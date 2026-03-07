@@ -1,0 +1,471 @@
+.roadmaps-page,
+.roadmap-detail-page {
+  padding: 1.5rem;
+}
+
+.roadmaps-hero,
+.detail-topbar {
+  background: linear-gradient(140deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
+  color: #f8fafc;
+  border-radius: 16px;
+  padding: 1.4rem;
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.18);
+}
+
+.roadmaps-hero h2,
+.detail-topbar h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.8rem;
+}
+
+.roadmaps-hero p,
+.detail-topbar p {
+  margin: 0;
+  max-width: 760px;
+}
+
+.roadmaps-toolbar {
+  margin: 1.2rem 0 0.4rem;
+}
+
+.schema-warning {
+  margin-top: 0.9rem;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  color: #92400e;
+}
+
+.schema-warning p {
+  margin: 0.35rem 0 0;
+}
+
+.toolbar-form {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-input,
+.toolbar-select,
+.toolbar-button,
+.submission-form input,
+.submission-form textarea,
+.submission-form select,
+.save-button {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.62rem 0.8rem;
+  font-size: 0.94rem;
+}
+
+.toolbar-input {
+  min-width: 260px;
+  flex: 1;
+}
+
+.toolbar-button,
+.save-button,
+.card-link,
+.project-open,
+#submission-button {
+  background: #0f766e;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.toolbar-button:hover,
+.save-button:hover,
+.card-link:hover,
+.project-open:hover,
+#submission-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.roadmaps-section {
+  margin-top: 1.6rem;
+}
+
+.section-heading h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #0f172a;
+}
+
+.section-heading p {
+  margin: 0.3rem 0 0;
+  color: #475569;
+}
+
+.saved-grid,
+.demand-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.95rem;
+}
+
+.saved-card,
+.demand-card,
+.stage-card,
+.details-panel,
+.overall-progress {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.saved-card,
+.demand-card {
+  padding: 1rem;
+}
+
+.roadmap-clickable {
+  cursor: pointer;
+}
+
+.saved-card-top,
+.demand-header,
+.meta-row,
+.progress-head,
+.stage-header,
+.project-card,
+.detail-topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.saved-card h4,
+.demand-card h4 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.saved-card p,
+.demand-card p,
+.saved-card small,
+.meta-row,
+.stage-header p {
+  color: #64748b;
+}
+
+.progress-chip,
+.save-count,
+.saved-indicator,
+.icon-pill,
+.project-label,
+.panel-kicker,
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+}
+
+.progress-chip,
+.icon-pill,
+.eyebrow {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.save-count,
+.saved-indicator,
+.project-label,
+.panel-kicker {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.card-link {
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 0.8rem;
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+}
+
+.progress-track {
+  margin-top: 0.45rem;
+  width: 100%;
+  height: 9px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
+}
+
+.empty-state {
+  border: 1px dashed #94a3b8;
+  border-radius: 14px;
+  padding: 1.4rem;
+  text-align: center;
+  color: #334155;
+}
+
+.detail-topbar {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.topbar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.save-counter {
+  color: #ecfeff;
+  font-size: 0.9rem;
+}
+
+.overall-progress {
+  margin-top: 1rem;
+  padding: 0.95rem;
+}
+
+.progress-head {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.detail-layout {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.9fr);
+  gap: 1rem;
+}
+
+.stages-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.stage-header {
+  width: 100%;
+  border: none;
+  background: #f8fafc;
+  padding: 0.9rem;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stage-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.stage-progress-wrap {
+  min-width: 110px;
+  text-align: right;
+}
+
+.stage-track {
+  margin-top: 0.3rem;
+  height: 7px;
+}
+
+.stage-body {
+  padding: 0.95rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.stage-objective {
+  margin-top: 0;
+  color: #334155;
+}
+
+.stage-card.collapsed .stage-body {
+  display: none;
+}
+
+.task-group + .task-group {
+  margin-top: 0.9rem;
+}
+
+.task-group h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.86rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.task-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.task-main {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.task-open {
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #64748b;
+}
+
+.task-status {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.25rem 0.35rem;
+}
+
+.project-card {
+  margin-top: 0.9rem;
+  border: 1px dashed #14b8a6;
+  border-radius: 12px;
+  padding: 0.75rem;
+  align-items: center;
+}
+
+.project-card h4 {
+  margin: 0.2rem 0;
+}
+
+.project-open {
+  border-radius: 9px;
+  padding: 0.45rem 0.7rem;
+}
+
+.details-panel {
+  padding: 1rem;
+  align-self: start;
+  position: sticky;
+  top: 14px;
+}
+
+.details-panel h3 {
+  margin: 0.25rem 0 0.4rem;
+  color: #0f172a;
+}
+
+.details-stage {
+  font-size: 0.92rem;
+  color: #475569;
+  margin: 0;
+}
+
+.details-description {
+  margin: 0.5rem 0 0.8rem;
+  color: #334155;
+}
+
+.details-resource a {
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.details-block {
+  margin-top: 0.95rem;
+}
+
+.details-block h4,
+.submission-form h4 {
+  margin: 0 0 0.35rem;
+  color: #0f172a;
+}
+
+.details-block ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: #334155;
+}
+
+.submission-form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#submission-feedback {
+  color: #0f766e;
+  min-height: 1rem;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .details-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .roadmaps-page,
+  .roadmap-detail-page {
+    padding: 0.8rem;
+  }
+
+  .roadmaps-hero h2,
+  .detail-topbar h2 {
+    font-size: 1.4rem;
+  }
+
+  .task-item,
+  .stage-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+}

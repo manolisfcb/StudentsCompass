@@ -22,6 +22,28 @@
           </div>
         </div>
 
+        <section class="resources-roadmap" aria-label="Resources rollout status">
+          <p class="roadmap-eyebrow">Roadmap</p>
+          <h3>Access is temporarily staged while we ship the next phase.</h3>
+          <div class="roadmap-track">
+            <div class="roadmap-step">
+              <span>In development</span>
+              <small>Core course experiences are being refined.</small>
+            </div>
+            <div class="roadmap-step">
+              <span>Phase unlocking progressively</span>
+              <small>Modules will open in controlled waves.</small>
+            </div>
+            <div class="roadmap-step">
+              <span>Currently in build</span>
+              <small>Final integration and QA are in progress.</small>
+            </div>
+          </div>
+          {% if locked_notice %}
+          <p class="roadmap-note">Course access is currently locked. You can keep browsing the catalog.</p>
+          {% endif %}
+        </section>
+
         <div class="filter-bar">
           <button class="filter-chip active" data-category="all">All</button>
           <button class="filter-chip" data-category="career">Career</button>
@@ -41,7 +63,7 @@
         <div id="resources-grid" class="resources-grid">
           {% for resource in resources %}
           <article
-            class="resource-card"
+            class="resource-card {% if not resource_detail_access_enabled %}resource-card-locked{% endif %}"
             data-category="{{ (resource.category or '') | lower }}"
             data-title="{{ resource.title }}"
             data-description="{{ resource.description }}"
@@ -62,7 +84,11 @@
               <span class="tag">{{ tag }}</span>
               {% endfor %}
             </div>
+            {% if resource_detail_access_enabled %}
             <a class="resource-open-btn" href="/resources/{{ resource.id }}">Open course</a>
+            {% else %}
+            <button class="resource-open-btn resource-open-btn-locked" type="button" disabled aria-disabled="true">Access locked</button>
+            {% endif %}
           </article>
           {% endfor %}
         </div>

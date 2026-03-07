@@ -1,16 +1,19 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.resumeService import ResumeService
-from app.schemas.resumeSchema import CreateResumeSchema, ResumeReadSchema
+from app.services.resumeCourseAuditService import ResumeCourseAuditService
+from app.schemas.resumeSchema import (
+    CreateResumeSchema,
+    ResumeCourseAuditAttemptsRead,
+    ResumeCourseAuditRead,
+    ResumeReadSchema,
+)
 from app.db import get_session
 from app.services.userService import current_active_user
 from app.models.userModel import User
-from app.services.embeddingService import generate_embedding, MODEL_NAME, EMBEDDING_DIMS
-from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf
 from uuid import UUID
 import os
 import logging
-import tempfile
 LOGGER = logging.getLogger(__name__)
 
 
@@ -52,44 +55,57 @@ async def upload_resume(
         resume = await resume_service.create_resume(resume_create)
         LOGGER.debug(f"Resume record created: {resume.id}")
         
-        # Generate embeddings for the resume
-        try:
-            # Extract text from PDF
-            # Create a temporary file to extract text (PyMuPDF needs a file path)
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-                tmp_file.write(file_bytes)
-                tmp_path = tmp_file.name
-            
-            try:
-                resume_text = await extract_text_from_pdf(tmp_path)
-                LOGGER.debug(f"Extracted text length: {len(resume_text)}")
-                
-                if resume_text.strip():
-                    # Generate embedding
-                    embedding = await generate_embedding(resume_text)
-                    
-                    # Save embedding to database
-                    await resume_service.create_resume_embedding(
-                        resume_id=resume.id,
-                        model_name=MODEL_NAME,
-                        dims=EMBEDDING_DIMS,
-                        embedding=embedding
-                    )
-                    LOGGER.info(f"Embedding created for resume {resume.id}")
-                else:
-                    LOGGER.warning(f"No text extracted from resume {resume.id}")
-            finally:
-                # Clean up temporary file
-                os.unlink(tmp_path)
-                
-        except Exception as e:
-            # Log but don't fail the upload if embedding generation fails
-            LOGGER.error(f"Failed to generate embedding for resume {resume.id}: {e}")
-        
+        # Desactivado: No se generan ni guardan embeddings para el resume
         return {"file_url": file_info["view_url"], "resume_id": resume.id}
     except Exception as e:
         LOGGER.exception("Upload failed")
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+
+@router.post("/profile/cv/course-audit-upload", response_model=ResumeCourseAuditRead)
+async def upload_resume_for_course_audit(
+    cv: UploadFile = File(..., alias="cv"),
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    LOGGER.debug(f"Course audit upload received: {cv.filename}, type={cv.content_type}")
+    valid_types = {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+    if cv.content_type not in valid_types:
+        raise HTTPException(status_code=400, detail="Only PDF or DOCX files are allowed for AI audit.")
+
+    if not BUCKET_NAME:
+        raise HTTPException(status_code=500, detail="Server misconfiguration: missing S3 bucket name")
+
+    audit_service = ResumeCourseAuditService(session)
+    await audit_service.ensure_daily_limit(user.id)
+
+    file_bytes = await cv.read()
+    payload, _ = await audit_service.upload_and_evaluate_resume(
+        user_id=user.id,
+        bucket_name=BUCKET_NAME,
+        file_bytes=file_bytes,
+        filename=cv.filename,
+        content_type=cv.content_type,
+    )
+    return ResumeCourseAuditRead(**payload)
+
+
+@router.get("/profile/cv/course-audit-attempts", response_model=ResumeCourseAuditAttemptsRead)
+async def get_course_audit_attempts(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    audit_service = ResumeCourseAuditService(session)
+    attempts_today = await audit_service.get_daily_attempts(user.id)
+    daily_limit = audit_service.DAILY_LIMIT
+    return ResumeCourseAuditAttemptsRead(
+        attempts_today=attempts_today,
+        daily_limit=daily_limit,
+        attempts_remaining=max(0, daily_limit - attempts_today),
+    )
 
 
 @router.get("/profile/cv", response_model=list[ResumeReadSchema])

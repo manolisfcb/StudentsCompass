@@ -27,16 +27,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     resumes = relationship("ResumeModel", back_populates="user")
     job_analyses = relationship("JobAnalysisModel", back_populates="user", lazy="dynamic")
     stats = relationship("UserStatsModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    resource_enrollments = relationship(
-        "ResourceEnrollmentModel",
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
     resource_lesson_progress = relationship(
         "ResourceLessonProgressModel",
-        back_populates="user",
         cascade="all, delete-orphan",
     )
+    resume_course_evaluations = relationship("ResumeCourseEvaluationModel", cascade="all, delete-orphan")
     
 
         
