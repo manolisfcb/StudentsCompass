@@ -159,27 +159,155 @@ SEED_RESOURCES = [
     },
     {
         "title": "Interview Preparation",
-        "description": "Practice behavioral and technical interviews with repeatable frameworks.",
+        "description": "Master the most common interview questions with proven frameworks and former-CEO answer strategies.",
         "icon": "🎯",
         "category": "Career",
-        "tags": ["Interview", "STAR", "Practice"],
+        "tags": ["Interview", "Behavioral", "Career", "Communication"],
         "level": "Beginner",
-        "estimated_duration_minutes": 120,
+        "estimated_duration_minutes": 90,
         "modules": [
             {
-                "title": "Behavioral Interview Core",
+                "title": "Opening Narrative and Positioning",
+                "description": "Build confident responses to core questions that define your professional story.",
                 "lessons": [
-                    ("STAR method refresher", "text", "Structure every answer: Situation, Task, Action, Result."),
-                    ("Leadership and teamwork prompts", "text", "Prepare 2 stories showing collaboration and ownership."),
-                    ("Failure and conflict questions", "text", "Focus on reflection, learning, and concrete outcomes."),
+                    (
+                        "Tell Me About Yourself | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=TQHW7gGjrCQ\nCraft a concise and compelling self-introduction that aligns with the role.",
+                        10,
+                    ),
+                    (
+                        "Why Should We Hire You? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=WQ6snVCCgt4\nPosition your value proposition with role-specific strengths and proof.",
+                        8,
+                    ),
+                    (
+                        "What are your Strengths? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=OayAgqYByew\nPresent strengths with concrete examples instead of generic traits.",
+                        8,
+                    ),
+                    (
+                        "What is your Weakness? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=yzWo8EXsfTs\nAnswer weakness questions with honesty, growth, and mitigation steps.",
+                        8,
+                    ),
                 ],
             },
             {
-                "title": "Technical Interview Core",
+                "title": "Compensation and Career Direction",
+                "description": "Handle forward-looking and salary questions with confidence and strategy.",
                 "lessons": [
-                    ("Problem-solving walkthrough", "text", "Clarify assumptions before coding and narrate decisions."),
-                    ("Common SQL checks", "text", "Review joins, aggregations, and data quality checks."),
-                    ("Mock interview checklist", "text", "Run timed mocks and capture feedback after each round."),
+                    (
+                        "What are your Salary Expectations? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=WChxbBSlWnQ\nSet salary expectations professionally while preserving negotiation room.",
+                        8,
+                    ),
+                    (
+                        "Where Do You See Yourself in 5 Years? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=n0f86_T8YZQ\nConnect your long-term goals with the position and company direction.",
+                        8,
+                    ),
+                ],
+            },
+            {
+                "title": "Transitions and Pressure Questions",
+                "description": "Answer sensitive questions about job changes and stress with maturity.",
+                "lessons": [
+                    (
+                        "Why Did you Leave your Last Job? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=ofTfvFcj5ok\nFrame transitions positively without sounding defensive.",
+                        8,
+                    ),
+                    (
+                        "How Do You Handle Stress? | Best Answer (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=SshYb1uV2uE\nDemonstrate calm decision-making and practical stress management habits.",
+                        8,
+                    ),
+                ],
+            },
+            {
+                "title": "Interview Closing Strategy",
+                "description": "Finish strong and leave a high-signal final impression.",
+                "lessons": [
+                    (
+                        "Questions to Ask at the End of an Interview | Job Interview Tips (from former CEO)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=OvvTD5rtnNA\nUse high-impact closing questions to show strategic thinking and interest.",
+                        8,
+                    ),
+                ],
+            },
+        ],
+    },
+    {
+        "title": "LinkedIn Hidden Job Market Playbook",
+        "description": "Learn how to find hiring managers, discover hidden opportunities, and send direct outreach that gets responses.",
+        "icon": "🕵️",
+        "category": "Career",
+        "tags": ["LinkedIn", "Hiring Managers", "Networking", "Job Search"],
+        "level": "Intermediate",
+        "estimated_duration_minutes": 72,
+        "external_url": "https://www.youtube.com/playlist?list=PLO4kDC0EWkeDaZyMJgm9W43J2Oy0VefRV",
+        "modules": [
+            {
+                "title": "Hidden Opportunities Discovery",
+                "description": "Find nearby employers and uncover job openings that are not obvious in public listings.",
+                "lessons": [
+                    (
+                        "How to Find Employers in your Hometown",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=LoW3vFu8TH4\nBuild a repeatable process to identify employers near you and prioritize your outreach list.",
+                        12,
+                    ),
+                    (
+                        "Discover Hidden Perfect Job Opportunities on LinkedIn",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=RUV0j7oL_X8\nUse LinkedIn strategically to surface high-fit opportunities before they are crowded.",
+                        12,
+                    ),
+                ],
+            },
+            {
+                "title": "Hiring Manager Mapping and Outreach",
+                "description": "Locate the right decision-makers and craft direct messages that increase interview chances.",
+                "lessons": [
+                    (
+                        "How to Find Hiring Managers on LinkedIn",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=XFW9Ei8SF_I\nIdentify the most relevant hiring managers for each target role and company.",
+                        12,
+                    ),
+                    (
+                        "How to Contact Hiring Managers on LinkedIn",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=-m-dMINshjI\nWrite concise outreach messages with context, value, and a clear next step.",
+                        12,
+                    ),
+                    (
+                        "What to Say to Hiring Managers | To Get a Job in the Hidden Job Market | The Direct Approach",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=IbVNnTDzmbc\nApply direct-approach scripts that start conversations without sounding generic.",
+                        12,
+                    ),
+                ],
+            },
+            {
+                "title": "Decision-Maker Signals",
+                "description": "Understand what makes a strong hiring manager and how to tailor your communication style.",
+                "lessons": [
+                    (
+                        "What makes a Good Hiring Manager?",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=g4xe224Xq7U\nRecognize high-quality manager behaviors and adapt your interview communication strategy.",
+                        12,
+                    ),
                 ],
             },
         ],
