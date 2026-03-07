@@ -286,6 +286,7 @@ async def list_resources(
                 "estimated_duration_minutes": r.estimated_duration_minutes,
                 "external_url": r.external_url,
                 "is_published": r.is_published,
+                "is_locked": r.is_locked,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "updated_at": r.updated_at.isoformat() if r.updated_at else None,
             }
@@ -321,6 +322,7 @@ async def create_resource(
         "id": str(resource.id),
         "title": resource.title,
         "is_published": resource.is_published,
+        "is_locked": resource.is_locked,
     }
 
 
@@ -342,6 +344,7 @@ async def update_resource(
         "id": str(resource.id),
         "title": resource.title,
         "is_published": resource.is_published,
+        "is_locked": resource.is_locked,
     }
 
 
@@ -379,6 +382,19 @@ async def toggle_resource_published(
     if resource is None:
         raise HTTPException(status_code=404, detail="Resource not found")
     return {"id": str(resource.id), "is_published": resource.is_published}
+
+
+@router.patch("/resources/{resource_id}/toggle-locked")
+async def toggle_resource_locked(
+    resource_id: uuid.UUID,
+    _write_guard: None = Depends(require_same_origin_for_write),
+    admin: User = Depends(current_admin_user),
+    svc: AdminService = Depends(_get_service),
+):
+    resource = await svc.toggle_resource_locked(resource_id)
+    if resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return {"id": str(resource.id), "is_locked": resource.is_locked}
 
 
 @router.delete("/resources/{resource_id}")

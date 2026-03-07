@@ -124,9 +124,11 @@ async def resource_detail(
         return RedirectResponse(url="/resources?locked=1", status_code=status.HTTP_303_SEE_OTHER)
 
     service = ResourceService(session)
-    resource = await service.get_resource_with_outline(resource_id)
+    resource = await service.get_published_resource(resource_id, include_locked=True)
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
+    if resource.is_locked:
+        return RedirectResponse(url="/resources?locked=1", status_code=status.HTTP_303_SEE_OTHER)
 
     completed_lesson_ids = await service.get_completed_lesson_ids_for_resource(
         resource_id=resource.id,

@@ -105,9 +105,24 @@ class ResourceService:
         return self.prioritize_mandatory_resources(resources)
 
     async def get_resource_with_outline(self, resource_id: UUID) -> ResourceModel | None:
+        return await self.get_published_resource(resource_id, include_locked=False)
+
+    async def get_published_resource(
+        self,
+        resource_id: UUID,
+        *,
+        include_locked: bool = False,
+    ) -> ResourceModel | None:
+        conditions = [
+            ResourceModel.id == resource_id,
+            ResourceModel.is_published.is_(True),
+        ]
+        if not include_locked:
+            conditions.append(ResourceModel.is_locked.is_(False))
+
         result = await self.session.execute(
             select(ResourceModel)
-            .where(ResourceModel.id == resource_id, ResourceModel.is_published.is_(True))
+            .where(*conditions)
             .options(
                 selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons),
             )
@@ -179,6 +194,7 @@ class ResourceService:
             .where(
                 ResourceLessonModel.id == lesson_id,
                 ResourceModel.is_published.is_(True),
+                ResourceModel.is_locked.is_(False),
             )
         )
         lesson_row = lesson_result.first()
@@ -329,6 +345,7 @@ class ResourceService:
             "level": resource.level,
             "estimated_duration_minutes": resource.estimated_duration_minutes,
             "external_url": resource.external_url,
+            "is_locked": resource.is_locked,
             "created_at": resource.created_at.isoformat(),
             "modules": modules,
             "module_progress": module_progress,

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/admin.css">
+<link rel="stylesheet" href="/static/css/admin.css?v=20260307a">
 <style>
     body {
         background: var(--admin-bg) !important;
@@ -246,6 +246,13 @@
                             Visible to students
                         </label>
                     </div>
+                    <div class="admin-form-group" style="width:220px;">
+                        <label class="admin-form-label">Locked</label>
+                        <label style="display:flex;align-items:center;gap:10px;color:#0f172a;font-weight:600;">
+                            <input type="checkbox" id="resLocked">
+                            Block course access
+                        </label>
+                    </div>
                 </div>
 
                 <datalist id="lessonTypeSuggestions">
@@ -417,14 +424,15 @@
                                         <th>Level</th>
                                         <th>Duration</th>
                                         <th>Tags</th>
-                                        <th>Status</th>
+                                        <th>Visibility</th>
+                                        <th>Access</th>
                                         <th>Created</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="resourcesTableBody">
                                     <tr>
-                                        <td colspan="8">
+                                        <td colspan="9">
                                             <div class="admin-empty">
                                                 <div class="admin-empty-icon">⏳</div>
                                                 <div class="admin-empty-title">Loading resources…</div>
@@ -679,6 +687,7 @@
         editingResourceId = null;
         document.getElementById('resourceForm').reset();
         document.getElementById('resPublished').checked = true;
+        document.getElementById('resLocked').checked = false;
         resetResourceStructureBuilder();
         addModuleBlock();
         setResourceModalMode('create');
@@ -704,6 +713,7 @@
             document.getElementById('resUrl').value = resource.external_url || '';
             document.getElementById('resTags').value = Array.isArray(resource.tags) ? resource.tags.join(', ') : '';
             document.getElementById('resPublished').checked = Boolean(resource.is_published);
+            document.getElementById('resLocked').checked = Boolean(resource.is_locked);
 
             resetResourceStructureBuilder();
             const modules = Array.isArray(resource.modules) ? resource.modules : [];
@@ -1040,6 +1050,7 @@
                 estimated_duration_minutes: parseInt(document.getElementById('resDuration').value, 10) || null,
                 external_url: document.getElementById('resUrl').value.trim() || null,
                 is_published: document.getElementById('resPublished').checked,
+                is_locked: document.getElementById('resLocked').checked,
                 modules: buildModulesPayload()
             };
 
@@ -1087,7 +1098,7 @@
     function renderResources(items) {
         const tbody = document.getElementById('resourcesTableBody');
         if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="8"><div class="admin-empty"><div class="admin-empty-icon">📚</div><div class="admin-empty-title">No resources yet</div></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9"><div class="admin-empty"><div class="admin-empty-icon">📚</div><div class="admin-empty-title">No resources yet</div></div></td></tr>';
             return;
         }
         tbody.innerHTML = items.map(r => {
@@ -1101,12 +1112,16 @@
     <td>${r.estimated_duration_minutes ? `${r.estimated_duration_minutes} min` : '—'}</td>
     <td>${tags.length ? esc(tags.join(', ')) : '—'}</td>
     <td><span class="admin-badge ${r.is_published ? 'published' : 'draft'}">${r.is_published ? '● Published' : '● Draft'}</span></td>
+    <td><span class="admin-badge ${r.is_locked ? 'locked' : 'unlocked'}">${r.is_locked ? '🔒 Locked' : '🔓 Unlocked'}</span></td>
     <td>${formatDate(r.created_at)}</td>
     <td>
       <div class="admin-actions-cell">
         <button class="admin-btn-icon" title="Edit resource" onclick="openEditResourceModal('${r.id}')">✏️</button>
         <button class="admin-btn-icon" title="Toggle publish" onclick="toggleResourcePublished('${r.id}')">
           ${r.is_published ? '📤' : '📥'}
+        </button>
+        <button class="admin-btn-icon" title="Toggle lock" onclick="toggleResourceLocked('${r.id}')">
+          ${r.is_locked ? '🔓' : '🔒'}
         </button>
         <button class="admin-btn-icon danger" title="Delete" onclick="deleteResource('${r.id}','${esc(r.title)}')">🗑️</button>
       </div>
@@ -1118,11 +1133,27 @@
     async function toggleResourcePublished(id) {
         try {
             const res = await fetch(`${API}/resources/${id}/toggle-published`, { method: 'PATCH', credentials: 'include' });
-            if (!res.ok) throw new Error();
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data?.detail || 'Failed to toggle publish state');
+            }
             const d = await res.json();
             toast(`Resource is now ${d.is_published ? 'published' : 'unpublished'}`);
             await loadResources();
-        } catch { toast('Failed', 'error'); }
+        } catch (e) { toast(e?.message || 'Failed', 'error'); }
+    }
+
+    async function toggleResourceLocked(id) {
+        try {
+            const res = await fetch(`${API}/resources/${id}/toggle-locked`, { method: 'PATCH', credentials: 'include' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data?.detail || 'Failed to toggle lock state');
+            }
+            const d = await res.json();
+            toast(`Resource is now ${d.is_locked ? 'locked' : 'unlocked'}`);
+            await loadResources();
+        } catch (e) { toast(e?.message || 'Failed', 'error'); }
     }
 
     async function deleteResource(id, title) {

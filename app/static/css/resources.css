@@ -310,6 +310,12 @@
   color: #115E59;
 }
 
+.meta-pill-locked {
+  background: #FEF3C7;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
 .resource-tags {
   display: flex;
   flex-wrap: wrap;

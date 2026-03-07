@@ -221,6 +221,7 @@ class AdminService:
             estimated_duration_minutes=payload.estimated_duration_minutes,
             external_url=payload.external_url,
             is_published=payload.is_published,
+            is_locked=payload.is_locked,
         )
         self.session.add(resource)
         await self.session.flush()
@@ -245,6 +246,7 @@ class AdminService:
         resource.estimated_duration_minutes = payload.estimated_duration_minutes
         resource.external_url = payload.external_url
         resource.is_published = payload.is_published
+        resource.is_locked = payload.is_locked
         await self._replace_resource_modules(resource.id, payload.modules)
         await self.session.commit()
         return await self.get_resource_with_outline(resource.id)
@@ -257,6 +259,18 @@ class AdminService:
         if resource is None:
             return None
         resource.is_published = not resource.is_published
+        await self.session.commit()
+        await self.session.refresh(resource)
+        return resource
+
+    async def toggle_resource_locked(self, resource_id: uuid.UUID) -> Optional[ResourceModel]:
+        result = await self.session.execute(
+            select(ResourceModel).where(ResourceModel.id == resource_id)
+        )
+        resource = result.scalar_one_or_none()
+        if resource is None:
+            return None
+        resource.is_locked = not resource.is_locked
         await self.session.commit()
         await self.session.refresh(resource)
         return resource
@@ -328,6 +342,7 @@ class AdminService:
             "estimated_duration_minutes": resource.estimated_duration_minutes,
             "external_url": resource.external_url,
             "is_published": resource.is_published,
+            "is_locked": resource.is_locked,
             "created_at": resource.created_at.isoformat() if resource.created_at else None,
             "updated_at": resource.updated_at.isoformat() if resource.updated_at else None,
             "modules": [

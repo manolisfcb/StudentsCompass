@@ -23,6 +23,7 @@ class ResourceModel(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_published = Column(Boolean, nullable=False, default=True)
+    is_locked = Column(Boolean, nullable=False, default=False)
 
     modules = relationship(
         "ResourceModuleModel",

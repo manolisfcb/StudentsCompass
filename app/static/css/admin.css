@@ -575,6 +575,16 @@
   color: var(--admin-warning);
 }
 
+.admin-badge.locked {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--admin-danger);
+}
+
+.admin-badge.unlocked {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--admin-info);
+}
+
 .admin-badge.status-applied { background: rgba(59,130,246,.12); color: var(--admin-info); }
 .admin-badge.status-in_review { background: rgba(245,158,11,.12); color: var(--admin-warning); }
 .admin-badge.status-interview { background: rgba(139,92,246,.12); color: var(--admin-accent-violet); }

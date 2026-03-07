@@ -17,6 +17,7 @@ class ResourceRead(BaseModel):
     external_url: Optional[str] = None
     created_at: datetime
     is_published: bool
+    is_locked: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,6 +32,7 @@ class ResourceCreate(BaseModel):
     estimated_duration_minutes: Optional[int] = None
     external_url: Optional[str] = None
     is_published: bool = True
+    is_locked: bool = False
     modules: list["ResourceModuleCreate"] = Field(default_factory=list)
 
 
