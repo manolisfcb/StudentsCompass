@@ -233,6 +233,11 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
+    .career-progress-card {
+      display: flex;
+      flex-direction: column;
+    }
+
     .content-card:hover {
       transform: translateY(-3px);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -270,6 +275,29 @@
 
     .progress-item:last-child {
       margin-bottom: 0;
+    }
+
+    .career-progress-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .progress-item-link {
+      display: block;
+      text-decoration: none;
+      border-radius: 10px;
+      padding: 0.35rem 0.15rem 0.45rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .progress-item-link:hover {
+      background: #F8FAFC;
+    }
+
+    .progress-item-link:focus-visible {
+      outline: 2px solid #0F766E;
+      outline-offset: 2px;
     }
 
     .progress-label {
@@ -384,6 +412,11 @@
       text-align: center;
     }
 
+    .career-progress-card .card-link {
+      margin-top: auto;
+      align-self: flex-start;
+    }
+
     .card-link:hover {
       opacity: 0.9;
     }
@@ -490,43 +523,45 @@
         <!-- Main Content Grid -->
         <div class="main-content-grid">
           <!-- Career Progress Card -->
-          <div class="content-card">
+          <div class="content-card career-progress-card">
             <div class="card-header">
               <div class="card-icon">🚀</div>
               <h3>Career Progress</h3>
             </div>
-            
-            <div class="progress-item">
-              <div class="progress-label">
-                <strong>Resume Creation</strong>
-                <span class="progress-percentage" id="resume-progress">0%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress" id="resume-progress-bar" style="width: 0%;"></div>
-              </div>
+
+            <div class="career-progress-list">
+              <a class="progress-item progress-item-link" id="resume-progress-link" href="/resources" aria-label="Continue Resume Creation course">
+                <div class="progress-label">
+                  <strong>Resume Creation</strong>
+                  <span class="progress-percentage" id="resume-progress">0%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress" id="resume-progress-bar" style="width: 0%;"></div>
+                </div>
+              </a>
+
+              <a class="progress-item progress-item-link" id="linkedin-progress-link" href="/resources" aria-label="Continue LinkedIn Profile course">
+                <div class="progress-label">
+                  <strong>LinkedIn Profile</strong>
+                  <span class="progress-percentage" id="linkedin-progress">0%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress" id="linkedin-progress-bar" style="width: 0%;"></div>
+                </div>
+              </a>
+
+              <a class="progress-item progress-item-link" id="interview-progress-link" href="/resources" aria-label="Continue Interview Preparation course">
+                <div class="progress-label">
+                  <strong>Interview Preparation</strong>
+                  <span class="progress-percentage" id="interview-progress">0%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress" id="interview-progress-bar" style="width: 0%;"></div>
+                </div>
+              </a>
             </div>
 
-            <div class="progress-item">
-              <div class="progress-label">
-                <strong>LinkedIn Profile</strong>
-                <span class="progress-percentage" id="linkedin-progress">0%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress" id="linkedin-progress-bar" style="width: 0%;"></div>
-              </div>
-            </div>
-
-            <div class="progress-item">
-              <div class="progress-label">
-                <strong>Interview Preparation</strong>
-                <span class="progress-percentage" id="interview-progress">0%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress" id="interview-progress-bar" style="width: 0%;"></div>
-              </div>
-            </div>
-
-            <a href="/roadmaps" class="card-link">View My Roadmap</a>
+            <a href="/resources" class="card-link">View Resources</a>
           </div>
 
           <!-- Application Status Card -->
@@ -623,6 +658,12 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const welcomeMessage = document.getElementById('welcome-message');
 
+      const setResourceLink = (elementId, targetUrl) => {
+        const link = document.getElementById(elementId);
+        if (!link) return;
+        link.href = (typeof targetUrl === 'string' && targetUrl.trim()) ? targetUrl : '/resources';
+      };
+
       try {
         const dashboardResponse = await fetch('/api/v1/students_dashboard', {
           credentials: 'include'
@@ -634,7 +675,7 @@
           if (data.user) {
             welcomeMessage.textContent = `Welcome Back, ${data.user.nickname || data.user.email || 'Student'}!`;
           }
-          
+
           // Update stats
           document.getElementById('overall-progress').textContent = `${data.stats.overall_progress}%`;
           document.getElementById('total-applications').textContent = data.stats.total_applications;
@@ -644,12 +685,18 @@
           // Update progress bars
           document.getElementById('resume-progress').textContent = `${data.progress.resume}%`;
           document.getElementById('resume-progress-bar').style.width = `${data.progress.resume}%`;
-          
+
           document.getElementById('linkedin-progress').textContent = `${data.progress.linkedin}%`;
           document.getElementById('linkedin-progress-bar').style.width = `${data.progress.linkedin}%`;
-          
+
           document.getElementById('interview-progress').textContent = `${data.progress.interview_prep}%`;
           document.getElementById('interview-progress-bar').style.width = `${data.progress.interview_prep}%`;
+
+          // Deep links to continue each core course in resources
+          const navigation = data.resource_navigation || {};
+          setResourceLink('resume-progress-link', navigation.resume);
+          setResourceLink('linkedin-progress-link', navigation.linkedin);
+          setResourceLink('interview-progress-link', navigation.interview_prep);
 
           // Update application breakdown
           document.getElementById('status-applied').textContent = `${data.application_breakdown.applied} roles`;

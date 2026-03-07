@@ -1,6 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import bindparam, select, text
+from sqlalchemy.orm import selectinload
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
+from app.models.resourceModel import (
+    ResourceLessonProgressModel,
+    ResourceModel,
+    ResourceModuleModel,
+)
 from app.models.userModel import User
 from app.models.userStatsModel import UserStatsModel
 from app.models.resumeModel import ResumeModel
@@ -107,6 +113,7 @@ class DashboardService:
                     "interviews": interviews,
                     "offers": offers
                 },
+                "resource_navigation": await DashboardService._get_core_resource_navigation(user_id, session),
                 "recent_applications": recent_applications,
                 "resources": [
                     {
@@ -330,6 +337,72 @@ class DashboardService:
             )
             for title, key in title_to_key.items()
         }
+
+    @staticmethod
+    async def _get_core_resource_navigation(user_id: UUID, session: AsyncSession) -> Dict[str, str]:
+        navigation = {key: "/resources" for key in DashboardService.CORE_RESOURCE_TITLES}
+        target_titles = list(DashboardService.CORE_RESOURCE_TITLES.values())
+
+        try:
+            resources_result = await session.execute(
+                select(ResourceModel)
+                .where(
+                    ResourceModel.title.in_(target_titles),
+                    ResourceModel.is_published.is_(True),
+                    ResourceModel.is_locked.is_(False),
+                )
+                .options(selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons))
+            )
+            resources = list(resources_result.scalars().all())
+        except Exception:
+            return navigation
+        if not resources:
+            return navigation
+
+        resource_by_title: Dict[str, ResourceModel] = {resource.title: resource for resource in resources}
+        ordered_lessons_by_title: Dict[str, list] = {}
+        all_lesson_ids = []
+
+        for resource in resources:
+            ordered_lessons = []
+            for module in sorted(resource.modules, key=lambda current: current.position):
+                ordered_lessons.extend(sorted(module.lessons, key=lambda current: current.position))
+            lesson_ids = [lesson.id for lesson in ordered_lessons]
+            ordered_lessons_by_title[resource.title] = lesson_ids
+            all_lesson_ids.extend(lesson_ids)
+
+        completed_ids = set()
+        if all_lesson_ids:
+            try:
+                completed_rows = await session.execute(
+                    select(ResourceLessonProgressModel.lesson_id).where(
+                        ResourceLessonProgressModel.user_id == user_id,
+                        ResourceLessonProgressModel.lesson_id.in_(all_lesson_ids),
+                    )
+                )
+                completed_ids = {row[0] for row in completed_rows.all()}
+            except Exception:
+                return navigation
+
+        for key, title in DashboardService.CORE_RESOURCE_TITLES.items():
+            resource = resource_by_title.get(title)
+            if not resource:
+                continue
+            ordered_lesson_ids = ordered_lessons_by_title.get(title, [])
+            target_lesson_id = None
+            for lesson_id in ordered_lesson_ids:
+                if lesson_id not in completed_ids:
+                    target_lesson_id = lesson_id
+                    break
+            if target_lesson_id is None and ordered_lesson_ids:
+                target_lesson_id = ordered_lesson_ids[-1]
+
+            if target_lesson_id:
+                navigation[key] = f"/resources/{resource.id}?lesson={target_lesson_id}"
+            else:
+                navigation[key] = f"/resources/{resource.id}"
+
+        return navigation
 
     @staticmethod
     async def _sync_user_stats_with_resource_progress(
