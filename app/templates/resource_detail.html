@@ -3,7 +3,7 @@
 {% set page_description = resource.description or "Dive into a structured learning module with lessons, timelines, and resources to build job-ready skills and advance your career plan." %}
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/resources.css">
+  <link rel="stylesheet" href="/static/css/resources.css?v=20260307e">
 {% endblock %}
 {% block content %}
   {% include "includes/header.html" %}
@@ -61,14 +61,16 @@
               </section>
               {% endfor %}
             </div>
+            <button id="course-outline-scroll-hint" class="course-outline-scroll-hint" type="button" aria-label="Scroll to view more lessons" hidden>
+              <span aria-hidden="true">⌄</span>
+            </button>
             <p id="lesson-search-empty" class="lesson-search-empty" hidden>No lessons found for this search.</p>
           </aside>
 
           <article class="panel course-main">
-            <div class="course-main-toolbar" aria-hidden="true">
-              <span class="course-tool-icon">⤓</span>
-              <span class="course-tool-icon">↗</span>
-              <span class="course-tool-icon">⤢</span>
+            <div class="course-main-toolbar" aria-live="polite">
+              <span id="lesson-step-pill" class="course-toolbar-pill">Lesson 0 of {{ lesson_count }}</span>
+              <span id="lesson-progress-pill" class="course-toolbar-pill course-toolbar-pill-muted">Progress 0%</span>
             </div>
 
             <div class="course-main-body">
@@ -77,6 +79,10 @@
                 <div id="lesson-meta" class="lesson-subtitle"></div>
               </div>
               <div id="lesson-content" class="lesson-content"></div>
+              <div id="lesson-action-bar" class="lesson-action-bar" hidden>
+                <button id="lesson-complete-btn" class="lesson-complete-btn" type="button">Mark as completed</button>
+                <p id="lesson-action-note" class="lesson-action-note"></p>
+              </div>
 
               <section class="course-info-strip">
                 <ul class="meta-list">
@@ -100,5 +106,5 @@
 
   {% include "includes/footer.html" %}
   <script id="resource-payload-json" type="application/json">{{ resource_payload_json | safe }}</script>
-  <script src="/static/js/resource_detail.js"></script>
+  <script src="/static/js/resource_detail.js?v=20260307e"></script>
 {% endblock %}

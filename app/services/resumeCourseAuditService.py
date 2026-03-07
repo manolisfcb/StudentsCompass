@@ -46,6 +46,20 @@ class ResumeCourseAuditService:
         end = start + timedelta(days=1)
         return start, end
 
+    @staticmethod
+    def _time_until_next_utc_day_label() -> str:
+        now = datetime.utcnow()
+        _, next_day_start = ResumeCourseAuditService._today_utc_bounds()
+        remaining_seconds = max(0, int((next_day_start - now).total_seconds()))
+        total_minutes = (remaining_seconds + 59) // 60
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+        if hours <= 0:
+            return f"{minutes}m"
+        if minutes <= 0:
+            return f"{hours}h"
+        return f"{hours}h {minutes}m"
+
     async def get_daily_attempts(self, user_id: UUID) -> int:
         start, end = self._today_utc_bounds()
         result = await self.session.execute(
@@ -60,9 +74,13 @@ class ResumeCourseAuditService:
     async def ensure_daily_limit(self, user_id: UUID) -> None:
         attempts_today = await self.get_daily_attempts(user_id)
         if attempts_today >= self.DAILY_LIMIT:
+            retry_in = self._time_until_next_utc_day_label()
             raise HTTPException(
                 status_code=429,
-                detail=f"You reached your daily limit of {self.DAILY_LIMIT} resume audit attempts.",
+                detail=(
+                    f"You reached your daily limit of {self.DAILY_LIMIT} resume audit attempts. "
+                    f"Try again in {retry_in}."
+                ),
             )
 
     async def create_pending_evaluation(self, *, user_id: UUID, resume_id: UUID) -> ResumeCourseEvaluationModel:

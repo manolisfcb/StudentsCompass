@@ -6,7 +6,13 @@
   const lessonTitle = document.getElementById('lesson-title');
   const lessonMeta = document.getElementById('lesson-meta');
   const lessonContent = document.getElementById('lesson-content');
-  const contentPanel = document.querySelector('.content-panel');
+  const lessonActionBar = document.getElementById('lesson-action-bar');
+  const lessonCompleteButton = document.getElementById('lesson-complete-btn');
+  const lessonActionNote = document.getElementById('lesson-action-note');
+  const lessonStepPill = document.getElementById('lesson-step-pill');
+  const lessonProgressPill = document.getElementById('lesson-progress-pill');
+  const courseOutline = document.querySelector('.course-outline');
+  const outlineScrollHint = document.getElementById('course-outline-scroll-hint');
   const lessonButtons = Array.from(document.querySelectorAll('[data-lesson-id]'));
   const moduleButtons = Array.from(document.querySelectorAll('[data-module-toggle]'));
   const moduleSections = Array.from(document.querySelectorAll('[data-module]'));
@@ -17,6 +23,27 @@
   const completedLessonIds = new Set((payload.completed_lesson_ids || []).map((id) => String(id)));
   const progressRequestsInFlight = new Set();
   let currentLessonId = null;
+
+  function orderedLessonIds() {
+    const ids = [];
+    (payload.modules || []).forEach((module) => {
+      (module.lessons || []).forEach((lesson) => ids.push(String(lesson.id)));
+    });
+    return ids;
+  }
+
+  function getLessonSequence(lessonId) {
+    const ids = orderedLessonIds();
+    const currentId = String(lessonId || '');
+    const index = ids.findIndex((id) => id === currentId);
+    return {
+      ids,
+      index,
+      current: index >= 0 ? ids[index] : null,
+      next: index >= 0 ? (ids[index + 1] || null) : null,
+      total: ids.length,
+    };
+  }
 
   function sanitizeHtml(html) {
     const parser = new DOMParser();
@@ -212,6 +239,7 @@
     if (resourceProgressValue) {
       const stats = countResourceProgress();
       resourceProgressValue.textContent = `${stats.percent}%`;
+      if (lessonProgressPill) lessonProgressPill.textContent = `Progress ${stats.percent}%`;
     }
   }
 
@@ -221,11 +249,17 @@
     completedLessonIds.clear();
     progressPayload.completed_lesson_ids.forEach((id) => completedLessonIds.add(String(id)));
     refreshProgressUI();
+    if (currentLessonId) {
+      const context = getLessonContextById(String(currentLessonId));
+      if (context) renderLessonActionBar(context.lesson);
+    }
   }
 
   async function markLessonCompleted(lessonId) {
     const id = String(lessonId || '');
-    if (!id || completedLessonIds.has(id) || progressRequestsInFlight.has(id)) return;
+    if (!id) return false;
+    if (completedLessonIds.has(id)) return true;
+    if (progressRequestsInFlight.has(id)) return false;
 
     progressRequestsInFlight.add(id);
     try {
@@ -235,11 +269,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed: true }),
       });
-      if (!response.ok) return;
+      if (!response.ok) return false;
       const progressPayload = await response.json();
       applyProgressPayload(progressPayload);
+      return true;
     } catch (error) {
       console.error('Failed to persist lesson progress', error);
+      return false;
     } finally {
       progressRequestsInFlight.delete(id);
     }
@@ -382,6 +418,29 @@
       if (!Number.isFinite(parsed) || parsed <= 0) return;
       maxAttemptsPerDay = Math.round(parsed);
       if (attemptsNode) attemptsNode.textContent = `${attemptsToday}/${maxAttemptsPerDay}`;
+    }
+
+    function getTimeUntilNextUtcDayLabel() {
+      const now = new Date();
+      const nextUtcMidnight = Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0,
+        0,
+        0,
+      );
+      const diffMs = Math.max(0, nextUtcMidnight - now.getTime());
+      const totalMinutes = Math.ceil(diffMs / 60000);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      if (hours <= 0) return `${minutes}m`;
+      if (minutes <= 0) return `${hours}h`;
+      return `${hours}h ${minutes}m`;
+    }
+
+    function limitReachedMessage() {
+      return `You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge. Try again in ${getTimeUntilNextUtcDayLabel()}.`;
     }
 
     function disableWidget(reason) {
@@ -536,7 +595,7 @@
         setDailyLimit(meta?.daily_limit);
         setAttempts(count);
         if (count >= maxAttemptsPerDay) {
-          disableWidget(`You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge.`);
+          disableWidget(limitReachedMessage());
         } else {
           enableWidget();
         }
@@ -573,7 +632,7 @@
     submitBtn?.addEventListener('click', async () => {
       if (!selectedFile || submitBtn.disabled) return;
       if (attemptsToday >= maxAttemptsPerDay) {
-        disableWidget(`You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge.`);
+        disableWidget(limitReachedMessage());
         return;
       }
 
@@ -598,7 +657,24 @@
           return;
         }
         if (!response.ok) {
-          throw new Error('Upload failed');
+          let errorDetail = '';
+          try {
+            const errorPayload = await response.json();
+            if (typeof errorPayload?.detail === 'string') {
+              errorDetail = errorPayload.detail.trim();
+            }
+          } catch {
+            // Keep fallback message below when response body is not JSON.
+          }
+
+          if (response.status === 429) {
+            const retryMessage = errorDetail || limitReachedMessage();
+            disableWidget(retryMessage);
+            setAnalyzing(false);
+            return;
+          }
+
+          throw new Error(errorDetail || 'Upload failed. Please try again.');
         }
 
         const result = await response.json();
@@ -625,13 +701,16 @@
         setAnalyzing(false);
 
         if (persistedAttempts >= maxAttemptsPerDay) {
-          disableWidget(`You reached the ${maxAttemptsPerDay} uploads/day limit for this challenge.`);
+          disableWidget(limitReachedMessage());
         } else {
           enableWidget();
         }
       } catch (error) {
         setAnalyzing(false);
-        setStatus('Upload failed. Please try again.', 'error');
+        const message = error instanceof Error && error.message
+          ? error.message
+          : 'Upload failed. Please try again.';
+        setStatus(message, 'error');
         submitBtn.disabled = false;
       }
     });
@@ -668,6 +747,41 @@
     return firstVisible ? firstVisible.dataset.lessonId : null;
   }
 
+  function updateOutlineScrollHint() {
+    if (!courseOutline || !outlineScrollHint) return;
+    const hasOverflow = courseOutline.scrollHeight > courseOutline.clientHeight + 8;
+    const nearBottom = courseOutline.scrollTop + courseOutline.clientHeight >= courseOutline.scrollHeight - 8;
+    outlineScrollHint.hidden = !hasOverflow || nearBottom;
+  }
+
+  function renderLessonActionBar(lesson) {
+    if (!lessonActionBar || !lessonCompleteButton || !lessonActionNote) return;
+    const lessonId = String(lesson?.id || '');
+    const isResumeUpload = normalize(lesson?.content_type) === 'resume_upload';
+    if (!lessonId || isResumeUpload) {
+      lessonActionBar.hidden = true;
+      return;
+    }
+
+    const sequence = getLessonSequence(lessonId);
+    const isCompleted = completedLessonIds.has(lessonId);
+    lessonActionBar.hidden = false;
+
+    if (isCompleted) {
+      if (sequence.next) {
+        lessonCompleteButton.textContent = 'Continue to next lesson';
+        lessonActionNote.textContent = 'Great. This lesson is already completed.';
+      } else {
+        lessonCompleteButton.textContent = 'Course completed';
+        lessonActionNote.textContent = 'You finished all lessons in this course.';
+      }
+      return;
+    }
+
+    lessonCompleteButton.textContent = sequence.next ? 'Mark as completed & Continue' : 'Mark as completed';
+    lessonActionNote.textContent = 'Progress updates only when you click this button.';
+  }
+
   function renderLesson(lessonId) {
     const context = getLessonContextById(lessonId) || getLessonContextById(firstVisibleLessonId()) || getLessonContextById(firstLessonId());
     if (!context) {
@@ -680,6 +794,7 @@
 
     const { lesson, module } = context;
     currentLessonId = lesson.id;
+    const sequence = getLessonSequence(lesson.id);
 
     lessonButtons.forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.lessonId === lesson.id);
@@ -693,14 +808,17 @@
       metaParts.push(readableType(lesson.content_type));
     }
     lessonMeta.textContent = metaParts.join(' · ');
+    if (lessonStepPill) {
+      const position = sequence.index >= 0 ? sequence.index + 1 : 0;
+      lessonStepPill.textContent = `Lesson ${position} of ${sequence.total}`;
+    }
     updateLessonUrl(lesson.id);
+    renderLessonActionBar(lesson);
 
     if (lesson.content_type === 'resume_upload') {
       renderResumeUploadLesson(lesson);
       return;
     }
-
-    markLessonCompleted(lesson.id);
 
     if (lesson.content_type === 'video_url') {
       const structured = getStructuredLessonContent(lesson);
@@ -753,6 +871,28 @@
     btn.addEventListener('click', () => renderLesson(btn.dataset.lessonId));
   });
 
+  lessonCompleteButton?.addEventListener('click', async () => {
+    if (!currentLessonId) return;
+    const sequence = getLessonSequence(currentLessonId);
+    const alreadyCompleted = completedLessonIds.has(String(currentLessonId));
+
+    if (alreadyCompleted) {
+      if (sequence.next) renderLesson(sequence.next);
+      return;
+    }
+
+    lessonCompleteButton.disabled = true;
+    const completed = await markLessonCompleted(currentLessonId);
+    lessonCompleteButton.disabled = false;
+    if (!completed) return;
+
+    if (sequence.next) {
+      renderLesson(sequence.next);
+    } else {
+      renderLesson(currentLessonId);
+    }
+  });
+
   moduleButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const moduleId = btn.dataset.moduleToggle;
@@ -762,6 +902,7 @@
       wrap.hidden = !isCollapsed;
       btn.classList.toggle('is-collapsed', !isCollapsed);
       btn.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
+      updateOutlineScrollHint();
     });
   });
 
@@ -802,11 +943,20 @@
         searchEmpty.hidden = visibleCount > 0;
       }
 
+      updateOutlineScrollHint();
       if (currentLessonId && isLessonVisible(currentLessonId)) return;
       renderLesson(firstVisibleLessonId());
     });
   }
 
+  outlineScrollHint?.addEventListener('click', () => {
+    if (!courseOutline) return;
+    courseOutline.scrollBy({ top: 240, behavior: 'smooth' });
+  });
+  courseOutline?.addEventListener('scroll', updateOutlineScrollHint);
+  window.addEventListener('resize', updateOutlineScrollHint);
+
   refreshProgressUI();
   renderLesson(payload.selected_lesson_id || firstLessonId());
+  updateOutlineScrollHint();
 })();
