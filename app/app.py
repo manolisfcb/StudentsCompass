@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.db import create_db_and_tables
 import os
 
@@ -27,6 +28,7 @@ from app.routes.resourceRoute import router as resource_router
 from app.routes.roadmapRoute import router as roadmap_router
 from app.routes.adminRoute import router as admin_router
 from app.services.roadmapSeedService import seed_roadmaps_on_startup_if_dev
+from app.middleware.rate_limit import RequestRateLimiter
 from fastapi import Response
 from fastapi.responses import FileResponse
 @asynccontextmanager
@@ -39,6 +41,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+rate_limiter = RequestRateLimiter.from_env()
 
 # Configure CORS origins from environment.
 def _load_cors_origins() -> list[str]:
@@ -63,6 +66,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def apply_rate_limits(request, call_next):
+    allowed, retry_after = rate_limiter.check(request)
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please try again later."},
+            headers={"Retry-After": str(retry_after)},
+        )
+    return await call_next(request)
+
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
     xml_content = """<?xml version="1.0" encoding="UTF-8"?>

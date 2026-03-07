@@ -17,8 +17,24 @@ import os
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-SECRET = os.getenv("SECRET_KEY", "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION")
 ENV = os.getenv("ENV", "development").lower()
+IS_PRODUCTION = ENV in {"production", "prod"}
+_DEFAULT_SECRET_FALLBACK = "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION"
+
+
+def _load_secret_key() -> str:
+    configured_secret = os.getenv("SECRET_KEY", "").strip()
+    if configured_secret:
+        return configured_secret
+
+    if IS_PRODUCTION:
+        raise RuntimeError("SECRET_KEY must be configured in production.")
+
+    logger.warning("SECRET_KEY is not set; using development fallback secret.")
+    return _DEFAULT_SECRET_FALLBACK
+
+
+SECRET = _load_secret_key()
 
 class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
     reset_password_token_secret = SECRET
@@ -31,7 +47,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
     ):
-        logger.info(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.info(f"User {user.id} requested a password reset.")
         await super().on_after_forgot_password(user, token, request)
         
 
@@ -44,7 +60,7 @@ async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db
 cookie_transport = CookieTransport(
     cookie_name="studentscompass_auth",
     cookie_max_age=3600,
-    cookie_secure=(ENV == "production"),
+    cookie_secure=IS_PRODUCTION,
     cookie_samesite="lax",
 )
 
