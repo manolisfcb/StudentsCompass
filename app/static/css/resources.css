@@ -585,6 +585,13 @@
   background: #000000;
 }
 
+.lesson-video-note {
+  color: #0F172A;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
 .video-wrap iframe {
   position: absolute;
   inset: 0;

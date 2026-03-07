@@ -82,6 +82,30 @@
     }
   }
 
+  function parseVideoContent(rawContent) {
+    const raw = (rawContent || '').trim();
+    if (!raw) return { url: '', description: '' };
+
+    if (raw.startsWith('{') && raw.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(raw);
+        return {
+          url: (parsed.url || '').toString().trim(),
+          description: (parsed.description || '').toString().trim(),
+        };
+      } catch {
+        // Fallback to line-based parsing when invalid JSON.
+      }
+    }
+
+    const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const firstUrlLine = lines.find((line) => isSafeHttpUrl(line)) || '';
+    if (!firstUrlLine) return { url: raw, description: '' };
+
+    const description = lines.filter((line) => line !== firstUrlLine).join(' ');
+    return { url: firstUrlLine, description };
+  }
+
   function getLessonContextById(lessonId) {
     for (const module of payload.modules || []) {
       const found = (module.lessons || []).find((lesson) => lesson.id === lessonId);
@@ -148,12 +172,19 @@
     lessonMeta.textContent = metaParts.join(' · ');
 
     if (lesson.content_type === 'video_url') {
-      const embedUrl = toEmbedUrl(lesson.content);
+      const parsedVideo = parseVideoContent(lesson.content);
+      const embedUrl = toEmbedUrl(parsedVideo.url);
       if (!embedUrl) {
         lessonContent.textContent = 'This video URL is not valid.';
         return;
       }
-      lessonContent.innerHTML = `<div class=\"video-wrap\"><iframe src=\"${embedUrl}\" allowfullscreen loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe></div>`;
+      const descriptionHtml = parsedVideo.description
+        ? `<p class=\"lesson-video-note\">${parsedVideo.description}</p>`
+        : '';
+      const directLinkHtml = isSafeHttpUrl(parsedVideo.url)
+        ? `<p><a class=\"open-resource\" href=\"${parsedVideo.url}\" target=\"_blank\" rel=\"noopener noreferrer\">Open video in YouTube</a></p>`
+        : '';
+      lessonContent.innerHTML = `${descriptionHtml}<div class=\"video-wrap\"><iframe src=\"${embedUrl}\" allowfullscreen loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe></div>${directLinkHtml}`;
       return;
     }
 
