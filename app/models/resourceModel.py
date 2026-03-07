@@ -30,16 +30,6 @@ class ResourceModel(Base):
         cascade="all, delete-orphan",
         order_by="ResourceModuleModel.position",
     )
-    enrollments = relationship(
-        "ResourceEnrollmentModel",
-        back_populates="resource",
-        cascade="all, delete-orphan",
-    )
-    lesson_progress_entries = relationship(
-        "ResourceLessonProgressModel",
-        back_populates="resource",
-        cascade="all, delete-orphan",
-    )
 
     # TODO(progress): Keep this entity read-only for users for now.
     # Later we can add per-user progress via a ResourceLessonProgress table:
