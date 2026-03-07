@@ -104,7 +104,6 @@ async def resources(
             "request": request,
             "resources": resources,
             "resource_detail_access_enabled": RESOURCE_DETAIL_ACCESS_ENABLED,
-            "locked_notice": request.query_params.get("locked") == "1",
             "mandatory_course_titles": list(ResourceService.MANDATORY_RESOURCE_TITLES),
         },
     )
