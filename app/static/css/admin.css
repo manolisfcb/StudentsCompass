@@ -7,6 +7,7 @@
 
 /* ── CSS Variables ─────────────────────────────────────────── */
 :root {
+  color-scheme: dark;
   --admin-bg: #0a0e1a;
   --admin-bg-secondary: #111827;
   --admin-surface: rgba(17, 24, 39, 0.7);
@@ -53,6 +54,13 @@
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* Keep admin rendering stable on OS/browser dark mode toggles. */
+.admin-body,
+.admin-login-page,
+.admin-modal {
+  color-scheme: dark;
 }
 
 .admin-body * { box-sizing: border-box; }

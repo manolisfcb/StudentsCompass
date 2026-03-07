@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+import mimetypes
+import os
 from typing import Iterable
 
 from sqlalchemy import select
@@ -19,11 +21,20 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,
 )
+from app.services.resourceLessonContentCodec import ResourceLessonContentCodec
+from app.services.s3Service import S3Service
 
 
 class ResourceService:
+    MANDATORY_RESOURCE_TITLES: tuple[str, ...] = (
+        "LinkedIn Optimization",
+        "Interview Preparation",
+        "Resume Templates",
+    )
+
     def __init__(self, session: AsyncSession):
         self.session = session
+        self.lesson_content_codec = ResourceLessonContentCodec()
         self.resources_bucket = os.getenv("RESOURCES_BUCKET_NAME") or os.getenv("BUCKET_NAME")
         try:
             self.s3_service = S3Service(bucket_name=self.resources_bucket) if self.resources_bucket else None
@@ -41,6 +52,22 @@ class ResourceService:
         if not completed_lesson_ids:
             return set()
         return set(completed_lesson_ids)
+
+    @classmethod
+    def is_mandatory_title(cls, title: str | None) -> bool:
+        return (title or "").strip() in cls.MANDATORY_RESOURCE_TITLES
+
+    @classmethod
+    def prioritize_mandatory_resources(cls, resources: list[ResourceModel]) -> list[ResourceModel]:
+        mandatory_by_title = {resource.title: resource for resource in resources if cls.is_mandatory_title(resource.title)}
+        mandatory_ordered = [
+            mandatory_by_title[title]
+            for title in cls.MANDATORY_RESOURCE_TITLES
+            if title in mandatory_by_title
+        ]
+        mandatory_ids = {resource.id for resource in mandatory_ordered}
+        remaining = [resource for resource in resources if resource.id not in mandatory_ids]
+        return mandatory_ordered + remaining
 
     async def list_published_resources(
         self,
@@ -75,7 +102,7 @@ class ResourceService:
         else:
             resources.sort(key=lambda r: r.created_at, reverse=True)
 
-        return resources
+        return self.prioritize_mandatory_resources(resources)
 
     async def get_resource_with_outline(self, resource_id: UUID) -> ResourceModel | None:
         result = await self.session.execute(
@@ -199,6 +226,33 @@ class ResourceService:
         completed_ids = await self.get_completed_lesson_ids_for_resource(resource_id=resource.id, user_id=user_id)
         return self.to_progress_payload(resource, completed_ids)
 
+    async def download_resource_file(self, key: str) -> tuple[bytes, str, str]:
+        safe_key = (key or "").strip().lstrip("/")
+        if not safe_key:
+            raise ValueError("File key is required.")
+        if not safe_key.startswith("resources/"):
+            raise ValueError("Invalid resource file key.")
+        if not self.s3_service:
+            raise ValueError("Resource storage is not configured.")
+
+        file_bytes = await self.s3_service.download_file(safe_key)
+        media_type = mimetypes.guess_type(safe_key)[0] or "application/octet-stream"
+        filename = safe_key.rsplit("/", 1)[-1] or "resource_file"
+        return file_bytes, media_type, filename
+
+    async def list_user_enrollment_progress(self, user_id: UUID) -> list[dict]:
+        resource_result = await self.session.execute(
+            select(ResourceModel)
+            .options(selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons))
+            .order_by(ResourceModel.created_at.desc())
+        )
+        resources = list(resource_result.scalars().all())
+        progress_payloads: list[dict] = []
+        for resource in resources:
+            completed_ids = await self.get_completed_lesson_ids_for_resource(resource.id, user_id)
+            progress_payloads.append(self.to_progress_payload(resource, completed_ids))
+        return progress_payloads
+
     def to_detail_payload(
         self,
         resource: ResourceModel,
@@ -215,6 +269,10 @@ class ResourceService:
             module_completed = 0
 
             for lesson in module.lessons:
+                content_fields = self.lesson_content_codec.to_api_fields(
+                    content_type=lesson.content_type,
+                    raw_content=lesson.content,
+                )
                 total_lessons += 1
                 is_completed = lesson.id in completed_ids
                 if is_completed:
@@ -226,8 +284,12 @@ class ResourceService:
                         "module_id": str(lesson.module_id),
                         "title": lesson.title,
                         "position": lesson.position,
-                        "content_type": lesson.content_type,
-                        "content": content,
+                        "content_type": content_fields["content_type"],
+                        "content": content_fields["content"],
+                        "content_payload": content_fields["content_payload"],
+                        "video_url": content_fields["video_url"],
+                        "resource_url": content_fields["resource_url"],
+                        "notes": content_fields["notes"],
                         "reading_time_minutes": lesson.reading_time_minutes,
                         "created_at": lesson.created_at.isoformat(),
                         "is_completed": is_completed,

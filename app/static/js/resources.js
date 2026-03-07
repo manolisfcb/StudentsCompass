@@ -1,5 +1,8 @@
 (function () {
-  const grid = document.getElementById('resources-grid');
+  const mandatoryGrid = document.getElementById('mandatory-grid');
+  const complementaryGrid = document.getElementById('complementary-grid');
+  const mandatorySection = document.getElementById('mandatory-section');
+  const complementarySection = document.getElementById('complementary-section');
   const cards = Array.from(document.querySelectorAll('.resource-card'));
   const chips = Array.from(document.querySelectorAll('.filter-chip'));
   const searchInput = document.getElementById('resource-search');
@@ -10,7 +13,7 @@
 
   function getFilteredCards() {
     const q = (searchInput?.value || '').trim().toLowerCase();
-    let list = cards.filter((card) => {
+    const list = cards.filter((card) => {
       const category = (card.dataset.category || '').toLowerCase();
       if (activeCategory !== 'all' && category !== activeCategory) return false;
 
@@ -19,32 +22,49 @@
       return haystack.includes(q);
     });
 
-    const sort = sortSelect?.value || 'recent';
-    if (sort === 'name') {
-      list.sort((a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || ''));
-    } else if (sort === 'duration') {
-      list.sort((a, b) => Number(a.dataset.duration || 999999) - Number(b.dataset.duration || 999999));
-    } else {
-      list.sort((a, b) => new Date(b.dataset.createdAt || 0) - new Date(a.dataset.createdAt || 0));
-    }
-
     return list;
   }
 
+  function sortCards(list) {
+    const sorted = [...list];
+    const sort = sortSelect?.value || 'recent';
+    if (sort === 'name') {
+      sorted.sort((a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || ''));
+    } else if (sort === 'duration') {
+      sorted.sort((a, b) => Number(a.dataset.duration || 999999) - Number(b.dataset.duration || 999999));
+    } else {
+      sorted.sort((a, b) => new Date(b.dataset.createdAt || 0) - new Date(a.dataset.createdAt || 0));
+    }
+    return sorted;
+  }
+
   function render() {
-    if (!grid) return;
+    if (!mandatoryGrid || !complementaryGrid) return;
     const filtered = getFilteredCards();
+    const mandatoryCards = sortCards(filtered.filter((card) => card.dataset.mandatory === '1'));
+    const complementaryCards = sortCards(filtered.filter((card) => card.dataset.mandatory !== '1'));
 
     cards.forEach((card) => {
       card.style.display = 'none';
-      grid.appendChild(card);
+      if (card.dataset.mandatory === '1') {
+        mandatoryGrid.appendChild(card);
+      } else {
+        complementaryGrid.appendChild(card);
+      }
     });
 
-    filtered.forEach((card) => {
+    mandatoryCards.forEach((card) => {
       card.style.display = '';
-      grid.appendChild(card);
+      mandatoryGrid.appendChild(card);
     });
 
+    complementaryCards.forEach((card) => {
+      card.style.display = '';
+      complementaryGrid.appendChild(card);
+    });
+
+    if (mandatorySection) mandatorySection.style.display = mandatoryCards.length ? '' : 'none';
+    if (complementarySection) complementarySection.style.display = complementaryCards.length ? '' : 'none';
     if (emptyState) emptyState.style.display = filtered.length ? 'none' : 'block';
   }
 

@@ -37,7 +37,10 @@ class ResourceCreate(BaseModel):
 class ResourceLessonCreate(BaseModel):
     title: str
     content_type: str = "text"
-    content: str
+    content: Optional[str] = None
+    video_url: Optional[str] = None
+    resource_url: Optional[str] = None
+    notes: Optional[str] = None
     reading_time_minutes: Optional[int] = None
 
 
@@ -54,6 +57,10 @@ class ResourceLessonRead(BaseModel):
     position: int
     content_type: str
     content: str
+    content_payload: Optional[dict[str, str]] = None
+    video_url: Optional[str] = None
+    resource_url: Optional[str] = None
+    notes: Optional[str] = None
     reading_time_minutes: Optional[int] = None
     created_at: datetime
 

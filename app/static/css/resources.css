@@ -175,6 +175,30 @@
   outline: none;
 }
 
+.resource-group {
+  margin-bottom: 1.4rem;
+}
+
+.resource-group-head {
+  margin-bottom: 0.7rem;
+}
+
+.resource-group-head h3 {
+  margin: 0 0 0.25rem;
+  color: #0F172A;
+  font-size: 1.08rem;
+}
+
+.resource-group-head p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.resources-grid-group {
+  margin-bottom: 0.2rem;
+}
+
 .resources-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -220,6 +244,11 @@
 .resource-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, .1);
+}
+
+.resource-card-mandatory {
+  border-color: #14B8A6;
+  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.15);
 }
 
 .resource-card-locked {
@@ -273,6 +302,12 @@
   padding: .2rem .6rem;
   font-size: .74rem;
   font-weight: 600;
+}
+
+.meta-pill-mandatory {
+  background: #CCFBF1;
+  border-color: #5EEAD4;
+  color: #115E59;
 }
 
 .resource-tags {

@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.db import create_db_and_tables
+import os
 
 from contextlib import asynccontextmanager
 from app.routes.postRoute import router as post_router
@@ -24,6 +25,7 @@ from app.routes.dashboardRoute import router as dashboard_router
 from app.routes.communityRoute import router as community_router
 from app.routes.resourceRoute import router as resource_router
 from app.routes.roadmapRoute import router as roadmap_router
+from app.routes.adminRoute import router as admin_router
 from app.services.roadmapSeedService import seed_roadmaps_on_startup_if_dev
 from fastapi import Response
 from fastapi.responses import FileResponse
@@ -38,10 +40,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Configure CORS origins from environment.
+def _load_cors_origins() -> list[str]:
+    configured = os.getenv("CORS_ORIGINS", "")
+    if configured.strip():
+        return [origin.strip() for origin in configured.split(",") if origin.strip()]
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "https://studentscompass.ca",
+        "https://www.studentscompass.ca",
+    ]
+
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, cambia esto a tu dominio específico
+    allow_origins=_load_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,3 +105,4 @@ app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(community_router, prefix="/api/v1", tags=["communities"])
 app.include_router(resource_router, prefix="/api/v1", tags=["resources"])
 app.include_router(roadmap_router, prefix="/api/v1", tags=["roadmaps"])
+app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])

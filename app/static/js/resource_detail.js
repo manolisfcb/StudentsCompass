@@ -55,6 +55,8 @@
     const key = normalize(type);
     if (key === 'video_url') return 'Video lesson';
     if (key === 'external_link') return 'External resource';
+    if (key === 'pdf_url') return 'PDF resource';
+    if (key === 'ppt_url') return 'Slides resource';
     if (key === 'resume_upload') return 'Resume challenge';
     if (key === 'html') return 'HTML lesson';
     return 'Text lesson';
@@ -128,6 +130,31 @@
       return 'Upload your resume after completing previous lessons. We will review it in the next phase.';
     }
     return text;
+  }
+
+  function getStructuredLessonContent(lesson) {
+    const payload = lesson && typeof lesson.content_payload === 'object' && lesson.content_payload
+      ? lesson.content_payload
+      : null;
+    const hasPayload = Boolean(payload && Object.keys(payload).length);
+    const payloadBody = hasPayload && typeof payload.body === 'string' ? payload.body.trim() : '';
+    const payloadNotes = hasPayload && typeof payload.notes === 'string' ? payload.notes.trim() : '';
+    const payloadVideoUrl = hasPayload && typeof payload.video_url === 'string' ? payload.video_url.trim() : '';
+    const payloadResourceUrl = hasPayload && typeof payload.resource_url === 'string' ? payload.resource_url.trim() : '';
+
+    const explicitVideoUrl = typeof lesson.video_url === 'string' ? lesson.video_url.trim() : '';
+    const explicitResourceUrl = typeof lesson.resource_url === 'string' ? lesson.resource_url.trim() : '';
+    const explicitNotes = typeof lesson.notes === 'string' ? lesson.notes.trim() : '';
+    const legacyContent = typeof lesson.content === 'string' ? lesson.content.trim() : '';
+
+    return {
+      hasPayload,
+      videoUrl: explicitVideoUrl || payloadVideoUrl,
+      resourceUrl: explicitResourceUrl || payloadResourceUrl,
+      notes: explicitNotes || payloadNotes,
+      body: hasPayload ? payloadBody : legacyContent,
+      legacyContent,
+    };
   }
 
   function getLessonContextById(lessonId) {
@@ -270,7 +297,8 @@
   function renderResumeUploadLesson(lesson) {
     let maxAttemptsPerDay = 3;
     const prerequisite = getPrerequisiteProgress(lesson.id);
-    const helperText = parseResumeUploadContent(lesson.content);
+    const structured = getStructuredLessonContent(lesson);
+    const helperText = parseResumeUploadContent(structured.body || structured.notes || structured.legacyContent);
 
     lessonContent.innerHTML = `
       <section class="resume-upload-lesson">
@@ -675,7 +703,13 @@
     markLessonCompleted(lesson.id);
 
     if (lesson.content_type === 'video_url') {
-      const parsedVideo = parseVideoContent(lesson.content);
+      const structured = getStructuredLessonContent(lesson);
+      const parsedVideo = structured.videoUrl
+        ? {
+            url: structured.videoUrl,
+            description: structured.notes || structured.body || '',
+          }
+        : parseVideoContent(lesson.content);
       const embedUrl = toEmbedUrl(parsedVideo.url);
       if (!embedUrl) {
         lessonContent.textContent = 'This video URL is not valid.';
@@ -691,19 +725,27 @@
       return;
     }
 
-    if (lesson.content_type === 'external_link') {
-      if (isSafeHttpUrl(lesson.content)) {
-        lessonContent.innerHTML = `<p>This lesson opens an external resource.</p><p><a class=\"open-resource\" href=\"${lesson.content}\" target=\"_blank\" rel=\"noopener noreferrer\">Open resource</a></p>`;
+    if (lesson.content_type === 'external_link' || lesson.content_type === 'pdf_url' || lesson.content_type === 'ppt_url') {
+      const structured = getStructuredLessonContent(lesson);
+      const linkUrl = structured.resourceUrl || (isSafeHttpUrl(structured.legacyContent) ? structured.legacyContent : '');
+      const noteHtml = structured.notes
+        ? `<p class=\"lesson-video-note\">${escapeHtml(structured.notes)}</p>`
+        : '';
+      if (isSafeHttpUrl(linkUrl)) {
+        lessonContent.innerHTML = `${noteHtml}<p>This lesson opens an external resource.</p><p><a class=\"open-resource\" href=\"${linkUrl}\" target=\"_blank\" rel=\"noopener noreferrer\">Open resource</a></p>`;
       } else {
-        lessonContent.textContent = lesson.content || 'External link unavailable.';
+        lessonContent.textContent = structured.legacyContent || 'External link unavailable.';
       }
       return;
     }
 
     if (lesson.content_type === 'html') {
-      lessonContent.innerHTML = sanitizeHtml(lesson.content);
+      const structured = getStructuredLessonContent(lesson);
+      const body = structured.body || structured.legacyContent;
+      lessonContent.innerHTML = sanitizeHtml(body);
     } else {
-      lessonContent.textContent = lesson.content;
+      const structured = getStructuredLessonContent(lesson);
+      lessonContent.textContent = structured.body || structured.legacyContent;
     }
   }
 

@@ -3,8 +3,40 @@
 {% set page_description = "Browse curated career courses, guides, and learning resources tailored to students on Student Compass, with filters and quick search." %}
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/resources.css">
+  <link rel="stylesheet" href="/static/css/resources.css?v=20260307a">
 {% endblock %}
+{% macro render_resource_card(resource, is_mandatory, resource_detail_access_enabled) -%}
+  <article
+    class="resource-card {% if is_mandatory %}resource-card-mandatory{% endif %} {% if not resource_detail_access_enabled %}resource-card-locked{% endif %}"
+    data-category="{{ (resource.category or '') | lower }}"
+    data-title="{{ resource.title }}"
+    data-description="{{ resource.description }}"
+    data-tags="{{ (resource.tags or []) | join(' ') }}"
+    data-created-at="{{ resource.created_at.isoformat() }}"
+    data-duration="{{ resource.estimated_duration_minutes or '' }}"
+    data-mandatory="{{ '1' if is_mandatory else '0' }}"
+  >
+    <div class="resource-icon">{{ resource.icon or '📚' }}</div>
+    <h3 class="resource-title">{{ resource.title }}</h3>
+    <p class="resource-description">{{ resource.description }}</p>
+    <div class="resource-meta">
+      {% if is_mandatory %}<span class="meta-pill meta-pill-mandatory">Mandatory</span>{% endif %}
+      <span class="meta-pill">{{ resource.category }}</span>
+      {% if resource.level %}<span class="meta-pill">{{ resource.level }}</span>{% endif %}
+      {% if resource.estimated_duration_minutes %}<span class="meta-pill">{{ resource.estimated_duration_minutes }} min</span>{% endif %}
+    </div>
+    <div class="resource-tags">
+      {% for tag in resource.tags or [] %}
+      <span class="tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% if resource_detail_access_enabled %}
+    <a class="resource-open-btn" href="/resources/{{ resource.id }}">Open course</a>
+    {% else %}
+    <button class="resource-open-btn resource-open-btn-locked" type="button" disabled aria-disabled="true">Access locked</button>
+    {% endif %}
+  </article>
+{%- endmacro %}
 {% block content %}
   {% include "includes/header.html" %}
 
@@ -60,38 +92,29 @@
           </select>
         </div>
 
-        <div id="resources-grid" class="resources-grid">
-          {% for resource in resources %}
-          <article
-            class="resource-card {% if not resource_detail_access_enabled %}resource-card-locked{% endif %}"
-            data-category="{{ (resource.category or '') | lower }}"
-            data-title="{{ resource.title }}"
-            data-description="{{ resource.description }}"
-            data-tags="{{ (resource.tags or []) | join(' ') }}"
-            data-created-at="{{ resource.created_at.isoformat() }}"
-            data-duration="{{ resource.estimated_duration_minutes or '' }}"
-          >
-            <div class="resource-icon">{{ resource.icon or '📚' }}</div>
-            <h3 class="resource-title">{{ resource.title }}</h3>
-            <p class="resource-description">{{ resource.description }}</p>
-            <div class="resource-meta">
-              <span class="meta-pill">{{ resource.category }}</span>
-              {% if resource.level %}<span class="meta-pill">{{ resource.level }}</span>{% endif %}
-              {% if resource.estimated_duration_minutes %}<span class="meta-pill">{{ resource.estimated_duration_minutes }} min</span>{% endif %}
-            </div>
-            <div class="resource-tags">
-              {% for tag in resource.tags or [] %}
-              <span class="tag">{{ tag }}</span>
-              {% endfor %}
-            </div>
-            {% if resource_detail_access_enabled %}
-            <a class="resource-open-btn" href="/resources/{{ resource.id }}">Open course</a>
-            {% else %}
-            <button class="resource-open-btn resource-open-btn-locked" type="button" disabled aria-disabled="true">Access locked</button>
-            {% endif %}
-          </article>
-          {% endfor %}
-        </div>
+        <section id="mandatory-section" class="resource-group" aria-label="Mandatory courses">
+          <div class="resource-group-head">
+            <h3>Mandatory Courses</h3>
+            <p>Complete these 3 courses first to unlock the strongest baseline for interviews.</p>
+          </div>
+          <div id="mandatory-grid" class="resources-grid resources-grid-group">
+            {% for resource in resources if resource.title in mandatory_course_titles %}
+            {{ render_resource_card(resource, true, resource_detail_access_enabled) }}
+            {% endfor %}
+          </div>
+        </section>
+
+        <section id="complementary-section" class="resource-group" aria-label="Complementary courses">
+          <div class="resource-group-head">
+            <h3>Complementary Courses</h3>
+            <p>Recommended after the mandatory path, based on your role goals.</p>
+          </div>
+          <div id="complementary-grid" class="resources-grid resources-grid-group">
+            {% for resource in resources if resource.title not in mandatory_course_titles %}
+            {{ render_resource_card(resource, false, resource_detail_access_enabled) }}
+            {% endfor %}
+          </div>
+        </section>
 
         <div id="resources-empty" class="empty-state" {% if resources|length > 0 %}style="display:none;"{% endif %}>
           No resources found for this filter.
@@ -101,5 +124,5 @@
   </main>
 
   {% include "includes/footer.html" %}
-  <script src="/static/js/resources.js"></script>
+  <script src="/static/js/resources.js?v=20260307a"></script>
 {% endblock %}

@@ -319,6 +319,174 @@ SEED_RESOURCES = [
             },
         ],
     },
+    {
+        "title": "HackerRank SQL for Beginners to Advanced",
+        "description": "Learn SQL step by step with real HackerRank challenges — from beginner to advanced.\nEach video includes the problem explanation, query logic, and the final solution.\nPerfect for anyone starting in data, analytics, or software development.",
+        "icon": "🧠",
+        "category": "Career",
+        "tags": ["LeetCode", "SQL", "Interviews", "HackerRank"],
+        "level": "Beginner",
+        "estimated_duration_minutes": 90,
+        "external_url": "https://www.youtube.com/playlist?list=PLtIxAGlpsx_-dHpnhpOs1HOhi84wyDM2M",
+        "modules": [
+            {
+                "title": "Filtering Fundamentals",
+                "description": "Start with basic WHERE conditions and single-table retrieval patterns.",
+                "lessons": [
+                    (
+                        "SQL for Beginners #1 (HackerRank) – Selecting American Cities with Population Over 100,000",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=npGhyCcU3zE\nLearn how to filter rows with basic numeric conditions using WHERE.",
+                        8,
+                    ),
+                    (
+                        "SQL for Beginners #2 (HackerRank)– Query all the NAME of American Cities with population Over 120000",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=c5_KOVCK-6E\nReturn specific columns while applying stricter population filters.",
+                        8,
+                    ),
+                    (
+                        "SQL for Beginners #3 (HackerRank) – Query CITY WITH ID = ID",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=EpM13lnXlUs\nUse equality-based filters to target exact records by identifier.",
+                        8,
+                    ),
+                    (
+                        "SQL for Beginners #8 (HackerRank) – Filter Employees by Salary",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=RoA1cuQMoVg\nApply salary thresholds to isolate qualified employee rows.",
+                        8,
+                    ),
+                ],
+            },
+            {
+                "title": "String and Pattern Queries",
+                "description": "Solve interview questions involving string matching, ordering, and edge cases.",
+                "lessons": [
+                    (
+                        "SQL for Beginners #7 (HackerRank) – Cities Starting with Vow",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=dnEFgQEgs_Q\nUse string predicates to match city names by first-letter patterns.",
+                        8,
+                    ),
+                    (
+                        "SQL for Beginners #6.1 (HackerRank) – Shortest and Largest Cities names",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=7q7zp1sVDcA\nApproach shortest/largest city name queries using sorting and limits.",
+                        8,
+                    ),
+                    (
+                        "SQL for Beginners #6.2  (HackerRank) – Shortest and Largest Cities names",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=8GyozohXivI\nReview alternate solutions for tie-breaking and lexicographic ordering.",
+                        8,
+                    ),
+                ],
+            },
+            {
+                "title": "Aggregation and Distinct",
+                "description": "Practice counts and uniqueness checks common in coding interviews.",
+                "lessons": [
+                    (
+                        "SQL for Beginners #5  (HackerRank) – Count Total and Unique Cities in Station",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=J6gInrod4zY\nCompare COUNT(*) vs COUNT(DISTINCT ...) in real interview prompts.",
+                        8,
+                    ),
+                    (
+                        "SQL: Format Names + Count Occupations (Easy)",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=9YDvzPakhn0\nCombine formatting and grouped counts to build interview-ready query output.",
+                        9,
+                    ),
+                ],
+            },
+            {
+                "title": "Set Logic and IDs",
+                "description": "Handle numeric ID constraints and deduplication patterns cleanly.",
+                "lessons": [
+                    (
+                        "SQL for Beginners #4 (HackerRank) – CITY Names with Even ID Num",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=6ce56x6DPeM\nFilter by parity and avoid duplicates when selecting by ID patterns.",
+                        8,
+                    ),
+                ],
+            },
+        ],
+    },
+    {
+        "title": "LeetCode Interview Prep: Arrays, Strings, and Hashing",
+        "description": "LeetCode-style interview walkthroughs focused on core Python problem-solving patterns.",
+        "icon": "🧩",
+        "category": "Career",
+        "tags": ["LeetCode", "Interviews", "Arrays", "Hashing", "Python"],
+        "level": "Beginner",
+        "estimated_duration_minutes": 60,
+        "external_url": "https://www.youtube.com/playlist?list=PLtIxAGlpsx_9nHZQ2Wk_4N7il7ZJT_qY8",
+        "modules": [
+            {
+                "title": "Arrays and Hashing",
+                "description": "Build fast lookup and frequency-map intuition for classic interview questions.",
+                "lessons": [
+                    (
+                        "Contains Duplicate | 3 Easy Python Solution",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=IqvwVIZi7UM\nLearn three clean approaches to detect duplicates efficiently in Python.",
+                        8,
+                    ),
+                    (
+                        "Group Anagrams  Python Solution",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=8WAaRE1XauI\nUse hash-map signatures to group anagrams with optimal runtime.",
+                        8,
+                    ),
+                    (
+                        "Top K Frequent Elements – Fast Python Solution",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=m38aZeVH6p8\nSolve top-k frequency queries using counting patterns and efficient selection.",
+                        8,
+                    ),
+                    (
+                        "Longest Consecutive Sequence - Python solution",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=AGRcmT8SnFw\nApply set-based logic to reach linear-time sequence detection.",
+                        8,
+                    ),
+                ],
+            },
+            {
+                "title": "Strings and Two Pointers",
+                "description": "Practice robust string validation with readable pointer-based logic.",
+                "lessons": [
+                    (
+                        "Solve Valid Palindrome in Python - 3 Solutions",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=gFFDJ_fI_2A\nCompare multiple palindrome strategies and choose the right tradeoff in interviews.",
+                        8,
+                    ),
+                ],
+            },
+            {
+                "title": "Interview Career and Coding Communication",
+                "description": "Supplement technical prep with communication and career execution habits.",
+                "lessons": [
+                    (
+                        "How I Made Job Fairs Finally Work for Me",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=7xxsvrAnW24\nPrepare stronger networking and outreach tactics for recruiting events.",
+                        8,
+                    ),
+                    (
+                        "Naming Things in Code",
+                        "video_url",
+                        "https://www.youtube.com/watch?v=-J3wNP6u5YU\nImprove code clarity with practical naming conventions interviewers appreciate.",
+                        8,
+                    ),
+                ],
+            },
+        ],
+    },
 ]
 
 

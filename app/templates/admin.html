@@ -11,33 +11,56 @@
         max-width: 920px;
         max-height: 90vh;
         overflow-y: auto;
-        color: #0f172a;
+        color: var(--admin-text);
+    }
+
+    #resourceModal .admin-modal {
+        background: linear-gradient(180deg, #111827 0%, #0f172a 100%) !important;
+        border: 1px solid rgba(148, 163, 184, 0.3) !important;
+        box-shadow: 0 24px 64px rgba(2, 6, 23, 0.6);
     }
 
     #resourceModal .admin-modal-title,
-    #resourceModal .admin-modal-desc,
     #resourceModal .admin-form-label,
     #resourceModal .resource-structure-title,
-    #resourceModal .resource-structure-note,
     #resourceModal .resource-module-title,
     #resourceModal .resource-item-label,
     #resourceModal .module-resources-title,
     #resourceModal .resource-upload-status {
-        color: #0f172a !important;
+        color: #e2e8f0 !important;
     }
 
+    #resourceModal .admin-modal-desc,
+    #resourceModal .resource-structure-note {
+        color: #94a3b8 !important;
+    }
+
+    #resourceModal textarea,
+    #resourceModal select,
     #resourceModal .admin-form-input {
-        color: #ffffff;
+        color: #e2e8f0 !important;
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px solid rgba(148, 163, 184, 0.35) !important;
+        -webkit-text-fill-color: #e2e8f0;
+    }
+
+    #resourceModal option {
+        color: #e2e8f0;
+        background: #0f172a;
+    }
+
+    #resourceModal input[type="checkbox"] {
+        accent-color: #38bdf8;
     }
 
     #resourceModal .admin-form-input::placeholder {
-        color: #cbd5e1;
+        color: #94a3b8;
         opacity: 1;
     }
 
     .resource-structure {
         margin-top: 16px;
-        border-top: 1px solid var(--admin-border);
+        border-top: 1px solid rgba(148, 163, 184, 0.25);
         padding-top: 16px;
     }
 
@@ -59,15 +82,15 @@
     .resource-structure-note {
         margin: 0 0 12px;
         font-size: 0.88rem;
-        color: #0f172a;
+        color: #94a3b8;
     }
 
     .resource-module-block {
-        border: 1px solid var(--admin-border);
+        border: 1px solid rgba(148, 163, 184, 0.25);
         border-radius: 12px;
         padding: 14px;
         margin-bottom: 14px;
-        background: #fff;
+        background: rgba(15, 23, 42, 0.5);
     }
 
     .resource-module-head {
@@ -89,11 +112,11 @@
     }
 
     .resource-item-row {
-        border: 1px dashed var(--admin-border);
+        border: 1px dashed rgba(148, 163, 184, 0.45);
         border-radius: 10px;
         padding: 10px;
         margin-bottom: 10px;
-        background: #fcfcfd;
+        background: rgba(15, 23, 42, 0.35);
     }
 
     .resource-item-head {
@@ -174,8 +197,8 @@
     <!-- Create Resource Modal -->
     <div id="resourceModal" class="admin-modal-overlay" style="display:none">
         <div class="admin-modal resource-create-modal">
-            <div class="admin-modal-title">Create Resource</div>
-            <div class="admin-modal-desc">Fill in the details and build the course structure.</div>
+            <div class="admin-modal-title" id="resourceModalTitle">Create Resource</div>
+            <div class="admin-modal-desc" id="resourceModalDesc">Fill in the details and build the course structure.</div>
 
             <form id="resourceForm" onsubmit="return handleCreateResource(event)">
                 <div class="admin-form-group">
@@ -211,6 +234,29 @@
                     <label class="admin-form-label">External URL (optional)</label>
                     <input class="admin-form-input" type="url" id="resUrl" placeholder="https://...">
                 </div>
+                <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                    <div class="admin-form-group" style="flex:1;min-width:260px;">
+                        <label class="admin-form-label">Tags (comma separated)</label>
+                        <input class="admin-form-input" id="resTags" placeholder="linkedin, resume, interview">
+                    </div>
+                    <div class="admin-form-group" style="width:220px;">
+                        <label class="admin-form-label">Published</label>
+                        <label style="display:flex;align-items:center;gap:10px;color:#0f172a;font-weight:600;">
+                            <input type="checkbox" id="resPublished" checked>
+                            Visible to students
+                        </label>
+                    </div>
+                </div>
+
+                <datalist id="lessonTypeSuggestions">
+                    <option value="text"></option>
+                    <option value="html"></option>
+                    <option value="external_link"></option>
+                    <option value="pdf_url"></option>
+                    <option value="ppt_url"></option>
+                    <option value="video_url"></option>
+                    <option value="resume_upload"></option>
+                </datalist>
 
                 <div class="resource-structure">
                     <div class="resource-structure-header">
@@ -228,7 +274,7 @@
                 <div class="admin-modal-actions" style="margin-top:20px;">
                     <button type="button" class="admin-btn admin-btn-ghost"
                         onclick="closeResourceModal()">Cancel</button>
-                    <button type="submit" class="admin-btn admin-btn-primary" id="resSubmit">Create</button>
+                    <button type="submit" class="admin-btn admin-btn-primary" id="resSubmit">Save Resource</button>
                 </div>
             </form>
         </div>
@@ -263,20 +309,8 @@
                         <span class="nav-icon">👥</span> Users
                         <span class="nav-badge" id="navBadgeUsers">—</span>
                     </button>
-                    <button class="admin-nav-item" onclick="showSection('communities', this)">
-                        <span class="nav-icon">💬</span> Communities
-                    </button>
                     <button class="admin-nav-item" onclick="showSection('resources', this)">
                         <span class="nav-icon">📚</span> Resources
-                    </button>
-                    <button class="admin-nav-item" onclick="showSection('jobs', this)">
-                        <span class="nav-icon">💼</span> Job Postings
-                    </button>
-                    <button class="admin-nav-item" onclick="showSection('companies', this)">
-                        <span class="nav-icon">🏢</span> Companies
-                    </button>
-                    <button class="admin-nav-item" onclick="showSection('applications', this)">
-                        <span class="nav-icon">📋</span> Applications
                     </button>
                 </div>
             </nav>
@@ -355,46 +389,6 @@
                     </div>
                 </div>
 
-                <!-- ════════════════ COMMUNITIES ══════════════ -->
-                <div class="admin-section" id="section-communities">
-                    <div class="admin-panel">
-                        <div class="admin-panel-header">
-                            <div class="admin-panel-title"><span class="panel-icon">💬</span> Communities</div>
-                            <div class="admin-panel-actions">
-                                <div class="admin-search">
-                                    <span class="search-icon">🔍</span>
-                                    <input type="text" placeholder="Search communities…" id="searchCommunities"
-                                        oninput="filterTable('communities')">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="admin-table-wrap">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Members</th>
-                                        <th>Status</th>
-                                        <th>Creator</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="communitiesTableBody">
-                                    <tr>
-                                        <td colspan="6">
-                                            <div class="admin-empty">
-                                                <div class="admin-empty-icon">⏳</div>
-                                                <div class="admin-empty-title">Loading communities…</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- ════════════════ RESOURCES ════════════════ -->
                 <div class="admin-section" id="section-resources">
                     <div class="admin-panel">
@@ -421,6 +415,8 @@
                                         <th>Title</th>
                                         <th>Category</th>
                                         <th>Level</th>
+                                        <th>Duration</th>
+                                        <th>Tags</th>
                                         <th>Status</th>
                                         <th>Created</th>
                                         <th>Actions</th>
@@ -428,129 +424,10 @@
                                 </thead>
                                 <tbody id="resourcesTableBody">
                                     <tr>
-                                        <td colspan="6">
+                                        <td colspan="8">
                                             <div class="admin-empty">
                                                 <div class="admin-empty-icon">⏳</div>
                                                 <div class="admin-empty-title">Loading resources…</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ════════════════ JOBS ═════════════════════ -->
-                <div class="admin-section" id="section-jobs">
-                    <div class="admin-panel">
-                        <div class="admin-panel-header">
-                            <div class="admin-panel-title"><span class="panel-icon">💼</span> Job Postings</div>
-                            <div class="admin-panel-actions">
-                                <div class="admin-search">
-                                    <span class="search-icon">🔍</span>
-                                    <input type="text" placeholder="Search jobs…" id="searchJobs"
-                                        oninput="filterTable('jobs')">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="admin-table-wrap">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Company</th>
-                                        <th>Location</th>
-                                        <th>Type</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="jobsTableBody">
-                                    <tr>
-                                        <td colspan="6">
-                                            <div class="admin-empty">
-                                                <div class="admin-empty-icon">⏳</div>
-                                                <div class="admin-empty-title">Loading jobs…</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ════════════════ COMPANIES ════════════════ -->
-                <div class="admin-section" id="section-companies">
-                    <div class="admin-panel">
-                        <div class="admin-panel-header">
-                            <div class="admin-panel-title"><span class="panel-icon">🏢</span> Companies</div>
-                            <div class="admin-panel-actions">
-                                <div class="admin-search">
-                                    <span class="search-icon">🔍</span>
-                                    <input type="text" placeholder="Search companies…" id="searchCompanies"
-                                        oninput="filterTable('companies')">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="admin-table-wrap">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Company</th>
-                                        <th>Industry</th>
-                                        <th>Location</th>
-                                        <th>Website</th>
-                                        <th>Email</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="companiesTableBody">
-                                    <tr>
-                                        <td colspan="6">
-                                            <div class="admin-empty">
-                                                <div class="admin-empty-icon">⏳</div>
-                                                <div class="admin-empty-title">Loading companies…</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ════════════════ APPLICATIONS ═════════════ -->
-                <div class="admin-section" id="section-applications">
-                    <div class="admin-panel">
-                        <div class="admin-panel-header">
-                            <div class="admin-panel-title"><span class="panel-icon">📋</span> Applications</div>
-                            <div class="admin-panel-actions">
-                                <div class="admin-search">
-                                    <span class="search-icon">🔍</span>
-                                    <input type="text" placeholder="Search applications…" id="searchApplications"
-                                        oninput="filterTable('applications')">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="admin-table-wrap">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Job Title</th>
-                                        <th>Applicant</th>
-                                        <th>Company</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="applicationsTableBody">
-                                    <tr>
-                                        <td colspan="5">
-                                            <div class="admin-empty">
-                                                <div class="admin-empty-icon">⏳</div>
-                                                <div class="admin-empty-title">Loading applications…</div>
                                             </div>
                                         </td>
                                     </tr>
@@ -640,9 +517,9 @@
         if (btn) btn.classList.add('active');
 
         const titles = {
-            dashboard: 'Dashboard', users: 'Users', communities: 'Communities',
-            resources: 'Resources', jobs: 'Job Postings', companies: 'Companies',
-            applications: 'Applications'
+            dashboard: 'Dashboard',
+            users: 'Users',
+            resources: 'Resources'
         };
         document.getElementById('headerTitle').textContent = titles[name] || name;
 
@@ -661,11 +538,7 @@
     const loaders = {
         dashboard: loadDashboard,
         users: loadUsers,
-        communities: loadCommunities,
         resources: loadResources,
-        jobs: loadJobs,
-        companies: loadCompanies,
-        applications: loadApplications,
     };
 
     // -- Dashboard Stats --
@@ -676,11 +549,7 @@
             const d = await res.json();
             const cards = [
                 { icon: '👥', cls: 'users', label: 'Total Users', value: d.total_users },
-                { icon: '🏢', cls: 'companies', label: 'Companies', value: d.total_companies },
-                { icon: '💬', cls: 'communities', label: 'Communities', value: d.total_communities },
                 { icon: '📚', cls: 'resources', label: 'Resources', value: d.total_resources },
-                { icon: '💼', cls: 'jobs', label: 'Job Postings', value: d.total_jobs },
-                { icon: '📋', cls: 'applications', label: 'Applications', value: d.total_applications },
                 { icon: '📄', cls: 'resumes', label: 'Resumes', value: d.total_resumes },
                 { icon: '📝', cls: 'questionnaires', label: 'Questionnaires', value: d.total_questionnaires },
             ];
@@ -780,53 +649,17 @@
         });
     }
 
-    // -- Communities --
-    let allCommunities = [];
-    async function loadCommunities() {
-        try {
-            const res = await fetch(`${API}/communities?limit=200`, { credentials: 'include' });
-            if (!res.ok) throw new Error();
-            const d = await res.json();
-            allCommunities = d.communities;
-            renderCommunities(allCommunities);
-        } catch { toast('Failed to load communities', 'error'); }
-    }
-
-    function renderCommunities(items) {
-        const tbody = document.getElementById('communitiesTableBody');
-        if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">💬</div><div class="admin-empty-title">No communities yet</div></div></td></tr>';
-            return;
-        }
-        tbody.innerHTML = items.map(c => `<tr data-search="${(c.name + ' ' + (c.creator_email || '')).toLowerCase()}">
-    <td><strong>${c.icon || ''} ${esc(c.name)}</strong></td>
-    <td>${c.member_count}</td>
-    <td><span class="admin-badge ${c.activity_status === 'active' ? 'active' : 'draft'}">${esc(c.activity_status) || '—'}</span></td>
-    <td>${esc(c.creator_email)}</td>
-    <td>${formatDate(c.created_at)}</td>
-    <td>
-      <div class="admin-actions-cell">
-        <button class="admin-btn-icon danger" title="Delete" onclick="deleteCommunity('${c.id}','${esc(c.name)}')">🗑️</button>
-      </div>
-    </td>
-  </tr>`).join('');
-    }
-
-    async function deleteCommunity(id, name) {
-        openConfirm('Delete Community', `Delete community "${name}" and all its posts? This cannot be undone.`, async () => {
-            try {
-                const res = await fetch(`${API}/communities/${id}`, { method: 'DELETE', credentials: 'include' });
-                if (!res.ok) throw new Error();
-                toast(`Community "${name}" deleted`);
-                await loadCommunities();
-                loadDashboard();
-            } catch { toast('Failed to delete', 'error'); }
-        });
-    }
-
     // -- Resources --
     let moduleDraftCounter = 0;
     let resourceDraftCounter = 0;
+    let editingResourceId = null;
+
+    function normalizeTags(rawTags) {
+        return String(rawTags || '')
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+    }
 
     function resetResourceStructureBuilder() {
         moduleDraftCounter = 0;
@@ -834,14 +667,59 @@
         document.getElementById('resourceModulesBuilder').innerHTML = '';
     }
 
+    function setResourceModalMode(mode) {
+        const isEdit = mode === 'edit';
+        document.getElementById('resourceModalTitle').textContent = isEdit ? 'Edit Resource' : 'Create Resource';
+        document.getElementById('resourceModalDesc').textContent = isEdit
+            ? 'Modify any field and save changes to this resource.'
+            : 'Fill in the details and build the course structure.';
+    }
+
     function openResourceModal() {
+        editingResourceId = null;
         document.getElementById('resourceForm').reset();
+        document.getElementById('resPublished').checked = true;
         resetResourceStructureBuilder();
         addModuleBlock();
+        setResourceModalMode('create');
         document.getElementById('resourceModal').style.display = '';
     }
 
+    async function openEditResourceModal(resourceId) {
+        try {
+            const res = await fetch(`${API}/resources/${resourceId}`, { credentials: 'include' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data?.detail || 'Failed to load resource details');
+            }
+            const resource = await res.json();
+            editingResourceId = resource.id;
+            setResourceModalMode('edit');
+            document.getElementById('resTitle').value = resource.title || '';
+            document.getElementById('resDesc').value = resource.description || '';
+            document.getElementById('resCategory').value = resource.category || '';
+            document.getElementById('resLevel').value = resource.level || '';
+            document.getElementById('resIcon').value = resource.icon || '';
+            document.getElementById('resDuration').value = resource.estimated_duration_minutes ?? '';
+            document.getElementById('resUrl').value = resource.external_url || '';
+            document.getElementById('resTags').value = Array.isArray(resource.tags) ? resource.tags.join(', ') : '';
+            document.getElementById('resPublished').checked = Boolean(resource.is_published);
+
+            resetResourceStructureBuilder();
+            const modules = Array.isArray(resource.modules) ? resource.modules : [];
+            if (!modules.length) {
+                addModuleBlock();
+            } else {
+                modules.forEach((module) => addModuleBlock(module));
+            }
+            document.getElementById('resourceModal').style.display = '';
+        } catch (e) {
+            toast(e.message || 'Failed to load resource details', 'error');
+        }
+    }
+
     function closeResourceModal() {
+        editingResourceId = null;
         document.getElementById('resourceModal').style.display = 'none';
     }
 
@@ -867,8 +745,8 @@
       </div>
       <div class="resource-items-wrap">
         <div class="resource-structure-header" style="margin-bottom:8px;">
-          <span class="module-resources-title">Module resources</span>
-          <button type="button" class="admin-btn admin-btn-ghost" onclick="addResourceBlock(${moduleId})">+ Add resource</button>
+          <span class="module-resources-title">Module lessons/resources</span>
+          <button type="button" class="admin-btn admin-btn-ghost" onclick="addResourceBlock(${moduleId})">+ Add lesson</button>
         </div>
         <div id="moduleResources-${moduleId}"></div>
       </div>
@@ -912,36 +790,38 @@
         row.dataset.resourceId = String(resourceId);
         row.innerHTML = `
       <div class="resource-item-head">
-        <span class="resource-item-label">Resource item</span>
+        <span class="resource-item-label">Lesson item</span>
         <button type="button" class="admin-btn admin-btn-danger" onclick="removeResourceBlock(${moduleId}, ${resourceId})">Remove</button>
       </div>
       <div class="admin-form-group">
-        <label class="admin-form-label">Resource title</label>
+        <label class="admin-form-label">Lesson title</label>
         <input class="admin-form-input lesson-title" placeholder="e.g. Intro video" required>
       </div>
-      <div style="display:flex;gap:12px;">
-        <div class="admin-form-group" style="flex:1;">
-          <label class="admin-form-label">Type</label>
-          <select class="admin-form-input lesson-type">
-            <option value="external_link">External link</option>
-            <option value="pdf_url">PDF</option>
-            <option value="ppt_url">PPT/PPTX</option>
-            <option value="video_url">Video</option>
-          </select>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="admin-form-group" style="flex:1;min-width:220px;">
+          <label class="admin-form-label">Content type</label>
+          <input class="admin-form-input lesson-type" list="lessonTypeSuggestions" placeholder="e.g. video_url">
         </div>
-        <div class="admin-form-group" style="flex:1;">
+        <div class="admin-form-group" style="flex:1;min-width:240px;">
+          <label class="admin-form-label">Primary URL (video/resource)</label>
+          <input class="admin-form-input lesson-url" type="url" placeholder="https://...">
+        </div>
+        <div class="admin-form-group" style="width:180px;">
           <label class="admin-form-label">Reading time (mins)</label>
           <input type="number" min="1" class="admin-form-input lesson-reading-time" placeholder="e.g. 8">
         </div>
       </div>
       <div class="admin-form-group">
-        <label class="admin-form-label">Stored URL (auto)</label>
-        <input class="admin-form-input lesson-content-view" placeholder="Upload a file to generate URL" readonly>
-        <input type="hidden" class="lesson-content">
+        <label class="admin-form-label">Lesson notes (optional)</label>
+        <textarea class="admin-form-input lesson-notes" rows="2" placeholder="Short note, context, or guidance for this lesson"></textarea>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Lesson body/content</label>
+        <textarea class="admin-form-input lesson-content" rows="3" placeholder="Detailed content or prompt text"></textarea>
       </div>
       <div class="resource-upload-row">
         <div class="admin-form-group" style="flex:1;margin-bottom:0;">
-          <label class="admin-form-label">Upload file to S3</label>
+          <label class="admin-form-label">Upload file to S3 (optional)</label>
           <input type="file" class="admin-form-input lesson-file">
         </div>
         <button type="button" class="admin-btn admin-btn-ghost" onclick="uploadLessonFile(${moduleId}, ${resourceId})">
@@ -955,9 +835,14 @@
         if (prefill?.title) row.querySelector('.lesson-title').value = prefill.title;
         if (prefill?.content_type) row.querySelector('.lesson-type').value = prefill.content_type;
         if (prefill?.reading_time_minutes) row.querySelector('.lesson-reading-time').value = prefill.reading_time_minutes;
-        if (prefill?.content) {
+        const prefillUrl = prefill?.video_url || prefill?.resource_url || '';
+        if (prefillUrl) row.querySelector('.lesson-url').value = prefillUrl;
+        if (prefill?.notes) row.querySelector('.lesson-notes').value = prefill.notes;
+        const payloadBody = prefill?.content_payload?.body || '';
+        if (payloadBody) {
+            row.querySelector('.lesson-content').value = payloadBody;
+        } else if (prefill?.content && (prefill?.content_type === 'text' || prefill?.content_type === 'html' || prefill?.content_type === 'resume_upload')) {
             row.querySelector('.lesson-content').value = prefill.content;
-            row.querySelector('.lesson-content-view').value = prefill.content;
         }
 
         reindexResourceLabels(moduleId);
@@ -993,14 +878,14 @@
     async function uploadLessonFile(moduleId, resourceId) {
         const row = getResourceRow(moduleId, resourceId);
         if (!row) {
-            toast('Resource item not found', 'error');
+            toast('Lesson item not found', 'error');
             return;
         }
 
         const fileInput = row.querySelector('.lesson-file');
         const uploadStatus = row.querySelector('.resource-upload-status');
+        const urlField = row.querySelector('.lesson-url');
         const contentField = row.querySelector('.lesson-content');
-        const contentViewField = row.querySelector('.lesson-content-view');
         const typeField = row.querySelector('.lesson-type');
         const uploadBtn = row.querySelector('button[onclick*="uploadLessonFile"]');
         const file = fileInput?.files?.[0];
@@ -1035,9 +920,12 @@
             }
 
             const data = await res.json();
-            contentField.value = data.file_url || '';
-            if (contentViewField) contentViewField.value = data.file_url || '';
-            if (typeField) {
+            if (urlField) {
+                urlField.value = data.file_url || '';
+            } else {
+                contentField.value = data.file_url || '';
+            }
+            if (typeField && !typeField.value.trim()) {
                 typeField.value = detectLessonTypeFromFile(
                     data.original_filename || file.name,
                     data.content_type || file.type
@@ -1045,7 +933,7 @@
             }
             if (uploadStatus) uploadStatus.textContent = `Uploaded: ${data.original_filename || file.name}`;
             if (fileInput) fileInput.value = '';
-            toast('File uploaded and URL attached');
+            toast('File uploaded and lesson content updated');
         } catch (err) {
             if (uploadStatus) uploadStatus.textContent = err?.message || 'Upload failed';
             toast(err?.message || 'Failed to upload file', 'error');
@@ -1071,7 +959,7 @@
         if (!moduleEl) return;
         moduleEl.querySelectorAll('.resource-item-row').forEach((row, idx) => {
             const label = row.querySelector('.resource-item-label');
-            if (label) label.textContent = `Resource item ${idx + 1}`;
+            if (label) label.textContent = `Lesson item ${idx + 1}`;
         });
     }
 
@@ -1090,31 +978,38 @@
 
             const lessonEls = Array.from(moduleEl.querySelectorAll('.resource-item-row'));
             if (!lessonEls.length) {
-                throw new Error(`Module "${moduleTitle}" must include at least one resource item.`);
+                throw new Error(`Module "${moduleTitle}" must include at least one lesson.`);
             }
 
             const lessons = lessonEls.map((lessonEl, lessonIndex) => {
                 const title = lessonEl.querySelector('.lesson-title')?.value.trim() || '';
-                const contentType = lessonEl.querySelector('.lesson-type')?.value || 'text';
+                const contentType = lessonEl.querySelector('.lesson-type')?.value.trim() || 'text';
+                const primaryUrl = lessonEl.querySelector('.lesson-url')?.value.trim() || '';
+                const notes = lessonEl.querySelector('.lesson-notes')?.value.trim() || '';
                 const content = lessonEl.querySelector('.lesson-content')?.value.trim() || '';
                 const readingTimeRaw = lessonEl.querySelector('.lesson-reading-time')?.value;
                 const readingTime = readingTimeRaw ? parseInt(readingTimeRaw, 10) : null;
 
                 if (!title) {
-                    throw new Error(`Resource item ${lessonIndex + 1} in module "${moduleTitle}" needs a title.`);
+                    throw new Error(`Lesson ${lessonIndex + 1} in module "${moduleTitle}" needs a title.`);
                 }
-                if (!content) {
-                    const hasPendingFile = Boolean(lessonEl.querySelector('.lesson-file')?.files?.length);
-                    if (hasPendingFile) {
-                        throw new Error(`Upload the selected file for "${title}" before creating the resource.`);
-                    }
-                    throw new Error(`Resource item "${title}" in module "${moduleTitle}" needs an uploaded file.`);
+                if (contentType === 'video_url' && !primaryUrl) {
+                    throw new Error(`Lesson "${title}" requires a video URL.`);
+                }
+                if ((contentType === 'external_link' || contentType === 'pdf_url' || contentType === 'ppt_url') && !primaryUrl) {
+                    throw new Error(`Lesson "${title}" requires a resource URL.`);
+                }
+                if ((contentType === 'text' || contentType === 'html') && !content) {
+                    throw new Error(`Lesson "${title}" requires body content.`);
                 }
 
                 return {
                     title,
                     content_type: contentType,
-                    content,
+                    content: content || (contentType === 'resume_upload' ? 'Upload your resume and receive AI feedback.' : ''),
+                    video_url: contentType === 'video_url' ? (primaryUrl || null) : null,
+                    resource_url: (contentType === 'external_link' || contentType === 'pdf_url' || contentType === 'ppt_url') ? (primaryUrl || null) : null,
+                    notes: notes || null,
                     reading_time_minutes: Number.isFinite(readingTime) ? readingTime : null
                 };
             });
@@ -1130,8 +1025,9 @@
     async function handleCreateResource(e) {
         e.preventDefault();
         const btn = document.getElementById('resSubmit');
+        const isEdit = Boolean(editingResourceId);
         btn.disabled = true;
-        btn.textContent = 'Creating...';
+        btn.textContent = isEdit ? 'Saving...' : 'Creating...';
 
         try {
             const payload = {
@@ -1140,36 +1036,40 @@
                 category: document.getElementById('resCategory').value.trim(),
                 level: document.getElementById('resLevel').value.trim() || null,
                 icon: document.getElementById('resIcon').value.trim() || null,
+                tags: normalizeTags(document.getElementById('resTags').value),
                 estimated_duration_minutes: parseInt(document.getElementById('resDuration').value, 10) || null,
                 external_url: document.getElementById('resUrl').value.trim() || null,
-                is_published: true,
+                is_published: document.getElementById('resPublished').checked,
                 modules: buildModulesPayload()
             };
 
-            const res = await fetch(`${API}/resources`, {
-                method: 'POST',
+            const endpoint = isEdit ? `${API}/resources/${editingResourceId}` : `${API}/resources`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(endpoint, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
                 credentials: 'include'
             });
 
             if (!res.ok) {
-                let message = 'Failed to create resource';
+                let message = isEdit ? 'Failed to update resource' : 'Failed to create resource';
                 try {
                     const data = await res.json();
                     message = data?.detail || message;
                 } catch { }
                 throw new Error(message);
             }
-            toast('Resource created successfully!');
+            toast(isEdit ? 'Resource updated successfully!' : 'Resource created successfully!');
             closeResourceModal();
             await loadResources();
             loadDashboard();
         } catch (err) {
-            toast(err?.message || 'Failed to create resource', 'error');
+            toast(err?.message || 'Failed to save resource', 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Create';
+            btn.textContent = 'Save Resource';
         }
     }
 
@@ -1187,24 +1087,32 @@
     function renderResources(items) {
         const tbody = document.getElementById('resourcesTableBody');
         if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">📚</div><div class="admin-empty-title">No resources yet</div></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8"><div class="admin-empty"><div class="admin-empty-icon">📚</div><div class="admin-empty-title">No resources yet</div></div></td></tr>';
             return;
         }
-        tbody.innerHTML = items.map(r => `<tr data-search="${(r.title + ' ' + r.category).toLowerCase()}">
+        tbody.innerHTML = items.map(r => {
+            const tags = Array.isArray(r.tags) ? r.tags : [];
+            const searchText = [r.title, r.category, r.level, tags.join(' '), r.description].filter(Boolean).join(' ').toLowerCase();
+            const safeSearch = searchText.replace(/"/g, '&quot;');
+            return `<tr data-search="${safeSearch}">
     <td><strong>${esc(r.title)}</strong></td>
     <td>${esc(r.category)}</td>
     <td>${esc(r.level) || '—'}</td>
+    <td>${r.estimated_duration_minutes ? `${r.estimated_duration_minutes} min` : '—'}</td>
+    <td>${tags.length ? esc(tags.join(', ')) : '—'}</td>
     <td><span class="admin-badge ${r.is_published ? 'published' : 'draft'}">${r.is_published ? '● Published' : '● Draft'}</span></td>
     <td>${formatDate(r.created_at)}</td>
     <td>
       <div class="admin-actions-cell">
+        <button class="admin-btn-icon" title="Edit resource" onclick="openEditResourceModal('${r.id}')">✏️</button>
         <button class="admin-btn-icon" title="Toggle publish" onclick="toggleResourcePublished('${r.id}')">
           ${r.is_published ? '📤' : '📥'}
         </button>
         <button class="admin-btn-icon danger" title="Delete" onclick="deleteResource('${r.id}','${esc(r.title)}')">🗑️</button>
       </div>
     </td>
-  </tr>`).join('');
+  </tr>`;
+        }).join('');
     }
 
     async function toggleResourcePublished(id) {
@@ -1227,134 +1135,6 @@
                 loadDashboard();
             } catch { toast('Failed to delete', 'error'); }
         });
-    }
-
-    // -- Jobs --
-    let allJobs = [];
-    async function loadJobs() {
-        try {
-            const res = await fetch(`${API}/jobs?limit=200`, { credentials: 'include' });
-            if (!res.ok) throw new Error();
-            const d = await res.json();
-            allJobs = d.jobs;
-            renderJobs(allJobs);
-        } catch { toast('Failed to load jobs', 'error'); }
-    }
-
-    function renderJobs(items) {
-        const tbody = document.getElementById('jobsTableBody');
-        if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">💼</div><div class="admin-empty-title">No job postings yet</div></div></td></tr>';
-            return;
-        }
-        tbody.innerHTML = items.map(j => `<tr data-search="${(j.title + ' ' + j.company_name + ' ' + (j.location || '')).toLowerCase()}">
-    <td><strong>${esc(j.title)}</strong></td>
-    <td>${esc(j.company_name)}</td>
-    <td>${esc(j.location)}</td>
-    <td>${esc(j.job_type)}</td>
-    <td><span class="admin-badge ${j.is_active ? 'active' : 'inactive'}">${j.is_active ? '● Active' : '● Inactive'}</span></td>
-    <td>
-      <div class="admin-actions-cell">
-        <button class="admin-btn-icon" title="Toggle active" onclick="toggleJobActive('${j.id}')">
-          ${j.is_active ? '🔒' : '🔓'}
-        </button>
-        <button class="admin-btn-icon danger" title="Delete" onclick="deleteJob('${j.id}','${esc(j.title)}')">🗑️</button>
-      </div>
-    </td>
-  </tr>`).join('');
-    }
-
-    async function toggleJobActive(id) {
-        try {
-            const res = await fetch(`${API}/jobs/${id}/toggle-active`, { method: 'PATCH', credentials: 'include' });
-            if (!res.ok) throw new Error();
-            const d = await res.json();
-            toast(`Job is now ${d.is_active ? 'active' : 'inactive'}`);
-            await loadJobs();
-        } catch { toast('Failed', 'error'); }
-    }
-
-    async function deleteJob(id, title) {
-        openConfirm('Delete Job Posting', `Delete "${title}"? This cannot be undone.`, async () => {
-            try {
-                const res = await fetch(`${API}/jobs/${id}`, { method: 'DELETE', credentials: 'include' });
-                if (!res.ok) throw new Error();
-                toast(`Job deleted`);
-                await loadJobs();
-                loadDashboard();
-            } catch { toast('Failed to delete', 'error'); }
-        });
-    }
-
-    // -- Companies --
-    let allCompanies = [];
-    async function loadCompanies() {
-        try {
-            const res = await fetch(`${API}/companies?limit=200`, { credentials: 'include' });
-            if (!res.ok) throw new Error();
-            const d = await res.json();
-            allCompanies = d.companies;
-            renderCompanies(allCompanies);
-        } catch { toast('Failed to load companies', 'error'); }
-    }
-
-    function renderCompanies(items) {
-        const tbody = document.getElementById('companiesTableBody');
-        if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">🏢</div><div class="admin-empty-title">No companies yet</div></div></td></tr>';
-            return;
-        }
-        tbody.innerHTML = items.map(c => `<tr data-search="${(c.company_name + ' ' + (c.industry || '')).toLowerCase()}">
-    <td><strong>${esc(c.company_name)}</strong></td>
-    <td>${esc(c.industry)}</td>
-    <td>${esc(c.location)}</td>
-    <td>${c.website ? `<a href="${esc(c.website)}" target="_blank" style="color:var(--admin-primary)">${esc(c.website)}</a>` : '—'}</td>
-    <td>${esc(c.email)}</td>
-    <td>
-      <div class="admin-actions-cell">
-        <button class="admin-btn-icon danger" title="Delete" onclick="deleteCompany('${c.id}','${esc(c.company_name)}')">🗑️</button>
-      </div>
-    </td>
-  </tr>`).join('');
-    }
-
-    async function deleteCompany(id, name) {
-        openConfirm('Delete Company', `Delete "${name}" and all its job postings? This cannot be undone.`, async () => {
-            try {
-                const res = await fetch(`${API}/companies/${id}`, { method: 'DELETE', credentials: 'include' });
-                if (!res.ok) throw new Error();
-                toast(`Company deleted`);
-                await loadCompanies();
-                loadDashboard();
-            } catch { toast('Failed to delete', 'error'); }
-        });
-    }
-
-    // -- Applications --
-    let allApplications = [];
-    async function loadApplications() {
-        try {
-            const res = await fetch(`${API}/applications?limit=200`, { credentials: 'include' });
-            if (!res.ok) throw new Error();
-            const d = await res.json();
-            allApplications = d.applications;
-            renderApplications(allApplications);
-        } catch { toast('Failed to load applications', 'error'); }
-    }
-
-    function renderApplications(items) {
-        const tbody = document.getElementById('applicationsTableBody');
-        if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">📋</div><div class="admin-empty-title">No applications yet</div></div></td></tr>';
-            return;
-        }
-        tbody.innerHTML = items.map(a => `<tr data-search="${(a.job_title + ' ' + (a.user_email || '') + ' ' + (a.company_name || '')).toLowerCase()}">
-    <td><strong>${esc(a.job_title)}</strong></td>
-    <td>${esc(a.user_email)}</td>
-    <td>${esc(a.company_name)}</td>
-    <td><span class="admin-badge status-${a.status || 'applied'}">${esc(a.status ? a.status.replace('_', ' ') : 'applied')}</span></td>
-    <td>${formatDate(a.application_date)}</td>
-  </tr>`).join('');
     }
 
     // ── Table Search / Filter ─────────────────────────────────────

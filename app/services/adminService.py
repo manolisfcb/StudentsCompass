@@ -28,6 +28,7 @@ from app.models.applicationModel import ApplicationModel
 from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
 from app.models.userStatsModel import UserStatsModel
+from app.services.resourceLessonContentCodec import ResourceLessonContentCodec
 from app.services.s3Service import S3Service
 from app.services.userService import current_active_user
 from app.schemas.resourceSchema import ResourceCreate
@@ -56,6 +57,7 @@ class AdminService:
 
     def __init__(self, session: AsyncSession):
         self.session = session
+        self.lesson_content_codec = ResourceLessonContentCodec()
 
     # ── Dashboard stats ────────────────────────────────────────────────
     async def get_dashboard_stats(self) -> dict:
@@ -152,6 +154,62 @@ class AdminService:
         )
         return result.scalars().all()
 
+    async def get_resource_with_outline(self, resource_id: uuid.UUID) -> Optional[ResourceModel]:
+        result = await self.session.execute(
+            select(ResourceModel)
+            .where(ResourceModel.id == resource_id)
+            .options(
+                selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons),
+            )
+        )
+        resource = result.scalar_one_or_none()
+        if resource is None:
+            return None
+        resource.modules.sort(key=lambda m: m.position)
+        for module in resource.modules:
+            module.lessons.sort(key=lambda l: l.position)
+        return resource
+
+    async def _replace_resource_modules(
+        self,
+        resource_id: uuid.UUID,
+        modules: Sequence,
+    ) -> None:
+        # Avoid relationship lazy-loading in async context (MissingGreenlet).
+        # Deleting by FK is deterministic and relies on DB cascades for lessons.
+        await self.session.execute(
+            delete(ResourceModuleModel).where(ResourceModuleModel.resource_id == resource_id)
+        )
+        await self.session.flush()
+
+        for module_index, module_data in enumerate(modules or [], start=1):
+            module = ResourceModuleModel(
+                resource_id=resource_id,
+                title=module_data.title,
+                position=module_index,
+                description=module_data.description,
+            )
+            self.session.add(module)
+            await self.session.flush()
+
+            for lesson_index, lesson_data in enumerate(module_data.lessons or [], start=1):
+                encoded_content = self.lesson_content_codec.encode(
+                    content_type=lesson_data.content_type,
+                    content=lesson_data.content,
+                    video_url=getattr(lesson_data, "video_url", None),
+                    resource_url=getattr(lesson_data, "resource_url", None),
+                    notes=getattr(lesson_data, "notes", None),
+                )
+                lesson = ResourceLessonModel(
+                    module_id=module.id,
+                    title=lesson_data.title,
+                    position=lesson_index,
+                    content_type=encoded_content.content_type,
+                    content=encoded_content.storage_content,
+                    reading_time_minutes=lesson_data.reading_time_minutes,
+                )
+                self.session.add(lesson)
+
     async def create_resource(self, payload: ResourceCreate) -> ResourceModel:
         resource = ResourceModel(
             title=payload.title,
@@ -166,31 +224,30 @@ class AdminService:
         )
         self.session.add(resource)
         await self.session.flush()
-
-        for module_index, module_data in enumerate(payload.modules or [], start=1):
-            module = ResourceModuleModel(
-                resource_id=resource.id,
-                title=module_data.title,
-                position=module_index,
-                description=module_data.description,
-            )
-            self.session.add(module)
-            await self.session.flush()
-
-            for lesson_index, lesson_data in enumerate(module_data.lessons or [], start=1):
-                lesson = ResourceLessonModel(
-                    module_id=module.id,
-                    title=lesson_data.title,
-                    position=lesson_index,
-                    content_type=lesson_data.content_type,
-                    content=lesson_data.content,
-                    reading_time_minutes=lesson_data.reading_time_minutes,
-                )
-                self.session.add(lesson)
-
+        await self._replace_resource_modules(resource.id, payload.modules)
         await self.session.commit()
-        await self.session.refresh(resource)
-        return resource
+        return (await self.get_resource_with_outline(resource.id)) or resource
+
+    async def update_resource(self, resource_id: uuid.UUID, payload: ResourceCreate) -> Optional[ResourceModel]:
+        result = await self.session.execute(
+            select(ResourceModel).where(ResourceModel.id == resource_id)
+        )
+        resource = result.scalar_one_or_none()
+        if resource is None:
+            return None
+
+        resource.title = payload.title
+        resource.description = payload.description
+        resource.category = payload.category
+        resource.icon = payload.icon
+        resource.level = payload.level
+        resource.tags = payload.tags
+        resource.estimated_duration_minutes = payload.estimated_duration_minutes
+        resource.external_url = payload.external_url
+        resource.is_published = payload.is_published
+        await self._replace_resource_modules(resource.id, payload.modules)
+        await self.session.commit()
+        return await self.get_resource_with_outline(resource.id)
 
     async def toggle_resource_published(self, resource_id: uuid.UUID) -> Optional[ResourceModel]:
         result = await self.session.execute(
@@ -239,6 +296,53 @@ class AdminService:
             "file_url": upload_result["file_url"],
             "original_filename": safe_name,
             "content_type": content_type or "application/octet-stream",
+        }
+
+    def serialize_lesson(self, lesson: ResourceLessonModel) -> dict:
+        content_fields = self.lesson_content_codec.to_api_fields(
+            content_type=lesson.content_type,
+            raw_content=lesson.content,
+        )
+        return {
+            "id": str(lesson.id),
+            "title": lesson.title,
+            "position": lesson.position,
+            "content_type": content_fields["content_type"],
+            "content": content_fields["content"],
+            "content_payload": content_fields["content_payload"],
+            "video_url": content_fields["video_url"],
+            "resource_url": content_fields["resource_url"],
+            "notes": content_fields["notes"],
+            "reading_time_minutes": lesson.reading_time_minutes,
+        }
+
+    def build_resource_detail_payload(self, resource: ResourceModel) -> dict:
+        return {
+            "id": str(resource.id),
+            "title": resource.title,
+            "description": resource.description,
+            "category": resource.category,
+            "icon": resource.icon,
+            "level": resource.level,
+            "tags": resource.tags or [],
+            "estimated_duration_minutes": resource.estimated_duration_minutes,
+            "external_url": resource.external_url,
+            "is_published": resource.is_published,
+            "created_at": resource.created_at.isoformat() if resource.created_at else None,
+            "updated_at": resource.updated_at.isoformat() if resource.updated_at else None,
+            "modules": [
+                {
+                    "id": str(module.id),
+                    "title": module.title,
+                    "position": module.position,
+                    "description": module.description,
+                    "lessons": [
+                        self.serialize_lesson(lesson)
+                        for lesson in sorted(module.lessons, key=lambda current: current.position)
+                    ],
+                }
+                for module in sorted(resource.modules, key=lambda current: current.position)
+            ],
         }
 
     # ── Jobs ───────────────────────────────────────────────────────────

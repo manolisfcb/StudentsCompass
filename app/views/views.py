@@ -105,6 +105,7 @@ async def resources(
             "resources": resources,
             "resource_detail_access_enabled": RESOURCE_DETAIL_ACCESS_ENABLED,
             "locked_notice": request.query_params.get("locked") == "1",
+            "mandatory_course_titles": list(ResourceService.MANDATORY_RESOURCE_TITLES),
         },
     )
 
@@ -288,3 +289,24 @@ async def jobs_board(request: Request, user: Optional[User] = Depends(current_ac
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("jobs.html", {"request": request})
+
+
+@router.get("/admin/login")
+async def admin_login_page(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
+    if user and user.is_superuser:
+        return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("admin_login.html", {"request": request, "page_title": "Admin Login"})
+
+
+@router.get("/admin")
+async def admin_panel_page(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
+    if user is None or not user.is_superuser:
+        return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        "admin.html",
+        {
+            "request": request,
+            "page_title": "Admin Panel",
+            "body_class": "admin-body",
+        },
+    )
