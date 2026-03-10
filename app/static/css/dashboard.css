@@ -18,10 +18,12 @@
 
 .dashboard-header::before {
     content: "Student Workspace";
-    display: inline-flex;
+    display: flex;
     align-items: center;
     margin-bottom: 1rem;
+    margin-right: auto;
     padding: 0.45rem 0.8rem;
+    width: fit-content;
     border-radius: 999px;
     background: rgba(15, 118, 110, 0.1);
     color: var(--primary-color);
