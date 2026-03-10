@@ -9,12 +9,16 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.services.companyService import current_active_company_optional
+from app.services.companyService import (
+    current_active_company_optional,
+    current_active_company_recruiter_optional,
+)
 from app.services.resourceService import ResourceService
 from app.services.roadmapService import RoadmapService
 from app.services.userService import current_active_user_optional
 from app.models.userModel import User
 from app.models.companyModel import Company
+from app.models.companyRecruiterModel import CompanyRecruiter
 from typing import Optional
 
 _ROADMAP_TABLES = (
@@ -70,10 +74,39 @@ async def dashboard(request: Request, user: Optional[User] = Depends(current_act
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 @router.get("/company-dashboard")
-async def company_dashboard(request: Request, company: Optional[Company] = Depends(current_active_company_optional)):
+async def company_dashboard(
+    request: Request,
+    company: Optional[Company] = Depends(current_active_company_optional),
+    company_recruiter: Optional[CompanyRecruiter] = Depends(current_active_company_recruiter_optional),
+):
     if company is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("company-dashboard.html", {"request": request})
+    return templates.TemplateResponse(
+        "company-dashboard.html",
+        {
+            "request": request,
+            "company_recruiter": company_recruiter,
+        },
+    )
+
+
+@router.get("/company-team")
+async def company_team_page(
+    request: Request,
+    company: Optional[Company] = Depends(current_active_company_optional),
+    company_recruiter: Optional[CompanyRecruiter] = Depends(current_active_company_recruiter_optional),
+):
+    if company is None or company_recruiter is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    if company_recruiter.role != "owner":
+        return RedirectResponse(url="/company-dashboard", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        "company-team.html",
+        {
+            "request": request,
+            "company_recruiter": company_recruiter,
+        },
+    )
 
 @router.get("/questionnaire")
 async def questionnaire(request: Request, user: Optional[User] = Depends(current_active_user_optional)):

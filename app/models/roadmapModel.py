@@ -4,11 +4,13 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.db import Base
+
+JSON_VARIANT = JSON().with_variant(JSONB, "postgresql")
 
 
 class TaskType(str, enum.Enum):
@@ -114,8 +116,8 @@ class StageProjectModel(Base):
     stage_id = Column(UUID(as_uuid=True), ForeignKey("roadmap_stages.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(220), nullable=False)
     brief = Column(Text, nullable=False)
-    acceptance_criteria = Column(JSONB, nullable=False)
-    rubric = Column(JSONB, nullable=False)
+    acceptance_criteria = Column(JSON_VARIANT, nullable=False)
+    rubric = Column(JSON_VARIANT, nullable=False)
     estimated_hours = Column(Integer, nullable=False)
 
     stage = relationship("RoadmapStageModel", back_populates="projects")

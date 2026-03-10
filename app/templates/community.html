@@ -11,9 +11,35 @@
       .communities-container { padding: 1rem; }
     }
 
-    .communities-header { margin-bottom: 1.5rem; }
-    .communities-header h2 { font-size: 2rem; color: #0F172A; margin-bottom: 0.3rem; }
-    .communities-header p  { color: #475569; font-size: 1.05rem; }
+    .communities-header {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      padding: 1.5rem;
+      border-radius: 28px;
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      background:
+        radial-gradient(circle at top right, rgba(94, 234, 212, 0.24), transparent 30%),
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.08)),
+        #ffffff;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+    }
+    .communities-header::before {
+      content: "Communities";
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.1);
+      color: #0F766E;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .communities-header h2 { font-size: clamp(2rem, 3.1vw, 2.9rem); color: #0F172A; margin: 0 0 0.35rem; line-height: 1; letter-spacing: -0.04em; }
+    .communities-header p  { color: #475569; font-size: 1rem; line-height: 1.65; margin: 0; max-width: 56ch; }
 
     @media (max-width: 768px) {
       .communities-header h2 { font-size: 1.5rem; }
@@ -29,12 +55,18 @@
     /* ── Search & filter bar ─────────────────────────────────── */
     .filter-bar {
       display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+      backdrop-filter: blur(12px);
     }
     .filter-bar input,
     .filter-bar select {
-      padding: 0.6rem 0.9rem;
-      border: 1px solid #E2E8F0; border-radius: 10px;
-      font-size: 0.9rem; background: #F8FAFC; color: #0F172A;
+      padding: 0.85rem 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 18px;
+      font-size: 0.95rem; background: rgba(248, 250, 252, 0.96); color: #0F172A;
       transition: border-color .2s, box-shadow .2s;
       box-sizing: border-box;
     }
@@ -45,6 +77,142 @@
       outline: none;
     }
     .filter-bar input { flex: 1; min-width: 180px; }
+
+    .tags-filter {
+      position: relative;
+      z-index: 20;
+      margin: 0 0 1.5rem;
+      padding: 1rem;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+      backdrop-filter: blur(12px);
+    }
+    .tags-filter__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .tags-filter__label {
+      color: #475569;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .tags-filter__helper {
+      color: #64748B;
+      font-size: 0.88rem;
+    }
+    .tags-filter__selected {
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      align-items: center;
+      min-height: 1.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .tag-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      border: 1px solid rgba(15, 118, 110, 0.14);
+      background: rgba(255, 255, 255, 0.88);
+      color: #0F766E;
+      padding: 0.55rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, color .2s, border-color .2s, box-shadow .2s, transform .2s;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+    }
+    .tag-filter-chip:hover {
+      transform: translateY(-1px);
+      border-color: rgba(15, 118, 110, 0.28);
+    }
+    .tag-filter-chip__remove {
+      border: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .tag-filter-chip--clear {
+      border-style: dashed;
+      color: #475569;
+      box-shadow: none;
+    }
+    .tags-filter__search-wrap {
+      position: relative;
+    }
+    .tags-filter__search {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 18px;
+      font-size: 0.95rem;
+      background: rgba(248, 250, 252, 0.96);
+      color: #0F172A;
+      transition: border-color .2s, box-shadow .2s;
+      box-sizing: border-box;
+    }
+    .tags-filter__search:focus {
+      border-color: #0F766E;
+      box-shadow: 0 0 0 3px rgba(15,118,110,.15);
+      outline: none;
+    }
+    .tags-filter__dropdown {
+      position: absolute;
+      top: calc(100% + 0.55rem);
+      left: 0;
+      right: 0;
+      z-index: 12;
+      display: none;
+      padding: 0.5rem;
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 24px 42px rgba(15,23,42,.12);
+      backdrop-filter: blur(18px);
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .tags-filter__dropdown.is-open {
+      display: block;
+    }
+    .tags-filter__option,
+    .tags-filter__message {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: left;
+      border-radius: 14px;
+      padding: 0.8rem 0.9rem;
+      font-size: 0.92rem;
+    }
+    .tags-filter__option {
+      color: #0F172A;
+      cursor: pointer;
+    }
+    .tags-filter__option:hover,
+    .tags-filter__option:focus-visible {
+      background: rgba(15, 118, 110, 0.08);
+      outline: none;
+    }
+    .tags-filter__message {
+      color: #64748B;
+    }
+    .tags-filter__empty {
+      color: #94A3B8;
+      font-size: 0.9rem;
+    }
 
     @media (max-width: 768px) {
       .filter-bar {
@@ -59,6 +227,8 @@
 
     /* ── Grid de cards ───────────────────────────────────────── */
     .communities-grid {
+      position: relative;
+      z-index: 1;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1.5rem;
@@ -66,27 +236,39 @@
     }
 
     .community-card {
-      background: white; border-radius: 12px; padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-      border: 1px solid #E2E8F0;
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92); border-radius: 26px; padding: 1.5rem;
+      box-shadow: 0 18px 36px rgba(15,23,42,.06);
+      border: 1px solid rgba(148, 163, 184, 0.18);
       display: flex; flex-direction: column; gap: 0.75rem;
-      transition: transform .25s ease, box-shadow .25s ease;
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
       cursor: pointer;
     }
     .community-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0,0,0,.1);
+      transform: translateY(-2px);
+      box-shadow: 0 24px 42px rgba(15,23,42,.08);
+      border-color: rgba(15, 118, 110, 0.16);
+    }
+    .community-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 1.5rem 1rem;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0F766E 0%, #5EEAD4 100%);
+      opacity: 0.9;
     }
 
     .community-icon {
       width: 56px; height: 56px;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      border-radius: 12px;
+      background: rgba(15, 118, 110, 0.1);
+      border-radius: 18px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.8rem; flex-shrink: 0;
     }
 
-    .community-title { font-size: 1.2rem; font-weight: 600; color: #0F172A; }
+    .community-title { font-size: 1.2rem; font-weight: 700; color: #0F172A; }
 
     .community-description {
       color: #475569; font-size: 0.92rem; line-height: 1.5;
@@ -107,23 +289,25 @@
       min-height: 1.6rem; max-height: 3.8rem; overflow: hidden;
     }
     .tag {
-      background: #E5E7EB; color: #0F766E;
+      background: #E2E8F0; color: #0F766E;
       padding: 0.25rem 0.7rem; border-radius: 20px;
-      font-size: 0.78rem; font-weight: 600;
+      font-size: 0.78rem; font-weight: 700;
     }
 
     .join-btn {
-      width: 100%; padding: 0.7rem;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      color: white; border: none; border-radius: 8px;
-      font-weight: 600; cursor: pointer;
-      transition: opacity .2s;
+      width: 100%; padding: 0.85rem;
+      background: linear-gradient(135deg, #0F766E 0%, #0b5d57 100%);
+      color: white; border: none; border-radius: 18px;
+      font-weight: 700; cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
       margin-top: auto; flex-shrink: 0;
+      box-shadow: 0 16px 28px rgba(15, 118, 110, 0.18);
     }
-    .join-btn:hover { opacity: .9; }
+    .join-btn:hover { transform: translateY(-1px); box-shadow: 0 18px 32px rgba(15, 118, 110, 0.24); }
     .join-btn.joined {
-      background: #E0F2F1; color: #0F766E;
+      background: rgba(15, 118, 110, 0.1); color: #0F766E;
       cursor: default;
+      box-shadow: none;
     }
 
     .community-status {
@@ -135,19 +319,23 @@
     /* ── Empty state ─────────────────────────────────────────── */
     .empty-state {
       text-align: center; color: #64748B; padding: 3rem 1rem;
+      border: 1px dashed #CBD5E1;
+      border-radius: 24px;
+      background: rgba(248, 250, 252, 0.92);
     }
     .empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; color: #CBD5E1; }
 
     /* ── Create button ───────────────────────────────────────── */
     .create-community-btn {
-      padding: .7rem 1.2rem;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      color: white; border: none; border-radius: 10px;
-      font-weight: 600; cursor: pointer;
-      transition: opacity .2s;
+      padding: .85rem 1.2rem;
+      background: linear-gradient(135deg, #0F766E 0%, #0b5d57 100%);
+      color: white; border: none; border-radius: 18px;
+      font-weight: 700; cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
       white-space: nowrap;
+      box-shadow: 0 16px 28px rgba(15, 118, 110, 0.18);
     }
-    .create-community-btn:hover { opacity: .9; }
+    .create-community-btn:hover { transform: translateY(-1px); box-shadow: 0 18px 32px rgba(15, 118, 110, 0.24); }
 
     /* ── Modal (create community) ────────────────────────────── */
     body.modal-open { overflow: hidden; }
@@ -162,14 +350,16 @@
     .modal *, .modal *::before, .modal *::after { box-sizing: border-box; }
 
     .modal {
-      background: white; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.98); border-radius: 24px;
       padding: 0; width: 100%; max-width: 520px; max-height: 90vh;
       display: flex; flex-direction: column; overflow: hidden;
-      box-shadow: 0 10px 30px rgba(15,23,42,.2);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 26px 60px rgba(15,23,42,.22);
+      backdrop-filter: blur(20px);
     }
 
     .modal__header {
-      position: sticky; top: 0; background: white; z-index: 2;
+      position: sticky; top: 0; background: rgba(255, 255, 255, 0.98); z-index: 2;
       display: flex; align-items: center; justify-content: space-between;
       padding: 1rem 1.25rem; border-bottom: 1px solid #E2E8F0;
     }
@@ -188,7 +378,7 @@
     .modal__footer {
       padding: 1rem 1.25rem;
       border-top: 1px solid #E2E8F0;
-      background: white; flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.98); flex-shrink: 0;
     }
     .modal__footer .primary-btn { width: 100%; }
 
@@ -199,9 +389,9 @@
 
     .form__field {
       display: block; width: 100%; max-width: 100%;
-      border: 1px solid #E2E8F0; border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 16px;
       padding: .75rem .9rem; font-size: .95rem;
-      background: #F8FAFC; color: #0F172A;
+      background: rgba(248, 250, 252, 0.96); color: #0F172A;
       transition: border-color .2s, box-shadow .2s;
     }
     .form__field:focus {
@@ -211,18 +401,19 @@
     }
 
     .primary-btn {
-      padding: .7rem 1rem;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      color: white; border: none; border-radius: 8px;
-      font-weight: 600; cursor: pointer;
+      padding: .85rem 1rem;
+      background: linear-gradient(135deg, #0F766E 0%, #0b5d57 100%);
+      color: white; border: none; border-radius: 16px;
+      font-weight: 700; cursor: pointer;
+      box-shadow: 0 16px 28px rgba(15, 118, 110, 0.18);
     }
 
     /* ── Icon Input Group ────────────────────────────────────── */
     .icon-input { display: flex; flex-direction: column; gap: .5rem; }
     .icon-input__group {
       display: flex; align-items: stretch;
-      border: 1px solid #E2E8F0; border-radius: 12px;
-      background: #F8FAFC; overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 16px;
+      background: rgba(248, 250, 252, 0.96); overflow: hidden;
       transition: border-color .2s, box-shadow .2s;
     }
     .icon-input__group:focus-within {
@@ -308,6 +499,27 @@
           </select>
         </div>
 
+        <div class="tags-filter" aria-label="Filter communities by tags">
+          <div class="tags-filter__header">
+            <span class="tags-filter__label">Tags</span>
+            <span class="tags-filter__helper">Escribe al menos 3 letras para buscar tags</span>
+          </div>
+          <div id="selected-tags" class="tags-filter__selected">
+            <span class="tags-filter__empty">No hay tags seleccionados.</span>
+          </div>
+          <div class="tags-filter__search-wrap">
+            <input
+              type="text"
+              id="tag-search-input"
+              class="tags-filter__search"
+              placeholder="Buscar tags, por ejemplo: pyt, data, ux..."
+              autocomplete="off"
+              aria-label="Search tags"
+            >
+            <div id="tags-dropdown" class="tags-filter__dropdown" role="listbox" aria-label="Tag suggestions"></div>
+          </div>
+        </div>
+
         <!-- Grid -->
         <div id="communities-grid" class="communities-grid"></div>
 
@@ -389,12 +601,18 @@
 
     /* ── State ───────────────────────────────────────────────── */
     let allCommunities = [];
+    let selectedTags = [];
+    let tagSuggestions = [];
+    let tagSearchRequestId = 0;
 
     /* ── DOM refs ─────────────────────────────────────────────── */
     const gridEl       = document.getElementById('communities-grid');
     const emptyEl      = document.getElementById('community-list-empty');
     const searchInput  = document.getElementById('search-input');
     const sortSelect   = document.getElementById('sort-select');
+    const selectedTagsEl = document.getElementById('selected-tags');
+    const tagSearchInput = document.getElementById('tag-search-input');
+    const tagsDropdownEl = document.getElementById('tags-dropdown');
 
     /* Modal refs */
     const createModal       = document.getElementById('create-community-modal');
@@ -415,8 +633,12 @@
     const emojiList = ['😀','😄','😊','😍','🤩','😎','🤓','🧠','📊','📈','💡','🚀','🐍','🗄️','📉','📚','🎯','🧩','🧪','💻','🌐','🤖','🎓','📝','🔬'];
 
     /* ── Load & render ───────────────────────────────────────── */
+    function getSelectedTagsQuery() {
+      return selectedTags.length ? `?tags=${encodeURIComponent(selectedTags.join(','))}` : '';
+    }
+
     async function loadCommunities() {
-      const res = await apiFetch('/api/v1/communities');
+      const res = await apiFetch(`/api/v1/communities${getSelectedTagsQuery()}`);
       if (!res.ok) { allCommunities = []; renderGrid(); return; }
       allCommunities = await res.json();
       renderGrid();
@@ -437,6 +659,102 @@
       else if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
       else list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       return list;
+    }
+
+    function closeTagDropdown() {
+      tagsDropdownEl.classList.remove('is-open');
+    }
+
+    function renderTagDropdown() {
+      tagsDropdownEl.innerHTML = '';
+
+      const term = tagSearchInput.value.trim();
+      if (term.length < 3) {
+        closeTagDropdown();
+        return;
+      }
+
+      if (!tagSuggestions.length) {
+        tagsDropdownEl.innerHTML = '<div class="tags-filter__message">No matching tags found.</div>';
+        tagsDropdownEl.classList.add('is-open');
+        return;
+      }
+
+      tagSuggestions.forEach((tag) => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'tags-filter__option';
+        option.textContent = `#${tag}`;
+        option.addEventListener('click', async () => {
+          if (!selectedTags.includes(tag)) {
+            selectedTags = [...selectedTags, tag];
+            renderSelectedTags();
+            await loadCommunities();
+          }
+          tagSearchInput.value = '';
+          tagSuggestions = [];
+          renderTagDropdown();
+          tagSearchInput.focus();
+        });
+        tagsDropdownEl.appendChild(option);
+      });
+
+      tagsDropdownEl.classList.add('is-open');
+    }
+
+    function renderSelectedTags() {
+      selectedTagsEl.innerHTML = '';
+
+      if (!selectedTags.length) {
+        selectedTagsEl.innerHTML = '<span class="tags-filter__empty">No hay tags seleccionados.</span>';
+        return;
+      }
+
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'tag-filter-chip tag-filter-chip--clear';
+      clearBtn.textContent = 'Clear all';
+      clearBtn.addEventListener('click', async () => {
+        selectedTags = [];
+        renderSelectedTags();
+        await loadCommunities();
+      });
+      selectedTagsEl.appendChild(clearBtn);
+
+      selectedTags.forEach((tag) => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-filter-chip';
+        chip.innerHTML = `#${escapeHtml(tag)} <button type="button" class="tag-filter-chip__remove" aria-label="Remove ${escapeHtml(tag)}">&times;</button>`;
+        chip.querySelector('.tag-filter-chip__remove').addEventListener('click', async () => {
+          selectedTags = selectedTags.filter((selectedTag) => selectedTag !== tag);
+          renderSelectedTags();
+          await loadCommunities();
+        });
+        selectedTagsEl.appendChild(chip);
+      });
+    }
+
+    async function searchTags(term) {
+      const normalizedTerm = term.trim();
+      if (normalizedTerm.length < 3) {
+        tagSuggestions = [];
+        renderTagDropdown();
+        return;
+      }
+
+      const requestId = ++tagSearchRequestId;
+      const res = await apiFetch(`/api/v1/communities/tags?q=${encodeURIComponent(normalizedTerm)}&limit=10`);
+      if (requestId !== tagSearchRequestId) return;
+
+      if (!res.ok) {
+        tagSuggestions = [];
+        renderTagDropdown();
+        return;
+      }
+
+      const results = await res.json();
+      tagSuggestions = results.filter((tag) => !selectedTags.includes(tag));
+      renderTagDropdown();
     }
 
     function renderGrid() {
@@ -496,6 +814,8 @@
 
     searchInput.addEventListener('input', renderGrid);
     sortSelect.addEventListener('change', renderGrid);
+    tagSearchInput.addEventListener('input', (e) => { searchTags(e.target.value); });
+    tagSearchInput.addEventListener('focus', () => { renderTagDropdown(); });
 
     /* ── Modal: create community ─────────────────────────────── */
     function openModal() {
@@ -586,10 +906,12 @@
       if (emojiPicker.style.display === 'block' &&
           !emojiPicker.contains(e.target) && !emojiTrigger.contains(e.target))
         closeEmojiPicker();
+      if (!e.target.closest('.tags-filter')) closeTagDropdown();
     });
 
     /* ── Init ────────────────────────────────────────────────── */
     renderEmojis();
+    renderSelectedTags();
     loadCommunities();
   </script>
 {% endblock %}

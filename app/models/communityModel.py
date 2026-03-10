@@ -1,11 +1,13 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, UniqueConstraint, Integer
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.db import Base
+
+JSON_VARIANT = JSON().with_variant(JSONB, "postgresql")
 
 
 class CommunityModel(Base):
@@ -16,7 +18,7 @@ class CommunityModel(Base):
     description = Column(Text, nullable=True)
     icon = Column(String(20), nullable=True)
     activity_status = Column(String(32), nullable=True)
-    tags = Column(JSONB, nullable=True)
+    tags = Column(JSON_VARIANT, nullable=True)
     member_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

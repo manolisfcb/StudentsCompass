@@ -1,21 +1,25 @@
 {% extends "base.html" %}
 {% set page_title = "About Us" %}
 {% set page_description = "Student Compass connects employers with career-ready graduates in Canada. Our proprietary AI-powered framework delivers pre-vetted, motivated talent — saving your company time, cost, and hiring risk." %}
+{% set body_class = "marketing-page marketing-about" %}
 {% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
 {% endblock %}
 {% block content %}
-    <header>
-        <nav>
+    <header class="marketing-header about-top-header">
+        <nav class="marketing-nav">
             <div class="container">
-                <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                <a href="/" class="marketing-brand" aria-label="StudentsCompass home">
+                    <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                </a>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation">☰</button>
                 <ul id="mobile-menu">
                     <li><a href="/#for-students" onclick="closeMobileMenu()">For Students</a></li>
                     <li><a href="/#for-companies" onclick="closeMobileMenu()">For Companies</a></li>
                     <li><a href="/#how-it-works" onclick="closeMobileMenu()">How It Works</a></li>
                     <li><a href="/about" onclick="closeMobileMenu()" class="active-link">About</a></li>
-                    <li><a href="/login" onclick="closeMobileMenu()">Login</a></li>
+                    <li><a href="/login" onclick="closeMobileMenu()" class="marketing-nav-login">Login</a></li>
+                    <li><a href="/register" onclick="closeMobileMenu()" class="marketing-nav-cta">Get Started</a></li>
                 </ul>
             </div>
         </nav>
@@ -297,7 +301,7 @@
         </div>
     </div>
 
-    <footer>
+    <footer class="public-footer">
         <div class="container">
             <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
             <ul>

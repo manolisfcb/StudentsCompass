@@ -1,11 +1,13 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.db import Base
+
+JSON_VARIANT = JSON().with_variant(JSONB, "postgresql")
 
 
 class ResourceModel(Base):
@@ -16,7 +18,7 @@ class ResourceModel(Base):
     description = Column(Text, nullable=False)
     icon = Column(String(120), nullable=True)
     category = Column(String(64), nullable=False)
-    tags = Column(JSONB, nullable=True)
+    tags = Column(JSON_VARIANT, nullable=True)
     level = Column(String(32), nullable=True)
     estimated_duration_minutes = Column(Integer, nullable=True)
     external_url = Column(String(512), nullable=True)

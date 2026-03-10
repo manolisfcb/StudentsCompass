@@ -9,68 +9,122 @@
     }
 
     .dashboard-header {
-      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 28px;
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      background:
+        radial-gradient(circle at top right, rgba(94, 234, 212, 0.22), transparent 28%),
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.08)),
+        #ffffff;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+    }
+
+    .dashboard-header::before {
+      content: "Student Workspace";
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.1);
+      color: var(--primary-color);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     .dashboard-header h2 {
-      font-size: 2rem;
+      font-size: clamp(2rem, 3.2vw, 3rem);
       color: #0F172A;
-      margin-bottom: 0.5rem;
+      margin: 0 0 0.55rem;
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      text-align: left;
     }
 
     .dashboard-header p {
       color: #475569;
-      font-size: 1.1rem;
+      font-size: 1rem;
+      line-height: 1.65;
+      max-width: 56ch;
+      text-align: left;
+      margin: 0;
     }
 
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
+      gap: 1rem;
       margin-bottom: 2rem;
     }
 
     .stat-card {
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      border-radius: 12px;
-      padding: 1.2rem;
-      color: white;
-      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
-      transition: transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 24px;
+      padding: 1.2rem 1.25rem;
+      color: #0F172A;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
 
     .stat-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-2px);
+      box-shadow: 0 22px 40px rgba(15, 23, 42, 0.08);
+      border-color: rgba(15, 118, 110, 0.16);
     }
 
-    .stat-card.applications {
-      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 1.25rem 1rem;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0F766E 0%, #5EEAD4 100%);
+      opacity: 0.85;
     }
 
-    .stat-card.interviews {
-      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
+    .stat-card.applications::after {
+      background: linear-gradient(90deg, #FB7185 0%, #FB923C 100%);
     }
 
-    .stat-card.offers {
-      background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+    .stat-card.interviews::after {
+      background: linear-gradient(90deg, #14B8A6 0%, #5EEAD4 100%);
+    }
+
+    .stat-card.offers::after {
+      background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
     }
 
     .stat-icon {
-      font-size: 2.2rem;
-      margin-bottom: 0.4rem;
-      opacity: 0.9;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      margin-bottom: 1rem;
+      font-size: 1.55rem;
+      background: rgba(15, 118, 110, 0.1);
     }
 
     .stat-value {
-      font-size: 2.2rem;
-      font-weight: 700;
+      font-size: 2.35rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
       margin-bottom: 0.2rem;
     }
 
     .stat-label {
-      font-size: 0.9rem;
-      opacity: 0.95;
-      font-weight: 500;
+      font-size: 0.92rem;
+      color: #64748B;
+      font-weight: 600;
     }
 
     .main-content-grid {
@@ -85,7 +139,7 @@
         padding: 1.5rem;
       }
       .dashboard-header h2 {
-        font-size: 1.7rem;
+        font-size: 1.9rem;
       }
       .stats-grid {
         gap: 1rem;
@@ -107,6 +161,9 @@
     @media (max-width: 768px) {
       .dashboard-container {
         padding: 1rem;
+      }
+      .dashboard-header {
+        padding: 1.2rem;
       }
       .dashboard-header h2 {
         font-size: 1.4rem;
@@ -226,11 +283,12 @@
     }
 
     .content-card {
-      background: white;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 28px;
       padding: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
 
     .career-progress-card {
@@ -239,8 +297,9 @@
     }
 
     .content-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+      border-color: rgba(15, 118, 110, 0.14);
     }
 
     .card-header {
@@ -249,22 +308,22 @@
       gap: 0.75rem;
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 2px solid #E5E7EB;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.9);
     }
 
     .card-icon {
-      width: 45px;
-      height: 45px;
-      border-radius: 10px;
+      width: 50px;
+      height: 50px;
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      font-size: 1.3rem;
+      background: rgba(15, 118, 110, 0.1);
     }
 
     .card-header h3 {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       color: #0F172A;
       margin: 0;
     }
@@ -342,15 +401,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      background: #f8f9fa;
-      border-radius: 8px;
-      transition: background 0.3s ease;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.65rem;
+      background: #F8FAFC;
+      border-radius: 18px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      transition: background 0.25s ease, transform 0.25s ease;
     }
 
     .status-item:hover {
-      background: #e9ecef;
+      background: #ffffff;
+      transform: translateX(2px);
     }
 
     .status-item strong {
@@ -359,11 +420,11 @@
     }
 
     .status-value {
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-      color: white;
-      padding: 0.3rem 0.8rem;
+      background: rgba(15, 118, 110, 0.1);
+      color: var(--primary-color);
+      padding: 0.45rem 0.85rem;
       border-radius: 20px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.85rem;
     }
 
@@ -374,18 +435,19 @@
     }
 
     .resource-item {
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      border-left: 3px solid #0F766E;
-      background: #f8f9fa;
-      border-radius: 6px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.65rem;
+      border-left: 0;
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      background: #F8FAFC;
+      border-radius: 18px;
       transition: all 0.3s ease;
     }
 
     .resource-item:hover {
-      background: #e9ecef;
-      border-left-width: 5px;
-      padding-left: 0.9rem;
+      background: #ffffff;
+      border-color: rgba(15, 118, 110, 0.16);
+      transform: translateX(2px);
     }
 
     .resource-item a {
@@ -402,14 +464,15 @@
     .card-link {
       display: inline-block;
       margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      padding: 0.9rem 1.35rem;
+      background: linear-gradient(135deg, var(--primary-color), #0b5d57);
       color: white;
       text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: opacity 0.3s ease;
+      border-radius: 18px;
+      font-weight: 700;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
       text-align: center;
+      box-shadow: 0 16px 28px rgba(15, 118, 110, 0.18);
     }
 
     .career-progress-card .card-link {
@@ -418,7 +481,8 @@
     }
 
     .card-link:hover {
-      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 18px 32px rgba(15, 118, 110, 0.24);
     }
 
     .full-width-card {
@@ -433,12 +497,12 @@
     }
 
     .action-btn {
-      background: white;
-      border: 2px solid #0F766E;
-      color: #0F766E;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #0F172A;
       padding: 1rem;
-      border-radius: 10px;
-      font-weight: 600;
+      border-radius: 22px;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
@@ -449,22 +513,31 @@
     }
 
     .action-btn:hover {
-      background: #0F766E;
-      color: white;
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+      background: rgba(15, 118, 110, 0.08);
+      color: var(--primary-color);
+      transform: translateY(-2px);
+      border-color: rgba(15, 118, 110, 0.16);
+      box-shadow: 0 18px 32px rgba(15, 23, 42, 0.07);
     }
 
     .action-icon {
-      font-size: 1.3rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      background: rgba(15, 118, 110, 0.1);
     }
 
     .notification-card {
-      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-      border-radius: 12px;
-      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(254, 243, 199, 0.88) 0%, rgba(253, 230, 138, 0.88) 100%);
+      border-radius: 26px;
+      padding: 1.5rem 1.6rem;
       margin-top: 2rem;
-      box-shadow: 0 4px 12px rgba(251, 113, 133, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.18);
+      box-shadow: 0 18px 34px rgba(245, 158, 11, 0.14);
     }
 
     .notification-card h4 {

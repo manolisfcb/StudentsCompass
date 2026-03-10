@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
@@ -19,6 +19,46 @@ from app.schemas.communitySchema import (
 )
 
 router = APIRouter()
+
+
+def _parse_tags_param(tags: str | None) -> list[str]:
+    if not tags:
+        return []
+    return [tag.strip() for tag in tags.split(",") if tag.strip()]
+
+
+@router.post("/communities", response_model=CommunityRead)
+async def create_community(
+    community: CommunityCreate,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = CommunityService(session)
+    existing = await service.get_community_by_name(community.name)
+    if existing:
+        raise HTTPException(status_code=409, detail="Community name already exists")
+    return await service.create_community(community, user.id)
+
+
+@router.get("/communities", response_model=list[CommunityRead])
+async def list_communities(
+    tags: str | None = Query(default=None, description="Comma-separated list of community tags"),
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = CommunityService(session)
+    return await service.list_communities(tags=_parse_tags_param(tags))
+
+
+@router.get("/communities/tags", response_model=list[str])
+async def list_community_tags(
+    q: str | None = Query(default=None, description="Search term for matching tags"),
+    limit: int = Query(default=12, ge=1, le=50, description="Maximum number of tags to return"),
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = CommunityService(session)
+    return await service.list_available_tags(query=q, limit=limit)
 
 
 # ── Single community detail ──────────────────────────────────────
@@ -45,28 +85,6 @@ async def check_membership(
     service = CommunityService(session)
     is_member = await service.is_member(community_id, user.id)
     return {"is_member": is_member}
-
-
-@router.post("/communities", response_model=CommunityRead)
-async def create_community(
-    community: CommunityCreate,
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(current_active_user),
-):
-    service = CommunityService(session)
-    existing = await service.get_community_by_name(community.name)
-    if existing:
-        raise HTTPException(status_code=409, detail="Community name already exists")
-    return await service.create_community(community, user.id)
-
-
-@router.get("/communities", response_model=list[CommunityRead])
-async def list_communities(
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(current_active_user),
-):
-    service = CommunityService(session)
-    return await service.list_communities()
 
 
 @router.post("/communities/{community_id}/join", response_model=CommunityMemberRead)
@@ -99,7 +117,10 @@ async def leave_community(
     if community.created_by == user.id:
         raise HTTPException(status_code=403, detail="El creador no puede abandonar la comunidad")
     await service.leave_community(community_id, user.id)
-    return {"detail": "Left community"}@router.get("/communities/{community_id}/posts", response_model=list[CommunityPostRead])
+    return {"detail": "Left community"}
+
+
+@router.get("/communities/{community_id}/posts", response_model=list[CommunityPostRead])
 async def list_community_posts(
     community_id: UUID,
     session: AsyncSession = Depends(get_session),

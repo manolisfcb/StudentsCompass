@@ -1,6 +1,5 @@
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from uuid import UUID
 
 from app.models.communityModel import CommunityModel, CommunityMemberModel
@@ -17,6 +16,24 @@ class CommunityService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    @staticmethod
+    def normalize_tags(tags: list[str] | None) -> list[str]:
+        if not tags:
+            return []
+
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for raw_tag in tags:
+            tag = (raw_tag or "").strip()
+            if not tag:
+                continue
+            key = tag.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized.append(tag)
+        return normalized
+
     async def get_community_by_name(self, name: str) -> CommunityModel | None:
         result = await self.session.execute(
             select(CommunityModel).where(CommunityModel.name == name)
@@ -29,11 +46,37 @@ class CommunityService:
         )
         return result.scalar_one_or_none()
 
-    async def list_communities(self) -> list[CommunityModel]:
+    async def list_communities(self, tags: list[str] | None = None) -> list[CommunityModel]:
         result = await self.session.execute(
             select(CommunityModel).order_by(CommunityModel.created_at.desc())
         )
-        return result.scalars().all()
+        communities = result.scalars().all()
+        normalized_tags = {tag.casefold() for tag in self.normalize_tags(tags)}
+        if not normalized_tags:
+            return communities
+
+        filtered: list[CommunityModel] = []
+        for community in communities:
+            community_tags = {
+                tag.casefold()
+                for tag in self.normalize_tags(community.tags or [])
+            }
+            if normalized_tags.issubset(community_tags):
+                filtered.append(community)
+        return filtered
+
+    async def list_available_tags(self, query: str | None = None, limit: int = 12) -> list[str]:
+        result = await self.session.execute(select(CommunityModel.tags))
+        tag_map: dict[str, str] = {}
+        normalized_query = (query or "").strip().casefold()
+        for community_tags in result.scalars().all():
+            for tag in self.normalize_tags(community_tags or []):
+                key = tag.casefold()
+                if normalized_query and normalized_query not in key:
+                    continue
+                tag_map.setdefault(key, tag)
+        sorted_tags = sorted(tag_map.values(), key=str.casefold)
+        return sorted_tags[: max(limit, 1)]
 
     async def create_community(self, community_data: CommunityCreate, user_id: UUID) -> CommunityModel:
         member_count = community_data.member_count if community_data.member_count is not None else 1
@@ -42,7 +85,7 @@ class CommunityService:
             description=community_data.description,
             icon=community_data.icon,
             activity_status=community_data.activity_status,
-            tags=community_data.tags,
+            tags=self.normalize_tags(community_data.tags),
             member_count=member_count,
             created_by=user_id,
         )

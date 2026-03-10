@@ -3,7 +3,7 @@
 {% set page_description = resource.description or "Dive into a structured learning module with lessons, timelines, and resources to build job-ready skills and advance your career plan." %}
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/resources.css?v=20260307e">
+  <link rel="stylesheet" href="/static/css/resources.css?v=20260310c">
 {% endblock %}
 {% block content %}
   {% include "includes/header.html" %}
@@ -80,7 +80,7 @@
               </div>
               <div id="lesson-content" class="lesson-content"></div>
               <div id="lesson-action-bar" class="lesson-action-bar" hidden>
-                <button id="lesson-complete-btn" class="lesson-complete-btn" type="button">Mark as completed</button>
+                <button id="lesson-complete-btn" class="lesson-complete-btn" type="button">Mark as complete</button>
                 <p id="lesson-action-note" class="lesson-action-note"></p>
               </div>
 
@@ -106,5 +106,5 @@
 
   {% include "includes/footer.html" %}
   <script id="resource-payload-json" type="application/json">{{ resource_payload_json | safe }}</script>
-  <script src="/static/js/resource_detail.js?v=20260307e"></script>
+  <script src="/static/js/resource_detail.js?v=20260310b"></script>
 {% endblock %}

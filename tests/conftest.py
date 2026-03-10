@@ -7,6 +7,7 @@ import asyncio
 from typing import AsyncGenerator, Generator
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
 from app.app import app
 from app.db import Base, get_session
@@ -27,6 +28,12 @@ test_engine = create_async_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
+
+
+@event.listens_for(test_engine.sync_engine, "connect")
+def register_sqlite_functions(dbapi_connection, connection_record):
+    dbapi_connection.create_function("btrim", 1, lambda value: (value or "").strip())
+    dbapi_connection.create_function("char_length", 1, lambda value: len(value or ""))
 
 # Create test session factory
 TestSessionLocal = async_sessionmaker(
@@ -64,6 +71,12 @@ async def setup_db() -> AsyncGenerator[None, None]:
     from app.models.jobAnalysisModel import JobAnalysisModel
     from app.models.resumeEmbeddingsModel import ResumeEmbedding
     from app.models.userStatsModel import UserStatsModel
+    from app.models.communityModel import CommunityModel, CommunityMemberModel
+    from app.models.communityPostModel import (
+        CommunityPostCommentModel,
+        CommunityPostLikeModel,
+        CommunityPostModel,
+    )
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -766,20 +766,22 @@
     const sequence = getLessonSequence(lessonId);
     const isCompleted = completedLessonIds.has(lessonId);
     lessonActionBar.hidden = false;
+    lessonCompleteButton.disabled = false;
 
     if (isCompleted) {
       if (sequence.next) {
-        lessonCompleteButton.textContent = 'Continue to next lesson';
+        lessonCompleteButton.textContent = 'Next lesson';
         lessonActionNote.textContent = 'Great. This lesson is already completed.';
       } else {
         lessonCompleteButton.textContent = 'Course completed';
         lessonActionNote.textContent = 'You finished all lessons in this course.';
+        lessonCompleteButton.disabled = true;
       }
       return;
     }
 
-    lessonCompleteButton.textContent = sequence.next ? 'Mark as completed & Continue' : 'Mark as completed';
-    lessonActionNote.textContent = 'Progress updates only when you click this button.';
+    lessonCompleteButton.textContent = 'Mark as complete';
+    lessonActionNote.textContent = 'Progress updates when you mark this lesson as complete.';
   }
 
   function renderLesson(lessonId) {
@@ -836,10 +838,7 @@
       const descriptionHtml = parsedVideo.description
         ? `<p class=\"lesson-video-note\">${parsedVideo.description}</p>`
         : '';
-      const directLinkHtml = isSafeHttpUrl(parsedVideo.url)
-        ? `<p><a class=\"open-resource\" href=\"${parsedVideo.url}\" target=\"_blank\" rel=\"noopener noreferrer\">Open video in YouTube</a></p>`
-        : '';
-      lessonContent.innerHTML = `${descriptionHtml}<div class=\"video-wrap\"><iframe src=\"${embedUrl}\" allowfullscreen loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe></div>${directLinkHtml}`;
+      lessonContent.innerHTML = `${descriptionHtml}<div class=\"video-wrap\"><iframe src=\"${embedUrl}\" allowfullscreen loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe></div>`;
       return;
     }
 
@@ -886,11 +885,7 @@
     lessonCompleteButton.disabled = false;
     if (!completed) return;
 
-    if (sequence.next) {
-      renderLesson(sequence.next);
-    } else {
-      renderLesson(currentLessonId);
-    }
+    renderLesson(currentLessonId);
   });
 
   moduleButtons.forEach((btn) => {

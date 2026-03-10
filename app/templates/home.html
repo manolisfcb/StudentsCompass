@@ -1,166 +1,257 @@
 {% extends "base.html" %}
 {% set page_title = "Career Platform in Canada" %}
 {% set page_description = "Student Compass helps students in Canada with AI resume analysis, job search, roadmaps, resources, and a supportive career community to become job-ready faster." %}
+{% set body_class = "marketing-page marketing-home" %}
 {% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
 {% endblock %}
 {% block content %}
-    <header>
-        <nav>
+    <header class="marketing-header home-header">
+        <nav class="marketing-nav">
             <div class="container">
-                <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                <a href="/" class="marketing-brand" aria-label="StudentsCompass home">
+                    <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                </a>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation">☰</button>
                 <ul id="mobile-menu">
                     <li><a href="#for-students" onclick="closeMobileMenu()">For Students</a></li>
                     <li><a href="#for-companies" onclick="closeMobileMenu()">For Companies</a></li>
                     <li><a href="#how-it-works" onclick="closeMobileMenu()">How It Works</a></li>
                     <li><a href="/about" onclick="closeMobileMenu()">About</a></li>
-                    <li><a href="/login" onclick="closeMobileMenu()">Login</a></li>
+                    <li><a href="/login" onclick="closeMobileMenu()" class="marketing-nav-login">Login</a></li>
+                    <li><a href="/register" onclick="closeMobileMenu()" class="marketing-nav-cta">Get Started</a></li>
                 </ul>
             </div>
         </nav>
-        <div class="hero">
+        <div class="hero hero-home">
             <div class="container">
-                <h2>Navigate Your Academic Journey with Confidence</h2>
-                <p>Your personalized guide to achieving academic success. Set goals, track progress, and find the best resources.</p>
-                <a href="/register" class="cta-button">Get Started for Free</a>
+                <div class="hero-grid">
+                    <div class="hero-copy">
+                        <span class="hero-kicker">Career Readiness, Rebuilt</span>
+                        <h2>From confused student to job-ready candidate, with one clear system.</h2>
+                        <p>Student Compass combines AI resume feedback, role-aligned roadmaps, curated resources, and employer-facing readiness so students move with intention and companies hire with confidence.</p>
+                        <div class="hero-actions">
+                            <a href="/register" class="cta-button">Get Started for Free</a>
+                            <a href="/about" class="hero-secondary-link">See how it works</a>
+                        </div>
+                        <div class="hero-proof-list">
+                            <span>AI resume analysis</span>
+                            <span>Structured roadmaps</span>
+                            <span>Employer-ready profiles</span>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <article class="hero-showcase hero-showcase-primary">
+                            <div class="hero-showcase-label">Student Workspace</div>
+                            <h3>Everything in one flow</h3>
+                            <p>Track progress, improve your profile, and move from preparation to applications without bouncing across five different tools.</p>
+                            <div class="hero-mini-stats">
+                                <div>
+                                    <strong>Resume</strong>
+                                    <span>AI-backed feedback</span>
+                                </div>
+                                <div>
+                                    <strong>Jobs</strong>
+                                    <span>Targeted opportunities</span>
+                                </div>
+                                <div>
+                                    <strong>Resources</strong>
+                                    <span>Courses that unlock readiness</span>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="hero-showcase hero-showcase-secondary">
+                            <div class="hero-showcase-badge">For companies too</div>
+                            <p>Not just more applicants. Better prepared ones.</p>
+                        </article>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
-    <main>
-        <!-- What We Offer for Students -->
-        <section id="for-students" class="for-students">
+    <main class="marketing-main">
+        <section class="home-value-strip">
             <div class="container">
-                <h2>For Students</h2>
-                <p class="section-intro">Boost your professional career with tools designed for your success</p>
-                <div class="feature-cards">
-                    <div class="card">
-                        <h3>📝 AI-Powered Resume Analysis</h3>
-                        <p>Optimize your resume with personalized recommendations based on artificial intelligence.</p>
+                <div class="value-strip-grid">
+                    <div class="value-pill">
+                        <strong>Students</strong>
+                        <span>Get clarity, tools, and a real plan.</span>
                     </div>
-                    <div class="card">
-                        <h3>💼 Smart Job Search</h3>
-                        <p>Find job opportunities tailored to your profile and career goals.</p>
+                    <div class="value-pill">
+                        <strong>Companies</strong>
+                        <span>Access candidates who prepared on purpose.</span>
                     </div>
-                    <div class="card">
-                        <h3>🎯 Personalized Roadmap</h3>
-                        <p>Create an academic and professional plan adapted to your goals and progress.</p>
-                    </div>
-                    <div class="card">
-                        <h3>📚 Curated Resources</h3>
-                        <p>Access study materials, career advice, and specialized resources.</p>
-                    </div>
-                    <div class="card">
-                        <h3>👥 Community</h3>
-                        <p>Connect with other students, share experiences, and grow together.</p>
-                    </div>
-                    <div class="card">
-                        <h3>📊 Goal Tracking</h3>
-                        <p>Monitor your academic and professional progress in real-time.</p>
+                    <div class="value-pill">
+                        <strong>Platform</strong>
+                        <span>One teal identity, one structured journey.</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- What We Offer for Companies -->
-        <section id="for-companies" class="for-companies">
+        <section id="for-students" class="home-audience-section home-audience-section-students">
             <div class="container">
-                <h2>For Companies</h2>
-                <p class="section-intro">Find the young talent your company needs</p>
-                <div class="feature-cards">
-                    <div class="card">
-                        <h3>🎓 Access to Qualified Talent</h3>
-                        <p>Connect with students and recent graduates with the skills you're looking for.</p>
+                <div class="home-section-head">
+                    <span class="section-kicker">For students</span>
+                    <h2>Stop guessing what matters next.</h2>
+                    <p class="section-intro">Build career momentum with one structured workspace instead of disconnected advice, generic job boards, and random PDFs.</p>
+                </div>
+                <div class="feature-cards feature-cards-home">
+                    <div class="card home-card">
+                        <span class="home-card-icon">📝</span>
+                        <h3>AI-Powered Resume Analysis</h3>
+                        <p>Get concrete feedback that improves structure, impact, and relevance for the roles you want.</p>
                     </div>
-                    <div class="card">
-                        <h3>💡 Job Posting</h3>
-                        <p>Post vacancies and reach motivated university candidates directly.</p>
+                    <div class="card home-card">
+                        <span class="home-card-icon">💼</span>
+                        <h3>Smart Job Search</h3>
+                        <p>Use a job board designed around fit and readiness, not just endless scrolling.</p>
                     </div>
-                    <div class="card">
-                        <h3>🔍 Smart Search</h3>
-                        <p>Use advanced filters to find the perfect profile for your company.</p>
+                    <div class="card home-card">
+                        <span class="home-card-icon">🎯</span>
+                        <h3>Personalized Roadmaps</h3>
+                        <p>See what to work on next with a guided sequence that keeps your effort focused.</p>
                     </div>
-                    <div class="card">
-                        <h3>📈 Company Dashboard</h3>
-                        <p>Manage your job postings and candidates from a centralized panel.</p>
+                    <div class="card home-card">
+                        <span class="home-card-icon">📚</span>
+                        <h3>Curated Resources</h3>
+                        <p>Learn through practical content tied directly to employability and role readiness.</p>
                     </div>
-                    <div class="card">
-                        <h3>🤝 Employer Branding</h3>
-                        <p>Build your employer brand among the next generation of professionals.</p>
+                    <div class="card home-card">
+                        <span class="home-card-icon">👥</span>
+                        <h3>Community</h3>
+                        <p>Stay connected to peers, share progress, and learn from people on a similar path.</p>
                     </div>
-                    <div class="card">
-                        <h3>⚡ Efficient Processes</h3>
-                        <p>Optimize your recruitment with tools that save time and resources.</p>
+                    <div class="card home-card">
+                        <span class="home-card-icon">📊</span>
+                        <h3>Progress Tracking</h3>
+                        <p>Measure what you have completed and what still needs attention before applications.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="features" class="features">
+        <section id="for-companies" class="home-audience-section home-audience-section-companies">
             <div class="container">
-                <h2>Key Features</h2>
-                <div class="feature-cards">
-                    <div class="card">
+                <div class="home-section-head">
+                    <span class="section-kicker section-kicker-dark">For companies</span>
+                    <h2>Hire candidates who already did the work.</h2>
+                    <p class="section-intro">Student Compass helps employers discover students and graduates who arrive more aligned, more prepared, and easier to evaluate.</p>
+                </div>
+                <div class="feature-cards feature-cards-home">
+                    <div class="card home-card">
+                        <span class="home-card-icon">🎓</span>
+                        <h3>Access to Qualified Talent</h3>
+                        <p>Connect with students and graduates who are actively preparing for the market.</p>
+                    </div>
+                    <div class="card home-card">
+                        <span class="home-card-icon">💡</span>
+                        <h3>Job Posting</h3>
+                        <p>Share opportunities directly where motivated early-career talent is already engaged.</p>
+                    </div>
+                    <div class="card home-card">
+                        <span class="home-card-icon">🔍</span>
+                        <h3>Smarter Discovery</h3>
+                        <p>Review candidates with more context than a cold resume and a hope-it-fits guess.</p>
+                    </div>
+                    <div class="card home-card">
+                        <span class="home-card-icon">📈</span>
+                        <h3>Company Dashboard</h3>
+                        <p>Manage roles, applicants, and pipeline activity from a cleaner hiring workspace.</p>
+                    </div>
+                    <div class="card home-card">
+                        <span class="home-card-icon">🤝</span>
+                        <h3>Employer Branding</h3>
+                        <p>Show up in front of the next generation with a stronger and more intentional presence.</p>
+                    </div>
+                    <div class="card home-card">
+                        <span class="home-card-icon">⚡</span>
+                        <h3>Faster Screening</h3>
+                        <p>Reduce wasted screening time by focusing on candidates building real career readiness.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="home-platform-section">
+            <div class="container">
+                <div class="home-section-head">
+                    <span class="section-kicker">Platform highlights</span>
+                    <h2>One ecosystem, not a patchwork of tools.</h2>
+                    <p class="section-intro">The platform is designed so each part reinforces the next: roadmap, profile, resources, applications, and community.</p>
+                </div>
+                <div class="feature-cards feature-cards-home feature-cards-visual">
+                    <div class="card home-card home-card-visual">
                         <img src="/static/images/roadmap.svg" alt="Personalized Roadmaps">
                         <h3>Personalized Roadmaps</h3>
-                        <p>Create a customized academic plan that adapts to your goals and progress.</p>
+                        <p>Create a customized career plan that adapts to your goals, not generic advice.</p>
                     </div>
-                    <div class="card">
+                    <div class="card home-card home-card-visual">
                         <img src="/static/images/goal.svg" alt="Goal Tracking">
                         <h3>Goal Tracking</h3>
-                        <p>Set and monitor your academic and personal goals to stay motivated and on track.</p>
+                        <p>Track progress with a cleaner signal on what is done, what is blocked, and what matters next.</p>
                     </div>
-                    <div class="card">
+                    <div class="card home-card home-card-visual">
                         <img src="/static/images/resources.svg" alt="Resource Hub">
                         <h3>Resource Hub</h3>
-                        <p>Access a curated library of resources, from study materials to career advice.</p>
+                        <p>Access a curated learning library tied directly to employability, not just content consumption.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="how-it-works" class="how-it-works">
+        <section id="how-it-works" class="how-it-works home-journey-section">
             <div class="container">
-                <h2>How It Works</h2>
+                <div class="home-section-head">
+                    <span class="section-kicker">How it works</span>
+                    <h2>A simple path from signup to readiness.</h2>
+                </div>
                 <div class="steps">
-                    <div class="step">
+                    <div class="step home-step">
                         <span>1</span>
                         <h3>Sign Up</h3>
-                        <p>Create your free account in minutes.</p>
+                        <p>Create your account and enter a workspace built around direction, not noise.</p>
                     </div>
-                    <div class="step">
+                    <div class="step home-step">
                         <span>2</span>
-                        <h3>Set Your Goals</h3>
-                        <p>Define what you want to achieve academically and personally.</p>
+                        <h3>Build Your Focus</h3>
+                        <p>Clarify goals, improve your profile, and unlock the right resources for your path.</p>
                     </div>
-                    <div class="step">
+                    <div class="step home-step">
                         <span>3</span>
-                        <h3>Follow Your Path</h3>
-                        <p>Use your personalized roadmap and resources to navigate your journey.</p>
+                        <h3>Move With Confidence</h3>
+                        <p>Apply, track, and keep progressing with a system that shows what comes next.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="testimonials" class="testimonials">
+        <section id="testimonials" class="testimonials home-social-proof">
             <div class="container">
-                <h2>What Students Are Saying</h2>
+                <div class="home-section-head">
+                    <span class="section-kicker">Student signal</span>
+                    <h2>It should feel clearer, not harder.</h2>
+                </div>
                 <div class="testimonial-cards">
-                    <div class="card">
-                        <p>"StudentsCompass helped me stay organized and focused. I finally feel in control of my studies."</p>
+                    <div class="card home-card testimonial-card">
+                        <p>"StudentsCompass helped me stop guessing. I finally had one place to improve my profile, follow a roadmap, and actually move forward."</p>
                         <span>- Maria S., University Student</span>
                     </div>
-                    <div class="card">
-                        <p>"The personalized roadmap feature is a game-changer. I know exactly what I need to do to reach my goals."</p>
-                        <span>- David L., High School Student</span>
+                    <div class="card home-card testimonial-card">
+                        <p>"The roadmap and resources made the process feel structured. Instead of random effort, I knew exactly what to do next."</p>
+                        <span>- David L., Early Career Learner</span>
                     </div>
+                </div>
+                <div class="home-final-cta">
+                    <h3>Ready to build career momentum with a system that actually feels coherent?</h3>
+                    <a href="/register" class="cta-button">Start your journey</a>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer>
+    <footer class="public-footer">
         <div class="container">
             <p>&copy; 2026 StudentsCompass. All rights reserved.</p>
             <ul>

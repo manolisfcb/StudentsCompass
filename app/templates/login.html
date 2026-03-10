@@ -1,55 +1,85 @@
 {% extends "base.html" %}
 {% set page_title = "Login" %}
 {% set page_description = "Log in to Student Compass to access your personalized career roadmap, resume tools, job search insights, and community updates in one place." %}
+{% set body_class = "auth-page auth-login-page" %}
 {% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
 {% endblock %}
 {% block content %}
     <div class="auth-container">
-        <div class="auth-card">
-            <h2>Welcome Back!</h2>
-            <p>Log in to your StudentsCompass account.</p>
-            <div id="error-message" style="color: red; margin-bottom: 1rem;"></div>
-            
-            <!-- Account Type Selection - Modern Toggle -->
-            <div class="form-group">
-                <label style="font-size: 0.9rem; font-weight: 600; color: #0F172A; margin-bottom: 0.75rem; display: block;">Account Type</label>
-                <div class="account-type-toggle">
-                    <input type="radio" name="login-type" value="student" id="type-student" checked hidden>
-                    <input type="radio" name="login-type" value="company" id="type-company" hidden>
-                    
-                    <label for="type-student" class="toggle-option toggle-active">
-                        <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <span class="toggle-text">Student</span>
-                    </label>
-                    
-                    <label for="type-company" class="toggle-option">
-                        <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                            <path d="M16 4h2a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2h2m12 10v4M2 17v4"></path>
-                        </svg>
-                        <span class="toggle-text">Company</span>
-                    </label>
+        <div class="auth-shell">
+            <aside class="auth-aside">
+                <a href="/" class="auth-brand" aria-label="StudentsCompass home">
+                    <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                </a>
+                <span class="auth-kicker">Welcome back</span>
+                <h1>Return to your career workspace.</h1>
+                <p>Pick up where you left off: refine your profile, continue your roadmap, review resources, or manage your company hiring flow.</p>
+                <div class="auth-aside-points">
+                    <div class="auth-aside-point">
+                        <div class="auth-aside-icon">🧭</div>
+                        <div>
+                            <strong>Clarity over chaos</strong>
+                            <span>One place to keep your career preparation moving with structure.</span>
+                        </div>
+                    </div>
+                    <div class="auth-aside-point">
+                        <div class="auth-aside-icon">⚡</div>
+                        <div>
+                            <strong>Fast access</strong>
+                            <span>Students and companies both enter through the same refined experience.</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </aside>
 
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="username">Email</label>
-                    <input type="email" id="username" name="username" required>
+            <div class="auth-card">
+                <div class="auth-form-header">
+                    <a href="/" class="auth-back-link">← Back to home</a>
+                    <h2>Login</h2>
+                    <p>Access your StudentsCompass account.</p>
                 </div>
+                <div id="error-message" class="auth-message auth-message-error"></div>
+
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <label class="auth-section-label">Account Type</label>
+                    <div class="account-type-toggle">
+                        <input type="radio" name="login-type" value="student" id="type-student" checked hidden>
+                        <input type="radio" name="login-type" value="company" id="type-company" hidden>
+                        
+                        <label for="type-student" class="toggle-option">
+                            <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span class="toggle-text">Student</span>
+                        </label>
+                        
+                        <label for="type-company" class="toggle-option">
+                            <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 4h2a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2h2m12 10v4M2 17v4"></path>
+                            </svg>
+                            <span class="toggle-text">Company</span>
+                        </label>
+                    </div>
                 </div>
-                <button type="submit" class="cta-button auth-button">Login</button>
-            </form>
-            <div class="auth-links">
-                <p>Don't have an account? <a href="/api/v1/auth/register">Sign Up</a></p>
-                <p><a href="/forgot-password">Forgot Password?</a></p>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">Email</label>
+                        <input type="email" id="username" name="username" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="cta-button auth-button">Login</button>
+                </form>
+                <div class="auth-links">
+                    <p>Don't have an account? <a href="/api/v1/auth/register">Create one</a></p>
+                    <p><a href="/forgot-password">Forgot Password?</a></p>
+                </div>
             </div>
         </div>
     </div>
@@ -64,6 +94,7 @@
             const loginType = document.querySelector('input[name="login-type"]:checked').value;
 
             errorMessage.textContent = '';
+            errorMessage.classList.remove('is-visible');
 
             // Determine the login endpoint based on account type
             const isStudent = loginType === 'student';
@@ -101,83 +132,13 @@
                         // Some auth backends return empty/non-JSON bodies
                     }
                     errorMessage.textContent = message;
+                    errorMessage.classList.add('is-visible');
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 errorMessage.textContent = 'An unexpected error occurred. Please try again.';
+                errorMessage.classList.add('is-visible');
             }
         });
     </script>
-
-    <style>
-        /* Account Type Toggle - Premium Design */
-        .account-type-toggle {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .toggle-option {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1rem;
-            border: 2px solid #E2E8F0;
-            border-radius: 12px;
-            background: #FFFFFF;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 600;
-            color: #64748B;
-        }
-
-        .toggle-option:hover {
-            border-color: #0F766E;
-            background: #F0FDFA;
-            transform: translateY(-2px);
-        }
-
-        #type-student:checked ~ label[for="type-student"],
-        #type-company:checked ~ label[for="type-company"] {
-            border-color: #0F766E;
-            background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
-            color: white;
-            box-shadow: 0 8px 16px rgba(15, 118, 110, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .toggle-icon {
-            width: 24px;
-            height: 24px;
-            transition: transform 0.3s ease;
-        }
-
-        #type-student:checked ~ label[for="type-student"] .toggle-icon,
-        #type-company:checked ~ label[for="type-company"] .toggle-icon {
-            transform: scale(1.1);
-        }
-
-        .toggle-text {
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        @media (max-width: 480px) {
-            .account-type-toggle {
-                gap: 0.5rem;
-            }
-
-            .toggle-option {
-                padding: 0.85rem 0.5rem;
-            }
-
-            .toggle-text {
-                font-size: 0.85rem;
-            }
-        }
-    </style>
 {% endblock %}

@@ -19,6 +19,13 @@
             Job Postings
           </a>
         </li>
+        {% if company_recruiter and company_recruiter.role == 'owner' %}
+        <li>
+          <a href="/company-team" class="nav-btn nav-btn-primary {{ 'active' if request.url.path == '/company-team' else '' }}">
+            Team
+          </a>
+        </li>
+        {% endif %}
         <li>
           <a href="/company-dashboard" class="nav-btn nav-btn-primary">
             Applications
