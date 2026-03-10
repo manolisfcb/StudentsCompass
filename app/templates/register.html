@@ -3,14 +3,14 @@
 {% set page_description = "Create a Student Compass account to start your career journey, build a roadmap, and access job-ready resources, tools, and community support." %}
 {% set body_class = "auth-page auth-register-page" %}
 {% block head_extra %}
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
 {% endblock %}
 {% block content %}
     <div class="auth-container">
         <div class="auth-shell">
             <aside class="auth-aside">
                 <a href="/" class="auth-brand" aria-label="StudentsCompass home">
-                    <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
                 </a>
                 <span class="auth-kicker">Create your account</span>
                 <h1>Start with a cleaner, more intentional career setup.</h1>

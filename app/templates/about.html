@@ -3,14 +3,14 @@
 {% set page_description = "Student Compass connects employers with career-ready graduates in Canada. Our proprietary AI-powered framework delivers pre-vetted, motivated talent — saving your company time, cost, and hiring risk." %}
 {% set body_class = "marketing-page marketing-about" %}
 {% block head_extra %}
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
 {% endblock %}
 {% block content %}
     <header class="marketing-header about-top-header">
         <nav class="marketing-nav">
             <div class="container">
                 <a href="/" class="marketing-brand" aria-label="StudentsCompass home">
-                    <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
                 </a>
                 <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation">☰</button>
                 <ul id="mobile-menu">

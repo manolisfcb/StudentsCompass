@@ -3,7 +3,7 @@
 {% set page_description = "Search jobs manually, use AI to extract keywords from your CV, track your applications, and manage recruiter conversations in Student Compass." %}
 {% set display_name = user.first_name or user.nickname or "Student" %}
 {% block head_extra %}
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
     <style>
         .jobs-stage {
             padding: 2rem 0 4rem;

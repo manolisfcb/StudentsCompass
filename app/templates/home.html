@@ -3,14 +3,14 @@
 {% set page_description = "Student Compass helps students in Canada with AI resume analysis, job search, roadmaps, resources, and a supportive career community to become job-ready faster." %}
 {% set body_class = "marketing-page marketing-home" %}
 {% block head_extra %}
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
 {% endblock %}
 {% block content %}
     <header class="marketing-header home-header">
         <nav class="marketing-nav">
             <div class="container">
                 <a href="/" class="marketing-brand" aria-label="StudentsCompass home">
-                    <img src="/static/images/Logo_Ready_to_Use.png" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
                 </a>
                 <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation">☰</button>
                 <ul id="mobile-menu">
@@ -183,17 +183,17 @@
                 </div>
                 <div class="feature-cards feature-cards-home feature-cards-visual">
                     <div class="card home-card home-card-visual">
-                        <img src="/static/images/roadmap.svg" alt="Personalized Roadmaps">
+                        <img src="{{ asset_url('images/roadmap.svg') }}" alt="Personalized Roadmaps">
                         <h3>Personalized Roadmaps</h3>
                         <p>Create a customized career plan that adapts to your goals, not generic advice.</p>
                     </div>
                     <div class="card home-card home-card-visual">
-                        <img src="/static/images/goal.svg" alt="Goal Tracking">
+                        <img src="{{ asset_url('images/goal.svg') }}" alt="Goal Tracking">
                         <h3>Goal Tracking</h3>
                         <p>Track progress with a cleaner signal on what is done, what is blocked, and what matters next.</p>
                     </div>
                     <div class="card home-card home-card-visual">
-                        <img src="/static/images/resources.svg" alt="Resource Hub">
+                        <img src="{{ asset_url('images/resources.svg') }}" alt="Resource Hub">
                         <h3>Resource Hub</h3>
                         <p>Access a curated learning library tied directly to employability, not just content consumption.</p>
                     </div>

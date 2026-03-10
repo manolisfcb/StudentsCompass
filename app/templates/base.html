@@ -15,17 +15,17 @@
   <link rel="canonical" href="{{ canonical_url }}">
   <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/static/images/Logo_Ready_to_Use.png">
+  <link rel="apple-touch-icon" href="{{ asset_url('images/Logo_Ready_to_Use.png') }}">
   <meta name="theme-color" content="#0F766E">
   <meta property="og:site_name" content="Students Compass">
   <meta property="og:title" content="Students Compass | {{ page_title_value }}">
   <meta property="og:description" content="{{ page_description_value }}">
   <meta property="og:url" content="{{ canonical_url }}">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://studentscompass.ca/static/images/Logo_Ready_to_Use.png">
+  <meta property="og:image" content="https://studentscompass.ca{{ asset_url('images/Logo_Ready_to_Use.png') }}">
   {% block head_extra %}{% endblock %}
   <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"Organization","name":"Students Compass","url":"https://studentscompass.ca","logo":"https://studentscompass.ca/static/images/Logo_Ready_to_Use.png"}
+    {"@context":"https://schema.org","@type":"Organization","name":"Students Compass","url":"https://studentscompass.ca","logo":"https://studentscompass.ca{{ asset_url('images/Logo_Ready_to_Use.png') }}"}
   </script>
   <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"WebSite","name":"Students Compass","url":"https://studentscompass.ca/","alternateName":"studentscompass.ca"}

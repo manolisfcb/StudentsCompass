@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.db import create_db_and_tables
+from app.template_utils import configure_template_helpers
 import os
 
 from contextlib import asynccontextmanager
@@ -106,7 +107,7 @@ async def favicon():
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+templates = configure_template_helpers(Jinja2Templates(directory="app/templates"))
 
 app.include_router(post_router, prefix="/api/v1")
 app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])

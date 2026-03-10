@@ -2,8 +2,8 @@
 {% set page_title = roadmap.title %}
 {% set page_description = roadmap.description %}
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/roadmaps.css">
+  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
+  <link rel="stylesheet" href="{{ asset_url('css/roadmaps.css') }}">
 {% endblock %}
 {% block content %}
   {% include "includes/header.html" %}

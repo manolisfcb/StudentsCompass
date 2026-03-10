@@ -2,7 +2,7 @@
 {% set page_title = "Dashboard" %}
 {% set page_description = "Track your job search progress, applications, and career milestones in your Student Compass dashboard with quick actions and insights." %}
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
 {% endblock %}
 {% block content %}
   {% include "includes/header.html" %}

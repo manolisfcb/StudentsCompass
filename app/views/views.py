@@ -19,6 +19,7 @@ from app.services.userService import current_active_user_optional
 from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
+from app.template_utils import configure_template_helpers
 from typing import Optional
 
 _ROADMAP_TABLES = (
@@ -37,7 +38,7 @@ def _is_missing_roadmap_tables_error(exc: Exception) -> bool:
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory="app/templates")
+templates = configure_template_helpers(Jinja2Templates(directory="app/templates"))
 RESOURCE_DETAIL_ACCESS_ENABLED = True
 
 @router.get("/")

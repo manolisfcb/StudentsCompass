@@ -2,8 +2,8 @@
 {% set page_title = resource.title %}
 {% set page_description = resource.description or "Dive into a structured learning module with lessons, timelines, and resources to build job-ready skills and advance your career plan." %}
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/resources.css?v=20260310c">
+  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
+  <link rel="stylesheet" href="{{ asset_url('css/resources.css') }}">
 {% endblock %}
 {% block content %}
   {% include "includes/header.html" %}
@@ -106,5 +106,5 @@
 
   {% include "includes/footer.html" %}
   <script id="resource-payload-json" type="application/json">{{ resource_payload_json | safe }}</script>
-  <script src="/static/js/resource_detail.js?v=20260310b"></script>
+  <script src="{{ asset_url('js/resource_detail.js') }}"></script>
 {% endblock %}
