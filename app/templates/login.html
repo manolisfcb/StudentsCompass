@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
 {% endblock %}
 {% block content %}
-    <div class="auth-container">
+    <div class="auth-container" id="auth-container">
         <div class="auth-shell">
             <aside class="auth-aside">
                 <a href="/" class="auth-brand" aria-label="StudentsCompass home">
@@ -85,6 +85,23 @@
     </div>
 
     <script>
+        const authContainer = document.getElementById('auth-container');
+        const loginTypeRadios = document.querySelectorAll('input[name="login-type"]');
+
+        function setAuthMode(mode) {
+            authContainer.classList.toggle('company-mode', mode === 'company');
+        }
+
+        loginTypeRadios.forEach((radio) => {
+            radio.addEventListener('change', (event) => {
+                if (event.target.checked) {
+                    setAuthMode(event.target.value);
+                }
+            });
+        });
+
+        setAuthMode(document.querySelector('input[name="login-type"]:checked').value);
+
         document.getElementById('login-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 

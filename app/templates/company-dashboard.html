@@ -8,22 +8,23 @@
       padding: 2rem;
     }
 
-    .dashboard-header {
+    .dashboard-header.company-dashboard-header {
       position: relative;
       overflow: hidden;
       margin-bottom: 1.75rem;
       padding: 1.6rem;
+      text-align: center;
       border-radius: 30px;
       border: 1px solid rgba(30, 64, 175, 0.14);
       background:
         radial-gradient(circle at top right, rgba(96, 165, 250, 0.22), transparent 26%),
         radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.18), transparent 28%),
-        linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(15, 118, 110, 0.9));
+        linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(29, 78, 216, 0.94) 56%, rgba(14, 165, 233, 0.88));
       box-shadow: 0 26px 58px rgba(15, 23, 42, 0.18);
       color: white;
     }
 
-    .dashboard-header::before {
+    .dashboard-header.company-dashboard-header::before {
       content: "Company Command Center";
       display: inline-flex;
       align-items: center;
@@ -38,7 +39,7 @@
       text-transform: uppercase;
     }
 
-    .dashboard-header h2 {
+    .dashboard-header.company-dashboard-header h2 {
       font-size: clamp(2rem, 3.2vw, 3rem);
       margin: 0 0 0.55rem;
       line-height: 0.98;
@@ -46,8 +47,8 @@
       color: #F8FAFC;
     }
 
-    .dashboard-header p {
-      margin: 0;
+    .dashboard-header.company-dashboard-header p {
+      margin: 0 auto;
       max-width: 58ch;
       color: rgba(226, 232, 240, 0.92);
       font-size: 1rem;
@@ -706,7 +707,7 @@
       .dashboard-container {
         padding: 1.5rem;
       }
-      .dashboard-header h2 {
+      .dashboard-header.company-dashboard-header h2 {
         font-size: 1.7rem;
       }
       .stats-grid {
@@ -718,11 +719,11 @@
       .dashboard-container {
         padding: 1rem;
       }
-      .dashboard-header h2 {
+      .dashboard-header.company-dashboard-header h2 {
         font-size: 1.4rem;
         margin-bottom: 0.25rem;
       }
-      .dashboard-header p {
+      .dashboard-header.company-dashboard-header p {
         font-size: 0.95rem;
       }
       .dashboard-content {
@@ -799,10 +800,10 @@
       .dashboard-container {
         padding: 0.75rem;
       }
-      .dashboard-header h2 {
+      .dashboard-header.company-dashboard-header h2 {
         font-size: 1.2rem;
       }
-      .dashboard-header p {
+      .dashboard-header.company-dashboard-header p {
         font-size: 0.9rem;
       }
       .stats-grid {
@@ -859,7 +860,7 @@
 
   <main>
     <div class="dashboard-container">
-      <div class="dashboard-header">
+      <div class="dashboard-header company-dashboard-header">
         <h2 id="company-welcome">Company Dashboard</h2>
         <p>Welcome back! Here's what's happening with your job postings.</p>
       </div>

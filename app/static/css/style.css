@@ -1427,11 +1427,37 @@ footer a:hover {
 
 /* Auth Pages */
 .auth-container {
+    --auth-accent: #0f766e;
+    --auth-accent-strong: #0b5d57;
+    --auth-accent-soft: #5eead4;
+    --auth-accent-rgb: 15, 118, 110;
+    --auth-link: #0f766e;
+    --auth-surface-tint: #f0fdfa;
+    --auth-text-soft: rgba(236, 254, 255, 0.88);
+    --auth-point-text: rgba(236, 254, 255, 0.76);
+    --auth-icon-bg: rgba(204, 251, 241, 0.14);
+    --auth-card-top: linear-gradient(90deg, #0f766e 0%, #5eead4 100%);
     min-height: 100vh;
     padding: 2rem;
     background:
         radial-gradient(circle at top left, rgba(94, 234, 212, 0.14), transparent 22%),
         linear-gradient(135deg, #0a4f48 0%, #0f766e 38%, #0d9488 70%, #5eead4 100%);
+}
+
+.auth-container.company-mode {
+    --auth-accent: #1d4ed8;
+    --auth-accent-strong: #0f172a;
+    --auth-accent-soft: #60a5fa;
+    --auth-accent-rgb: 29, 78, 216;
+    --auth-link: #1d4ed8;
+    --auth-surface-tint: #eff6ff;
+    --auth-text-soft: rgba(219, 234, 254, 0.9);
+    --auth-point-text: rgba(219, 234, 254, 0.78);
+    --auth-icon-bg: rgba(191, 219, 254, 0.16);
+    --auth-card-top: linear-gradient(90deg, #0f172a 0%, #1d4ed8 54%, #60a5fa 100%);
+    background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.18), transparent 24%),
+        linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #0ea5e9 100%);
 }
 
 .auth-shell {
@@ -1457,6 +1483,12 @@ footer a:hover {
         linear-gradient(160deg, rgba(8, 59, 55, 0.96) 0%, rgba(11, 95, 88, 0.94) 100%);
 }
 
+.auth-container.company-mode .auth-aside {
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 28%),
+        linear-gradient(160deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 64, 175, 0.94) 62%, rgba(14, 165, 233, 0.86) 100%);
+}
+
 .auth-aside::after {
     content: "";
     position: absolute;
@@ -1466,6 +1498,10 @@ footer a:hover {
     border-radius: 50%;
     background: radial-gradient(circle, rgba(94, 234, 212, 0.22), transparent 72%);
     pointer-events: none;
+}
+
+.auth-container.company-mode .auth-aside::after {
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.24), transparent 72%);
 }
 
 .auth-brand {
@@ -1481,7 +1517,7 @@ footer a:hover {
     padding: 0.45rem 0.8rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.12);
-    color: #ccfbf1;
+    color: var(--auth-text-soft);
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -1498,7 +1534,7 @@ footer a:hover {
 .auth-aside p {
     margin: 0;
     max-width: 34ch;
-    color: rgba(236, 254, 255, 0.88);
+    color: var(--auth-text-soft);
     font-size: 1rem;
     line-height: 1.72;
 }
@@ -1527,7 +1563,7 @@ footer a:hover {
 }
 
 .auth-aside-point span {
-    color: rgba(236, 254, 255, 0.76);
+    color: var(--auth-point-text);
     font-size: 0.88rem;
     line-height: 1.5;
 }
@@ -1540,7 +1576,7 @@ footer a:hover {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: rgba(204, 251, 241, 0.14);
+    background: var(--auth-icon-bg);
     font-size: 1.1rem;
 }
 
@@ -1554,6 +1590,14 @@ footer a:hover {
     border-radius: 0;
 }
 
+.auth-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: var(--auth-card-top);
+}
+
 .auth-form-header {
     margin-bottom: 1.6rem;
 }
@@ -1563,7 +1607,7 @@ footer a:hover {
     align-items: center;
     gap: 0.35rem;
     margin-bottom: 1rem;
-    color: var(--primary-color);
+    color: var(--auth-link);
     font-size: 0.88rem;
     font-weight: 700;
     text-decoration: none;
@@ -1621,7 +1665,7 @@ footer a:hover {
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--primary-color);
+    color: var(--auth-link);
     margin-bottom: 0.85rem;
     display: block;
 }
@@ -1656,8 +1700,8 @@ footer a:hover {
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    border-color: var(--auth-accent);
+    box-shadow: 0 0 0 4px rgba(var(--auth-accent-rgb), 0.12);
 }
 
 .form-grid-two {
@@ -1673,8 +1717,8 @@ footer a:hover {
     cursor: pointer;
     min-height: 56px;
     border-radius: 18px;
-    background: linear-gradient(135deg, var(--primary-color), #0b5d57);
-    box-shadow: 0 18px 30px rgba(15, 118, 110, 0.18);
+    background: linear-gradient(135deg, var(--auth-accent), var(--auth-accent-strong));
+    box-shadow: 0 18px 30px rgba(var(--auth-accent-rgb), 0.2);
 }
 
 .auth-links {
@@ -1689,7 +1733,7 @@ footer a:hover {
 }
 
 .auth-links a {
-    color: var(--primary-color);
+    color: var(--auth-link);
     text-decoration: none;
     font-weight: 700;
 }
@@ -1723,8 +1767,8 @@ footer a:hover {
 }
 
 .toggle-option:hover {
-    border-color: rgba(15, 118, 110, 0.24);
-    background: #f0fdfa;
+    border-color: rgba(var(--auth-accent-rgb), 0.24);
+    background: var(--auth-surface-tint);
     transform: translateY(-1px);
 }
 
@@ -1744,10 +1788,10 @@ footer a:hover {
 #type-company:checked ~ label[for="type-company"],
 #reg-type-student:checked ~ label[for="reg-type-student"],
 #reg-type-company:checked ~ label[for="reg-type-company"] {
-    border-color: #0f766e;
-    background: linear-gradient(135deg, #0f766e 0%, #5eead4 100%);
+    border-color: var(--auth-accent);
+    background: linear-gradient(135deg, var(--auth-accent) 0%, var(--auth-accent-soft) 100%);
     color: white;
-    box-shadow: 0 14px 26px rgba(15, 118, 110, 0.18);
+    box-shadow: 0 14px 26px rgba(var(--auth-accent-rgb), 0.18);
     transform: translateY(-1px);
 }
 
@@ -1756,6 +1800,25 @@ footer a:hover {
 #reg-type-student:checked ~ label .toggle-icon,
 #reg-type-company:checked ~ label .toggle-icon {
     transform: scale(1.06);
+}
+
+.auth-container.company-mode #company-form {
+    position: relative;
+}
+
+.auth-container.company-mode #company-form::before {
+    content: "Company onboarding";
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .registration-form {

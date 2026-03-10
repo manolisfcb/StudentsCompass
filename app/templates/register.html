@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
 {% endblock %}
 {% block content %}
-    <div class="auth-container">
+    <div class="auth-container" id="auth-container">
         <div class="auth-shell">
             <aside class="auth-aside">
                 <a href="/" class="auth-brand" aria-label="StudentsCompass home">
@@ -159,24 +159,32 @@
 
     <script>
         // Toggle between student and company forms
+        const authContainer = document.getElementById('auth-container');
         const accountTypeStudentRadio = document.getElementById('reg-type-student');
         const accountTypeCompanyRadio = document.getElementById('reg-type-company');
         const studentForm = document.getElementById('student-form');
         const companyForm = document.getElementById('company-form');
 
+        function setAuthMode(mode) {
+            const isCompany = mode === 'company';
+            authContainer.classList.toggle('company-mode', isCompany);
+            studentForm.style.display = isCompany ? 'none' : 'block';
+            companyForm.style.display = isCompany ? 'block' : 'none';
+        }
+
         accountTypeStudentRadio.addEventListener('change', (e) => {
             if (e.target.checked) {
-                studentForm.style.display = 'block';
-                companyForm.style.display = 'none';
+                setAuthMode('student');
             }
         });
 
         accountTypeCompanyRadio.addEventListener('change', (e) => {
             if (e.target.checked) {
-                studentForm.style.display = 'none';
-                companyForm.style.display = 'block';
+                setAuthMode('company');
             }
         });
+
+        setAuthMode(document.querySelector('input[name="account-type"]:checked').value);
 
         // Student form submission
         document.getElementById('student-form').addEventListener('submit', async (event) => {
