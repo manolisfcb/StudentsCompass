@@ -10,7 +10,12 @@ class JobPostingBase(BaseModel):
     responsibilities: Optional[str] = None
     location: Optional[str] = None
     job_type: Optional[str] = None
+    workplace_type: Optional[str] = None
+    seniority_level: Optional[str] = None
     salary_range: Optional[str] = None
+    benefits: Optional[str] = None
+    listed_context: Optional[str] = None
+    source_context: Optional[str] = None
     application_url: Optional[str] = None
     is_active: bool = True
     expires_at: Optional[datetime] = None
@@ -20,6 +25,10 @@ class JobPostingCreate(JobPostingBase):
     company_id: UUID4
 
 
+class CompanyJobPostingCreate(JobPostingBase):
+    pass
+
+
 class JobPostingUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
@@ -27,7 +36,12 @@ class JobPostingUpdate(BaseModel):
     responsibilities: Optional[str] = None
     location: Optional[str] = None
     job_type: Optional[str] = None
+    workplace_type: Optional[str] = None
+    seniority_level: Optional[str] = None
     salary_range: Optional[str] = None
+    benefits: Optional[str] = None
+    listed_context: Optional[str] = None
+    source_context: Optional[str] = None
     application_url: Optional[str] = None
     is_active: Optional[bool] = None
     expires_at: Optional[datetime] = None
@@ -41,3 +55,12 @@ class JobPostingRead(JobPostingBase):
     
     class Config:
         from_attributes = True
+
+
+class JobBoardPostingRead(JobPostingRead):
+    company_name: Optional[str] = None
+    company_location: Optional[str] = None
+    company_description: Optional[str] = None
+    company_website: Optional[str] = None
+    source: str = "students_compass"
+    source_label: str = "Students Compass"

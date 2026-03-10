@@ -43,7 +43,12 @@ class JobPosting(Base):
     responsibilities = Column(Text, nullable=True)
     location = Column(String, nullable=True)
     job_type = Column(String, nullable=True)  # full-time, part-time, internship, etc.
+    workplace_type = Column(String, nullable=True)  # remote, hybrid, on-site
+    seniority_level = Column(String, nullable=True)
     salary_range = Column(String, nullable=True)
+    benefits = Column(Text, nullable=True)
+    listed_context = Column(String, nullable=True)
+    source_context = Column(String, nullable=True)
     application_url = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     

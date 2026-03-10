@@ -21,7 +21,9 @@ class ResumeService:
             view_url=resume_create.view_url,
             original_filename=resume_create.original_filename,
             storage_file_id=resume_create.storage_file_id,
-            folder_id=resume_create.folder_id
+            folder_id=resume_create.folder_id,
+            ai_summary=resume_create.ai_summary,
+            contact_phone=resume_create.contact_phone,
         )
         self.session.add(resume)
         await self.session.commit()
@@ -40,6 +42,41 @@ class ResumeService:
             .order_by(ResumeModel.created_at.desc())
         )
         return list(result.scalars().all())
+
+    async def get_latest_user_resume(self, user_id: UUID) -> ResumeModel | None:
+        result = await self.session.execute(
+            select(ResumeModel)
+            .where(ResumeModel.user_id == user_id)
+            .order_by(ResumeModel.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_user_resume(self, *, resume_id: UUID, user_id: UUID) -> ResumeModel | None:
+        result = await self.session.execute(
+            select(ResumeModel).where(
+                ResumeModel.id == resume_id,
+                ResumeModel.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def update_resume_analysis(
+        self,
+        *,
+        resume_id: UUID,
+        ai_summary: str | None = None,
+        contact_phone: str | None = None,
+    ) -> ResumeModel | None:
+        resume = await self.session.get(ResumeModel, resume_id)
+        if resume is None:
+            return None
+
+        resume.ai_summary = ai_summary
+        resume.contact_phone = contact_phone
+        await self.session.commit()
+        await self.session.refresh(resume)
+        return resume
     
     async def upload_pdf_to_s3(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
         """Upload PDF file to S3 bucket"""

@@ -11,6 +11,8 @@ class CreateResumeSchema(BaseModel):
     storage_file_id: str
     folder_id: str
     user_id: uuid.UUID
+    ai_summary: Optional[str] = None
+    contact_phone: Optional[str] = None
 
 
 
@@ -21,6 +23,8 @@ class ResumeReadSchema(BaseModel):
     original_filename: str
     storage_file_id: str
     folder_id: str
+    ai_summary: Optional[str] = None
+    contact_phone: Optional[str] = None
     created_at: Optional[str] = None
 
 

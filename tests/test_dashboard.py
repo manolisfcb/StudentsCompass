@@ -60,23 +60,38 @@ class TestDashboard:
         db_session: AsyncSession
     ):
         """Test dashboard with applications"""
-        # Create job posting
-        job_posting = JobPosting(
-            id=uuid.uuid4(),
-            company_id=test_company.id,
-            title="Software Engineer",
-            description="Great job",
-            location="Remote"
-        )
-        db_session.add(job_posting)
-        
-        # Create applications
+        job_postings = [
+            JobPosting(
+                id=uuid.uuid4(),
+                company_id=test_company.id,
+                title="Software Engineer",
+                description="Great job",
+                location="Remote",
+            ),
+            JobPosting(
+                id=uuid.uuid4(),
+                company_id=test_company.id,
+                title="Backend Developer",
+                description="Backend role",
+                location="Remote",
+            ),
+            JobPosting(
+                id=uuid.uuid4(),
+                company_id=test_company.id,
+                title="Frontend Developer",
+                description="Frontend role",
+                location="Remote",
+            ),
+        ]
+        for job_posting in job_postings:
+            db_session.add(job_posting)
+
         applications = [
             ApplicationModel(
                 id=uuid.uuid4(),
                 user_id=test_user.id,
                 company_id=test_company.id,
-                job_posting_id=job_posting.id,
+                job_posting_id=job_postings[0].id,
                 job_title="Software Engineer",
                 status=ApplicationStatus.APPLIED
             ),
@@ -84,7 +99,7 @@ class TestDashboard:
                 id=uuid.uuid4(),
                 user_id=test_user.id,
                 company_id=test_company.id,
-                job_posting_id=job_posting.id,
+                job_posting_id=job_postings[1].id,
                 job_title="Backend Developer",
                 status=ApplicationStatus.IN_REVIEW
             ),
@@ -92,7 +107,7 @@ class TestDashboard:
                 id=uuid.uuid4(),
                 user_id=test_user.id,
                 company_id=test_company.id,
-                job_posting_id=job_posting.id,
+                job_posting_id=job_postings[2].id,
                 job_title="Frontend Developer",
                 status=ApplicationStatus.INTERVIEW
             )
@@ -226,24 +241,24 @@ class TestCompanyDashboard:
                 id=uuid.uuid4(),
                 user_id=test_user.id,
                 company_id=test_company.id,
-                job_posting_id=older_job.id,
-                job_title=older_job.title,
+                job_posting_id=latest_job.id,
+                job_title=latest_job.title,
                 status=ApplicationStatus.IN_REVIEW,
             ),
             ApplicationModel(
                 id=uuid.uuid4(),
                 user_id=test_user.id,
                 company_id=test_company.id,
-                job_posting_id=older_job.id,
-                job_title=older_job.title,
+                job_posting_id=None,
+                job_title="Operations Analyst",
                 status=ApplicationStatus.INTERVIEW,
             ),
             ApplicationModel(
                 id=uuid.uuid4(),
                 user_id=test_user.id,
                 company_id=test_company.id,
-                job_posting_id=latest_job.id,
-                job_title=latest_job.title,
+                job_posting_id=None,
+                job_title="Community Coordinator",
                 status=ApplicationStatus.OFFER,
             ),
         ]
@@ -269,7 +284,8 @@ class TestCompanyDashboard:
         assert data["recent_job_postings"][0]["status"] == "closed"
         assert data["recent_job_postings"][1]["title"] == "Junior Backend Engineer"
         assert data["recent_job_postings"][1]["status"] == "active"
-        assert data["recent_job_postings"][1]["application_count"] == 3
+        assert data["recent_job_postings"][0]["application_count"] == 1
+        assert data["recent_job_postings"][1]["application_count"] == 1
 
     @pytest.mark.asyncio
     async def test_get_company_dashboard_unauthorized(self, client: AsyncClient):

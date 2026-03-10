@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.resumeService import ResumeService
 from app.services.resumeCourseAuditService import ResumeCourseAuditService
@@ -110,11 +110,14 @@ async def get_course_audit_attempts(
 
 @router.get("/profile/cv", response_model=list[ResumeReadSchema])
 async def list_resumes(
+    response: Response,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
 ):
+    response.headers["Cache-Control"] = "no-store, private"
+    response.headers["Pragma"] = "no-cache"
     resume_service = ResumeService(session)
-    resumes = await resume_service.list_user_resumes(user.id)
+    resumes = [resume for resume in await resume_service.list_user_resumes(user.id) if resume.user_id == user.id]
     return [
         ResumeReadSchema(
             id=r.id,
@@ -123,6 +126,8 @@ async def list_resumes(
             original_filename=r.original_filename,
             storage_file_id=r.storage_file_id,
             folder_id=r.folder_id,
+            ai_summary=r.ai_summary,
+            contact_phone=r.contact_phone,
             created_at=r.created_at.isoformat() if r.created_at else None,
         )
         for r in resumes

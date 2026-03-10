@@ -9,7 +9,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
-from app.app import app
+from app.app import app, rate_limiter
 from app.db import Base, get_session
 from app.models.userModel import User
 from app.models.companyModel import Company
@@ -96,6 +96,7 @@ async def client(setup_db) -> AsyncGenerator[AsyncClient, None]:
             yield session
     
     app.dependency_overrides[get_session] = override_get_session
+    rate_limiter._events.clear()
     
     # Create test client
     async with AsyncClient(

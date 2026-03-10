@@ -15,6 +15,8 @@ class ResumeModel(Base):
     storage_file_id = Column(String(255), nullable=False)
     original_filename = Column(String(255), nullable=False)
     folder_id = Column(String(255), nullable=False)
+    ai_summary = Column(Text, nullable=True)
+    contact_phone = Column(String(64), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -22,3 +24,4 @@ class ResumeModel(Base):
     user = relationship("User", back_populates="resumes")
     job_analyses = relationship("JobAnalysisModel", back_populates="resume")
     course_evaluations = relationship("ResumeCourseEvaluationModel", back_populates="resume", cascade="all, delete-orphan")
+    applications = relationship("ApplicationModel", back_populates="resume")

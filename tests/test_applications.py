@@ -14,6 +14,7 @@ from app.models.applicationAnalyticsModel import (
     ApplicationStatusEventModel,
 )
 from app.models.jobPostingModel import JobPosting
+from app.models.resumeModel import ResumeModel
 import uuid
 
 
@@ -27,6 +28,7 @@ class TestApplications:
         auth_headers: dict,
         test_user: User,
         test_company: Company,
+        test_company_recruiter,
         db_session: AsyncSession
     ):
         """Test creating a new application"""
@@ -37,7 +39,18 @@ class TestApplications:
             title="Software Engineer",
             description="Great opportunity"
         )
+        resume = ResumeModel(
+            id=uuid.uuid4(),
+            user_id=test_user.id,
+            view_url="https://example.com/resume.pdf",
+            storage_file_id="resumes/test.pdf",
+            original_filename="resume.pdf",
+            folder_id="test-bucket",
+            ai_summary="Test summary",
+            contact_phone="+1 555 0100",
+        )
         db_session.add(job_posting)
+        db_session.add(resume)
         await db_session.commit()
         await db_session.refresh(job_posting)
         
@@ -58,6 +71,8 @@ class TestApplications:
         assert data["job_title"] == "Software Engineer"
         assert data["status"] == "applied"
         assert "id" in data
+        assert data["assigned_recruiter_id"] == str(test_company_recruiter.id)
+        assert data["resume_id"] == str(resume.id)
 
         event_result = await db_session.execute(
             select(ApplicationStatusEventModel).where(
@@ -78,6 +93,50 @@ class TestApplications:
         aggregate = aggregate_result.scalar_one()
         assert aggregate.applications_created_count == 1
         assert aggregate.entered_applied_count == 1
+
+    @pytest.mark.asyncio
+    async def test_create_application_is_idempotent_for_same_job_posting(
+        self,
+        client: AsyncClient,
+        auth_headers: dict,
+        test_user: User,
+        test_company: Company,
+        test_company_recruiter,
+        db_session: AsyncSession,
+    ):
+        job_posting = JobPosting(
+            id=uuid.uuid4(),
+            company_id=test_company.id,
+            title="Platform Engineer",
+            description="Great opportunity",
+        )
+        resume = ResumeModel(
+            id=uuid.uuid4(),
+            user_id=test_user.id,
+            view_url="https://example.com/resume.pdf",
+            storage_file_id="resumes/test.pdf",
+            original_filename="resume.pdf",
+            folder_id="test-bucket",
+        )
+        db_session.add(job_posting)
+        db_session.add(resume)
+        await db_session.commit()
+
+        payload = {
+            "company_id": str(test_company.id),
+            "job_posting_id": str(job_posting.id),
+            "job_title": "Platform Engineer",
+            "status": "applied",
+        }
+
+        first_response = await client.post("/api/v1/applications", headers=auth_headers, json=payload)
+        second_response = await client.post("/api/v1/applications", headers=auth_headers, json=payload)
+
+        assert first_response.status_code == 200
+        assert second_response.status_code == 200
+        assert first_response.json()["id"] == second_response.json()["id"]
+        assert second_response.json()["assigned_recruiter_id"] == str(test_company_recruiter.id)
+        assert second_response.json()["resume_id"] == str(resume.id)
     
     @pytest.mark.asyncio
     async def test_create_application_unauthorized(

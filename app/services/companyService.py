@@ -100,6 +100,17 @@ async def current_company_owner_recruiter(
     return recruiter
 
 
+async def current_company_job_manager_recruiter(
+    recruiter: CompanyRecruiter = Depends(current_active_company_recruiter),
+) -> CompanyRecruiter:
+    if recruiter.role not in {"owner", "admin", "recruiter"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only company recruiters can manage job postings",
+        )
+    return recruiter
+
+
 async def current_active_company(
     recruiter: CompanyRecruiter = Depends(current_active_company_recruiter),
     session: AsyncSession = Depends(get_session),

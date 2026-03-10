@@ -50,6 +50,7 @@ Focus on producing keywords useful for job searching:
 5) Seniority signals: years of experience (if stated), leadership/ownership terms
 6) Location/authorization: location(s), work authorization, relocation/remote preferences (if present)
 7) Certifications and education keywords
+8) Resume summary: a concise 2-4 sentence recruiter-facing summary grounded only in the resume
 8) Must-have search strings:
    - A) Boolean query for LinkedIn jobs
    - B) Boolean query for Indeed

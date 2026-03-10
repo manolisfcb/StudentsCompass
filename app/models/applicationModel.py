@@ -55,7 +55,9 @@ class ApplicationModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    assigned_recruiter_id = Column(UUID(as_uuid=True), ForeignKey("company_recruiters.id"), nullable=True)
     job_posting_id = Column(UUID(as_uuid=True), nullable=True)
+    resume_id = Column(UUID(as_uuid=True), ForeignKey("resumes.id"), nullable=True)
     
     job_title = Column(String, nullable=False)
     status = Column(Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.APPLIED)
@@ -69,7 +71,9 @@ class ApplicationModel(Base):
     # Relationships
     user = relationship("User")
     company = relationship("Company", back_populates="applications", overlaps="job_posting,applications")
+    assigned_recruiter = relationship("CompanyRecruiter")
     job_posting = relationship("JobPosting", back_populates="applications", overlaps="company,applications")
+    resume = relationship("ResumeModel", back_populates="applications")
     status_events = relationship("ApplicationStatusEventModel", back_populates="application")
 
     @property

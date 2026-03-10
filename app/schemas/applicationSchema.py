@@ -23,6 +23,7 @@ class ApplicationBase(BaseModel):
 class ApplicationCreate(ApplicationBase):
     company_id: UUID4
     job_posting_id: Optional[UUID4] = None
+    resume_id: Optional[UUID4] = None
 
 
 class ApplicationUpdate(BaseModel):
@@ -36,9 +37,11 @@ class ApplicationRead(ApplicationBase):
     id: UUID4
     user_id: UUID4
     company_id: UUID4
+    assigned_recruiter_id: Optional[UUID4] = None
     company_name: Optional[str] = None
     company_location: Optional[str] = None
     job_posting_id: Optional[UUID4] = None
+    resume_id: Optional[UUID4] = None
     application_date: datetime
     created_at: datetime
     updated_at: datetime

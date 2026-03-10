@@ -14,6 +14,8 @@ from app.models.applicationAnalyticsModel import (
     ApplicationStatusEventModel,
 )
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
+from app.models.companyRecruiterModel import CompanyRecruiter
+from app.models.resumeModel import ResumeModel
 from app.schemas.applicationSchema import ApplicationCreate, ApplicationUpdate
 
 
@@ -22,11 +24,21 @@ class ApplicationService:
         self.session = session
 
     async def create_application(self, *, user_id: UUID, payload: ApplicationCreate) -> ApplicationModel:
+        if payload.job_posting_id is not None:
+            existing_application = await self._get_existing_job_application(
+                user_id=user_id,
+                job_posting_id=payload.job_posting_id,
+            )
+            if existing_application is not None:
+                return existing_application
+
         now = datetime.utcnow()
         application = ApplicationModel(
             user_id=user_id,
             company_id=payload.company_id,
+            assigned_recruiter_id=await self._select_assigned_recruiter_id(company_id=payload.company_id),
             job_posting_id=payload.job_posting_id,
+            resume_id=await self._select_resume_id(user_id=user_id, requested_resume_id=payload.resume_id),
             job_title=payload.job_title,
             status=payload.status,
             application_url=payload.application_url,
@@ -56,6 +68,23 @@ class ApplicationService:
         await self.session.commit()
         await self.session.refresh(application)
         return application
+
+    async def _get_existing_job_application(
+        self,
+        *,
+        user_id: UUID,
+        job_posting_id: UUID,
+    ) -> ApplicationModel | None:
+        result = await self.session.execute(
+            select(ApplicationModel)
+            .options(selectinload(ApplicationModel.company))
+            .where(
+                ApplicationModel.user_id == user_id,
+                ApplicationModel.job_posting_id == job_posting_id,
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
 
     async def list_user_applications(self, *, user_id: UUID) -> List[ApplicationModel]:
         result = await self.session.execute(
@@ -160,6 +189,49 @@ class ApplicationService:
             occurred_at=occurred_at,
         )
         self.session.add(event)
+
+    async def _select_assigned_recruiter_id(self, *, company_id: UUID) -> UUID | None:
+        result = await self.session.execute(
+            select(CompanyRecruiter)
+            .where(
+                CompanyRecruiter.company_id == company_id,
+                CompanyRecruiter.is_active.is_(True),
+                CompanyRecruiter.role.in_(("owner", "admin", "recruiter")),
+            )
+            .order_by(CompanyRecruiter.created_at.asc())
+        )
+        recruiters = list(result.scalars().all())
+        if not recruiters:
+            return None
+
+        role_rank = {"owner": 0, "admin": 1, "recruiter": 2}
+        recruiters.sort(key=lambda recruiter: (role_rank.get(recruiter.role, 99), recruiter.created_at))
+        return recruiters[0].id
+
+    async def _select_resume_id(
+        self,
+        *,
+        user_id: UUID,
+        requested_resume_id: UUID | None,
+    ) -> UUID | None:
+        if requested_resume_id is not None:
+            result = await self.session.execute(
+                select(ResumeModel.id).where(
+                    ResumeModel.id == requested_resume_id,
+                    ResumeModel.user_id == user_id,
+                )
+            )
+            resume_id = result.scalar_one_or_none()
+            if resume_id is not None:
+                return resume_id
+
+        result = await self.session.execute(
+            select(ResumeModel.id)
+            .where(ResumeModel.user_id == user_id)
+            .order_by(ResumeModel.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
 
     async def _apply_daily_aggregate_delta(
         self,
