@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-
-{% block head_extra %}
-<link rel="stylesheet" href="{{ asset_url('css/admin.css') }}">
-{% endblock %}
+{% set include_app_shell = false %}
+{% set page_css = "admin_login" %}
+{% set page_js = "admin_login" %}
 
 {% block content %}
 <div class="admin-login-page">
@@ -17,7 +16,7 @@
       Invalid credentials or insufficient privileges.
     </div>
 
-    <form id="adminLoginForm" onsubmit="return handleAdminLogin(event)">
+    <form id="adminLoginForm">
       <div class="admin-form-group">
         <label class="admin-form-label" for="adminEmail">Email address</label>
         <input class="admin-form-input" type="email" id="adminEmail" name="email"
@@ -34,51 +33,4 @@
     </form>
   </div>
 </div>
-
-<script>
-async function handleAdminLogin(e) {
-  e.preventDefault();
-  const btn = document.getElementById('loginBtn');
-  const errBox = document.getElementById('loginError');
-  errBox.classList.remove('visible');
-  btn.disabled = true;
-  btn.textContent = 'Signing in…';
-
-  const email = document.getElementById('adminEmail').value;
-  const password = document.getElementById('adminPassword').value;
-
-  try {
-    // 1. Log in with FastAPI-Users cookie auth
-    const loginRes = await fetch('/auth/jwt/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username: email, password }),
-      credentials: 'include',
-    });
-
-    if (!loginRes.ok) {
-      throw new Error('Invalid credentials');
-    }
-
-    // 2. Verify admin privileges by hitting the admin stats endpoint
-    const checkRes = await fetch('/api/v1/admin/stats', {
-      credentials: 'include',
-    });
-
-    if (!checkRes.ok) {
-      throw new Error('Not an admin account');
-    }
-
-    // 3. Success – redirect to the admin panel
-    window.location.href = '/admin';
-  } catch (err) {
-    errBox.textContent = err.message === 'Not an admin account'
-      ? 'This account does not have admin privileges.'
-      : 'Invalid email or password.';
-    errBox.classList.add('visible');
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
-  }
-}
-</script>
 {% endblock %}

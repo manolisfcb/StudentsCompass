@@ -1,0 +1,322 @@
+.dashboard-header {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 28px;
+            border: 1px solid rgba(15, 118, 110, 0.12);
+            background:
+                radial-gradient(circle at top right, rgba(94, 234, 212, 0.22), transparent 28%),
+                linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.08)),
+                #ffffff;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+        }
+        .dashboard-header::before {
+            content: "Student Profile";
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            margin-right: auto;
+            padding: 0.45rem 0.8rem;
+            width: fit-content;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .dashboard-header h2 {
+            margin: 0 0 0.55rem;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            line-height: 1;
+            letter-spacing: -0.04em;
+            text-align: left;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .dashboard-header p {
+            margin: 0;
+            max-width: 54ch;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            text-align: left;
+        }
+        .profile-card {
+            border-radius: 28px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .profile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
+            border-color: rgba(15, 118, 110, 0.14);
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        .result-card {
+            padding: 1.5rem;
+            border-radius: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .progress-bar {
+            background-color: #E2E8F0;
+            height: 10px;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+        .progress {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .question-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        .answer-highlight {
+            background-color: #E0E7FF;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .info-card {
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .profile-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .profile-edit-card {
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        .profile-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .profile-field {
+            display: grid;
+            gap: 0.45rem;
+        }
+        .profile-field.full {
+            grid-column: 1 / -1;
+        }
+        .profile-field label {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        .profile-field input,
+        .profile-field select {
+            width: 100%;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 16px;
+            padding: 0.85rem 0.95rem;
+            font: inherit;
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.96);
+        }
+        .profile-field-hint {
+            color: var(--gray);
+            font-size: 0.84rem;
+        }
+        .profile-save-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .profile-save-status {
+            color: var(--gray);
+            font-size: 0.92rem;
+            min-height: 1.25rem;
+        }
+        .secondary-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.9rem 1.35rem !important;
+            border-radius: 18px !important;
+            border: 1px solid rgba(148, 163, 184, 0.2) !important;
+            background: rgba(255, 255, 255, 0.92) !important;
+            color: var(--text-color) !important;
+            text-decoration: none;
+            font-weight: 700 !important;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .secondary-action:hover {
+            transform: translateY(-1px);
+            border-color: rgba(15, 118, 110, 0.16) !important;
+            box-shadow: 0 16px 28px rgba(15, 23, 42, 0.06);
+        }
+        #loading,
+        #noData {
+            border-radius: 28px !important;
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            background: rgba(255, 255, 255, 0.92) !important;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06) !important;
+        }
+        #uploadArea {
+            border: 1.5px dashed rgba(15, 118, 110, 0.38) !important;
+            border-radius: 24px !important;
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(94, 234, 212, 0.08)) !important;
+            transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease !important;
+        }
+        #uploadArea:hover {
+            transform: translateY(-1px);
+            border-color: rgba(15, 118, 110, 0.5) !important;
+        }
+        #filePreview {
+            border-radius: 20px !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        }
+        #uploadBtn {
+            padding: 0.9rem 1.4rem !important;
+            border-radius: 18px !important;
+            background: linear-gradient(135deg, var(--primary-color), #0b5d57) !important;
+            box-shadow: 0 16px 28px rgba(15, 118, 110, 0.18);
+        }
+        #uploadBtn:disabled {
+            box-shadow: none;
+            opacity: 0.65;
+        }
+        #refreshCvList,
+        #removeFile,
+        .delete-cv-btn {
+            font-weight: 700 !important;
+        }
+        #cvTableWrapper {
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.92);
+        }
+        #cvTableWrapper table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        #cvTableWrapper th,
+        #cvTableWrapper td {
+            padding: 0.8rem 1rem !important;
+        }
+        #cvTableWrapper thead tr {
+            border-bottom: 1px solid var(--light-gray) !important;
+        }
+        #cvTableBody tr {
+            border-bottom: 1px solid var(--light-gray);
+        }
+        #cvTableBody tr:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .results-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .result-card {
+                padding: 1rem;
+            }
+            .info-card {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            .profile-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .profile-form-grid {
+                grid-template-columns: 1fr;
+            }
+            .question-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .answer-highlight {
+                padding: 0.75rem;
+                margin-top: 0.75rem;
+            }
+            .profile-grid {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.75rem;
+            }
+            .results-grid {
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
+            .result-card {
+                padding: 0.75rem;
+            }
+            .info-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .question-card {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+                border-left-width: 3px;
+            }
+            .answer-highlight {
+                padding: 0.5rem;
+                border-left-width: 3px;
+            }
+            .profile-grid {
+                gap: 1rem;
+            }
+        }

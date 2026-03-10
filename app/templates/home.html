@@ -2,24 +2,23 @@
 {% set page_title = "Career Platform in Canada" %}
 {% set page_description = "Student Compass helps students in Canada with AI resume analysis, job search, roadmaps, resources, and a supportive career community to become job-ready faster." %}
 {% set body_class = "marketing-page marketing-home" %}
-{% block head_extra %}
-    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
-{% endblock %}
+{% set page_css = "home" %}
+{% set page_js = "home" %}
 {% block content %}
     <header class="marketing-header home-header">
         <nav class="marketing-nav">
             <div class="container">
                 <a href="/" class="marketing-brand" aria-label="StudentsCompass home">
-                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" class="brand-logo brand-logo--hero" />
                 </a>
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation">☰</button>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation">☰</button>
                 <ul id="mobile-menu">
-                    <li><a href="#for-students" onclick="closeMobileMenu()">For Students</a></li>
-                    <li><a href="#for-companies" onclick="closeMobileMenu()">For Companies</a></li>
-                    <li><a href="#how-it-works" onclick="closeMobileMenu()">How It Works</a></li>
-                    <li><a href="/about" onclick="closeMobileMenu()">About</a></li>
-                    <li><a href="/login" onclick="closeMobileMenu()" class="marketing-nav-login">Login</a></li>
-                    <li><a href="/register" onclick="closeMobileMenu()" class="marketing-nav-cta">Get Started</a></li>
+                    <li><a href="#for-students" data-mobile-menu-close>For Students</a></li>
+                    <li><a href="#for-companies" data-mobile-menu-close>For Companies</a></li>
+                    <li><a href="#how-it-works" data-mobile-menu-close>How It Works</a></li>
+                    <li><a href="/about" data-mobile-menu-close>About</a></li>
+                    <li><a href="/login" data-mobile-menu-close class="marketing-nav-login">Login</a></li>
+                    <li><a href="/register" data-mobile-menu-close class="marketing-nav-cta">Get Started</a></li>
                 </ul>
             </div>
         </nav>
@@ -260,25 +259,4 @@
             </ul>
         </div>
     </footer>
-
-    <script>
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('active');
-        }
-
-        function closeMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.remove('active');
-        }
-
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('mobile-menu');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            if (menu && !menu.contains(event.target) && !toggle.contains(event.target)) {
-                menu.classList.remove('active');
-            }
-        });
-    </script>
 {% endblock %}

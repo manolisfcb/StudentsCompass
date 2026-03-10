@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+{% set use_app_shell = include_app_shell | default(true) %}
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -23,6 +24,12 @@
   <meta property="og:url" content="{{ canonical_url }}">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://studentscompass.ca{{ asset_url('images/Logo_Ready_to_Use.png') }}">
+  {% if use_app_shell %}
+  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
+  {% endif %}
+  {% if page_css is defined and page_css %}
+  <link rel="stylesheet" href="{{ asset_url('css/' ~ page_css ~ '.css') }}">
+  {% endif %}
   {% block head_extra %}{% endblock %}
   <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"Organization","name":"Students Compass","url":"https://studentscompass.ca","logo":"https://studentscompass.ca{{ asset_url('images/Logo_Ready_to_Use.png') }}"}
@@ -33,5 +40,12 @@
 </head>
 <body class="{{ body_class | default('') }}">
   {% block content %}{% endblock %}
+  {% if use_app_shell %}
+  <script defer src="{{ asset_url('js/base.js') }}"></script>
+  {% endif %}
+  {% if page_js is defined and page_js %}
+  <script defer src="{{ asset_url('js/' ~ page_js ~ '.js') }}"></script>
+  {% endif %}
+  {% block body_scripts %}{% endblock %}
 </body>
 </html>

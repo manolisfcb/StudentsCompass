@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% set page_title = "Roadmaps" %}
 {% set page_description = "Browse in-demand career roadmaps and track your progress stage by stage." %}
-{% block head_extra %}
-  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
-  <link rel="stylesheet" href="{{ asset_url('css/roadmaps.css') }}">
-{% endblock %}
+{% set page_css = "roadmaps" %}
+{% set page_js = "roadmaps_list" %}
 {% block content %}
   {% include "includes/header.html" %}
 
@@ -13,10 +11,14 @@
 
     <main class="dashboard">
       <section class="roadmaps-page">
-        <header class="roadmaps-hero">
-          <h2>Roadmaps</h2>
-          <p>Follow practical, project-driven learning plans and measure your progress week by week.</p>
-        </header>
+        <div class="roadmaps-hero page-shell-header">
+          <div class="page-shell-header-row">
+            <div class="page-shell-header-copy">
+              <h2>Roadmaps</h2>
+              <p>Follow practical, project-driven learning plans and measure your progress week by week.</p>
+            </div>
+          </div>
+        </div>
 
         <div class="roadmaps-toolbar">
           <form method="get" action="/roadmaps" class="toolbar-form">
@@ -53,7 +55,7 @@
                     </div>
                     <p>{{ roadmap.duration_weeks_min }}-{{ roadmap.duration_weeks_max }} weeks • {{ roadmap.difficulty }}</p>
                     <div class="progress-track">
-                      <span style="width: {{ roadmap.overall_progress_percent }}%"></span>
+                      <span class="roadmap-progress-fill" data-progress="{{ roadmap.overall_progress_percent }}"></span>
                     </div>
                     <small>{{ roadmap.completed_tasks }}/{{ roadmap.total_tasks }} tasks completed</small>
                     <a href="/roadmaps/{{ roadmap.slug }}" class="card-link">Continue roadmap</a>
@@ -131,101 +133,4 @@
   </main>
 
   {% include "includes/footer.html" %}
-  <script>
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function bindRoadmapCardClicks() {
-      document.querySelectorAll(".roadmap-clickable").forEach((card) => {
-        if (card.dataset.bound === "1") return;
-        card.dataset.bound = "1";
-        const href = card.dataset.href;
-        if (!href) return;
-
-        card.addEventListener("click", (event) => {
-          if (event.target.closest("a, button, input, select, textarea, label")) {
-            return;
-          }
-          window.location.href = href;
-        });
-
-        card.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            window.location.href = href;
-          }
-        });
-      });
-    }
-
-    function renderSavedRoadmaps(items) {
-      const container = document.getElementById("my-roadmaps-container");
-      if (!container) return;
-
-      if (!Array.isArray(items) || items.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <h4>No saved roadmaps yet</h4>
-            <p>Save a roadmap from below to keep it in your workspace.</p>
-          </div>
-        `;
-        bindRoadmapCardClicks();
-        return;
-      }
-
-      const cards = items.map((item) => {
-        const roadmap = item.roadmap || {};
-        const slug = escapeHtml(roadmap.slug || "");
-        const title = escapeHtml(roadmap.title || "");
-        const difficulty = escapeHtml(roadmap.difficulty || "");
-        const minWeeks = Number(roadmap.duration_weeks_min || 0);
-        const maxWeeks = Number(roadmap.duration_weeks_max || 0);
-        const progress = Number(roadmap.overall_progress_percent || 0);
-        const completed = Number(roadmap.completed_tasks || 0);
-        const total = Number(roadmap.total_tasks || 0);
-
-        return `
-          <article class="saved-card roadmap-clickable" data-href="/roadmaps/${slug}" tabindex="0" role="link">
-            <div class="saved-card-top">
-              <h4>${title}</h4>
-              <span class="progress-chip">${progress}%</span>
-            </div>
-            <p>${minWeeks}-${maxWeeks} weeks • ${difficulty}</p>
-            <div class="progress-track"><span style="width: ${progress}%"></span></div>
-            <small>${completed}/${total} tasks completed</small>
-            <a href="/roadmaps/${slug}" class="card-link">Continue roadmap</a>
-          </article>
-        `;
-      }).join("");
-
-      container.innerHTML = `<div class="saved-grid">${cards}</div>`;
-      bindRoadmapCardClicks();
-    }
-
-    async function refreshSavedRoadmaps() {
-      try {
-        const response = await fetch("/api/v1/me/roadmaps", { headers: { "Accept": "application/json" } });
-        if (!response.ok) return;
-        const data = await response.json();
-        renderSavedRoadmaps(data);
-      } catch (error) {
-        // keep server-rendered fallback
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      bindRoadmapCardClicks();
-      refreshSavedRoadmaps();
-    });
-
-    window.addEventListener("pageshow", () => {
-      refreshSavedRoadmaps();
-    });
-  </script>
 {% endblock %}

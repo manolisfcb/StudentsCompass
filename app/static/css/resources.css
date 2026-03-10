@@ -67,6 +67,7 @@
   margin: 0 0 0.35rem;
   line-height: 1;
   letter-spacing: -0.04em;
+  text-align: left;
 }
 
 .resources-header p {
@@ -75,6 +76,7 @@
   line-height: 1.65;
   margin: 0;
   max-width: 56ch;
+  text-align: left;
 }
 
 @media (max-width: 768px) {
@@ -84,7 +86,7 @@
 
 .resources-header-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;

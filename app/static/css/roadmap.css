@@ -1,0 +1,392 @@
+.roadmaps-container {
+      padding: 2rem;
+    }
+
+    .roadmaps-header {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border-radius: 28px;
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      background:
+        radial-gradient(circle at top right, rgba(94, 234, 212, 0.24), transparent 30%),
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.08)),
+        #ffffff;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+      text-align: left;
+    }
+
+    .roadmaps-header::before {
+      content: "Roadmaps";
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.1);
+      color: #0F766E;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .roadmaps-header h2 {
+      font-size: 2rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    .roadmaps-header p {
+      color: #475569;
+      font-size: 1.1rem;
+      text-align: left;
+      max-width: 56ch;
+      margin: 0;
+    }
+
+    .section-header {
+      margin-top: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h3 {
+      font-size: 1.5rem;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    .roadmaps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .roadmap-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .roadmap-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .roadmap-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+
+    .roadmap-card.web .roadmap-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+    }
+
+    .roadmap-card.data .roadmap-icon {
+      background: linear-gradient(135deg, #14B8A6 0%, #5EEAD4 100%);
+    }
+
+    .roadmap-card.product .roadmap-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FB923C 100%);
+    }
+
+    .roadmap-card.design .roadmap-icon {
+      background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+    }
+
+    .roadmap-card.realtor .roadmap-icon {
+      background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+    }
+
+    .roadmap-card.service .roadmap-icon {
+      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+    }
+
+    .roadmap-card.hospitality .roadmap-icon {
+      background: linear-gradient(135deg, #FB7185 0%, #FCA5A5 100%);
+    }
+
+    .roadmap-card.carpentry .roadmap-icon {
+      background: linear-gradient(135deg, #92400E 0%, #D97706 100%);
+    }
+
+    .roadmap-card.empty .roadmap-icon {
+      background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%);
+    }
+
+    @media (max-width: 1200px) {
+      .roadmaps-container {
+        padding: 1.5rem;
+      }
+      .roadmaps-header h2 {
+        font-size: 1.7rem;
+      }
+      .roadmaps-grid {
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .roadmaps-container {
+        padding: 1rem;
+      }
+      .roadmaps-header h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.25rem;
+      }
+      .roadmaps-header p {
+        font-size: 0.95rem;
+      }
+      .section-header {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      .section-header h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.25rem;
+      }
+      .roadmaps-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+      .roadmap-card {
+        padding: 1rem;
+      }
+      .roadmap-icon {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 0.75rem;
+        font-size: 1.5rem;
+      }
+      .roadmap-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+      }
+      .roadmap-description {
+        font-size: 0.85rem;
+        margin-bottom: 0.75rem;
+      }
+      .tag {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+      }
+      .roadmap-stats {
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      .stat-item {
+        font-size: 0.8rem;
+      }
+      .roadmap-link {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+      }
+      .empty-state {
+        padding: 2rem;
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .roadmaps-container {
+        padding: 0.75rem;
+      }
+      .roadmaps-header h2 {
+        font-size: 1.2rem;
+      }
+      .roadmaps-header p {
+        font-size: 0.9rem;
+      }
+      .section-header {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .section-header h3 {
+        font-size: 1rem;
+        margin-bottom: 0.15rem;
+      }
+      .section-header p {
+        font-size: 0.85rem;
+      }
+      .roadmaps-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .roadmap-card {
+        padding: 0.75rem;
+      }
+      .roadmap-icon {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 0.5rem;
+        font-size: 1.25rem;
+      }
+      .roadmap-title {
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+      }
+      .roadmap-description {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+      }
+      .tag {
+        padding: 0.15rem 0.5rem;
+        font-size: 0.7rem;
+      }
+      .roadmap-stats {
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .stat-item {
+        font-size: 0.75rem;
+      }
+      .roadmap-link {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+      }
+      .empty-state {
+        padding: 1.5rem;
+      }
+      .empty-state-icon {
+        font-size: 2rem;
+      }
+    }
+
+    .roadmap-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .roadmap-description {
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .roadmap-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tag {
+      background: #E5E7EB;
+      color: #0F766E;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .roadmap-stats {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .stat-item svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .roadmap-link {
+      display: inline-block;
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #0F766E 0%, #5EEAD4 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .roadmap-link:hover {
+      opacity: 0.9;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem;
+      background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+      border-radius: 12px;
+      border: 2px dashed #E5E7EB;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      color: #0F172A;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: #475569;
+    }
+
+    .filter-section {
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #0F766E;
+      background: white;
+      color: #0F766E;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      background: #0F766E;
+      color: white;
+    }
+
+    .filter-btn:hover {
+      background: #0F766E;
+      color: white;
+    }

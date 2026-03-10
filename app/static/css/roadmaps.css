@@ -5,10 +5,41 @@
 
 .roadmaps-hero,
 .detail-topbar {
-  background: linear-gradient(140deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
-  color: #f8fafc;
   border-radius: 16px;
   padding: 1.4rem;
+}
+
+.roadmaps-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(15, 118, 110, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba(94, 234, 212, 0.24), transparent 30%),
+    linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.08)),
+    #ffffff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+  color: #0F172A;
+  text-align: left;
+}
+
+.roadmaps-hero::before {
+  content: "Roadmaps";
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.1);
+  color: #0F766E;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-topbar {
+  background: linear-gradient(140deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
+  color: #f8fafc;
   box-shadow: 0 8px 24px rgba(15, 118, 110, 0.18);
 }
 
@@ -22,6 +53,14 @@
 .detail-topbar p {
   margin: 0;
   max-width: 760px;
+}
+
+.roadmaps-hero h2,
+.roadmaps-hero p {
+  color: #0F172A;
+  text-align: left;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .roadmaps-toolbar {
@@ -39,6 +78,10 @@
 
 .schema-warning p {
   margin: 0.35rem 0 0;
+}
+
+.roadmap-progress-fill {
+  width: 0;
 }
 
 .toolbar-form {

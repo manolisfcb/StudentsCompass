@@ -1,0 +1,312 @@
+.team-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3rem;
+}
+
+.page-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.page-hero h2 {
+    color: #0F172A;
+    margin-bottom: 0.35rem;
+    font-size: 2rem;
+}
+
+.page-hero p {
+    margin: 0;
+    color: #64748B;
+    max-width: 720px;
+    line-height: 1.6;
+}
+
+.owner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.95rem;
+    border-radius: 999px;
+    background: #DBEAFE;
+    color: #1D4ED8;
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.section-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+    border: 1px solid #E2E8F0;
+}
+
+.section-card + .section-card {
+    margin-top: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.section-header h3 {
+    color: #0F172A;
+    margin-bottom: 0.35rem;
+    font-size: 1.35rem;
+}
+
+.section-header p {
+    color: #64748B;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.recruiter-form {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background: #F8FAFC;
+}
+
+.recruiter-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-field label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+.form-field input,
+.form-field select {
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 0.75rem 0.85rem;
+    font-size: 0.95rem;
+    color: #0F172A;
+    background: white;
+}
+
+.form-field.checkbox-field {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-field.checkbox-field label {
+    margin: 0;
+}
+
+.form-field.checkbox-field input {
+    width: auto;
+    margin: 0;
+}
+
+.form-help {
+    margin: 0;
+    color: #64748B;
+    font-size: 0.85rem;
+}
+
+.recruiter-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 1.1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.25s ease;
+}
+
+.btn-primary {
+    background: #0F766E;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0D9488;
+}
+
+.btn-secondary {
+    background: #E2E8F0;
+    color: #0F172A;
+}
+
+.btn-secondary:hover {
+    background: #CBD5E1;
+}
+
+.btn-danger {
+    background: #DC2626;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #B91C1C;
+}
+
+.feedback-message {
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.feedback-message.success {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.feedback-message.error {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.recruiter-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.recruiter-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background: white;
+}
+
+.recruiter-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.recruiter-name {
+    color: #0F172A;
+    font-weight: 600;
+}
+
+.recruiter-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: #64748B;
+    font-size: 0.9rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge.role-owner {
+    background: #CCFBF1;
+    color: #115E59;
+}
+
+.badge.role-admin {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+.badge.role-recruiter {
+    background: #F3E8FF;
+    color: #7E22CE;
+}
+
+.badge.role-viewer {
+    background: #E2E8F0;
+    color: #334155;
+}
+
+.badge.status-active {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.badge.status-inactive {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.recruiter-row-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.recruiter-empty,
+.roadmap-note {
+    padding: 1rem;
+    border: 1px dashed #CBD5E1;
+    border-radius: 12px;
+    color: #64748B;
+    background: #F8FAFC;
+}
+
+.roadmap-note strong {
+    color: #0F172A;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+@media (max-width: 768px) {
+    .team-shell {
+        padding: 1.25rem 1rem 2rem;
+    }
+
+    .page-hero,
+    .section-header,
+    .recruiter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .recruiter-row-actions,
+    .recruiter-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-hero h2 {
+        font-size: 1.55rem;
+    }
+
+    .recruiter-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

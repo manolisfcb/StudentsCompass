@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% set page_title = "Resources Hub" %}
 {% set page_description = "Browse curated career courses, guides, and learning resources tailored to students on Student Compass, with filters and quick search." %}
-{% block head_extra %}
-  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
-  <link rel="stylesheet" href="{{ asset_url('css/resources.css') }}">
-{% endblock %}
+{% set page_css = "resources" %}
+{% set page_js = "resources" %}
 {% macro render_resource_card(resource, is_mandatory, resource_detail_access_enabled) -%}
   {% set can_open = resource_detail_access_enabled and not resource.is_locked %}
   <article
@@ -48,9 +46,9 @@
 
     <main class="dashboard">
       <div class="resources-container">
-        <div class="resources-header">
-          <div class="resources-header-row">
-            <div>
+        <div class="resources-header page-shell-header">
+          <div class="resources-header-row page-shell-header-row">
+            <div class="page-shell-header-copy">
               <h2>Resources Hub</h2>
               <p>Explore curated learning resources and career courses.</p>
             </div>
@@ -97,7 +95,7 @@
           </div>
         </section>
 
-        <div id="resources-empty" class="empty-state" {% if resources|length > 0 %}style="display:none;"{% endif %}>
+        <div id="resources-empty" class="empty-state{% if resources|length > 0 %} resources-empty-hidden{% endif %}">
           No resources found for this filter.
         </div>
       </div>
@@ -105,5 +103,4 @@
   </main>
 
   {% include "includes/footer.html" %}
-  <script src="{{ asset_url('js/resources.js') }}"></script>
 {% endblock %}

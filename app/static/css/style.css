@@ -41,16 +41,165 @@ img {
     height: auto;
 }
 
+.brand-logo {
+    display: block;
+    width: auto;
+}
+
+.brand-logo--hero {
+    height: 72px;
+}
+
+.brand-logo--nav {
+    height: 64px;
+}
+
+body.page-is-exiting {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
 }
 
+.page-shell-header {
+    text-align: left;
+}
+
+.page-shell-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+}
+
+.page-shell-header-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.page-shell-header h2,
+.page-shell-header p {
+    margin-left: 0;
+    margin-right: 0;
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .page-shell-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 /* Header */
 header {
     background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
     color: var(--white);
+}
+
+.student-header {
+    padding: 1rem 1rem 0;
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 20%),
+        linear-gradient(110deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
+}
+
+.student-nav {
+    padding: 0 0 0.35rem;
+    background: transparent;
+    color: var(--text-color);
+}
+
+.student-nav .container {
+    max-width: 1520px;
+    padding: 1rem 1.2rem;
+    background: rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.student-brand,
+.company-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+    text-decoration: none;
+}
+
+.student-badge,
+.company-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.student-badge {
+    padding: 0.35rem 0.8rem;
+    letter-spacing: 0.08em;
+    color: #ccfbf1;
+    border: 1px solid rgba(204, 251, 241, 0.35);
+    background: rgba(15, 23, 42, 0.2);
+}
+
+.student-nav .nav-btn-primary {
+    border-color: rgba(204, 251, 241, 0.32) !important;
+    background: rgba(15, 23, 42, 0.14) !important;
+    color: #ffffff !important;
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+}
+
+.student-nav .nav-btn-primary.active,
+.student-nav .nav-btn-primary:hover {
+    border-color: rgba(255, 255, 255, 0.72) !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.company-header {
+    background: linear-gradient(110deg, #0f172a 0%, #1d4ed8 52%, #0ea5e9 100%);
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+}
+
+.company-nav {
+    padding: 0.75rem 0;
+}
+
+.company-badge {
+    padding: 0.25rem 0.65rem;
+    letter-spacing: 0.06em;
+    color: #dbeafe;
+    border: 1px solid rgba(219, 234, 254, 0.35);
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.company-header .nav-btn-primary {
+    border-color: rgba(219, 234, 254, 0.45) !important;
+    background: rgba(15, 23, 42, 0.2) !important;
+}
+
+.company-header .nav-btn-primary.active,
+.company-header .nav-btn-primary:hover {
+    border-color: rgba(255, 255, 255, 0.75) !important;
+    background: rgba(255, 255, 255, 0.18) !important;
 }
 
 nav {
@@ -180,6 +329,47 @@ nav a:hover {
         justify-content: flex-start !important;
         font-size: 0.88rem !important;
         padding: 0.5rem 0.85rem !important;
+    }
+
+    .student-header {
+        padding: 0.8rem 0.8rem 0;
+    }
+
+    .student-nav .container {
+        padding-right: 4.4rem;
+    }
+
+    .student-menu-toggle {
+        background: rgba(15, 23, 42, 0.2);
+        border-color: rgba(204, 251, 241, 0.35);
+        color: #ffffff;
+    }
+
+    .student-nav #mobile-menu {
+        background: linear-gradient(145deg, rgba(11, 89, 81, 0.98) 0%, rgba(13, 148, 136, 0.98) 100%);
+        border: 1px solid rgba(204, 251, 241, 0.16);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+    }
+
+    .company-menu-toggle {
+        background: rgba(15, 23, 42, 0.42);
+        border-color: rgba(219, 234, 254, 0.45);
+        color: #fff;
+    }
+
+    .company-header #company-mobile-menu {
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 64, 175, 0.98) 100%);
+    }
+}
+
+@media (max-width: 640px) {
+    .brand-logo--nav {
+        height: 56px;
+    }
+
+    .student-badge,
+    .company-badge {
+        display: none;
     }
 }
 

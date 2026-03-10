@@ -2,15 +2,14 @@
 {% set page_title = "Login" %}
 {% set page_description = "Log in to Student Compass to access your personalized career roadmap, resume tools, job search insights, and community updates in one place." %}
 {% set body_class = "auth-page auth-login-page" %}
-{% block head_extra %}
-    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
-{% endblock %}
+{% set page_css = "login" %}
+{% set page_js = "login" %}
 {% block content %}
     <div class="auth-container" id="auth-container">
         <div class="auth-shell">
             <aside class="auth-aside">
                 <a href="/" class="auth-brand" aria-label="StudentsCompass home">
-                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" class="brand-logo brand-logo--hero" />
                 </a>
                 <span class="auth-kicker">Welcome back</span>
                 <h1>Return to your career workspace.</h1>
@@ -83,79 +82,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        const authContainer = document.getElementById('auth-container');
-        const loginTypeRadios = document.querySelectorAll('input[name="login-type"]');
-
-        function setAuthMode(mode) {
-            authContainer.classList.toggle('company-mode', mode === 'company');
-        }
-
-        loginTypeRadios.forEach((radio) => {
-            radio.addEventListener('change', (event) => {
-                if (event.target.checked) {
-                    setAuthMode(event.target.value);
-                }
-            });
-        });
-
-        setAuthMode(document.querySelector('input[name="login-type"]:checked').value);
-
-        document.getElementById('login-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const form = event.target;
-            const formData = new FormData(form);
-            const errorMessage = document.getElementById('error-message');
-            const loginType = document.querySelector('input[name="login-type"]:checked').value;
-
-            errorMessage.textContent = '';
-            errorMessage.classList.remove('is-visible');
-
-            // Determine the login endpoint based on account type
-            const isStudent = loginType === 'student';
-            const loginEndpoint = isStudent ? '/auth/jwt/login' : '/api/v1/auth/company/login';
-            const dashboardUrl = isStudent ? '/dashboard' : '/company-dashboard';
-
-            try {
-                const response = await fetch(loginEndpoint, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include' // Important: include cookies
-                });
-
-                console.log('Login response status:', response.status, 'OK:', response.ok);
-
-                if (response.ok) {
-                    // Both student and company now use HttpOnly cookie auth.
-                    // Cleanup must not block redirect if storage is unavailable.
-                    try {
-                        localStorage.removeItem('bearer_token');
-                        localStorage.removeItem('company_token');
-                        localStorage.removeItem('account_type');
-                    } catch (storageError) {
-                        console.warn('Storage cleanup skipped:', storageError);
-                    }
-                    console.log('Redirecting to:', dashboardUrl);
-                    window.location.assign(dashboardUrl);
-                    return;
-                } else {
-                    let message = 'Login failed. Please check your credentials.';
-                    try {
-                        const errorData = await response.json();
-                        message = errorData.detail || message;
-                    } catch (_) {
-                        // Some auth backends return empty/non-JSON bodies
-                    }
-                    errorMessage.textContent = message;
-                    errorMessage.classList.add('is-visible');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                errorMessage.textContent = 'An unexpected error occurred. Please try again.';
-                errorMessage.classList.add('is-visible');
-            }
-        });
-    </script>
 {% endblock %}

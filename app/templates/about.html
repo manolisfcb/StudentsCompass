@@ -2,24 +2,23 @@
 {% set page_title = "About Us" %}
 {% set page_description = "Student Compass connects employers with career-ready graduates in Canada. Our proprietary AI-powered framework delivers pre-vetted, motivated talent — saving your company time, cost, and hiring risk." %}
 {% set body_class = "marketing-page marketing-about" %}
-{% block head_extra %}
-    <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
-{% endblock %}
+{% set page_css = "about" %}
+{% set page_js = "about" %}
 {% block content %}
     <header class="marketing-header about-top-header">
         <nav class="marketing-nav">
             <div class="container">
                 <a href="/" class="marketing-brand" aria-label="StudentsCompass home">
-                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" style="height:72px; width:auto; display:block;" />
+                    <img src="{{ asset_url('images/Logo_Ready_to_Use.png') }}" alt="StudentsCompass logo" class="brand-logo brand-logo--hero" />
                 </a>
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation">☰</button>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation">☰</button>
                 <ul id="mobile-menu">
-                    <li><a href="/#for-students" onclick="closeMobileMenu()">For Students</a></li>
-                    <li><a href="/#for-companies" onclick="closeMobileMenu()">For Companies</a></li>
-                    <li><a href="/#how-it-works" onclick="closeMobileMenu()">How It Works</a></li>
-                    <li><a href="/about" onclick="closeMobileMenu()" class="active-link">About</a></li>
-                    <li><a href="/login" onclick="closeMobileMenu()" class="marketing-nav-login">Login</a></li>
-                    <li><a href="/register" onclick="closeMobileMenu()" class="marketing-nav-cta">Get Started</a></li>
+                    <li><a href="/#for-students" data-mobile-menu-close>For Students</a></li>
+                    <li><a href="/#for-companies" data-mobile-menu-close>For Companies</a></li>
+                    <li><a href="/#how-it-works" data-mobile-menu-close>How It Works</a></li>
+                    <li><a href="/about" data-mobile-menu-close class="active-link">About</a></li>
+                    <li><a href="/login" data-mobile-menu-close class="marketing-nav-login">Login</a></li>
+                    <li><a href="/register" data-mobile-menu-close class="marketing-nav-cta">Get Started</a></li>
                 </ul>
             </div>
         </nav>
@@ -45,17 +44,17 @@
                 <span class="section-eyebrow">The Data</span>
                 <h2>The Hiring Problem No One Talks About</h2>
                 <div class="about-problem-grid">
-                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 49% statistic" onclick="openRefModal(0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(0)}">
+                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 49% statistic" data-ref-index="0">
                         <span class="problem-stat">49%</span>
                         <p>of hiring managers say applicants lack relevant experience — a major barrier for entry-level candidates entering the workforce.</p>
                         <span class="problem-card__source-hint">Click to view source ↗</span>
                     </div>
-                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for $30,680 statistic" onclick="openRefModal(1)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(1)}">
+                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for $30,680 statistic" data-ref-index="1">
                         <span class="problem-stat">$30,680</span>
                         <p>average cost of employee turnover in Canada — and bad hires that leave early can cost significantly more.</p>
                         <span class="problem-card__source-hint">Click to view source ↗</span>
                     </div>
-                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 82% statistic" onclick="openRefModal(2)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRefModal(2)}">
+                    <div class="problem-card problem-card--clickable" role="button" tabindex="0" aria-label="View source for 82% statistic" data-ref-index="2">
                         <span class="problem-stat">82%</span>
                         <p>of Canadian hiring managers say resumes don't match candidates' real skills — with AI making exaggeration easier.</p>
                         <span class="problem-card__source-hint">Click to view source ↗</span>
@@ -290,13 +289,13 @@
     <!-- Reference Modal -->
     <div class="ref-modal-backdrop" id="refModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="refModalTitle" aria-hidden="true">
         <div class="ref-modal">
-            <button class="ref-modal__close" aria-label="Close modal" onclick="closeRefModal()">&times;</button>
+            <button class="ref-modal__close" id="refModalCloseBtn" aria-label="Close modal" type="button">&times;</button>
             <div class="ref-modal__badge">Source & Reference</div>
             <h3 class="ref-modal__title" id="refModalTitle"></h3>
             <div class="ref-modal__body" id="refModalBody"></div>
             <div class="ref-modal__footer">
                 <a class="ref-modal__link" id="refModalLink" href="#" target="_blank" rel="noopener noreferrer">View Original Source ↗</a>
-                <button class="ref-modal__btn" onclick="closeRefModal()">Close</button>
+                <button class="ref-modal__btn" id="refModalDismissBtn" type="button">Close</button>
             </div>
         </div>
     </div>
@@ -310,103 +309,4 @@
             </ul>
         </div>
     </footer>
-
-    <script>
-        /* ── Mobile menu ── */
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('active');
-        }
-        function closeMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.remove('active');
-        }
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('mobile-menu');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            if (menu && !menu.contains(event.target) && !toggle.contains(event.target)) {
-                menu.classList.remove('active');
-            }
-        });
-
-        /* ── Reference modal data ── */
-        const refData = [
-            {
-                title: '49% — Lack of Relevant Experience in Entry-Level Hiring',
-                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>Survey of 504 hiring decision-makers across Canada. 45% of companies say candidates don\'t have relevant experience; 54% say it\'s difficult to find the right candidates.</p><p>"Lack of relevant experience" cited as a top hiring barrier for entry-level positions.</p>',
-                url: 'https://www.expresspros.ca/newsroom/news-releases/news-releases/2025/02/canadian-companies-say-worsening-skills-gap-and-navigating-ai-top-challenges-in-2025'
-            },
-            {
-                title: '$30,680 — Average Cost of Employee Turnover in Canada',
-                body: '<p><strong>Express Employment Professionals — Canadian Hiring Outlook (2026)</strong></p><p>Average cost of employee turnover per employee in Canada, including recruiting, training, and lost productivity. Hiring outlook dampened due to skills gaps and technological shifts.</p><p><strong>Robert Half Canada (2025)</strong></p><p>33% of Canadian professionals plan to search for a new job in 2026, signaling significant workforce rotation and compounding turnover costs for employers.</p>',
-                url: 'https://www.expresspros.ca/newsroom/news-releases/news-releases/2025/12/canadian-hiring-outlook-dampens-in-first-half-of-2026',
-                url2: 'https://press.roberthalf.ca/2025-12-10-Survey-One-third-of-Canadian-professionals-plan-to-search-for-a-new-job-in-2026'
-            },
-            {
-                title: '82% — Resumes Misrepresent Candidate Skills',
-                body: '<p><strong>Express Employment Professionals / Harris Poll (Canada, 2025)</strong></p><p>82% of hiring managers report that resumes sometimes or often misrepresent candidate skills. AI-generated content is making exaggeration even easier to produce at scale.</p><p>Data sourced from the Express Job Insights Canada survey program.</p>',
-                url: 'https://www.expresspros.com/jobinsights-canada'
-            }
-        ];
-
-        let _prevFocus = null;
-
-        function openRefModal(index) {
-            const d = refData[index];
-            if (!d) return;
-            _prevFocus = document.activeElement;
-            document.getElementById('refModalTitle').textContent = d.title;
-
-            let bodyHtml = d.body;
-            if (d.url2) {
-                bodyHtml += '<p style="margin-top:0.5rem"><a href="' + d.url2 + '" target="_blank" rel="noopener noreferrer" class="ref-modal__inline-link">View additional source (Robert Half) ↗</a></p>';
-            }
-            document.getElementById('refModalBody').innerHTML = bodyHtml;
-
-            const link = document.getElementById('refModalLink');
-            link.href = d.url;
-
-            const backdrop = document.getElementById('refModalBackdrop');
-            backdrop.setAttribute('aria-hidden', 'false');
-            backdrop.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            backdrop.querySelector('.ref-modal__close').focus();
-        }
-
-        function closeRefModal() {
-            const backdrop = document.getElementById('refModalBackdrop');
-            backdrop.classList.remove('active');
-            backdrop.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-            if (_prevFocus) _prevFocus.focus();
-        }
-
-        /* Close on backdrop click */
-        document.getElementById('refModalBackdrop').addEventListener('click', function(e) {
-            if (e.target === this) closeRefModal();
-        });
-
-        /* Close on ESC */
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const backdrop = document.getElementById('refModalBackdrop');
-                if (backdrop.classList.contains('active')) closeRefModal();
-            }
-        });
-
-        /* Focus trap */
-        document.getElementById('refModalBackdrop').addEventListener('keydown', function(e) {
-            if (e.key !== 'Tab') return;
-            const modal = this.querySelector('.ref-modal');
-            const focusable = modal.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
-            if (!focusable.length) return;
-            const first = focusable[0];
-            const last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault(); last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault(); first.focus();
-            }
-        });
-    </script>
 {% endblock %}

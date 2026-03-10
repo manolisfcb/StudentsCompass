@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% set page_title = "Dashboard" %}
 {% set page_description = "Track your job search progress, applications, and career milestones in your Student Compass dashboard with quick actions and insights." %}
-{% block head_extra %}
-  <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
-{% endblock %}
+{% set page_css = "dashboard_old" %}
+{% set page_js = "dashboard_old" %}
 {% block content %}
   {% include "includes/header.html" %}
 
@@ -25,7 +24,7 @@
               <li>
                 <strong>Resume Creation Progress</strong>
                 <div class="progress-bar">
-                  <div class="progress" style="width: 65%;"></div>
+                  <div class="progress" data-progress-value="65"></div>
                 </div>
                 <span>65%</span>
               </li>
@@ -33,7 +32,7 @@
               <li>
                 <strong>LinkedIn Profile Review</strong>
                 <div class="progress-bar">
-                  <div class="progress" style="width: 40%;"></div>
+                  <div class="progress" data-progress-value="40"></div>
                 </div>
                 <span>40%</span>
               </li>
@@ -41,7 +40,7 @@
               <li>
                 <strong>Interview Preparation</strong>
                 <div class="progress-bar">
-                  <div class="progress" style="width: 25%;"></div>
+                  <div class="progress" data-progress-value="25"></div>
                 </div>
                 <span>25%</span>
               </li>
@@ -64,7 +63,7 @@
           <!-- Card 3: Personalized Resource Hub -->
           <div class="dashboard-card recommended-resources">
             <h3>Resource Hub (For You)</h3>
-            <p style="margin-top: 6px; opacity: 0.85;">
+            <p class="legacy-resource-copy">
               Curated materials aligned with your interests and target roles.
             </p>
             <ul>
@@ -86,44 +85,4 @@
   </main>
 
   {% include "includes/footer.html" %}
-
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const token = localStorage.getItem('bearer_token');
-      const welcomeMessage = document.getElementById('welcome-message');
-
-      if (!token) {
-        window.location.href = '/login';
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/v1/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const user = await response.json();
-          welcomeMessage.textContent = `Welcome Back, ${user.nickname || user.email}!`;
-        } else {
-          localStorage.removeItem('bearer_token');
-          window.location.href = '/login';
-        }
-      } catch (error) {
-        localStorage.removeItem('bearer_token');
-        window.location.href = '/login';
-      }
-
-      const logoutLink = document.getElementById('logout-link');
-      logoutLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (confirm('Are you sure you want to log out?')) {
-          localStorage.removeItem('bearer_token');
-          window.location.href = '/login';
-        }
-      });
-    });
-  </script>
 {% endblock %}
