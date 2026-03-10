@@ -696,7 +696,7 @@ nav a:hover {
 }
 
 .home-value-strip {
-    padding: 0 0 1rem;
+    padding: 0.35rem 0 1.4rem;
 }
 
 .value-strip-grid {
@@ -735,10 +735,14 @@ nav a:hover {
 
 .home-audience-section-students {
     background: transparent;
+    padding-top: 6rem;
+    padding-bottom: 6.15rem;
 }
 
 .home-audience-section-companies {
     background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+    padding-top: 6rem;
+    padding-bottom: 6.15rem;
 }
 
 .home-platform-section {
@@ -763,6 +767,19 @@ nav a:hover {
     gap: 0;
 }
 
+.home-audience-section .container {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
+.home-platform-section .container,
+.home-journey-section .container,
+.home-social-proof .container,
+.home-value-strip .container {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
 .home-social-proof {
     background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
 }
@@ -771,6 +788,15 @@ nav a:hover {
     text-align: center;
     padding-top: 0.4rem;
     margin-bottom: 3rem;
+}
+
+.home-audience-section .home-section-head {
+    margin-bottom: 3.35rem;
+}
+
+.home-platform-section .home-section-head,
+.home-social-proof .home-section-head {
+    margin-bottom: 3.15rem;
 }
 
 .home-section-head .section-kicker {
@@ -816,6 +842,16 @@ nav a:hover {
 .feature-cards-home {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.15rem;
+}
+
+.home-audience-section .feature-cards-home {
+    margin-top: 0.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.home-platform-section .feature-cards-home {
+    margin-top: 0.25rem;
+    margin-bottom: 0.45rem;
 }
 
 .home-card {
@@ -910,6 +946,11 @@ nav a:hover {
     margin-bottom: 0.35rem;
 }
 
+.home-social-proof .testimonial-cards {
+    margin-top: 0.2rem;
+    margin-bottom: 0.6rem;
+}
+
 .testimonial-card {
     min-height: 100%;
 }
@@ -921,7 +962,7 @@ nav a:hover {
 }
 
 .home-final-cta {
-    margin-top: 2rem;
+    margin-top: 2.4rem;
     padding: 2rem;
     border-radius: 30px;
     background: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(94, 234, 212, 0.08));
@@ -3419,6 +3460,21 @@ main.dashboard {
 
     .home-section-head {
         margin-bottom: 2.25rem;
+    }
+
+    .home-audience-section-students,
+    .home-audience-section-companies {
+        padding-top: 4.15rem;
+        padding-bottom: 4.25rem;
+    }
+
+    .home-audience-section .home-section-head {
+        margin-bottom: 2.55rem;
+    }
+
+    .home-platform-section .home-section-head,
+    .home-social-proof .home-section-head {
+        margin-bottom: 2.4rem;
     }
 
     .home-journey-section .home-section-head {
