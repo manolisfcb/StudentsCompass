@@ -52,5 +52,5 @@ class JobPosting(Base):
     expires_at = Column(DateTime, nullable=True)
     
     # Relationships
-    company = relationship("Company", backref="job_postings")
-    applications = relationship("ApplicationModel", back_populates="job_posting")
+    company = relationship("Company", back_populates="job_postings")
+    applications = relationship("ApplicationModel", back_populates="job_posting", overlaps="company,applications")

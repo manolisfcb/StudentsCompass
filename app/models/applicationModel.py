@@ -68,8 +68,8 @@ class ApplicationModel(Base):
     
     # Relationships
     user = relationship("User")
-    company = relationship("Company")
-    job_posting = relationship("JobPosting", back_populates="applications")
+    company = relationship("Company", back_populates="applications", overlaps="job_posting,applications")
+    job_posting = relationship("JobPosting", back_populates="applications", overlaps="company,applications")
     status_events = relationship("ApplicationStatusEventModel", back_populates="application")
 
     @property

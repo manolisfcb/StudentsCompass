@@ -26,3 +26,5 @@ class Company(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     recruiters = relationship("CompanyRecruiter", back_populates="company", cascade="all, delete-orphan")
+    job_postings = relationship("JobPosting", back_populates="company", cascade="all, delete-orphan")
+    applications = relationship("ApplicationModel", back_populates="company", overlaps="job_posting,applications")
