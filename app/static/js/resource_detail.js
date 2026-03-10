@@ -885,7 +885,7 @@
     lessonCompleteButton.disabled = false;
     if (!completed) return;
 
-    renderLesson(currentLessonId);
+    renderLesson(sequence.next || currentLessonId);
   });
 
   moduleButtons.forEach((btn) => {
