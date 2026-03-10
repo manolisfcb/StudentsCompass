@@ -71,3 +71,13 @@ class ApplicationModel(Base):
     company = relationship("Company")
     job_posting = relationship("JobPosting", back_populates="applications")
     status_events = relationship("ApplicationStatusEventModel", back_populates="application")
+
+    @property
+    def company_name(self) -> str | None:
+        company = self.__dict__.get("company")
+        return company.company_name if company else None
+
+    @property
+    def company_location(self) -> str | None:
+        company = self.__dict__.get("company")
+        return company.location if company else None

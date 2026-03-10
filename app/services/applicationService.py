@@ -6,6 +6,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.applicationAnalyticsModel import (
     ApplicationDailyAggregateModel,
@@ -59,6 +60,7 @@ class ApplicationService:
     async def list_user_applications(self, *, user_id: UUID) -> List[ApplicationModel]:
         result = await self.session.execute(
             select(ApplicationModel)
+            .options(selectinload(ApplicationModel.company))
             .where(ApplicationModel.user_id == user_id)
             .order_by(ApplicationModel.created_at.desc())
         )

@@ -1,431 +1,1180 @@
 {% extends "base.html" %}
-{% set page_title = "Job Search" %}
-{% set page_description = "Search curated job opportunities and internships tailored to your profile with Student Compass job search tools, filters, and AI keyword insights." %}
+{% set page_title = "Job Board" %}
+{% set page_description = "Search jobs manually, use AI to extract keywords from your CV, track your applications, and manage recruiter conversations in Student Compass." %}
+{% set display_name = user.first_name or user.nickname or "Student" %}
 {% block head_extra %}
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-        .job-board-container {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
+        .jobs-stage {
+            padding: 2rem 0 4rem;
         }
 
-        @media (max-width: 1024px) {
-            .job-board-container {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
+        .jobs-page {
+            width: min(1520px, 100%);
+            margin: 0 auto;
         }
 
-        @media (max-width: 768px) {
-            .job-board-container {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-                margin-bottom: 1rem;
-            }
+        .jobs-shell {
+            background:
+                radial-gradient(circle at top left, rgba(94, 234, 212, 0.16), transparent 28%),
+                linear-gradient(180deg, #ffffff 0%, #f7fbfa 100%);
+            border: 1px solid rgba(15, 118, 110, 0.12);
+            border-radius: 32px;
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
         }
 
-        .search-panel {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .jobs-topbar {
             padding: 1.5rem;
-            height: fit-content;
-            position: sticky;
-            top: 20px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(255, 255, 255, 0.84);
+            backdrop-filter: blur(18px);
         }
 
-        @media (max-width: 768px) {
-            .search-panel {
-                padding: 1rem;
-                position: static;
-                margin-bottom: 1.5rem;
-            }
+        .jobs-searchbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.7fr) auto;
+            gap: 0.85rem;
+            align-items: center;
         }
 
-        .search-panel h3 {
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            color: var(--text-color);
+        .search-field {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-height: 64px;
+            padding: 0 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 22px;
+            background: #ffffff;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
 
-        .form-group {
-            margin-bottom: 1.5rem;
+        .search-field svg {
+            width: 22px;
+            height: 22px;
+            color: var(--primary-color);
+            flex-shrink: 0;
         }
 
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-            font-size: 0.95rem;
-        }
-
-        @media (max-width: 768px) {
-            .form-group label {
-                font-size: 0.9rem;
-            }
-        }
-
-        .form-group input,
-        .form-group select {
+        .search-field input,
+        .toolbar-select select {
             width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--light-gray);
-            border-radius: 8px;
-            font-size: 0.95rem;
+            border: 0;
+            background: transparent;
+            color: var(--text-color);
+            font-size: 1rem;
             font-family: inherit;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        .search-field input:focus,
+        .toolbar-select select:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+        .search-action {
+            min-width: 164px;
+            min-height: 64px;
+            border: 0;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--primary-color), #0b5d57);
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 700;
             cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 16px 30px rgba(15, 118, 110, 0.22);
         }
 
-        .checkbox-group label {
-            margin: 0;
-            font-weight: normal;
-            cursor: pointer;
+        .search-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 34px rgba(15, 118, 110, 0.28);
         }
 
-        .search-btn {
-            width: 100%;
-            padding: 0.8rem;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        @media (max-width: 768px) {
-            .search-btn {
-                padding: 1rem;
-                font-size: 0.95rem;
-            }
-        }
-
-        .search-btn:hover {
-            background-color: #5b48d1;
-        }
-
-        .search-btn:disabled {
-            opacity: 0.6;
+        .search-action:disabled,
+        .feature-button:disabled,
+        .ghost-button:disabled {
+            opacity: 0.68;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        .jobs-container {
-            min-height: 400px;
-        }
-
-        .jobs-header {
+        .jobs-utilitybar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 1.5rem;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
         }
 
-        .jobs-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: var(--text-color);
-        }
-
-        .jobs-count {
-            color: var(--gray);
-            font-size: 0.95rem;
-        }
-
-        .job-card {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .job-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .job-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin: 0 0 0.5rem 0;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .job-title:hover {
-            text-decoration: underline;
-        }
-
-        .job-company {
-            font-weight: 600;
-            color: var(--text-color);
-            margin: 0 0 0.25rem 0;
-            font-size: 0.95rem;
-        }
-
-        .job-location {
-            color: var(--gray);
-            font-size: 0.9rem;
-            margin: 0 0 0.5rem 0;
+        .jobs-tabs {
             display: flex;
             align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
-        .job-location svg {
-            width: 16px;
-            height: 16px;
-            margin-right: 0.5rem;
+        .jobs-tab,
+        .jobs-profile-link {
+            border: 0;
+            background: transparent;
+            color: var(--text-color);
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.8rem 1.05rem;
+            border-radius: 999px;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .jobs-tab.active {
+            background: rgba(15, 118, 110, 0.1);
             color: var(--primary-color);
         }
 
-        .job-time {
-            color: var(--gray);
-            font-size: 0.85rem;
-            margin-top: 0.75rem;
+        .jobs-tab.active::after {
+            content: "";
+            position: absolute;
+            left: 1rem;
+            right: 1rem;
+            bottom: 0.2rem;
+            height: 4px;
+            border-radius: 999px;
+            background: var(--primary-color);
         }
 
-        .loading {
-            text-align: center;
-            padding: 2rem;
+        .toolbar-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-select {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-height: 46px;
+            padding: 0 0.9rem;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.32);
+            border-radius: 16px;
+        }
+
+        .toolbar-label {
             color: var(--gray);
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .toolbar-status {
+            min-height: 1.4rem;
+            color: var(--gray);
+            font-size: 0.92rem;
+        }
+
+        .jobs-body {
+            padding: 2rem;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .hero-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .hero-copy,
+        .hero-stats {
+            border-radius: 28px;
+            padding: 1.15rem 1.25rem;
+            min-height: 188px;
+        }
+
+        .hero-copy {
+            background:
+                linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.08)),
+                #ffffff;
+            border: 1px solid rgba(15, 118, 110, 0.12);
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 1rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            margin: 0 0 0.55rem;
+            font-size: clamp(1.8rem, 3vw, 2.75rem);
+            line-height: 1;
+            letter-spacing: -0.04em;
+            text-align: left;
+        }
+
+        .hero-description {
+            max-width: 52ch;
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.96rem;
+            line-height: 1.5;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.8rem;
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .hero-stat {
+            padding: 1rem;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hero-stat-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.35rem;
+        }
+
+        .hero-stat-value {
+            font-size: 1.55rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .hero-stat-copy {
+            margin-top: 0.45rem;
+            color: rgba(255, 255, 255, 0.76);
+            font-size: 0.86rem;
+        }
+
+        .highlights-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-card {
+            position: relative;
+            padding: 1.4rem;
+            border-radius: 28px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: #ffffff;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .feature-card.ai-card::before {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(94, 234, 212, 0.02));
+        }
+
+        .feature-card.new-card::before {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(249, 115, 22, 0.03));
+        }
+
+        .feature-card.soon-card::before {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.03));
+        }
+
+        .feature-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: var(--text-color);
+        }
+
+        .feature-title {
+            margin: 0 0 0.55rem;
+            font-size: 1.45rem;
+            text-align: left;
+        }
+
+        .feature-copy {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            margin: 1rem 0 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 0.65rem;
+            color: var(--text-color);
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            font-size: 0.95rem;
+        }
+
+        .feature-list li::before {
+            content: "•";
+            color: var(--primary-color);
+            font-weight: 900;
+        }
+
+        .status-banner {
+            min-height: 72px;
+            margin-top: 1rem;
+            padding: 0.95rem 1rem;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.84);
+            color: var(--text-color);
+            font-size: 0.95rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .status-banner.loading {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .cv-summary {
+            min-height: 72px;
+            margin-top: 1rem;
+            padding: 0.95rem 1rem;
+            border-radius: 20px;
+            background: rgba(15, 118, 110, 0.06);
+            color: var(--text-color);
+            border: 1px solid rgba(15, 118, 110, 0.12);
+            line-height: 1.55;
+        }
+
+        .cv-summary strong {
+            color: var(--primary-color);
+        }
+
+        .feature-button,
+        .ghost-button,
+        .inline-link-button {
+            border: 0;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .feature-button {
+            min-height: 48px;
+            padding: 0 1rem;
+            border-radius: 16px;
+            background: #032f2b;
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 12px 24px rgba(3, 47, 43, 0.18);
+        }
+
+        .ghost-button {
+            min-height: 48px;
+            padding: 0 1rem;
+            border-radius: 16px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .inline-link-button {
+            background: transparent;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 0;
         }
 
         .loading-spinner {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--light-gray);
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(15, 118, 110, 0.2);
             border-top-color: var(--primary-color);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
+            animation: spin 0.9s linear infinite;
+            flex-shrink: 0;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .error {
-            background-color: #FEE2E2;
-            border: 1px solid #FCA5A5;
-            border-radius: 8px;
-            padding: 1rem;
-            color: #991B1B;
-            margin-bottom: 1rem;
+        .section-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
+        .section-head h2 {
+            margin: 0 0 0.3rem;
+            font-size: 1.7rem;
+            text-align: left;
+        }
+
+        .section-head p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .jobs-count {
             color: var(--gray);
+            font-size: 0.95rem;
+            font-weight: 600;
         }
 
-        .empty-state svg {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+        .results-stack,
+        .applications-stack {
+            display: grid;
+            gap: 1.1rem;
         }
 
-        .keyword-group {
-            background-color: var(--white);
-            border: 1px solid var(--light-gray);
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            overflow: hidden;
+        .result-group {
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 28px;
+            padding: 1.15rem;
+            background: rgba(255, 255, 255, 0.92);
         }
 
-        .keyword-summary {
+        .result-group-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 0.75rem;
-            padding: 1rem 1.25rem;
-            cursor: pointer;
-            background-color: #f8fafc;
-            list-style: none;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
 
-        .keyword-summary::-webkit-details-marker {
-            display: none;
+        .result-group-title {
+            margin: 0;
+            font-size: 1.12rem;
         }
 
-        .keyword-title {
-            font-weight: 700;
-            color: var(--text-color);
-            font-size: 1rem;
-        }
-
-        .keyword-meta {
+        .result-group-meta {
             color: var(--gray);
-            font-size: 0.9rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .jobs-grid,
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .job-card,
+        .application-card,
+        .summary-card,
+        .message-folder,
+        .message-empty {
+            background: #ffffff;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 24px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+        }
+
+        .job-card,
+        .application-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            padding: 1.2rem;
+            min-height: 100%;
+        }
+
+        .job-card-top,
+        .application-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.85rem;
+        }
+
+        .company-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .bookmark-pill,
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 0.8rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
             white-space: nowrap;
         }
 
-        .keyword-content {
-            padding: 1rem;
+        .bookmark-pill {
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary-color);
+        }
+
+        .status-pill {
+            text-transform: capitalize;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .status-pill.applied {
+            background: #ecfeff;
+            color: #0f766e;
+        }
+
+        .status-pill.in_review {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .status-pill.interview {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .status-pill.offer {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-pill.rejected,
+        .status-pill.withdrawn {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .job-company,
+        .application-company {
+            margin: 0 0 0.2rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .job-title,
+        .application-title {
+            margin: 0;
+            font-size: 1.28rem;
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        .job-meta,
+        .application-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            color: var(--gray);
+            font-size: 0.93rem;
+        }
+
+        .job-meta span,
+        .application-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.38rem 0.65rem;
+            border-radius: 999px;
+            background: #f8fafc;
+        }
+
+        .job-actions,
+        .application-actions {
+            display: flex;
+            gap: 0.7rem;
+            margin-top: auto;
+            flex-wrap: wrap;
+        }
+
+        .primary-link,
+        .secondary-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 1rem;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .primary-link {
+            background: rgba(94, 234, 212, 0.28);
+            color: #03322d;
+        }
+
+        .secondary-link {
+            background: #f1f5f9;
+            color: var(--text-color);
+        }
+
+        .empty-state {
+            padding: 2rem 1.25rem;
+            text-align: center;
+            border-radius: 28px;
+            border: 1px dashed rgba(148, 163, 184, 0.45);
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--gray);
+        }
+
+        .empty-state h3 {
+            margin: 0 0 0.45rem;
+            color: var(--text-color);
+            font-size: 1.2rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .summary-card {
+            padding: 1.1rem 1.15rem;
+        }
+
+        .summary-label {
+            display: block;
+            color: var(--gray);
+            font-size: 0.84rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .summary-value {
+            display: block;
+            margin-top: 0.45rem;
+            font-size: 1.9rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .summary-note {
+            margin-top: 0.45rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .application-notes {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.94rem;
+        }
+
+        .messages-layout {
+            display: grid;
+            grid-template-columns: 290px minmax(0, 1fr);
+            gap: 1rem;
+        }
+
+        .messages-sidebar,
+        .messages-main {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .message-folder,
+        .message-empty {
+            padding: 1.2rem;
+        }
+
+        .message-folder h3,
+        .message-empty h3 {
+            margin: 0 0 0.45rem;
+            font-size: 1.15rem;
+            text-align: left;
+        }
+
+        .message-folder p,
+        .message-empty p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .message-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            min-height: 34px;
+            padding: 0 0.65rem;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-weight: 800;
+            margin-top: 1rem;
+        }
+
+        .jobs-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 9998;
+        }
+
+        .jobs-modal.active {
+            display: flex;
+        }
+
+        .jobs-modal-card {
+            width: min(720px, 100%);
+            background: #ffffff;
+            border-radius: 32px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 30px 90px rgba(15, 23, 42, 0.24);
+            overflow: hidden;
+        }
+
+        .jobs-modal-head,
+        .jobs-modal-body {
+            padding: 1.4rem 1.5rem;
+        }
+
+        .jobs-modal-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(94, 234, 212, 0.06));
+        }
+
+        .jobs-modal-head h2 {
+            margin: 0 0 0.45rem;
+            text-align: left;
+            font-size: 1.5rem;
+        }
+
+        .jobs-modal-head p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .jobs-modal-close {
+            width: 42px;
+            height: 42px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.06);
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 1200px) {
+            .jobs-grid,
+            .applications-grid,
+            .highlights-grid,
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .jobs-searchbar,
+            .hero-panel,
+            .messages-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .search-action {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .jobs-topbar,
+            .jobs-body {
+                padding: 1rem;
+            }
+
+            .jobs-grid,
+            .applications-grid,
+            .highlights-grid,
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
         }
     </style>
 {% endblock %}
 {% block content %}
     {% include "includes/header.html" %}
 
-    <main class="dashboard-layout">
-        {% include "includes/sidebar.html" %}
-
-        <main class="dashboard">
-            <div class="container">
-                <div class="dashboard-header">
-                    <h2>Job Board</h2>
-                    <p>Find jobs matched to your skills and interests</p>
-                </div>
-
-                <div class="job-board-container">
-                    <!-- Search Panel -->
-                    <div class="search-panel">
-                        <h3>Find Jobs</h3>
-                        
-                        <!-- Mode Selector -->
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Search Mode</label>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button id="modeAuto" class="mode-btn mode-active" style="flex: 1; padding: 0.6rem; border: 2px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                                    From CV
-                                </button>
-                                <button id="modeManual" class="mode-btn" style="flex: 1; padding: 0.6rem; border: 2px solid var(--light-gray); background-color: white; color: var(--text-color); border-radius: 8px; font-weight: 600; cursor: pointer;">
-                                    Manual
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Auto Mode Info -->
-                        <div id="autoModeInfo" style="background-color: #EDE9FE; border: 1px solid #DDD6FE; border-radius: 8px; padding: 0.75rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-color);">
-                            <p id="cvStatus" style="margin: 0;">👆 Select a search mode to get started</p>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="keywords">Keywords</label>
-                            <input 
-                                type="text" 
-                                id="keywords" 
-                                placeholder="e.g., Python Developer" 
-                                value=""
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label for="location">Location</label>
-                            <input 
-                                type="text" 
-                                id="location" 
-                                placeholder="e.g., New York, Remote" 
-                                value="Remote"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label for="limit">Number of Jobs (per keyword)</label>
-                            <select id="limit">
-                                <option value="10">10</option>
-                                <option value="25" selected>25</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group checkbox-group">
-                            <input 
-                                type="checkbox" 
-                                id="remote" 
-                                checked
-                            >
-                            <label for="remote">Remote Only</label>
-                        </div>
-
-                        <button id="searchBtn" class="search-btn">Search Jobs</button>
-                        <p id="searchStatus" style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--gray);"></p>
-                    </div>
-
-                    <!-- Jobs Listing -->
-                    <div class="jobs-container">
-                        <div class="jobs-header">
-                            <h2>Available Positions</h2>
-                            <span class="jobs-count" id="jobsCount"></span>
-                        </div>
-
-                        <div id="jobsList">
-                            <div class="empty-state">
+    <main class="dashboard jobs-stage">
+            <div class="container jobs-page">
+                <section class="jobs-shell">
+                    <header class="jobs-topbar">
+                        <div class="jobs-searchbar">
+                            <label class="search-field" aria-label="Search jobs by title or keywords">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
                                 </svg>
-                                <h3>Search for jobs to get started</h3>
-                                <p>Use the filters on the left to find positions that match your skills</p>
+                                <input id="keywords" type="text" placeholder="Search job title or keywords">
+                            </label>
+                            <label class="search-field" aria-label="Search jobs by location">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <input id="location" type="text" placeholder="City or region" value="Toronto, ON">
+                            </label>
+                            <button id="searchBtn" class="search-action" type="button">Search</button>
+                        </div>
+
+                        <div class="jobs-utilitybar">
+                            <nav class="jobs-tabs" aria-label="Job board sections">
+                                <button id="tabButton-home" class="jobs-tab active" type="button" data-tab="home">Home</button>
+                                <button id="tabButton-cv" class="jobs-tab" type="button" data-tab="cv">Based on your CV</button>
+                                <button id="tabButton-applications" class="jobs-tab" type="button" data-tab="applications">My Jobs</button>
+                                <button id="tabButton-messages" class="jobs-tab" type="button" data-tab="messages">Messages</button>
+                                <a class="jobs-profile-link" href="/user-profile">Profile</a>
+                            </nav>
+
+                            <div class="toolbar-meta">
+                                <label class="toolbar-select" for="limit">
+                                    <span class="toolbar-label">Jobs per search</span>
+                                    <select id="limit">
+                                        <option value="10">10</option>
+                                        <option value="25" selected>25</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </label>
+                                <div id="searchStatus" class="toolbar-status" aria-live="polite"></div>
                             </div>
+                        </div>
+                    </header>
+
+                    <div class="jobs-body">
+                        <section id="tab-home" class="tab-panel active">
+                            <div class="hero-panel">
+                                <div class="hero-copy">
+                                    <span class="hero-eyebrow">Students Compass Job Board</span>
+                                    <h1 id="greetingTitle" class="hero-title">Hello, {{ display_name | upper }}</h1>
+                                    <p class="hero-description">
+                                        Search manually from the top bar. Your main results should start here, without extra scrolling.
+                                    </p>
+                                </div>
+
+                                <div class="hero-stats">
+                                    <div class="hero-stat">
+                                        <span class="hero-stat-label">Last search results</span>
+                                        <span id="heroResultsCount" class="hero-stat-value">0</span>
+                                        <div class="hero-stat-copy">Fresh job cards from your latest search.</div>
+                                    </div>
+                                    <div class="hero-stat">
+                                        <span class="hero-stat-label">My jobs tracked</span>
+                                        <span id="heroApplicationsCount" class="hero-stat-value">0</span>
+                                        <div class="hero-stat-copy">Applications saved inside Student Compass.</div>
+                                    </div>
+                                    <div class="hero-stat">
+                                        <span class="hero-stat-label">Interviews in pipeline</span>
+                                        <span id="heroInterviewCount" class="hero-stat-value">0</span>
+                                        <div class="hero-stat-copy">Live progress across your applications.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <section>
+                                <div class="section-head">
+                                    <div>
+                                        <h2>Top picks for you</h2>
+                                        <p>Results from your manual search appear here immediately.</p>
+                                    </div>
+                                    <span id="jobsCount" class="jobs-count">No search yet</span>
+                                </div>
+
+                                <div id="jobsList" class="results-stack">
+                                    <div class="empty-state">
+                                        <h3>Search for jobs to get started</h3>
+                                        <p>Use the search bar above or run the AI CV keyword search to populate this board.</p>
+                                    </div>
+                                </div>
+                            </section>
+                        </section>
+
+                        <section id="tab-cv" class="tab-panel">
+                            <div class="section-head">
+                                <div>
+                                    <h2>Based on your CV</h2>
+                                    <p>Run AI on your resume, extract keywords, and search matching roles from there.</p>
+                                </div>
+                            </div>
+
+                            <div class="highlights-grid">
+                                <article class="feature-card ai-card">
+                                    <span class="feature-badge">AI-powered</span>
+                                    <h2 class="feature-title">Search jobs from your CV</h2>
+                                    <p class="feature-copy">
+                                        We read your CV, extract the strongest keywords, and use them to launch a targeted search.
+                                    </p>
+                                    <div id="cvTabSummary" class="cv-summary">Checking if your CV is ready for AI search...</div>
+                                    <div class="feature-actions">
+                                        <button id="openCvModalBtn" class="feature-button" type="button">Open AI search</button>
+                                        <button id="manualFocusBtn" class="ghost-button" type="button">Go to manual search</button>
+                                    </div>
+                                </article>
+
+                                <article class="feature-card soon-card">
+                                    <span class="feature-badge">Feature coming soon</span>
+                                    <h2 class="feature-title">Inspired by your applies</h2>
+                                    <p class="feature-copy">
+                                        This area will recommend jobs based on where you already applied and which roles are getting traction.
+                                    </p>
+                                    <ul class="feature-list">
+                                        <li>Smarter recommendations based on your application history.</li>
+                                        <li>Signals from recruiter interest and interview movement.</li>
+                                    </ul>
+                                </article>
+                            </div>
+                        </section>
+
+                        <section id="tab-applications" class="tab-panel">
+                            <div class="section-head">
+                                <div>
+                                    <h2>My Jobs</h2>
+                                    <p>These are the jobs you already applied to.</p>
+                                </div>
+                                <button id="refreshApplicationsBtn" class="ghost-button" type="button">Refresh</button>
+                            </div>
+
+                            <div id="applicationsSummary" class="summary-grid">
+                                <div class="summary-card">
+                                    <span class="summary-label">Loading</span>
+                                    <span class="summary-value">...</span>
+                                    <div class="summary-note">Fetching your tracked applications.</div>
+                                </div>
+                            </div>
+
+                            <div id="applicationsList" class="applications-stack">
+                                <div class="empty-state">
+                                    <h3>Loading your applications</h3>
+                                    <p>We are preparing your jobs tracker.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="tab-messages" class="tab-panel">
+                            <div class="section-head">
+                                <div>
+                                    <h2>Messages</h2>
+                                    <p>Messages sent to recruiters and their replies will live here.</p>
+                                </div>
+                            </div>
+
+                            <div class="messages-layout">
+                                <div class="messages-sidebar">
+                                    <div class="message-folder">
+                                        <h3>Recruiter inbox</h3>
+                                        <p>Your outreach threads will be grouped here once messaging is enabled.</p>
+                                        <span class="message-count">0</span>
+                                    </div>
+                                    <div class="message-folder">
+                                        <h3>Replies</h3>
+                                        <p>Responses from companies will appear in a dedicated view so you can follow up faster.</p>
+                                        <span class="message-count">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="messages-main">
+                                    <div class="message-empty">
+                                        <h3>Recruiter messaging is not connected yet</h3>
+                                        <p>
+                                            This section is ready in the interface, but the current project does not yet have a recruiter conversation model or API.
+                                            When that backend is added, this panel can show sent messages, replies, and thread status.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+            </div>
+            <div id="cvModal" class="jobs-modal" aria-hidden="true">
+                <div class="jobs-modal-card" role="dialog" aria-modal="true" aria-labelledby="cvModalTitle">
+                    <div class="jobs-modal-head">
+                        <div>
+                            <h2 id="cvModalTitle">AI search from your CV</h2>
+                            <p>We will analyze your CV, extract keywords, place them in the top search bar, and run the search for you.</p>
+                        </div>
+                        <button id="closeCvModalBtn" class="jobs-modal-close" type="button" aria-label="Close AI search modal">×</button>
+                    </div>
+                    <div class="jobs-modal-body">
+                        <div id="cvStatus" class="status-banner">Checking if your CV is ready for AI search...</div>
+                        <div class="feature-actions">
+                            <button id="useCvBtn" class="feature-button" type="button">Use AI from my CV</button>
+                            <button id="closeCvSecondaryBtn" class="ghost-button" type="button">Close</button>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-
-        <aside class="dashboard-sidebar right">
-            <h4>Tips</h4>
-            <ul style="padding-left: 1.5rem; color: var(--gray); font-size: 0.9rem;">
-                <li>Use specific keywords related to your skills</li>
-                <li>Filter by location to find jobs near you</li>
-                <li>Check "Remote Only" for work from home positions</li>
-                <li>Click job titles to view full details on LinkedIn</li>
-            </ul>
-        </aside>
     </main>
 
     {% include "includes/footer.html" %}
 
     <script>
-        const searchBtn = document.getElementById('searchBtn');
+        const userDisplayName = {{ display_name | tojson }};
         const keywordsInput = document.getElementById('keywords');
         const locationInput = document.getElementById('location');
         const limitSelect = document.getElementById('limit');
-        const remoteCheckbox = document.getElementById('remote');
-        const jobsList = document.getElementById('jobsList');
+        const searchBtn = document.getElementById('searchBtn');
         const searchStatus = document.getElementById('searchStatus');
+        const jobsList = document.getElementById('jobsList');
         const jobsCount = document.getElementById('jobsCount');
-        
-        // Mode buttons
-        const modeAutoBtn = document.getElementById('modeAuto');
-        const modeManualBtn = document.getElementById('modeManual');
-        const autoModeInfo = document.getElementById('autoModeInfo');
+        const heroResultsCount = document.getElementById('heroResultsCount');
+        const heroApplicationsCount = document.getElementById('heroApplicationsCount');
+        const heroInterviewCount = document.getElementById('heroInterviewCount');
+        const cvTabSummary = document.getElementById('cvTabSummary');
         const cvStatus = document.getElementById('cvStatus');
-        
-        let currentMode = 'auto'; // 'auto' or 'manual'
-        let autoKeywords = '';
+        const cvModal = document.getElementById('cvModal');
+        const openCvModalBtn = document.getElementById('openCvModalBtn');
+        const closeCvModalBtn = document.getElementById('closeCvModalBtn');
+        const closeCvSecondaryBtn = document.getElementById('closeCvSecondaryBtn');
+        const useCvBtn = document.getElementById('useCvBtn');
+        const manualFocusBtn = document.getElementById('manualFocusBtn');
+        const refreshApplicationsBtn = document.getElementById('refreshApplicationsBtn');
+        const applicationsSummary = document.getElementById('applicationsSummary');
+        const applicationsList = document.getElementById('applicationsList');
+        const tabButtons = Array.from(document.querySelectorAll('.jobs-tab'));
+        const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+        let lastSearchSource = 'manual';
+
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Hello';
+            if (hour < 12) greeting = 'Good morning';
+            else if (hour < 18) greeting = 'Good afternoon';
+            else greeting = 'Good evening';
+
+            document.getElementById('greetingTitle').textContent = `${greeting}, ${String(userDisplayName).toUpperCase()}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Date unavailable';
+            try {
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                });
+            } catch (_) {
+                return dateStr;
+            }
+        }
+
+        function formatStatus(status) {
+            return String(status || '')
+                .split('_')
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
+
+        function getCompanyInitials(company) {
+            const parts = String(company || 'SC')
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2);
+
+            if (!parts.length) return 'SC';
+            return parts.map((part) => part[0].toUpperCase()).join('');
+        }
 
         async function readErrorDetail(response, fallbackMessage) {
             try {
@@ -434,216 +1183,61 @@
                     return data.detail.trim();
                 }
             } catch (_) {
-                // Ignore parse errors and use fallback
+                // Use fallback when the body cannot be parsed.
             }
             return fallbackMessage;
         }
 
         function userFriendlyAutoModeError(message) {
-            const raw = (message || '').toLowerCase();
+            const raw = String(message || '').toLowerCase();
             if (!raw) return 'We could not analyze your CV right now.';
-
-            if (raw.includes('daily limit') || raw.includes('429')) {
-                return 'You reached your daily AI analysis limit. Please try again tomorrow or use Manual mode.';
+            if (raw.includes('daily limit') || raw.includes('429')) return 'You reached your daily AI analysis limit. Please try again tomorrow or use manual search.';
+            if (raw.includes('quota') || raw.includes('credit') || raw.includes('billing') || raw.includes('resource_exhausted') || raw.includes('rate limit')) {
+                return 'AI credits are temporarily exhausted. Please try again later or use manual search.';
             }
-            if (
-                raw.includes('quota') ||
-                raw.includes('credit') ||
-                raw.includes('resource_exhausted') ||
-                raw.includes('billing') ||
-                raw.includes('rate limit')
-            ) {
-                return 'AI credits are temporarily exhausted. Please try again later or use Manual mode.';
-            }
-            if (raw.includes('timeout') || raw.includes('timed out')) {
-                return 'AI analysis took too long. Please try again in a few minutes.';
-            }
-            if (raw.includes('no cv')) {
-                return 'No CV found. Please upload your CV first.';
-            }
-
-            return 'We could not analyze your CV right now. Please try again later or use Manual mode.';
+            if (raw.includes('timeout') || raw.includes('timed out')) return 'AI analysis took too long. Please try again in a few minutes.';
+            if (raw.includes('no cv')) return 'No CV found. Please upload your CV first.';
+            return 'We could not analyze your CV right now. Please try again later or use manual search.';
         }
 
-        // Mode switcher
-        modeAutoBtn.addEventListener('click', () => {
-            currentMode = 'auto';
-            modeAutoBtn.classList.add('mode-active');
-            modeAutoBtn.style.backgroundColor = 'var(--primary-color)';
-            modeAutoBtn.style.color = 'white';
-            modeAutoBtn.style.borderColor = 'var(--primary-color)';
-            
-            modeManualBtn.classList.remove('mode-active');
-            modeManualBtn.style.backgroundColor = 'white';
-            modeManualBtn.style.color = 'var(--text-color)';
-            modeManualBtn.style.borderColor = 'var(--light-gray)';
-            
-            autoModeInfo.style.display = 'block';
-            loadAutoKeywords();
-        });
+        function switchTab(nextTab) {
+            tabButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.tab === nextTab);
+            });
 
-        modeManualBtn.addEventListener('click', () => {
-            currentMode = 'manual';
-            modeManualBtn.classList.add('mode-active');
-            modeManualBtn.style.backgroundColor = 'var(--primary-color)';
-            modeManualBtn.style.color = 'white';
-            modeManualBtn.style.borderColor = 'var(--primary-color)';
-            
-            modeAutoBtn.classList.remove('mode-active');
-            modeAutoBtn.style.backgroundColor = 'white';
-            modeAutoBtn.style.color = 'var(--text-color)';
-            modeAutoBtn.style.borderColor = 'var(--light-gray)';
-            
-            autoModeInfo.style.display = 'none';
-            keywordsInput.value = '';
-            keywordsInput.focus();
-        });
-
-        async function loadAutoKeywords() {
-            // Show loading state
-            cvStatus.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 16px; height: 16px; border: 2px solid var(--primary-color); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <span>Starting CV analysis with AI...</span>
-                </div>
-            `;
-            modeAutoBtn.disabled = true;
-            modeManualBtn.disabled = true;
-            searchBtn.disabled = true;
-            
-            try {
-                // Start analysis job
-                const startRes = await fetch('/api/v1/jobs/keywords/analyze', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-
-                if (startRes.status === 401 || startRes.status === 403) {
-                    cvStatus.textContent = 'Please log in to use auto mode';
-                    window.location.href = '/login';
-                    return false;
-                }
-                
-                if (!startRes.ok) {
-                    const detail = await readErrorDetail(startRes, 'Failed to start analysis');
-                    throw new Error(detail);
-                }
-                
-                const { job_id } = await startRes.json();
-                
-                // Poll for job status
-                let attempts = 0;
-                const maxAttempts = 20; // 60 seconds max (20 attempts x 3 seconds)
-                
-                while (attempts < maxAttempts) {
-                    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
-                    
-                    const statusRes = await fetch(`/api/v1/jobs/keywords/${job_id}`, {
-                        credentials: 'include'
-                    });
-
-                    if (statusRes.status === 401 || statusRes.status === 403) {
-                        window.location.href = '/login';
-                        return false;
-                    }
-                    
-                    if (!statusRes.ok) {
-                        const detail = await readErrorDetail(statusRes, 'Failed to check job status');
-                        throw new Error(detail);
-                    }
-                    
-                    const jobData = await statusRes.json();
-                    
-                    if (jobData.status === 'completed') {
-                        // Success!
-                        autoKeywords = jobData.keywords;
-                        keywordsInput.value = autoKeywords;
-                        cvStatus.innerHTML = `📄 Keywords from your CV: <strong>"${jobData.keywords}"</strong>`;
-                        return true;
-                    } else if (jobData.status === 'failed') {
-                        throw new Error(jobData.error_message || 'Analysis failed');
-                    } else {
-                        // Still processing
-                        cvStatus.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 16px; height: 16px; border: 2px solid var(--primary-color); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                                <span>Analyzing your CV (${(attempts + 1) * 3}s)...</span>
-                            </div>
-                        `;
-                    }
-                    
-                    attempts++;
-                }
-                
-                throw new Error('Analysis timed out. Please try again.');
-                
-            } catch (err) {
-                console.error('Error analyzing CV:', err);
-                const safeMessage = userFriendlyAutoModeError(err?.message || '');
-                cvStatus.innerHTML = `⚠️ ${escapeHtml(safeMessage)} <a href="#" onclick="location.reload()" style="color: var(--primary-color); text-decoration: underline;">Try again</a>`;
-                return false;
-            } finally {
-                // Re-enable buttons
-                modeAutoBtn.disabled = false;
-                modeManualBtn.disabled = false;
-                searchBtn.disabled = false;
-            }
+            tabPanels.forEach((panel) => {
+                panel.classList.toggle('active', panel.id === `tab-${nextTab}`);
+            });
         }
 
-        // Check CV availability on page load
-        async function checkCVAvailability() {
-            try {
-                const res = await fetch('/api/v1/jobs/keywords', {
-                    credentials: 'include'
-                });
-
-                if (res.status === 401 || res.status === 403) {
-                    modeAutoBtn.disabled = true;
-                    modeAutoBtn.style.opacity = '0.5';
-                    modeAutoBtn.title = 'Log in to use this feature';
-                    cvStatus.textContent = '🔒 Log in to use auto mode';
-                    currentMode = 'manual';
-                    modeManualBtn.click();
-                    return;
-                }
-                if (res.ok) {
-                    const data = await res.json();
-                    if (!data.has_cv) {
-                        // Disable From CV button
-                        modeAutoBtn.disabled = true;
-                        modeAutoBtn.style.opacity = '0.5';
-                        modeAutoBtn.title = 'Upload a CV to use this feature';
-                        cvStatus.innerHTML = `⚠️ No CV uploaded. Please <a href="/user-profile" style="color: var(--primary-color); text-decoration: underline;">upload your CV</a> to use auto mode.`;
-                        // Switch to manual mode
-                        currentMode = 'manual';
-                        modeManualBtn.click();
-                    } else {
-                        // CV available - show instruction message
-                        cvStatus.innerHTML = `👆 Click <strong>"From CV"</strong> to analyze your resume and extract keywords automatically.`;
-                    }
-                } else {
-                    cvStatus.textContent = '⚠️ Could not check CV status. Use manual mode.';
-                    currentMode = 'manual';
-                    modeManualBtn.click();
-                }
-            } catch (err) {
-                console.error('Failed to check CV availability', err);
-                cvStatus.textContent = '⚠️ Could not check CV status. Use manual mode.';
-                currentMode = 'manual';
-                modeManualBtn.click();
-            }
+        function openCvModal() {
+            cvModal.classList.add('active');
+            cvModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Perform search on button click
-        searchBtn.addEventListener('click', performSearch);
+        function closeCvModal() {
+            cvModal.classList.remove('active');
+            cvModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
 
-        // Allow Enter key to search
-        keywordsInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') performSearch();
-        });
+        function setCvSummary(message, { loading = false, html = false } = {}) {
+            cvTabSummary.classList.toggle('loading', loading);
+            cvStatus.classList.toggle('loading', loading);
+
+            if (html) {
+                cvTabSummary.innerHTML = message;
+                cvStatus.innerHTML = message;
+                return;
+            }
+
+            cvTabSummary.textContent = message;
+            cvStatus.textContent = message;
+        }
 
         function splitKeywords(rawKeywords) {
-            const cleaned = (rawKeywords || '').trim();
+            const cleaned = String(rawKeywords || '').trim();
             if (!cleaned) return [];
 
             const parts = cleaned
@@ -651,21 +1245,17 @@
                 .map((item) => item.trim())
                 .filter(Boolean);
 
-            const values = parts.length > 0 ? parts : [cleaned];
+            const values = parts.length ? parts : [cleaned];
             const seen = new Set();
-            const unique = [];
-
-            for (const value of values) {
+            return values.filter((value) => {
                 const key = value.toLowerCase();
-                if (seen.has(key)) continue;
+                if (seen.has(key)) return false;
                 seen.add(key);
-                unique.push(value);
-            }
-
-            return unique.slice(0, 10);
+                return true;
+            }).slice(0, 10);
         }
 
-        async function fetchJobsForKeyword(keyword, location, limit, remote) {
+        async function fetchJobsForKeyword(keyword, location, limit) {
             try {
                 const response = await fetch('/api/v1/jobs/search', {
                     method: 'POST',
@@ -677,7 +1267,7 @@
                         keywords: keyword,
                         location,
                         limit,
-                        remote,
+                        remote: false,
                     }),
                 });
 
@@ -698,112 +1288,398 @@
             }
         }
 
-        async function performSearch() {
+        function renderEmptyJobs(messageTitle, messageBody) {
+            jobsCount.textContent = 'No results';
+            heroResultsCount.textContent = '0';
+            jobsList.innerHTML = `
+                <div class="empty-state">
+                    <h3>${escapeHtml(messageTitle)}</h3>
+                    <p>${escapeHtml(messageBody)}</p>
+                </div>
+            `;
+        }
+
+        function displayGroupedJobs(groups) {
+            const totalJobs = groups.reduce((sum, group) => sum + group.jobs.length, 0);
+            heroResultsCount.textContent = String(totalJobs);
+            jobsCount.textContent = totalJobs
+                ? `${totalJobs} jobs across ${groups.length} keyword ${groups.length === 1 ? 'group' : 'groups'}`
+                : 'No results found';
+
+            if (!totalJobs && groups.every((group) => group.jobs.length === 0)) {
+                renderEmptyJobs('No jobs found yet', 'Try broader keywords, change the location, or use the AI CV search to discover better matches.');
+                return;
+            }
+
+            jobsList.innerHTML = groups.map((group) => {
+                const groupMeta = group.error
+                    ? `0 jobs • ${escapeHtml(group.error)}`
+                    : `${group.jobs.length} ${group.jobs.length === 1 ? 'job' : 'jobs'}`;
+
+                const cards = group.jobs.length
+                    ? group.jobs.map((job) => {
+                        const companyName = escapeHtml(job.company || 'Unknown company');
+                        const title = escapeHtml(job.title || 'Untitled role');
+                        const location = escapeHtml(job.location || 'Location not specified');
+                        const listedAt = job.listed_at ? `<span>Posted ${escapeHtml(formatDate(job.listed_at))}</span>` : '';
+                        const label = lastSearchSource === 'cv' ? 'Based on your CV' : 'Manual search';
+
+                        return `
+                            <article class="job-card">
+                                <div class="job-card-top">
+                                    <div class="company-mark">${escapeHtml(getCompanyInitials(job.company))}</div>
+                                    <span class="bookmark-pill">${escapeHtml(label)}</span>
+                                </div>
+                                <div>
+                                    <p class="job-company">${companyName}</p>
+                                    <h3 class="job-title">${title}</h3>
+                                </div>
+                                <div class="job-meta">
+                                    <span>${location}</span>
+                                    ${listedAt}
+                                </div>
+                                <div class="job-actions">
+                                    <a class="primary-link" href="${escapeHtml(job.url)}" target="_blank" rel="noopener noreferrer">Open job</a>
+                                </div>
+                            </article>
+                        `;
+                    }).join('')
+                    : `
+                        <div class="empty-state">
+                            <h3>No jobs found for ${escapeHtml(group.keyword)}</h3>
+                            <p>Try another location or a broader keyword cluster.</p>
+                        </div>
+                    `;
+
+                return `
+                    <section class="result-group">
+                        <div class="result-group-header">
+                            <h3 class="result-group-title">${escapeHtml(group.keyword)}</h3>
+                            <span class="result-group-meta">${groupMeta}</span>
+                        </div>
+                        <div class="jobs-grid">
+                            ${cards}
+                        </div>
+                    </section>
+                `;
+            }).join('');
+        }
+
+        async function performSearch(source = 'manual') {
             const rawKeywords = keywordsInput.value.trim();
             const location = locationInput.value.trim();
-            const limit = parseInt(limitSelect.value);
-            const remote = remoteCheckbox.checked;
+            const limit = parseInt(limitSelect.value, 10);
             const keywordList = splitKeywords(rawKeywords);
 
-            if (keywordList.length === 0) {
-                searchStatus.textContent = 'Please enter keywords';
-                searchStatus.style.color = '#EF4444';
+            if (!keywordList.length) {
+                searchStatus.textContent = 'Enter at least one keyword to search.';
                 return;
             }
 
             searchBtn.disabled = true;
-            searchStatus.textContent = `Searching ${keywordList.length} keyword${keywordList.length !== 1 ? 's' : ''}...`;
-            searchStatus.style.color = 'var(--gray)';
+            lastSearchSource = source;
+            searchStatus.textContent = `Searching ${keywordList.length} keyword ${keywordList.length === 1 ? 'group' : 'groups'}...`;
+            switchTab('home');
             jobsList.innerHTML = `
-                <div class="loading">
+                <div class="status-banner loading">
                     <div class="loading-spinner"></div>
-                    <p>Finding jobs by keyword...</p>
+                    <span>Finding fresh jobs for your selected keywords...</span>
                 </div>
             `;
 
             try {
                 const groups = await Promise.all(
-                    keywordList.map((keyword) => fetchJobsForKeyword(keyword, location, limit, remote))
+                    keywordList.map((keyword) => fetchJobsForKeyword(keyword, location, limit))
                 );
                 displayGroupedJobs(groups);
-                searchStatus.textContent = '';
-            } catch (error) {
-                jobsList.innerHTML = `
-                    <div class="error">
-                        <strong>Error:</strong> Failed to search jobs. Please try again.
-                    </div>
-                `;
+                searchStatus.textContent = totalSearchStatus(groups);
+            } catch (_) {
+                renderEmptyJobs('Search failed', 'Something went wrong while fetching jobs. Please try again.');
                 searchStatus.textContent = 'Search failed';
-                searchStatus.style.color = '#EF4444';
             } finally {
                 searchBtn.disabled = false;
             }
         }
 
-        function displayGroupedJobs(groups) {
+        function totalSearchStatus(groups) {
             const totalJobs = groups.reduce((sum, group) => sum + group.jobs.length, 0);
-            const totalGroups = groups.length;
-
-            jobsCount.textContent = `${totalJobs} position${totalJobs !== 1 ? 's' : ''} in ${totalGroups} keyword group${totalGroups !== 1 ? 's' : ''}`;
-
-            jobsList.innerHTML = groups.map((group, index) => {
-                const jobsMarkup = group.jobs.length > 0
-                    ? group.jobs.map((job) => `
-                        <div class="job-card">
-                            <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="job-title">${escapeHtml(job.title)}</a>
-                            <p class="job-company">${escapeHtml(job.company)}</p>
-                            <div class="job-location">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                </svg>
-                                ${escapeHtml(job.location || 'Location not specified')}
-                            </div>
-                            ${job.listed_at ? `<p class="job-time">Posted: ${formatDate(job.listed_at)}</p>` : ''}
-                        </div>
-                    `).join('')
-                    : `<div class="empty-state" style="padding: 1.5rem 0.5rem;">
-                        <h3 style="margin-bottom: 0.5rem;">No jobs found for this keyword</h3>
-                        <p style="margin: 0;">Try another keyword or location.</p>
-                    </div>`;
-
-                const statusLabel = group.error
-                    ? `0 positions • ${escapeHtml(group.error)}`
-                    : `${group.jobs.length} position${group.jobs.length !== 1 ? 's' : ''}`;
-
-                return `
-                    <details class="keyword-group" ${index === 0 ? 'open' : ''}>
-                        <summary class="keyword-summary">
-                            <span class="keyword-title">${escapeHtml(group.keyword)}</span>
-                            <span class="keyword-meta">${statusLabel}</span>
-                        </summary>
-                        <div class="keyword-content">
-                            ${jobsMarkup}
-                        </div>
-                    </details>
-                `;
-            }).join('');
+            if (!totalJobs) return 'No results yet.';
+            return `${totalJobs} jobs loaded.`;
         }
 
-        function formatDate(dateStr) {
+        async function checkCVAvailability() {
+            setCvSummary(`
+                <div class="loading-spinner"></div>
+                <span>Checking if your CV is available for AI analysis...</span>
+            `, { loading: true, html: true });
+
             try {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            } catch {
-                return dateStr;
+                const response = await fetch('/api/v1/jobs/keywords', {
+                    credentials: 'include',
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    setCvSummary('Could not verify CV status. You can still use manual search.');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!data.has_cv) {
+                    setCvSummary('No CV uploaded yet. Upload your resume in <a href="/user-profile">Profile</a> to enable AI keyword search.', { html: true });
+                    return;
+                }
+
+                setCvSummary('Your CV is ready. Click <strong>Open AI search</strong> to analyze it and run the search automatically.', { html: true });
+            } catch (_) {
+                setCvSummary('Could not verify CV status. You can still use manual search.');
             }
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        async function loadAutoKeywords() {
+            useCvBtn.disabled = true;
+            searchBtn.disabled = true;
+            setCvSummary(`
+                <div class="loading-spinner"></div>
+                <span>Starting AI CV analysis...</span>
+            `, { loading: true, html: true });
+
+            try {
+                const startResponse = await fetch('/api/v1/jobs/keywords/analyze', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
+
+                if (startResponse.status === 401 || startResponse.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!startResponse.ok) {
+                    const detail = await readErrorDetail(startResponse, 'Failed to start CV analysis');
+                    throw new Error(detail);
+                }
+
+                const { job_id: jobId } = await startResponse.json();
+                let attempts = 0;
+                const maxAttempts = 20;
+
+                while (attempts < maxAttempts) {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+                    const statusResponse = await fetch(`/api/v1/jobs/keywords/${jobId}`, {
+                        credentials: 'include',
+                    });
+
+                    if (!statusResponse.ok) {
+                        const detail = await readErrorDetail(statusResponse, 'Failed to check analysis status');
+                        throw new Error(detail);
+                    }
+
+                    const jobData = await statusResponse.json();
+
+                    if (jobData.status === 'completed') {
+                        keywordsInput.value = jobData.keywords || '';
+                        setCvSummary(`AI extracted these keywords: <strong>${escapeHtml(jobData.keywords || '')}</strong>`, { html: true });
+                        if (keywordsInput.value.trim()) {
+                            closeCvModal();
+                            await performSearch('cv');
+                        }
+                        return;
+                    }
+
+                    if (jobData.status === 'failed') {
+                        throw new Error(jobData.error_message || 'AI analysis failed');
+                    }
+
+                    attempts += 1;
+                    setCvSummary(`
+                        <div class="loading-spinner"></div>
+                        <span>Analyzing your CV... ${attempts * 3}s</span>
+                    `, { loading: true, html: true });
+                }
+
+                throw new Error('Analysis timed out');
+            } catch (error) {
+                setCvSummary(userFriendlyAutoModeError(error?.message || ''));
+            } finally {
+                useCvBtn.disabled = false;
+                searchBtn.disabled = false;
+            }
         }
 
-        // Check CV availability and auto-load keywords on page load
-        window.addEventListener('load', () => {
-            // Start in manual mode by default
-            modeManualBtn.click();
+        function renderApplicationSummary(applications) {
+            const counts = applications.reduce((acc, application) => {
+                const status = application.status || 'applied';
+                acc.total += 1;
+                acc[status] = (acc[status] || 0) + 1;
+                return acc;
+            }, { total: 0, applied: 0, in_review: 0, interview: 0, offer: 0 });
+
+            heroApplicationsCount.textContent = String(counts.total);
+            heroInterviewCount.textContent = String(counts.interview || 0);
+
+            applicationsSummary.innerHTML = `
+                <div class="summary-card">
+                    <span class="summary-label">Total tracked</span>
+                    <span class="summary-value">${counts.total}</span>
+                    <div class="summary-note">All jobs you already applied to.</div>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Applied</span>
+                    <span class="summary-value">${counts.applied || 0}</span>
+                    <div class="summary-note">Initial submissions logged.</div>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">In review</span>
+                    <span class="summary-value">${counts.in_review || 0}</span>
+                    <div class="summary-note">Companies still evaluating you.</div>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Interviews</span>
+                    <span class="summary-value">${counts.interview || 0}</span>
+                    <div class="summary-note">Active conversations in progress.</div>
+                </div>
+            `;
+        }
+
+        function renderApplications(applications) {
+            renderApplicationSummary(applications);
+
+            if (!applications.length) {
+                applicationsList.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No applications tracked yet</h3>
+                        <p>Your applied jobs will appear here once they are stored in Student Compass.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            applicationsList.innerHTML = `
+                <div class="applications-grid">
+                    ${applications.map((application) => {
+                        const companyName = escapeHtml(application.company_name || 'Company');
+                        const companyLocation = application.company_location ? `<span>${escapeHtml(application.company_location)}</span>` : '';
+                        const applicationUrl = application.application_url
+                            ? `<a class="secondary-link" href="${escapeHtml(application.application_url)}" target="_blank" rel="noopener noreferrer">Application link</a>`
+                            : '';
+                        const notes = application.notes
+                            ? `<p class="application-notes">${escapeHtml(application.notes)}</p>`
+                            : '';
+
+                        return `
+                            <article class="application-card">
+                                <div class="application-card-top">
+                                    <div class="company-mark">${escapeHtml(getCompanyInitials(application.company_name))}</div>
+                                    <span class="status-pill ${escapeHtml(application.status)}">${escapeHtml(formatStatus(application.status))}</span>
+                                </div>
+                                <div>
+                                    <p class="application-company">${companyName}</p>
+                                    <h3 class="application-title">${escapeHtml(application.job_title || 'Untitled role')}</h3>
+                                </div>
+                                <div class="application-meta">
+                                    ${companyLocation}
+                                    <span>Applied ${escapeHtml(formatDate(application.application_date))}</span>
+                                </div>
+                                ${notes}
+                                <div class="application-actions">
+                                    ${applicationUrl}
+                                </div>
+                            </article>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        async function loadApplications() {
+            applicationsList.innerHTML = `
+                <div class="status-banner loading">
+                    <div class="loading-spinner"></div>
+                    <span>Loading your tracked jobs...</span>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/v1/applications', {
+                    credentials: 'include',
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(await readErrorDetail(response, 'Failed to load applications'));
+                }
+
+                const applications = await response.json();
+                renderApplications(applications);
+            } catch (error) {
+                applicationsSummary.innerHTML = `
+                    <div class="summary-card">
+                        <span class="summary-label">Error</span>
+                        <span class="summary-value">!</span>
+                        <div class="summary-note">${escapeHtml(error?.message || 'Failed to load applications.')}</div>
+                    </div>
+                `;
+                applicationsList.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Could not load My Jobs</h3>
+                        <p>${escapeHtml(error?.message || 'Please try again in a moment.')}</p>
+                    </div>
+                `;
+            }
+        }
+
+        tabButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                switchTab(button.dataset.tab);
+            });
+        });
+
+        searchBtn.addEventListener('click', () => performSearch('manual'));
+        openCvModalBtn.addEventListener('click', openCvModal);
+        closeCvModalBtn.addEventListener('click', closeCvModal);
+        closeCvSecondaryBtn.addEventListener('click', closeCvModal);
+        useCvBtn.addEventListener('click', loadAutoKeywords);
+        manualFocusBtn.addEventListener('click', () => {
+            closeCvModal();
+            switchTab('home');
+            keywordsInput.focus();
+        });
+        refreshApplicationsBtn.addEventListener('click', loadApplications);
+
+        cvModal.addEventListener('click', (event) => {
+            if (event.target === cvModal) {
+                closeCvModal();
+            }
+        });
+
+        [keywordsInput, locationInput].forEach((input) => {
+            input.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    performSearch('manual');
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && cvModal.classList.contains('active')) {
+                closeCvModal();
+            }
+        });
+
+        window.addEventListener('load', async () => {
+            setGreeting();
+            await Promise.all([checkCVAvailability(), loadApplications()]);
         });
     </script>
 {% endblock %}

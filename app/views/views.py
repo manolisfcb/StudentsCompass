@@ -289,7 +289,7 @@ async def community_feed(request: Request, community_id: str, user: Optional[Use
 async def jobs_board(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("jobs.html", {"request": request})
+    return templates.TemplateResponse("jobs.html", {"request": request, "user": user})
 
 
 @router.get("/admin/login")

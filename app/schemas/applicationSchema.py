@@ -36,6 +36,8 @@ class ApplicationRead(ApplicationBase):
     id: UUID4
     user_id: UUID4
     company_id: UUID4
+    company_name: Optional[str] = None
+    company_location: Optional[str] = None
     job_posting_id: Optional[UUID4] = None
     application_date: datetime
     created_at: datetime
