@@ -101,7 +101,7 @@ async def robots():
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse("app/static/images/icono.ico", media_type="image/x-icon")
+    return FileResponse("app/static/images/favicon.ico", media_type="image/x-icon")
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
