@@ -5,6 +5,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.userModel import User
+from app.models.companyRecruiterModel import CompanyRecruiter
+from sqlalchemy import select
 
 
 class TestAuth:
@@ -136,3 +138,65 @@ class TestAuth:
         
         # Note: JWT logout typically returns 204 or 200
         assert response.status_code in [200, 204]
+
+    @pytest.mark.asyncio
+    async def test_register_company_creates_owner_recruiter(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+    ):
+        """Company registration should create both company profile and owner recruiter."""
+        response = await client.post(
+            "/api/v1/auth/company/register",
+            json={
+                "email": "newcompany@example.com",
+                "password": "StrongPass123!",
+                "company_name": "New Company Inc.",
+                "industry": "Technology",
+                "contact_person": "Owner Name",
+                "location": "Toronto",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert "email" not in data
+        assert data["company_name"] == "New Company Inc."
+
+        recruiter_result = await db_session.execute(
+            select(CompanyRecruiter).where(CompanyRecruiter.email == "newcompany@example.com")
+        )
+        recruiter = recruiter_result.scalar_one_or_none()
+        assert recruiter is not None
+        assert recruiter.role == "owner"
+
+    @pytest.mark.asyncio
+    async def test_company_login_and_profile_me(
+        self,
+        client: AsyncClient,
+    ):
+        """Company recruiter should login and fetch /companies/me profile."""
+        register_response = await client.post(
+            "/api/v1/auth/company/register",
+            json={
+                "email": "companyme@example.com",
+                "password": "StrongPass123!",
+                "company_name": "Profile Co",
+            },
+        )
+        assert register_response.status_code == 201
+
+        login_response = await client.post(
+            "/api/v1/auth/company/login",
+            data={
+                "username": "companyme@example.com",
+                "password": "StrongPass123!",
+            },
+        )
+        assert login_response.status_code in (200, 204)
+
+        profile_response = await client.get("/api/v1/companies/me")
+        assert profile_response.status_code == 200
+        profile_data = profile_response.json()
+        assert "email" not in profile_data
+        assert profile_data["company_name"] == "Profile Co"

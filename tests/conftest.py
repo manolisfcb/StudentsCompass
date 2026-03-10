@@ -12,6 +12,7 @@ from app.app import app
 from app.db import Base, get_session
 from app.models.userModel import User
 from app.models.companyModel import Company
+from app.models.companyRecruiterModel import CompanyRecruiter
 from app.services.userService import UserManager, get_user_manager
 from fastapi_users.password import PasswordHelper
 import uuid
@@ -53,6 +54,8 @@ async def setup_db() -> AsyncGenerator[None, None]:
     # Import all models before creating tables
     from app.models.userModel import User
     from app.models.companyModel import Company
+    from app.models.companyRecruiterModel import CompanyRecruiter
+    from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel, ApplicationStatusEventModel
     from app.models.applicationModel import ApplicationModel
     from app.models.jobPostingModel import JobPosting
     from app.models.resumeModel import ResumeModel
@@ -123,14 +126,8 @@ async def test_user(db_session: AsyncSession) -> User:
 @pytest_asyncio.fixture
 async def test_company(db_session: AsyncSession) -> Company:
     """Create a test company."""
-    password_helper = PasswordHelper()
     company = Company(
         id=uuid.uuid4(),
-        email="company@example.com",
-        hashed_password=password_helper.hash("password123"),
-        is_active=True,
-        is_superuser=False,
-        is_verified=True,
         company_name="Test Company",
         industry="Technology",
         location="San Francisco, CA"
@@ -139,6 +136,26 @@ async def test_company(db_session: AsyncSession) -> Company:
     await db_session.commit()
     await db_session.refresh(company)
     return company
+
+
+@pytest_asyncio.fixture
+async def test_company_recruiter(db_session: AsyncSession, test_company: Company) -> CompanyRecruiter:
+    """Create a test recruiter attached to a company."""
+    password_helper = PasswordHelper()
+    recruiter = CompanyRecruiter(
+        id=uuid.uuid4(),
+        company_id=test_company.id,
+        email="company@example.com",
+        hashed_password=password_helper.hash("password123"),
+        is_active=True,
+        is_superuser=False,
+        is_verified=True,
+        role="owner",
+    )
+    db_session.add(recruiter)
+    await db_session.commit()
+    await db_session.refresh(recruiter)
+    return recruiter
 
 
 @pytest_asyncio.fixture
@@ -154,6 +171,26 @@ async def auth_headers(client: AsyncClient, test_user: User) -> dict:
     # CookieTransport returns 204 and sets an HttpOnly cookie on the client.
     assert response.status_code in (200, 204)
     # If a token-based backend is ever enabled, keep compatibility.
+    if response.status_code == 200 and response.headers.get("content-type", "").startswith("application/json"):
+        token = response.json().get("access_token")
+        if token:
+            return {"Authorization": f"Bearer {token}"}
+    return {}
+
+
+@pytest_asyncio.fixture
+async def company_auth_headers(client: AsyncClient, test_company_recruiter: CompanyRecruiter) -> dict:
+    """Get authentication headers for test company."""
+    response = await client.post(
+        "/api/v1/auth/company/login",
+        data={
+            "username": test_company_recruiter.email,
+            "password": "password123"
+        }
+    )
+    # CookieTransport returns 204 and sets an HttpOnly cookie on the client.
+    assert response.status_code in (200, 204)
+    # Keep compatibility if a token-based backend is enabled later.
     if response.status_code == 200 and response.headers.get("content-type", "").startswith("application/json"):
         token = response.json().get("access_token")
         if token:

@@ -13,7 +13,9 @@ from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
 from app.models.resumeEmbeddingsModel import ResumeEmbedding
 from app.models.applicationModel import ApplicationModel
+from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel, ApplicationStatusEventModel
 from app.models.companyModel import Company
+from app.models.companyRecruiterModel import CompanyRecruiter
 from app.models.jobPostingModel import JobPosting
 from app.models.jobAnalysisModel import JobAnalysisModel
 from app.models.userStatsModel import UserStatsModel

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
+from app.services.companyService import current_active_company, current_active_company_recruiter
 from app.services.userService import current_active_user
+from app.services.applicationService import ApplicationService
 from app.services.dashboardService import DashboardService
 from app.models.userModel import User
-from app.models.applicationModel import ApplicationModel
+from app.models.companyModel import Company
+from app.models.companyRecruiterModel import CompanyRecruiter
 from app.schemas.applicationSchema import ApplicationCreate, ApplicationRead, ApplicationUpdate
 from typing import Dict, List
 from uuid import UUID
@@ -13,6 +16,39 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("/company_dashboard", response_model=Dict)
+async def get_company_dashboard(
+    company: Company = Depends(current_active_company),
+    recruiter: CompanyRecruiter = Depends(current_active_company_recruiter),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Get complete dashboard data for companies.
+    """
+    logger.info(f"Company dashboard request received for company: {company.id if company else 'None'}")
+
+    if not company:
+        logger.error("No company found in request")
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    try:
+        logger.info(f"Fetching dashboard data for company {company.id}")
+        dashboard_data = await DashboardService.get_company_dashboard(company.id, session)
+        dashboard_data["current_recruiter"] = {
+            "id": str(recruiter.id),
+            "email": recruiter.email,
+            "first_name": recruiter.first_name,
+            "last_name": recruiter.last_name,
+            "role": recruiter.role,
+            "is_active": recruiter.is_active,
+        }
+        logger.info(f"Company dashboard data fetched successfully for company {company.id}")
+        return dashboard_data
+    except Exception as e:
+        logger.error(f"Error fetching company dashboard for company {company.id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error fetching company dashboard data: {str(e)}")
 
 
 @router.get("/students_dashboard", response_model=Dict)
@@ -66,20 +102,11 @@ async def create_application(
     """
     Create a new job application
     """
-    new_application = ApplicationModel(
+    application_service = ApplicationService(session)
+    new_application = await application_service.create_application(
         user_id=user.id,
-        company_id=application.company_id,
-        job_posting_id=application.job_posting_id,
-        job_title=application.job_title,
-        status=application.status,
-        application_url=application.application_url,
-        notes=application.notes
+        payload=application,
     )
-    
-    session.add(new_application)
-    await session.commit()
-    await session.refresh(new_application)
-    
     return new_application
 
 
@@ -91,12 +118,8 @@ async def get_applications(
     """
     Get all applications for the current user
     """
-    from sqlalchemy import select
-    
-    query = select(ApplicationModel).where(ApplicationModel.user_id == user.id)
-    result = await session.execute(query)
-    applications = result.scalars().all()
-    
+    application_service = ApplicationService(session)
+    applications = await application_service.list_user_applications(user_id=user.id)
     return applications
 
 
@@ -110,26 +133,14 @@ async def update_application(
     """
     Update an existing application
     """
-    from sqlalchemy import select
-    
-    query = select(ApplicationModel).where(
-        ApplicationModel.id == application_id,
-        ApplicationModel.user_id == user.id
+    application_service = ApplicationService(session)
+    application = await application_service.update_application(
+        application_id=application_id,
+        user_id=user.id,
+        payload=application_update,
     )
-    result = await session.execute(query)
-    application = result.scalar_one_or_none()
-    
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
-    
-    # Update fields
-    update_data = application_update.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(application, field, value)
-    
-    await session.commit()
-    await session.refresh(application)
-    
     return application
 
 
@@ -142,19 +153,11 @@ async def delete_application(
     """
     Delete an application
     """
-    from sqlalchemy import select, delete
-    
-    query = select(ApplicationModel).where(
-        ApplicationModel.id == application_id,
-        ApplicationModel.user_id == user.id
+    application_service = ApplicationService(session)
+    deleted = await application_service.delete_application(
+        application_id=application_id,
+        user_id=user.id,
     )
-    result = await session.execute(query)
-    application = result.scalar_one_or_none()
-    
-    if not application:
+    if not deleted:
         raise HTTPException(status_code=404, detail="Application not found")
-    
-    await session.delete(application)
-    await session.commit()
-    
     return {"message": "Application deleted successfully"}

@@ -1,7 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import bindparam, select, text
+from sqlalchemy import bindparam, case, func, or_, select, text
 from sqlalchemy.orm import selectinload
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
+from app.models.companyModel import Company
+from app.models.jobPostingModel import JobPosting
 from app.models.resourceModel import (
     ResourceLessonProgressModel,
     ResourceModel,
@@ -12,6 +14,7 @@ from app.models.userStatsModel import UserStatsModel
 from app.models.resumeModel import ResumeModel
 from typing import Dict, List
 from uuid import UUID
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +27,104 @@ class DashboardService:
         "interview_prep": "Interview Preparation",
     }
     
+    @staticmethod
+    async def get_company_dashboard(company_id: UUID, session: AsyncSession) -> Dict:
+        """
+        Get dashboard data for a company including posting/application stats and recent jobs.
+        """
+        now = datetime.utcnow()
+
+        company_result = await session.execute(select(Company).where(Company.id == company_id))
+        company = company_result.scalar_one_or_none()
+
+        active_jobs_result = await session.execute(
+            select(func.count(JobPosting.id)).where(
+                JobPosting.company_id == company_id,
+                JobPosting.is_active.is_(True),
+                or_(JobPosting.expires_at.is_(None), JobPosting.expires_at >= now),
+            )
+        )
+        active_job_postings = int(active_jobs_result.scalar_one() or 0)
+
+        application_stats_result = await session.execute(
+            select(
+                func.count(ApplicationModel.id),
+                func.sum(
+                    case(
+                        (ApplicationModel.status == ApplicationStatus.INTERVIEW, 1),
+                        else_=0,
+                    )
+                ),
+                func.sum(
+                    case(
+                        (ApplicationModel.status == ApplicationStatus.IN_REVIEW, 1),
+                        else_=0,
+                    )
+                ),
+            ).where(ApplicationModel.company_id == company_id)
+        )
+        total_applications, interviews_scheduled, shortlisted = application_stats_result.one()
+
+        recent_jobs_result = await session.execute(
+            select(
+                JobPosting.id,
+                JobPosting.title,
+                JobPosting.location,
+                JobPosting.job_type,
+                JobPosting.is_active,
+                JobPosting.created_at,
+                JobPosting.expires_at,
+                func.count(ApplicationModel.id).label("application_count"),
+            )
+            .outerjoin(ApplicationModel, ApplicationModel.job_posting_id == JobPosting.id)
+            .where(JobPosting.company_id == company_id)
+            .group_by(
+                JobPosting.id,
+                JobPosting.title,
+                JobPosting.location,
+                JobPosting.job_type,
+                JobPosting.is_active,
+                JobPosting.created_at,
+                JobPosting.expires_at,
+            )
+            .order_by(JobPosting.created_at.desc())
+            .limit(5)
+        )
+
+        recent_job_postings = []
+        for row in recent_jobs_result.all():
+            is_open = row.is_active and (row.expires_at is None or row.expires_at >= now)
+            status = "active" if is_open else "closed"
+            recent_job_postings.append(
+                {
+                    "id": str(row.id),
+                    "title": row.title,
+                    "location": row.location,
+                    "job_type": row.job_type,
+                    "is_active": bool(row.is_active),
+                    "status": status,
+                    "status_label": "Active" if status == "active" else "Closed",
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                    "application_count": int(row.application_count or 0),
+                }
+            )
+
+        return {
+            "company": {
+                "id": str(company.id) if company else str(company_id),
+                "company_name": company.company_name if company else None,
+                "industry": company.industry if company else None,
+                "location": company.location if company else None,
+            },
+            "stats": {
+                "active_job_postings": active_job_postings,
+                "total_applications": int(total_applications or 0),
+                "scheduled_interviews": int(interviews_scheduled or 0),
+                "shortlisted": int(shortlisted or 0),
+            },
+            "recent_job_postings": recent_job_postings,
+        }
+
     @staticmethod
     async def get_student_dashboard(user_id: UUID, session: AsyncSession) -> Dict:
         """

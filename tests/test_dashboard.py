@@ -4,6 +4,7 @@ Tests for dashboard endpoints
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timedelta
 from app.models.userModel import User
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.resumeModel import ResumeModel
@@ -155,3 +156,122 @@ class TestDashboard:
         
         # Resume progress should be > 0
         assert data["progress"]["resume"] > 0
+
+
+class TestCompanyDashboard:
+    """Test company dashboard endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_get_company_dashboard_no_data(
+        self,
+        client: AsyncClient,
+        company_auth_headers: dict,
+        test_company: Company,
+    ):
+        response = await client.get(
+            "/api/v1/company_dashboard",
+            headers=company_auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["company"]["company_name"] == test_company.company_name
+        assert data["stats"]["active_job_postings"] == 0
+        assert data["stats"]["total_applications"] == 0
+        assert data["stats"]["scheduled_interviews"] == 0
+        assert data["stats"]["shortlisted"] == 0
+        assert data["recent_job_postings"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_company_dashboard_with_data(
+        self,
+        client: AsyncClient,
+        company_auth_headers: dict,
+        test_company: Company,
+        test_user: User,
+        db_session: AsyncSession,
+    ):
+        older_job = JobPosting(
+            id=uuid.uuid4(),
+            company_id=test_company.id,
+            title="Junior Backend Engineer",
+            description="Backend role",
+            location="Remote",
+            is_active=True,
+            created_at=datetime.utcnow() - timedelta(days=2),
+        )
+        latest_job = JobPosting(
+            id=uuid.uuid4(),
+            company_id=test_company.id,
+            title="Frontend Engineer",
+            description="Frontend role",
+            location="Toronto",
+            is_active=False,
+            created_at=datetime.utcnow() - timedelta(hours=1),
+        )
+        db_session.add(older_job)
+        db_session.add(latest_job)
+
+        applications = [
+            ApplicationModel(
+                id=uuid.uuid4(),
+                user_id=test_user.id,
+                company_id=test_company.id,
+                job_posting_id=older_job.id,
+                job_title=older_job.title,
+                status=ApplicationStatus.APPLIED,
+            ),
+            ApplicationModel(
+                id=uuid.uuid4(),
+                user_id=test_user.id,
+                company_id=test_company.id,
+                job_posting_id=older_job.id,
+                job_title=older_job.title,
+                status=ApplicationStatus.IN_REVIEW,
+            ),
+            ApplicationModel(
+                id=uuid.uuid4(),
+                user_id=test_user.id,
+                company_id=test_company.id,
+                job_posting_id=older_job.id,
+                job_title=older_job.title,
+                status=ApplicationStatus.INTERVIEW,
+            ),
+            ApplicationModel(
+                id=uuid.uuid4(),
+                user_id=test_user.id,
+                company_id=test_company.id,
+                job_posting_id=latest_job.id,
+                job_title=latest_job.title,
+                status=ApplicationStatus.OFFER,
+            ),
+        ]
+        for application in applications:
+            db_session.add(application)
+
+        await db_session.commit()
+
+        response = await client.get(
+            "/api/v1/company_dashboard",
+            headers=company_auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["stats"]["active_job_postings"] == 1
+        assert data["stats"]["total_applications"] == 4
+        assert data["stats"]["scheduled_interviews"] == 1
+        assert data["stats"]["shortlisted"] == 1
+        assert len(data["recent_job_postings"]) == 2
+        assert data["recent_job_postings"][0]["title"] == "Frontend Engineer"
+        assert data["recent_job_postings"][0]["status"] == "closed"
+        assert data["recent_job_postings"][1]["title"] == "Junior Backend Engineer"
+        assert data["recent_job_postings"][1]["status"] == "active"
+        assert data["recent_job_postings"][1]["application_count"] == 3
+
+    @pytest.mark.asyncio
+    async def test_get_company_dashboard_unauthorized(self, client: AsyncClient):
+        response = await client.get("/api/v1/company_dashboard")
+        assert response.status_code == 401
