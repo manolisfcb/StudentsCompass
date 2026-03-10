@@ -48,3 +48,14 @@ class ApplicationRead(ApplicationBase):
     
     class Config:
         from_attributes = True
+
+
+class ApplicationEligibleResumeRead(BaseModel):
+    id: UUID4
+    original_filename: str
+    created_at: datetime
+    ai_summary: Optional[str] = None
+    contact_phone: Optional[str] = None
+    overall_score: float
+    approved_at: datetime
+    is_latest: bool = False

@@ -14,8 +14,36 @@ from app.models.applicationAnalyticsModel import (
     ApplicationStatusEventModel,
 )
 from app.models.jobPostingModel import JobPosting
+from app.models.resumeCourseEvaluationModel import (
+    ResumeCourseEvaluationModel,
+    ResumeCourseEvaluationStatus,
+)
 from app.models.resumeModel import ResumeModel
 import uuid
+
+
+async def create_approved_resume(*, db_session: AsyncSession, test_user: User, filename: str = "resume.pdf") -> ResumeModel:
+    resume = ResumeModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        view_url=f"https://example.com/{filename}",
+        storage_file_id=f"resumes/{filename}",
+        original_filename=filename,
+        folder_id="test-bucket",
+        ai_summary="Approved resume summary",
+        contact_phone="+1 555 0100",
+    )
+    evaluation = ResumeCourseEvaluationModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        resume_id=resume.id,
+        status=ResumeCourseEvaluationStatus.COMPLETED,
+        overall_score=8.7,
+        pass_status=True,
+    )
+    db_session.add_all([resume, evaluation])
+    await db_session.commit()
+    return resume
 
 
 class TestApplications:
@@ -39,18 +67,8 @@ class TestApplications:
             title="Software Engineer",
             description="Great opportunity"
         )
-        resume = ResumeModel(
-            id=uuid.uuid4(),
-            user_id=test_user.id,
-            view_url="https://example.com/resume.pdf",
-            storage_file_id="resumes/test.pdf",
-            original_filename="resume.pdf",
-            folder_id="test-bucket",
-            ai_summary="Test summary",
-            contact_phone="+1 555 0100",
-        )
+        resume = await create_approved_resume(db_session=db_session, test_user=test_user)
         db_session.add(job_posting)
-        db_session.add(resume)
         await db_session.commit()
         await db_session.refresh(job_posting)
         
@@ -110,16 +128,8 @@ class TestApplications:
             title="Platform Engineer",
             description="Great opportunity",
         )
-        resume = ResumeModel(
-            id=uuid.uuid4(),
-            user_id=test_user.id,
-            view_url="https://example.com/resume.pdf",
-            storage_file_id="resumes/test.pdf",
-            original_filename="resume.pdf",
-            folder_id="test-bucket",
-        )
+        resume = await create_approved_resume(db_session=db_session, test_user=test_user)
         db_session.add(job_posting)
-        db_session.add(resume)
         await db_session.commit()
 
         payload = {
@@ -137,6 +147,84 @@ class TestApplications:
         assert first_response.json()["id"] == second_response.json()["id"]
         assert second_response.json()["assigned_recruiter_id"] == str(test_company_recruiter.id)
         assert second_response.json()["resume_id"] == str(resume.id)
+
+    @pytest.mark.asyncio
+    async def test_create_application_requires_students_compass_approved_resume(
+        self,
+        client: AsyncClient,
+        auth_headers: dict,
+        test_user: User,
+        test_company: Company,
+        db_session: AsyncSession,
+    ):
+        job_posting = JobPosting(
+            id=uuid.uuid4(),
+            company_id=test_company.id,
+            title="Backend Engineer",
+            description="Role",
+        )
+        resume = ResumeModel(
+            id=uuid.uuid4(),
+            user_id=test_user.id,
+            view_url="https://example.com/unapproved.pdf",
+            storage_file_id="resumes/unapproved.pdf",
+            original_filename="unapproved.pdf",
+            folder_id="test-bucket",
+        )
+        db_session.add_all([job_posting, resume])
+        await db_session.commit()
+
+        response = await client.post(
+            "/api/v1/applications",
+            headers=auth_headers,
+            json={
+                "company_id": str(test_company.id),
+                "job_posting_id": str(job_posting.id),
+                "resume_id": str(resume.id),
+                "job_title": "Backend Engineer",
+                "status": "applied",
+            },
+        )
+
+        assert response.status_code == 400
+        assert "approved resume" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_get_eligible_resumes_returns_only_approved_resumes(
+        self,
+        client: AsyncClient,
+        auth_headers: dict,
+        test_user: User,
+        db_session: AsyncSession,
+    ):
+        approved_resume = await create_approved_resume(db_session=db_session, test_user=test_user, filename="approved_resume.pdf")
+        rejected_resume = ResumeModel(
+            id=uuid.uuid4(),
+            user_id=test_user.id,
+            view_url="https://example.com/rejected.pdf",
+            storage_file_id="resumes/rejected.pdf",
+            original_filename="rejected.pdf",
+            folder_id="test-bucket",
+        )
+        rejected_evaluation = ResumeCourseEvaluationModel(
+            id=uuid.uuid4(),
+            user_id=test_user.id,
+            resume_id=rejected_resume.id,
+            status=ResumeCourseEvaluationStatus.COMPLETED,
+            overall_score=6.5,
+            pass_status=False,
+        )
+        db_session.add_all([rejected_resume, rejected_evaluation])
+        await db_session.commit()
+
+        response = await client.get("/api/v1/applications/eligible-resumes", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == str(approved_resume.id)
+        assert data[0]["is_latest"] is True
+        assert data[0]["overall_score"] == 8.7
     
     @pytest.mark.asyncio
     async def test_create_application_unauthorized(

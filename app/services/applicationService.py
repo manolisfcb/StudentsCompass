@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -15,11 +17,27 @@ from app.models.applicationAnalyticsModel import (
 )
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.companyRecruiterModel import CompanyRecruiter
+from app.models.resumeCourseEvaluationModel import (
+    ResumeCourseEvaluationModel,
+    ResumeCourseEvaluationStatus,
+)
 from app.models.resumeModel import ResumeModel
 from app.schemas.applicationSchema import ApplicationCreate, ApplicationUpdate
 
 
+@dataclass
+class ApprovedResumeOption:
+    resume: ResumeModel
+    overall_score: float
+    approved_at: datetime
+
+
 class ApplicationService:
+    MIN_APPROVED_RESUME_SCORE = 8.0
+    APPROVED_RESUME_REQUIRED_MESSAGE = (
+        "You need a Students Compass-approved resume with score 8+ before applying to this job."
+    )
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -94,6 +112,42 @@ class ApplicationService:
             .order_by(ApplicationModel.created_at.desc())
         )
         return list(result.scalars().all())
+
+    async def list_approved_resumes(self, *, user_id: UUID) -> list[ApprovedResumeOption]:
+        result = await self.session.execute(
+            select(ResumeModel, ResumeCourseEvaluationModel)
+            .join(
+                ResumeCourseEvaluationModel,
+                ResumeCourseEvaluationModel.resume_id == ResumeModel.id,
+            )
+            .where(
+                ResumeModel.user_id == user_id,
+                ResumeCourseEvaluationModel.user_id == user_id,
+                ResumeCourseEvaluationModel.status == ResumeCourseEvaluationStatus.COMPLETED,
+                ResumeCourseEvaluationModel.pass_status.is_(True),
+                ResumeCourseEvaluationModel.overall_score >= self.MIN_APPROVED_RESUME_SCORE,
+            )
+            .order_by(
+                ResumeModel.created_at.desc(),
+                ResumeCourseEvaluationModel.completed_at.desc(),
+                ResumeCourseEvaluationModel.created_at.desc(),
+            )
+        )
+
+        approved_options: list[ApprovedResumeOption] = []
+        seen_resume_ids: set[UUID] = set()
+        for resume, evaluation in result.all():
+            if resume.id in seen_resume_ids:
+                continue
+            seen_resume_ids.add(resume.id)
+            approved_options.append(
+                ApprovedResumeOption(
+                    resume=resume,
+                    overall_score=float(evaluation.overall_score or 0.0),
+                    approved_at=evaluation.completed_at or evaluation.created_at,
+                )
+            )
+        return approved_options
 
     async def update_application(
         self,
@@ -214,24 +268,24 @@ class ApplicationService:
         user_id: UUID,
         requested_resume_id: UUID | None,
     ) -> UUID | None:
-        if requested_resume_id is not None:
-            result = await self.session.execute(
-                select(ResumeModel.id).where(
-                    ResumeModel.id == requested_resume_id,
-                    ResumeModel.user_id == user_id,
-                )
-            )
-            resume_id = result.scalar_one_or_none()
-            if resume_id is not None:
-                return resume_id
+        approved_resumes = await self.list_approved_resumes(user_id=user_id)
 
-        result = await self.session.execute(
-            select(ResumeModel.id)
-            .where(ResumeModel.user_id == user_id)
-            .order_by(ResumeModel.created_at.desc())
-            .limit(1)
+        if requested_resume_id is not None:
+            for option in approved_resumes:
+                if option.resume.id == requested_resume_id:
+                    return option.resume.id
+            raise HTTPException(
+                status_code=400,
+                detail=self.APPROVED_RESUME_REQUIRED_MESSAGE,
+            )
+
+        if approved_resumes:
+            return approved_resumes[0].resume.id
+
+        raise HTTPException(
+            status_code=400,
+            detail=self.APPROVED_RESUME_REQUIRED_MESSAGE,
         )
-        return result.scalar_one_or_none()
 
     async def _apply_daily_aggregate_delta(
         self,

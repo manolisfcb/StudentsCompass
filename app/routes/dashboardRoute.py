@@ -8,7 +8,12 @@ from app.services.dashboardService import DashboardService
 from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
-from app.schemas.applicationSchema import ApplicationCreate, ApplicationRead, ApplicationUpdate
+from app.schemas.applicationSchema import (
+    ApplicationCreate,
+    ApplicationEligibleResumeRead,
+    ApplicationRead,
+    ApplicationUpdate,
+)
 from typing import Dict, List
 from uuid import UUID
 import logging
@@ -108,6 +113,28 @@ async def create_application(
         payload=application,
     )
     return new_application
+
+
+@router.get("/applications/eligible-resumes", response_model=List[ApplicationEligibleResumeRead])
+async def get_eligible_resumes_for_application(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    application_service = ApplicationService(session)
+    approved_resumes = await application_service.list_approved_resumes(user_id=user.id)
+    return [
+        ApplicationEligibleResumeRead(
+            id=option.resume.id,
+            original_filename=option.resume.original_filename,
+            created_at=option.resume.created_at,
+            ai_summary=option.resume.ai_summary,
+            contact_phone=option.resume.contact_phone,
+            overall_score=round(option.overall_score, 1),
+            approved_at=option.approved_at,
+            is_latest=index == 0,
+        )
+        for index, option in enumerate(approved_resumes)
+    ]
 
 
 @router.get("/applications", response_model=List[ApplicationRead])

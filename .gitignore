@@ -18,6 +18,9 @@ htmlcov/
 .coverage
 coverage.xml
 .pytest_cache/
+node_modules/
 
 scripts/
 scripts/*
+
+deliverables/

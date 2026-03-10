@@ -1078,6 +1078,103 @@
             flex-shrink: 0;
         }
 
+        .resume-choice-copy {
+            margin: 0 0 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .resume-choice-list {
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        .resume-choice-card {
+            display: grid;
+            gap: 0.8rem;
+            padding: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 20px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+        }
+
+        .resume-choice-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(15, 118, 110, 0.35);
+            box-shadow: 0 14px 26px rgba(15, 23, 42, 0.06);
+        }
+
+        .resume-choice-card input {
+            margin-top: 0.2rem;
+        }
+
+        .resume-choice-card.active {
+            border-color: rgba(15, 118, 110, 0.52);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+        }
+
+        .resume-choice-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .resume-choice-main {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            min-width: 0;
+        }
+
+        .resume-choice-title {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .resume-choice-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            margin-top: 0.35rem;
+            color: var(--gray);
+            font-size: 0.88rem;
+        }
+
+        .resume-choice-summary {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        .resume-choice-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 30px;
+            padding: 0 0.8rem;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .resume-choice-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
         @media (max-width: 1200px) {
             .jobs-grid,
             .applications-grid,
@@ -1350,6 +1447,29 @@
                     </div>
                 </div>
             </div>
+            <div id="applyResumeModal" class="jobs-modal" aria-hidden="true">
+                <div class="jobs-modal-card" role="dialog" aria-modal="true" aria-labelledby="applyResumeModalTitle">
+                    <div class="jobs-modal-head">
+                        <div>
+                            <h2 id="applyResumeModalTitle">Choose your approved CV</h2>
+                            <p>Apply using your latest Students Compass-approved resume or pick another approved one you already uploaded.</p>
+                        </div>
+                        <button id="closeApplyResumeModalBtn" class="jobs-modal-close" type="button" aria-label="Close apply modal">×</button>
+                    </div>
+                    <div class="jobs-modal-body">
+                        <p class="resume-choice-copy">Only resumes approved by Students Compass with score 8+ can be used here. The selected resume is the one the company will see.</p>
+                        <div id="applyResumeStatus" class="status-banner loading">
+                            <div class="loading-spinner"></div>
+                            <span>Loading your approved resumes...</span>
+                        </div>
+                        <div id="applyResumeOptions" class="resume-choice-list"></div>
+                        <div class="resume-choice-actions">
+                            <button id="cancelApplyResumeBtn" class="ghost-button" type="button">Cancel</button>
+                            <button id="confirmApplyResumeBtn" class="feature-button" type="button" disabled>Apply with selected CV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </main>
 
     {% include "includes/footer.html" %}
@@ -1371,9 +1491,15 @@
         const cvTabSummary = document.getElementById('cvTabSummary');
         const cvStatus = document.getElementById('cvStatus');
         const cvModal = document.getElementById('cvModal');
+        const applyResumeModal = document.getElementById('applyResumeModal');
         const openCvModalBtn = document.getElementById('openCvModalBtn');
         const closeCvModalBtn = document.getElementById('closeCvModalBtn');
         const closeCvSecondaryBtn = document.getElementById('closeCvSecondaryBtn');
+        const closeApplyResumeModalBtn = document.getElementById('closeApplyResumeModalBtn');
+        const cancelApplyResumeBtn = document.getElementById('cancelApplyResumeBtn');
+        const confirmApplyResumeBtn = document.getElementById('confirmApplyResumeBtn');
+        const applyResumeStatus = document.getElementById('applyResumeStatus');
+        const applyResumeOptions = document.getElementById('applyResumeOptions');
         const useCvBtn = document.getElementById('useCvBtn');
         const manualFocusBtn = document.getElementById('manualFocusBtn');
         const refreshApplicationsBtn = document.getElementById('refreshApplicationsBtn');
@@ -1386,6 +1512,7 @@
         let currentJobResults = { students_compass: [], linkedin: [] };
         let renderedJobMap = new Map();
         let appliedJobPostingIds = new Set();
+        let pendingApplyJobKey = null;
 
         function setGreeting() {
             const hour = new Date().getHours();
@@ -1468,16 +1595,133 @@
             });
         }
 
+        function syncModalBodyLock() {
+            const hasActiveModal = cvModal.classList.contains('active') || applyResumeModal.classList.contains('active');
+            document.body.style.overflow = hasActiveModal ? 'hidden' : '';
+        }
+
         function openCvModal() {
             cvModal.classList.add('active');
             cvModal.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
+            syncModalBodyLock();
         }
 
         function closeCvModal() {
             cvModal.classList.remove('active');
             cvModal.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
+            syncModalBodyLock();
+        }
+
+        function setApplyResumeStatus(message, { loading = false, html = false } = {}) {
+            applyResumeStatus.classList.toggle('loading', loading);
+            if (html) {
+                applyResumeStatus.innerHTML = message;
+                return;
+            }
+            applyResumeStatus.textContent = message;
+        }
+
+        function closeApplyResumeModal() {
+            pendingApplyJobKey = null;
+            applyResumeModal.classList.remove('active');
+            applyResumeModal.setAttribute('aria-hidden', 'true');
+            confirmApplyResumeBtn.disabled = true;
+            applyResumeOptions.innerHTML = '';
+            setApplyResumeStatus('Loading your approved resumes...', { loading: true });
+            syncModalBodyLock();
+        }
+
+        function getSelectedApprovedResumeId() {
+            const selected = applyResumeOptions.querySelector('input[name="approvedResumeChoice"]:checked');
+            return selected ? selected.value : null;
+        }
+
+        function refreshApprovedResumeSelectionUI() {
+            const selectedId = getSelectedApprovedResumeId();
+            const cards = applyResumeOptions.querySelectorAll('.resume-choice-card');
+            cards.forEach((card) => {
+                card.classList.toggle('active', card.getAttribute('data-resume-id') === selectedId);
+            });
+            confirmApplyResumeBtn.disabled = !selectedId;
+        }
+
+        function renderApprovedResumeOptions(resumes) {
+            if (!Array.isArray(resumes) || !resumes.length) {
+                applyResumeOptions.innerHTML = '';
+                confirmApplyResumeBtn.disabled = true;
+                setApplyResumeStatus(
+                    'You do not have any approved resumes yet. Upload a CV in <a href="/user-profile">Profile</a> and get a Students Compass audit score of 8+ to apply here.',
+                    { html: true }
+                );
+                return;
+            }
+
+            applyResumeOptions.innerHTML = resumes.map((resume, index) => {
+                const summary = resume.ai_summary || 'No AI summary available for this resume yet.';
+                const meta = [
+                    `Score ${Number(resume.overall_score || 0).toFixed(1)}/10`,
+                    `Approved ${escapeHtml(formatDate(resume.approved_at))}`,
+                    `Uploaded ${escapeHtml(formatDate(resume.created_at))}`,
+                ];
+                return `
+                    <label class="resume-choice-card ${index === 0 ? 'active' : ''}" data-resume-id="${escapeHtml(resume.id)}">
+                        <div class="resume-choice-head">
+                            <div class="resume-choice-main">
+                                <input type="radio" name="approvedResumeChoice" value="${escapeHtml(resume.id)}" ${index === 0 ? 'checked' : ''}>
+                                <div>
+                                    <h3 class="resume-choice-title">${escapeHtml(resume.original_filename)}</h3>
+                                    <div class="resume-choice-meta">
+                                        ${meta.map((item) => `<span>${item}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            ${resume.is_latest ? '<span class="resume-choice-pill">Latest approved</span>' : ''}
+                        </div>
+                        <p class="resume-choice-summary">${escapeHtml(summary)}</p>
+                    </label>
+                `;
+            }).join('');
+            setApplyResumeStatus('Select the approved resume you want to send to the company.');
+            refreshApprovedResumeSelectionUI();
+        }
+
+        async function fetchEligibleResumes() {
+            const response = await fetch('/api/v1/applications/eligible-resumes', {
+                credentials: 'include',
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = '/login';
+                return [];
+            }
+
+            if (!response.ok) {
+                throw new Error(await readErrorDetail(response, 'Failed to load approved resumes.'));
+            }
+
+            return response.json();
+        }
+
+        async function openApplyResumeModal(jobKey) {
+            pendingApplyJobKey = jobKey;
+            applyResumeOptions.innerHTML = '';
+            confirmApplyResumeBtn.disabled = true;
+            setApplyResumeStatus(`
+                <div class="loading-spinner"></div>
+                <span>Loading your approved resumes...</span>
+            `, { loading: true, html: true });
+            applyResumeModal.classList.add('active');
+            applyResumeModal.setAttribute('aria-hidden', 'false');
+            syncModalBodyLock();
+
+            try {
+                const resumes = await fetchEligibleResumes();
+                renderApprovedResumeOptions(Array.isArray(resumes) ? resumes : []);
+            } catch (error) {
+                applyResumeOptions.innerHTML = '';
+                confirmApplyResumeBtn.disabled = true;
+                setApplyResumeStatus(error?.message || 'Failed to load approved resumes.');
+            }
         }
 
         function setCvSummary(message, { loading = false, html = false } = {}) {
@@ -1622,7 +1866,7 @@
                 const applied = job.id && appliedJobPostingIds.has(job.id);
                 return `
                     <button class="primary-link" type="button" data-easy-apply="${escapeHtml(jobKey)}" ${applied ? 'disabled' : ''}>
-                        ${applied ? 'Applied' : '1-Click Apply'}
+                        ${applied ? 'Applied' : 'Quick Apply'}
                     </button>
                 `;
             }
@@ -1638,7 +1882,7 @@
             return '<span class="secondary-link" aria-disabled="true">Apply link unavailable</span>';
         }
 
-        async function submitEasyApply(job) {
+        async function submitQuickApply(job, resumeId) {
             if (!job?.id || !job?.company_id) {
                 throw new Error('This job cannot be applied to right now.');
             }
@@ -1652,10 +1896,11 @@
                 body: JSON.stringify({
                     company_id: job.company_id,
                     job_posting_id: job.id,
+                    resume_id: resumeId,
                     job_title: job.title,
                     application_url: job.url,
                     status: 'applied',
-                    notes: 'Applied via Students Compass Easy Apply.',
+                    notes: 'Applied via Students Compass Quick Apply.',
                 }),
             });
 
@@ -1665,7 +1910,7 @@
             }
 
             if (!response.ok) {
-                throw new Error(await readErrorDetail(response, 'Easy Apply failed.'));
+                throw new Error(await readErrorDetail(response, 'Quick Apply failed.'));
             }
 
             return response.json();
@@ -2217,19 +2462,7 @@
                 return;
             }
 
-            try {
-                easyApplyButton.setAttribute('disabled', 'disabled');
-                await submitEasyApply(job);
-                if (job.id) {
-                    appliedJobPostingIds.add(job.id);
-                }
-                searchStatus.textContent = `Application saved for ${job.title}.`;
-                await loadApplications();
-                renderJobResults(currentJobResults);
-            } catch (error) {
-                easyApplyButton.removeAttribute('disabled');
-                searchStatus.textContent = error?.message || 'Easy Apply failed.';
-            }
+            await openApplyResumeModal(jobKey);
         });
 
         jobDetailPanel.addEventListener('click', (event) => {
@@ -2246,19 +2479,7 @@
                 }
 
                 (async () => {
-                    try {
-                        easyApplyButton.setAttribute('disabled', 'disabled');
-                        await submitEasyApply(job);
-                        if (job.id) {
-                            appliedJobPostingIds.add(job.id);
-                        }
-                        searchStatus.textContent = `Application saved for ${job.title}.`;
-                        await loadApplications();
-                        renderJobResults(currentJobResults);
-                    } catch (error) {
-                        easyApplyButton.removeAttribute('disabled');
-                        searchStatus.textContent = error?.message || 'Easy Apply failed.';
-                    }
+                    await openApplyResumeModal(jobKey);
                 })();
                 return;
             }
@@ -2278,6 +2499,65 @@
             }
         });
 
+        applyResumeModal.addEventListener('click', (event) => {
+            if (event.target === applyResumeModal) {
+                closeApplyResumeModal();
+            }
+        });
+
+        applyResumeOptions.addEventListener('change', (event) => {
+            if (event.target.matches('input[name="approvedResumeChoice"]')) {
+                refreshApprovedResumeSelectionUI();
+            }
+        });
+
+        applyResumeOptions.addEventListener('click', (event) => {
+            const card = event.target.closest('.resume-choice-card');
+            if (!card) {
+                return;
+            }
+            const input = card.querySelector('input[name="approvedResumeChoice"]');
+            if (input) {
+                input.checked = true;
+                refreshApprovedResumeSelectionUI();
+            }
+        });
+
+        closeApplyResumeModalBtn.addEventListener('click', closeApplyResumeModal);
+        cancelApplyResumeBtn.addEventListener('click', closeApplyResumeModal);
+        confirmApplyResumeBtn.addEventListener('click', async () => {
+            const resumeId = getSelectedApprovedResumeId();
+            if (!resumeId || !pendingApplyJobKey || !renderedJobMap.has(pendingApplyJobKey)) {
+                return;
+            }
+
+            const job = renderedJobMap.get(pendingApplyJobKey);
+            if (!job || !isEasyApplyJob(job)) {
+                return;
+            }
+
+            confirmApplyResumeBtn.disabled = true;
+            setApplyResumeStatus(`
+                <div class="loading-spinner"></div>
+                <span>Submitting your application with the selected approved CV...</span>
+            `, { loading: true, html: true });
+
+            try {
+                await submitQuickApply(job, resumeId);
+                if (job.id) {
+                    appliedJobPostingIds.add(job.id);
+                }
+                closeApplyResumeModal();
+                searchStatus.textContent = `Application saved for ${job.title}.`;
+                await loadApplications();
+                renderJobResults(currentJobResults);
+            } catch (error) {
+                setApplyResumeStatus(error?.message || 'Quick Apply failed.');
+                refreshApprovedResumeSelectionUI();
+                searchStatus.textContent = error?.message || 'Quick Apply failed.';
+            }
+        });
+
         [keywordsInput, locationInput].forEach((input) => {
             input.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
@@ -2289,6 +2569,9 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && cvModal.classList.contains('active')) {
                 closeCvModal();
+            }
+            if (event.key === 'Escape' && applyResumeModal.classList.contains('active')) {
+                closeApplyResumeModal();
             }
         });
 
