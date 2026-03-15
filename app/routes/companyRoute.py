@@ -11,15 +11,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ResumeAnalizer.resume_text_extractor import extract_resume_text_from_bytes
 from app.db import get_session
+from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
-from app.models.applicationModel import ApplicationModel
 from app.schemas.companyApplicantSchema import (
     CompanyApplicantApplicationRead,
     CompanyApplicantCandidateRead,
     CompanyApplicantRead,
+    CompanyApplicantPipelineUpdate,
     CompanyApplicantResumeRead,
 )
+from app.schemas.interviewSchema import InterviewAvailabilityPublishRequest, InterviewAvailabilityRead
 from app.schemas.companyRecruiterSchema import (
     CompanyRecruiterCreate,
     CompanyRecruiterManagementRead,
@@ -33,9 +35,12 @@ from app.services.companyService import (
     auth_backend_company,
     current_active_company,
     current_active_company_recruiter,
+    current_company_job_manager_recruiter,
     current_company_owner_recruiter,
     fastapi_company_recruiters,
 )
+from app.services.applicationService import ApplicationService
+from app.services.interviewService import InterviewService
 from app.services.resumeService import ResumeService
 
 router = APIRouter()
@@ -160,6 +165,15 @@ def _build_company_applicant_payload(application: ApplicationModel) -> CompanyAp
             job_posting_id=application.job_posting_id,
             job_title=application.job_title,
             status=application.status.value if hasattr(application.status, "value") else str(application.status),
+            match_strength=application.match_strength.value if hasattr(application.match_strength, "value") else str(application.match_strength),
+            selected_interview_slot=(
+                InterviewAvailabilityRead.model_validate(application.selected_interview_slot, from_attributes=True)
+                if application.selected_interview_slot is not None else None
+            ),
+            available_interview_slots=[
+                InterviewAvailabilityRead.model_validate(slot, from_attributes=True)
+                for slot in application.available_interview_slots
+            ],
             application_date=application.application_date,
             assigned_recruiter_id=application.assigned_recruiter_id,
             notes=application.notes,
@@ -343,14 +357,67 @@ async def get_current_company_recruiter_profile(
 async def list_company_applicants(
     company: Company = Depends(current_active_company),
     job_posting_id: UUID | None = Query(default=None),
+    status: list[ApplicationStatus] | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
 ):
     applicant_service = CompanyApplicantService(session)
     applications = await applicant_service.list_company_applicants(
         company_id=company.id,
         job_posting_id=job_posting_id,
+        statuses=status,
     )
     return [_build_company_applicant_payload(application) for application in applications]
+
+
+@router.patch("/companies/me/applicants/{application_id}", response_model=CompanyApplicantRead)
+async def update_company_applicant_pipeline(
+    application_id: UUID,
+    payload: CompanyApplicantPipelineUpdate,
+    recruiter: CompanyRecruiter = Depends(current_company_job_manager_recruiter),
+    session: AsyncSession = Depends(get_session),
+):
+    application_service = ApplicationService(session)
+    application = await application_service.update_company_application(
+        application_id=application_id,
+        company_id=recruiter.company_id,
+        recruiter_id=recruiter.id,
+        status=payload.status,
+        notes=payload.notes,
+    )
+    if application is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    applicant_service = CompanyApplicantService(session)
+    hydrated_application = await applicant_service.get_company_application(
+        company_id=recruiter.company_id,
+        application_id=application_id,
+    )
+    if hydrated_application is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return _build_company_applicant_payload(hydrated_application)
+
+
+@router.post("/companies/me/applicants/{application_id}/interview-availabilities", response_model=CompanyApplicantRead)
+async def publish_company_applicant_interview_availabilities(
+    application_id: UUID,
+    payload: InterviewAvailabilityPublishRequest,
+    recruiter: CompanyRecruiter = Depends(current_company_job_manager_recruiter),
+    session: AsyncSession = Depends(get_session),
+):
+    interview_service = InterviewService(session)
+    application = await interview_service.publish_company_availabilities(
+        application_id=application_id,
+        recruiter=recruiter,
+        payload=payload,
+    )
+    applicant_service = CompanyApplicantService(session)
+    hydrated_application = await applicant_service.get_company_application(
+        company_id=recruiter.company_id,
+        application_id=application.id,
+    )
+    if hydrated_application is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return _build_company_applicant_payload(hydrated_application)
 
 
 async def _get_company_resume_response(

@@ -64,6 +64,8 @@ async def setup_db() -> AsyncGenerator[None, None]:
     from app.models.companyRecruiterModel import CompanyRecruiter
     from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel, ApplicationStatusEventModel
     from app.models.applicationModel import ApplicationModel
+    from app.models.emailNotificationLogModel import EmailNotificationLogModel
+    from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
     from app.models.jobPostingModel import JobPosting
     from app.models.resumeModel import ResumeModel
     from app.models.questionnaireModel import UserQuestionnaire

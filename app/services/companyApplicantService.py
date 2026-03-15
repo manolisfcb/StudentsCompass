@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.applicationModel import ApplicationModel
+from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.userModel import User
 
 
@@ -19,10 +19,13 @@ class CompanyApplicantService:
         *,
         company_id: UUID,
         job_posting_id: UUID | None = None,
+        statuses: list[ApplicationStatus] | None = None,
     ) -> list[ApplicationModel]:
         query = (
             select(ApplicationModel)
+            .execution_options(populate_existing=True)
             .options(
+                selectinload(ApplicationModel.interview_availabilities),
                 selectinload(ApplicationModel.resume),
                 selectinload(ApplicationModel.job_posting),
             )
@@ -31,6 +34,8 @@ class CompanyApplicantService:
         )
         if job_posting_id is not None:
             query = query.where(ApplicationModel.job_posting_id == job_posting_id)
+        if statuses:
+            query = query.where(ApplicationModel.status.in_(tuple(statuses)))
 
         result = await self.session.execute(query)
         applications = list(result.scalars().all())
@@ -47,7 +52,9 @@ class CompanyApplicantService:
     ) -> ApplicationModel | None:
         result = await self.session.execute(
             select(ApplicationModel)
+            .execution_options(populate_existing=True)
             .options(
+                selectinload(ApplicationModel.interview_availabilities),
                 selectinload(ApplicationModel.resume),
                 selectinload(ApplicationModel.job_posting),
             )

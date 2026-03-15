@@ -16,6 +16,7 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
         const cvStatus = document.getElementById('cvStatus');
         const cvModal = document.getElementById('cvModal');
         const applyResumeModal = document.getElementById('applyResumeModal');
+        const interviewAvailabilityModal = document.getElementById('interviewAvailabilityModal');
         const openCvModalBtn = document.getElementById('openCvModalBtn');
         const closeCvModalBtn = document.getElementById('closeCvModalBtn');
         const closeCvSecondaryBtn = document.getElementById('closeCvSecondaryBtn');
@@ -29,6 +30,10 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
         const refreshApplicationsBtn = document.getElementById('refreshApplicationsBtn');
         const applicationsSummary = document.getElementById('applicationsSummary');
         const applicationsList = document.getElementById('applicationsList');
+        const closeInterviewAvailabilityModalBtn = document.getElementById('closeInterviewAvailabilityModalBtn');
+        const interviewAvailabilityStatus = document.getElementById('interviewAvailabilityStatus');
+        const interviewAvailabilityOptions = document.getElementById('interviewAvailabilityOptions');
+        const interviewAvailabilitySubtitle = document.getElementById('interviewAvailabilitySubtitle');
         const tabButtons = Array.from(document.querySelectorAll('.jobs-tab'));
         const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
         let lastSearchSource = 'manual';
@@ -37,6 +42,7 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
         let renderedJobMap = new Map();
         let appliedJobPostingIds = new Set();
         let pendingApplyJobKey = null;
+        let activeInterviewApplication = null;
 
         function setGreeting() {
             const hour = new Date().getHours();
@@ -73,6 +79,21 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
                 .filter(Boolean)
                 .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
                 .join(' ');
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return 'Date unavailable';
+            try {
+                return new Date(dateStr).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                });
+            } catch (_) {
+                return dateStr;
+            }
         }
 
         function getCompanyInitials(company) {
@@ -120,7 +141,10 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
         }
 
         function syncModalBodyLock() {
-            const hasActiveModal = cvModal.classList.contains('active') || applyResumeModal.classList.contains('active');
+            const hasActiveModal =
+                cvModal.classList.contains('active') ||
+                applyResumeModal.classList.contains('active') ||
+                interviewAvailabilityModal.classList.contains('active');
             document.body.style.overflow = hasActiveModal ? 'hidden' : '';
         }
 
@@ -133,6 +157,25 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
         function closeCvModal() {
             cvModal.classList.remove('active');
             cvModal.setAttribute('aria-hidden', 'true');
+            syncModalBodyLock();
+        }
+
+        function openInterviewAvailabilityModal(application) {
+            activeInterviewApplication = application;
+            interviewAvailabilitySubtitle.textContent = `Choose one interview slot for ${application.job_title || 'this role'}.`;
+            interviewAvailabilityModal.classList.add('active');
+            interviewAvailabilityModal.setAttribute('aria-hidden', 'false');
+            syncModalBodyLock();
+            renderInterviewAvailability(application);
+        }
+
+        function closeInterviewAvailabilityModal() {
+            activeInterviewApplication = null;
+            interviewAvailabilityModal.classList.remove('active');
+            interviewAvailabilityModal.setAttribute('aria-hidden', 'true');
+            interviewAvailabilityStatus.className = 'status-banner';
+            interviewAvailabilityStatus.textContent = 'Loading interview options...';
+            interviewAvailabilityOptions.innerHTML = '';
             syncModalBodyLock();
         }
 
@@ -864,6 +907,16 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
                         const notes = application.notes
                             ? `<p class="application-notes">${escapeHtml(application.notes)}</p>`
                             : '';
+                        const hasAvailableSlots = Array.isArray(application.available_interview_slots) && application.available_interview_slots.length > 0;
+                        const selectedInterviewSlot = application.selected_interview_slot;
+                        const interviewButton = hasAvailableSlots
+                            ? `<button class="primary-link" type="button" data-open-interview-availabilities="${escapeHtml(application.id)}">View interview availabilities</button>`
+                            : '';
+                        const interviewSummary = selectedInterviewSlot
+                            ? `<div class="application-interview-banner">Interview confirmed for ${escapeHtml(formatDateTime(selectedInterviewSlot.starts_at))}</div>`
+                            : hasAvailableSlots
+                                ? `<div class="application-interview-banner pending">${application.available_interview_slots.length} interview option(s) available to choose.</div>`
+                                : '';
 
                         return `
                             <article class="application-card">
@@ -879,8 +932,10 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
                                     ${companyLocation}
                                     <span>Applied ${escapeHtml(formatDate(application.application_date))}</span>
                                 </div>
+                                ${interviewSummary}
                                 ${notes}
                                 <div class="application-actions">
+                                    ${interviewButton}
                                     ${applicationUrl}
                                 </div>
                             </article>
@@ -931,6 +986,63 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
             }
         }
 
+        async function selectInterviewAvailability(applicationId, slotId) {
+            const response = await fetch(`/api/v1/applications/${applicationId}/interview-selection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ slot_id: slotId }),
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = '/login';
+                return null;
+            }
+            if (!response.ok) {
+                throw new Error(await readErrorDetail(response, 'Failed to confirm interview slot'));
+            }
+            return response.json();
+        }
+
+        function renderInterviewAvailability(application) {
+            const availableSlots = Array.isArray(application?.available_interview_slots) ? application.available_interview_slots : [];
+            const selectedSlot = application?.selected_interview_slot || null;
+
+            if (selectedSlot) {
+                interviewAvailabilityStatus.className = 'status-banner';
+                interviewAvailabilityStatus.textContent = `Interview confirmed for ${formatDateTime(selectedSlot.starts_at)} (${selectedSlot.timezone}).`;
+            } else if (availableSlots.length) {
+                interviewAvailabilityStatus.className = 'status-banner';
+                interviewAvailabilityStatus.textContent = 'Select one of the interview options below. A mock confirmation email will be queued for you and the recruiter.';
+            } else {
+                interviewAvailabilityStatus.className = 'status-banner';
+                interviewAvailabilityStatus.textContent = 'No interview availabilities are available yet.';
+            }
+
+            if (!availableSlots.length) {
+                interviewAvailabilityOptions.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No open interview slots</h3>
+                        <p>The recruiter has not shared interview availability for this application yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            interviewAvailabilityOptions.innerHTML = availableSlots.map((slot) => `
+                <article class="interview-option-card">
+                    <div>
+                        <h3>${escapeHtml(formatDateTime(slot.starts_at))}</h3>
+                        <p>${escapeHtml(slot.timezone)} · Ends ${escapeHtml(formatDateTime(slot.ends_at))}</p>
+                        ${slot.notes ? `<p class="application-notes">${escapeHtml(slot.notes)}</p>` : ''}
+                    </div>
+                    <button class="primary-link" type="button" data-select-interview-slot="${escapeHtml(slot.id)}">Choose this time</button>
+                </article>
+            `).join('');
+        }
+
         tabButtons.forEach((button) => {
             button.addEventListener('click', () => {
                 switchTab(button.dataset.tab);
@@ -948,6 +1060,59 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
             keywordsInput.focus();
         });
         refreshApplicationsBtn.addEventListener('click', loadApplications);
+
+        applicationsList.addEventListener('click', async (event) => {
+            const openButton = event.target.closest('[data-open-interview-availabilities]');
+            if (openButton) {
+                const applicationId = openButton.getAttribute('data-open-interview-availabilities');
+                if (!applicationId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/v1/applications', {
+                        credentials: 'include',
+                    });
+                    if (!response.ok) {
+                        throw new Error(await readErrorDetail(response, 'Failed to load applications'));
+                    }
+                    const applications = await response.json();
+                    const application = applications.find((item) => item.id === applicationId);
+                    if (!application) {
+                        throw new Error('Application not found');
+                    }
+                    openInterviewAvailabilityModal(application);
+                } catch (error) {
+                    searchStatus.textContent = error?.message || 'Failed to open interview availability.';
+                }
+                return;
+            }
+        });
+
+        interviewAvailabilityOptions.addEventListener('click', async (event) => {
+            const slotButton = event.target.closest('[data-select-interview-slot]');
+            if (!slotButton || !activeInterviewApplication) {
+                return;
+            }
+            const slotId = slotButton.getAttribute('data-select-interview-slot');
+            if (!slotId) {
+                return;
+            }
+
+            slotButton.disabled = true;
+            try {
+                const updatedApplication = await selectInterviewAvailability(activeInterviewApplication.id, slotId);
+                if (updatedApplication) {
+                    renderInterviewAvailability(updatedApplication);
+                    searchStatus.textContent = 'Interview confirmed. Mock email notifications were queued for you and the recruiter.';
+                    await loadApplications();
+                }
+            } catch (error) {
+                interviewAvailabilityStatus.className = 'status-banner';
+                interviewAvailabilityStatus.textContent = error?.message || 'Failed to confirm interview slot.';
+                slotButton.disabled = false;
+            }
+        });
 
         jobsList.addEventListener('click', (event) => {
             if (event.target.closest('a.primary-link, a.secondary-link')) {
@@ -1029,6 +1194,12 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
             }
         });
 
+        interviewAvailabilityModal.addEventListener('click', (event) => {
+            if (event.target === interviewAvailabilityModal) {
+                closeInterviewAvailabilityModal();
+            }
+        });
+
         applyResumeOptions.addEventListener('change', (event) => {
             if (event.target.matches('input[name="approvedResumeChoice"]')) {
                 refreshApprovedResumeSelectionUI();
@@ -1049,6 +1220,7 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
 
         closeApplyResumeModalBtn.addEventListener('click', closeApplyResumeModal);
         cancelApplyResumeBtn.addEventListener('click', closeApplyResumeModal);
+        closeInterviewAvailabilityModalBtn.addEventListener('click', closeInterviewAvailabilityModal);
         confirmApplyResumeBtn.addEventListener('click', async () => {
             const resumeId = getSelectedApprovedResumeId();
             if (!resumeId || !pendingApplyJobKey || !renderedJobMap.has(pendingApplyJobKey)) {
@@ -1097,9 +1269,16 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
             if (event.key === 'Escape' && applyResumeModal.classList.contains('active')) {
                 closeApplyResumeModal();
             }
+            if (event.key === 'Escape' && interviewAvailabilityModal.classList.contains('active')) {
+                closeInterviewAvailabilityModal();
+            }
         });
 
         window.addEventListener('load', async () => {
             setGreeting();
             await Promise.all([checkCVAvailability(), loadApplications(), loadInitialJobBoard()]);
+            const requestedTab = new URLSearchParams(window.location.search).get('tab');
+            if (requestedTab && ['home', 'cv', 'applications', 'messages'].includes(requestedTab)) {
+                switchTab(requestedTab);
+            }
         });

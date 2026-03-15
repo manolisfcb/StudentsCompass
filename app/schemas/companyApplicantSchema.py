@@ -3,6 +3,8 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+from app.models.applicationModel import ApplicationStatus
+from app.schemas.interviewSchema import InterviewAvailabilityRead
 
 
 class CompanyApplicantApplicationRead(BaseModel):
@@ -10,9 +12,12 @@ class CompanyApplicantApplicationRead(BaseModel):
     job_posting_id: Optional[UUID] = None
     job_title: str
     status: str
+    match_strength: str
     application_date: datetime
     assigned_recruiter_id: Optional[UUID] = None
     notes: Optional[str] = None
+    selected_interview_slot: Optional[InterviewAvailabilityRead] = None
+    available_interview_slots: list[InterviewAvailabilityRead] = Field(default_factory=list)
 
 
 class CompanyApplicantCandidateRead(BaseModel):
@@ -49,3 +54,8 @@ class CompanyApplicantRead(BaseModel):
     candidate: CompanyApplicantCandidateRead
     resume: Optional[CompanyApplicantResumeRead] = None
     certifications: list[CompanyApplicantCertificationRead] = Field(default_factory=list)
+
+
+class CompanyApplicantPipelineUpdate(BaseModel):
+    status: ApplicationStatus
+    notes: Optional[str] = None

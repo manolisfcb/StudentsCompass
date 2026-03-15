@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% set page_title = "Selected Candidates" %}
+{% set page_description = "Manage shortlisted candidates and interview progression from the Student Compass company pipeline." %}
+{% set page_css = "company-dashboard" %}
+{% set page_js = "company-candidates" %}
+{% block content %}
+  {% include 'includes/company_header.html' %}
+
+  <main>
+    <div class="dashboard-container">
+      <div class="dashboard-header company-dashboard-header">
+        <h2 id="selected-candidates-heading">Selected Candidates</h2>
+        <p>Candidates moved into review land here so your team can decide who should go to interview next.</p>
+      </div>
+
+      <div class="stats-grid pipeline-stats-grid">
+        <div class="stat-card shortlist">
+          <div class="stat-card-top">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-kicker">Selected</div>
+          </div>
+          <h3>In Review</h3>
+          <div class="number" id="pipeline-in-review-count">0</div>
+          <p>Candidates your team already moved forward.</p>
+        </div>
+
+        <div class="stat-card interviews">
+          <div class="stat-card-top">
+            <div class="stat-icon">🎙️</div>
+            <div class="stat-kicker">Interview</div>
+          </div>
+          <h3>Interview Stage</h3>
+          <div class="number" id="pipeline-interview-count">0</div>
+          <p>Candidates already marked for interview.</p>
+        </div>
+      </div>
+
+      <section class="section-card pipeline-section-card">
+        <div class="section-card-head">
+          <div>
+            <h3>Selected Pipeline</h3>
+            <p class="section-copy">Only candidates already chosen by your team appear here.</p>
+          </div>
+          <a class="btn btn-secondary" href="/company-dashboard">Back to Dashboard</a>
+        </div>
+
+        <div class="pipeline-toolbar">
+          <div>
+            <label for="selected-candidates-job-filter" class="applicants-job-filter-label">Filter by job</label>
+            <select id="selected-candidates-job-filter">
+              <option value="">All job postings</option>
+            </select>
+          </div>
+          <div>
+            <label for="selected-candidates-status-filter" class="applicants-job-filter-label">Filter by stage</label>
+            <select id="selected-candidates-status-filter">
+              <option value="">All selected candidates</option>
+              <option value="in_review">In review</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-secondary" id="refresh-selected-candidates-btn">Refresh pipeline</button>
+        </div>
+
+        <div id="selected-candidates-message" class="dashboard-message" role="status" aria-live="polite"></div>
+        <div id="selected-candidates-list" class="applicants-grid">
+          <div class="applicant-empty">Loading selected candidates...</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="selected-resume-preview-overlay" class="modal-overlay" aria-hidden="true">
+    <div class="applicants-modal" role="dialog" aria-modal="true" aria-labelledby="selected-resume-preview-title">
+      <div class="job-modal-header">
+        <div>
+          <h3 id="selected-resume-preview-title">Resume preview</h3>
+          <p id="selected-resume-preview-subtitle">Previewing candidate resume.</p>
+        </div>
+        <button id="selected-resume-preview-close" class="job-modal-close" type="button" aria-label="Close">×</button>
+      </div>
+      <iframe id="selected-resume-preview-frame" class="resume-preview-frame" title="Resume preview"></iframe>
+    </div>
+  </div>
+
+  <div id="interview-availability-overlay" class="modal-overlay" aria-hidden="true">
+    <div class="applicants-modal interview-modal" role="dialog" aria-modal="true" aria-labelledby="interview-availability-title">
+      <div class="job-modal-header">
+        <div>
+          <h3 id="interview-availability-title">Share Interview Availability</h3>
+          <p>Select one or more interview slots. The candidate will receive these options and choose one.</p>
+        </div>
+        <button id="interview-availability-close" class="job-modal-close" type="button" aria-label="Close">×</button>
+      </div>
+      <form id="interview-availability-form" class="job-form">
+        <div id="interview-availability-list" class="interview-slot-list"></div>
+        <button id="add-interview-slot-btn" class="btn btn-secondary" type="button">Add another slot</button>
+        <div class="form-field full">
+          <label for="interview-availability-notes">Notes for candidate</label>
+          <textarea id="interview-availability-notes" name="notes" placeholder="Optional context, meeting link note, or prep instructions."></textarea>
+        </div>
+        <div class="job-form-actions">
+          <button id="interview-availability-cancel" type="button" class="btn btn-secondary">Cancel</button>
+          <button id="interview-availability-submit" type="submit" class="btn btn-primary">Send availability</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'includes/footer.html' %}
+{% endblock %}

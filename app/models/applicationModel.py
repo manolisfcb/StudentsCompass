@@ -11,6 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.models.jobPostingModel import JobPosting
+from app.models.interviewAvailabilityModel import InterviewAvailabilityStatus
 from app.db import Base
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -26,6 +27,12 @@ class ApplicationStatus(str, enum.Enum):
     OFFER = "offer"
     REJECTED = "rejected"
     WITHDRAWN = "withdrawn"
+
+
+class ApplicationMatchStrength(str, enum.Enum):
+    STRONG_MATCH = "strong_match"
+    MATCH = "match"
+    WEAK_MATCH = "weak_match"
 
 
 class ApplicationModel(Base):
@@ -61,6 +68,15 @@ class ApplicationModel(Base):
     
     job_title = Column(String, nullable=False)
     status = Column(Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.APPLIED)
+    match_strength = Column(
+        Enum(
+            ApplicationMatchStrength,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            name="applicationmatchstrength",
+        ),
+        nullable=False,
+        default=ApplicationMatchStrength.MATCH,
+    )
     application_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     application_url = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
@@ -75,6 +91,12 @@ class ApplicationModel(Base):
     job_posting = relationship("JobPosting", back_populates="applications", overlaps="company,applications")
     resume = relationship("ResumeModel", back_populates="applications")
     status_events = relationship("ApplicationStatusEventModel", back_populates="application")
+    interview_availabilities = relationship(
+        "InterviewAvailabilityModel",
+        back_populates="application",
+        cascade="all, delete-orphan",
+        order_by="InterviewAvailabilityModel.starts_at.asc()",
+    )
 
     @property
     def company_name(self) -> str | None:
@@ -85,3 +107,19 @@ class ApplicationModel(Base):
     def company_location(self) -> str | None:
         company = self.__dict__.get("company")
         return company.location if company else None
+
+    @property
+    def selected_interview_slot(self):
+        for slot in self.interview_availabilities or []:
+            normalized_status = slot.status.value if hasattr(slot.status, "value") else str(slot.status)
+            if normalized_status == InterviewAvailabilityStatus.BOOKED.value:
+                return slot
+        return None
+
+    @property
+    def available_interview_slots(self):
+        return [
+            slot for slot in (self.interview_availabilities or [])
+            if (slot.status.value if hasattr(slot.status, "value") else str(slot.status))
+            == InterviewAvailabilityStatus.AVAILABLE.value
+        ]

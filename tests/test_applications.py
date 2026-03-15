@@ -88,6 +88,7 @@ class TestApplications:
         data = response.json()
         assert data["job_title"] == "Software Engineer"
         assert data["status"] == "applied"
+        assert data["match_strength"] in {"strong_match", "match", "weak_match"}
         assert "id" in data
         assert data["assigned_recruiter_id"] == str(test_company_recruiter.id)
         assert data["resume_id"] == str(resume.id)
@@ -145,6 +146,7 @@ class TestApplications:
         assert first_response.status_code == 200
         assert second_response.status_code == 200
         assert first_response.json()["id"] == second_response.json()["id"]
+        assert first_response.json()["match_strength"] == second_response.json()["match_strength"]
         assert second_response.json()["assigned_recruiter_id"] == str(test_company_recruiter.id)
         assert second_response.json()["resume_id"] == str(resume.id)
 

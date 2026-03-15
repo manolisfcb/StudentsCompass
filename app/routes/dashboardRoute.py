@@ -14,9 +14,11 @@ from app.schemas.applicationSchema import (
     ApplicationRead,
     ApplicationUpdate,
 )
+from app.schemas.interviewSchema import InterviewAvailabilitySelectionRequest
 from typing import Dict, List
 from uuid import UUID
 import logging
+from app.services.interviewService import InterviewService
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +150,21 @@ async def get_applications(
     application_service = ApplicationService(session)
     applications = await application_service.list_user_applications(user_id=user.id)
     return applications
+
+
+@router.post("/applications/{application_id}/interview-selection", response_model=ApplicationRead)
+async def select_interview_availability(
+    application_id: UUID,
+    payload: InterviewAvailabilitySelectionRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    interview_service = InterviewService(session)
+    return await interview_service.select_user_availability(
+        application_id=application_id,
+        slot_id=payload.slot_id,
+        user=user,
+    )
 
 
 @router.patch("/applications/{application_id}", response_model=ApplicationRead)

@@ -1,5 +1,9 @@
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pathlib import Path
+from urllib.parse import urljoin
+from xml.etree.ElementTree import Element, SubElement, tostring, register_namespace
 
 # Load environment variables from .env early so routes can read them
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +37,68 @@ from app.services.roadmapSeedService import seed_roadmaps_on_startup_if_dev
 from app.middleware.rate_limit import RequestRateLimiter
 from fastapi import Response
 from fastapi.responses import FileResponse
+
+
+SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
+register_namespace("", SITEMAP_NAMESPACE)
+
+
+@dataclass(frozen=True)
+class SitemapEntry:
+    path: str
+    priority: str
+    changefreq: str
+    source_file: Path | None = None
+
+
+_PUBLIC_SITEMAP_ENTRIES: tuple[SitemapEntry, ...] = (
+    SitemapEntry(path="/", priority="1.0", changefreq="weekly", source_file=ROOT / "app/templates/home.html"),
+    SitemapEntry(path="/about", priority="0.8", changefreq="monthly", source_file=ROOT / "app/templates/about.html"),
+    SitemapEntry(path="/login", priority="0.6", changefreq="monthly", source_file=ROOT / "app/templates/login.html"),
+    SitemapEntry(path="/register", priority="0.7", changefreq="monthly", source_file=ROOT / "app/templates/register.html"),
+)
+
+
+def _get_public_base_url() -> str:
+    configured = (
+        os.getenv("PUBLIC_BASE_URL")
+        or os.getenv("APP_BASE_URL")
+        or os.getenv("SITE_URL")
+        or "https://studentscompass.ca"
+    ).strip()
+    return configured.rstrip("/")
+
+
+def _build_public_url(path: str) -> str:
+    base_url = _get_public_base_url()
+    relative_path = path.lstrip("/")
+    if not relative_path:
+        return f"{base_url}/"
+    return urljoin(f"{base_url}/", relative_path)
+
+
+def _get_last_modified_date(path: Path | None) -> str | None:
+    if path is None or not path.exists():
+        return None
+    modified_at = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+    return modified_at.date().isoformat()
+
+
+def _build_sitemap_xml() -> bytes:
+    urlset = Element(f"{{{SITEMAP_NAMESPACE}}}urlset")
+
+    for entry in _PUBLIC_SITEMAP_ENTRIES:
+        url_node = SubElement(urlset, f"{{{SITEMAP_NAMESPACE}}}url")
+        SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}loc").text = _build_public_url(entry.path)
+        last_modified = _get_last_modified_date(entry.source_file)
+        if last_modified:
+            SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}lastmod").text = last_modified
+        SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}changefreq").text = entry.changefreq
+        SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}priority").text = entry.priority
+
+    return tostring(urlset, encoding="utf-8", xml_declaration=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Avoid running Base.metadata.create_all on startup in production.
@@ -84,20 +150,13 @@ async def apply_rate_limits(request, call_next):
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
-    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-        <url>
-            <loc>https://studentscompass.ca/</loc>
-            <priority>1.0</priority>
-        </url>
-    </urlset>
-    """
-    return Response(content=xml_content, media_type="application/xml")
+    return Response(content=_build_sitemap_xml(), media_type="application/xml")
 
 @app.get("/robots.txt", include_in_schema=False)
 async def robots():
+    public_base_url = _get_public_base_url()
     return Response(
-        content="User-agent: *\nAllow: /\nSitemap: https://studentscompass.ca/sitemap.xml",
+        content=f"User-agent: *\nAllow: /\nSitemap: {public_base_url}/sitemap.xml",
         media_type="text/plain"
     )
 

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, UUID4
+from pydantic import BaseModel, Field, UUID4
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from app.schemas.interviewSchema import InterviewAvailabilityRead
 
 
 class ApplicationStatus(str, Enum):
@@ -11,6 +12,12 @@ class ApplicationStatus(str, Enum):
     OFFER = "offer"
     REJECTED = "rejected"
     WITHDRAWN = "withdrawn"
+
+
+class ApplicationMatchStrength(str, Enum):
+    STRONG_MATCH = "strong_match"
+    MATCH = "match"
+    WEAK_MATCH = "weak_match"
 
 
 class ApplicationBase(BaseModel):
@@ -38,10 +45,13 @@ class ApplicationRead(ApplicationBase):
     user_id: UUID4
     company_id: UUID4
     assigned_recruiter_id: Optional[UUID4] = None
+    match_strength: ApplicationMatchStrength
     company_name: Optional[str] = None
     company_location: Optional[str] = None
     job_posting_id: Optional[UUID4] = None
     resume_id: Optional[UUID4] = None
+    selected_interview_slot: Optional[InterviewAvailabilityRead] = None
+    available_interview_slots: list[InterviewAvailabilityRead] = Field(default_factory=list)
     application_date: datetime
     created_at: datetime
     updated_at: datetime

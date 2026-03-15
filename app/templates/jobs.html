@@ -244,9 +244,24 @@
                             <button id="cancelApplyResumeBtn" class="ghost-button" type="button">Cancel</button>
                             <button id="confirmApplyResumeBtn" class="feature-button" type="button" disabled>Apply with selected CV</button>
                         </div>
+                </div>
+            </div>
+            <div id="interviewAvailabilityModal" class="jobs-modal" aria-hidden="true">
+                <div class="jobs-modal-card" role="dialog" aria-modal="true" aria-labelledby="interviewAvailabilityTitle">
+                    <div class="jobs-modal-head">
+                        <div>
+                            <h2 id="interviewAvailabilityTitle">Interview Availability</h2>
+                            <p id="interviewAvailabilitySubtitle">Choose one interview slot shared by the recruiter.</p>
+                        </div>
+                        <button id="closeInterviewAvailabilityModalBtn" class="jobs-modal-close" type="button" aria-label="Close interview availability modal">×</button>
+                    </div>
+                    <div class="jobs-modal-body">
+                        <div id="interviewAvailabilityStatus" class="status-banner">Loading interview options...</div>
+                        <div id="interviewAvailabilityOptions" class="interview-options-stack"></div>
                     </div>
                 </div>
             </div>
+        </div>
     </main>
 
     {% include "includes/footer.html" %}

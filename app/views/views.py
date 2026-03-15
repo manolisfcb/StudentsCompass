@@ -91,6 +91,23 @@ async def company_dashboard(
     )
 
 
+@router.get("/company-candidates")
+async def company_candidates_page(
+    request: Request,
+    company: Optional[Company] = Depends(current_active_company_optional),
+    company_recruiter: Optional[CompanyRecruiter] = Depends(current_active_company_recruiter_optional),
+):
+    if company is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        "company-candidates.html",
+        {
+            "request": request,
+            "company_recruiter": company_recruiter,
+        },
+    )
+
+
 @router.get("/company-team")
 async def company_team_page(
     request: Request,

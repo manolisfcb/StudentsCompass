@@ -19,6 +19,11 @@
             Job Postings
           </a>
         </li>
+        <li>
+          <a href="/company-candidates" class="nav-btn nav-btn-primary {{ 'active' if request.url.path == '/company-candidates' else '' }}">
+            Selected Candidates
+          </a>
+        </li>
         {% if company_recruiter and company_recruiter.role == 'owner' %}
         <li>
           <a href="/company-team" class="nav-btn nav-btn-primary {{ 'active' if request.url.path == '/company-team' else '' }}">
@@ -26,11 +31,6 @@
           </a>
         </li>
         {% endif %}
-        <li>
-          <a href="/company-dashboard" class="nav-btn nav-btn-primary">
-            Applications
-          </a>
-        </li>
         <li>
           <a href="#" id="company-logout-link" class="nav-btn nav-btn-logout">
             Logout

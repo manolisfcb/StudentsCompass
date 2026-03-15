@@ -14,8 +14,10 @@ from app.models.resumeModel import ResumeModel
 from app.models.resumeEmbeddingsModel import ResumeEmbedding
 from app.models.applicationModel import ApplicationModel
 from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel, ApplicationStatusEventModel
+from app.models.emailNotificationLogModel import EmailNotificationLogModel
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
+from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
 from app.models.jobPostingModel import JobPosting
 from app.models.jobAnalysisModel import JobAnalysisModel
 from app.models.userStatsModel import UserStatsModel
