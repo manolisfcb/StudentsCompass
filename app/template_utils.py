@@ -5,12 +5,14 @@ from hashlib import sha256
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 STATIC_ROOT = Path(__file__).resolve().parent / "static"
 
 
 def configure_template_helpers(templates: Jinja2Templates) -> Jinja2Templates:
     templates.env.globals["asset_url"] = asset_url
+    templates.env.globals["inline_asset"] = inline_asset
     return templates
 
 
@@ -37,3 +39,16 @@ def _build_asset_version(path: str, mtime_ns: int, size: int) -> str:
     asset_path = STATIC_ROOT / path
     digest = sha256(asset_path.read_bytes()).hexdigest()
     return digest[:12]
+
+
+def inline_asset(path: str) -> Markup:
+    normalized_path = path.lstrip("/")
+    return Markup(_read_asset_text(normalized_path))
+
+
+@lru_cache(maxsize=64)
+def _read_asset_text(path: str) -> str:
+    asset_path = (STATIC_ROOT / path).resolve()
+    if not asset_path.is_file() or not asset_path.is_relative_to(STATIC_ROOT.resolve()):
+        return ""
+    return asset_path.read_text(encoding="utf-8")

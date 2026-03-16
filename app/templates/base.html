@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 {% set use_app_shell = include_app_shell | default(true) %}
+{% set inline_app_shell_css = inline_app_shell_css | default(false) %}
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -25,7 +26,11 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://studentscompass.ca{{ asset_url('images/Logo_Ready_to_Use.png') }}">
   {% if use_app_shell %}
+    {% if inline_app_shell_css %}
+  <style>{{ inline_asset('css/style.css') }}</style>
+    {% else %}
   <link rel="stylesheet" href="{{ asset_url('css/style.css') }}">
+    {% endif %}
   {% endif %}
   {% if page_css is defined and page_css %}
   <link rel="stylesheet" href="{{ asset_url('css/' ~ page_css ~ '.css') }}">
