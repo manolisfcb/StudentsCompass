@@ -110,6 +110,8 @@ header {
     background:
         radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 20%),
         linear-gradient(110deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
+    position: relative;
+    z-index: 40;
 }
 
 .student-nav {
@@ -177,6 +179,8 @@ header {
     color: #fff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.16);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+    position: relative;
+    z-index: 40;
 }
 
 .company-nav {
@@ -250,6 +254,12 @@ nav a:hover {
 }
 
 @media (max-width: 968px) {
+    .student-nav,
+    .company-nav,
+    nav .container {
+        overflow: visible;
+    }
+
     .mobile-menu-toggle {
         display: flex;
         align-items: center;
@@ -266,7 +276,7 @@ nav a:hover {
         backdrop-filter: blur(8px);
         font-size: 1.25rem;
         transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-        z-index: 100;
+        z-index: 220;
     }
 
     .mobile-menu-toggle:hover {
@@ -282,8 +292,9 @@ nav a:hover {
         top: calc(100% + 10px);
         right: 12px;
         left: auto;
-        width: max-content;
+        width: min(320px, calc(100vw - 24px));
         max-width: calc(100vw - 24px);
+        max-height: min(70vh, 520px);
         box-sizing: border-box;
         padding: 0.55rem 0.5rem;
         background: linear-gradient(145deg, rgba(10, 89, 82, 0.98) 0%, rgba(7, 65, 60, 0.98) 100%);
@@ -295,7 +306,9 @@ nav a:hover {
             0 12px 40px rgba(0, 0, 0, 0.35),
             0 4px 12px rgba(0, 0, 0, 0.2),
             inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        z-index: 99;
+        z-index: 230;
+        overflow-y: auto;
+        overscroll-behavior: contain;
 
         /* Estado oculto — animación de entrada */
         visibility: hidden;
@@ -363,6 +376,11 @@ nav a:hover {
 }
 
 @media (max-width: 640px) {
+    .student-header,
+    .company-header {
+        z-index: 60;
+    }
+
     .brand-logo--nav {
         height: 56px;
     }

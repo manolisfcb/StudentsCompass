@@ -61,9 +61,12 @@
 .stat-card {
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
     background: rgba(255, 255, 255, 0.92);
     border-radius: 24px;
-    padding: 1.2rem 1.25rem;
+    padding: 1.2rem 1.25rem 2rem;
     color: #0F172A;
     border: 1px solid rgba(148, 163, 184, 0.18);
     box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
@@ -114,13 +117,16 @@
     font-size: 2.35rem;
     font-weight: 800;
     letter-spacing: -0.04em;
-    margin-bottom: 0.2rem;
+    margin: 0;
+    line-height: 1;
 }
 
 .stat-label {
     font-size: 0.92rem;
     color: #64748B;
     font-weight: 600;
+    line-height: 1.4;
+    max-width: 16ch;
 }
 
 .main-content-grid {
@@ -441,6 +447,7 @@
 
     .dashboard-header {
         padding: 1.2rem;
+        border-radius: 24px;
     }
 
     .dashboard-header h2 {
@@ -459,24 +466,29 @@
     }
 
     .stat-card {
-        padding: 1rem;
+        padding: 1rem 1rem 1.75rem;
+        border-radius: 20px;
     }
 
     .stat-icon {
-        font-size: 1.75rem;
-        margin-bottom: 0.25rem;
+        width: 48px;
+        height: 48px;
+        font-size: 1.45rem;
+        margin-bottom: 0.1rem;
     }
 
     .stat-value {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
     }
 
     .stat-label {
-        font-size: 0.85rem;
+        font-size: 0.86rem;
+        max-width: none;
     }
 
     .content-card {
         padding: 1rem;
+        border-radius: 24px;
     }
 
     .card-header {
@@ -514,19 +526,38 @@
     }
 
     .stat-card {
-        padding: 0.75rem;
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr);
+        grid-template-areas:
+            "icon value"
+            "icon label";
+        align-items: center;
+        column-gap: 0.85rem;
+        row-gap: 0.2rem;
+        padding: 0.95rem 0.95rem 1.45rem;
     }
 
     .stat-icon {
-        font-size: 1.5rem;
+        grid-area: icon;
+        width: 52px;
+        height: 52px;
+        font-size: 1.35rem;
+        margin-bottom: 0;
     }
 
     .stat-value {
-        font-size: 1.25rem;
+        grid-area: value;
+        font-size: 1.8rem;
     }
 
     .stat-label {
-        font-size: 0.8rem;
+        grid-area: label;
+        font-size: 0.9rem;
+        max-width: none;
+    }
+
+    .stat-card::after {
+        inset: auto 0.95rem 0.7rem;
     }
 
     .main-content-grid {
@@ -555,8 +586,18 @@
         margin-bottom: 1rem;
     }
 
+    .progress-item-link {
+        padding: 0.45rem 0;
+    }
+
+    .progress-label {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+
     .status-item {
-        padding: 0.5rem;
+        padding: 0.75rem 0.85rem;
         flex-direction: column;
         gap: 0.5rem;
         align-items: flex-start;
