@@ -79,6 +79,8 @@ async def setup_db() -> AsyncGenerator[None, None]:
         CommunityPostLikeModel,
         CommunityPostModel,
     )
+    from app.models.friendshipModel import FriendRequestModel, FriendshipModel
+    from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

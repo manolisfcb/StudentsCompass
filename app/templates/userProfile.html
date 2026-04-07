@@ -105,6 +105,46 @@
                         </form>
                     </div>
 
+                    <section class="network-card profile-card fade-in" aria-labelledby="network-heading">
+                        <div class="network-card__header">
+                            <div>
+                                <h3 id="network-heading">Your student network</h3>
+                                <p>Build connections from communities now so direct messages and private spaces feel natural later.</p>
+                            </div>
+                            <button id="refreshNetworkButton" class="secondary-action network-refresh" type="button">Refresh network</button>
+                        </div>
+                        <div class="network-grid">
+                            <section class="network-column">
+                                <div class="network-column__header">
+                                    <h4>Incoming requests</h4>
+                                    <span id="incomingCount" class="network-count">0</span>
+                                </div>
+                                <div id="incomingRequests" class="network-list">
+                                    <p class="network-empty">No incoming requests right now.</p>
+                                </div>
+                            </section>
+                            <section class="network-column">
+                                <div class="network-column__header">
+                                    <h4>Outgoing requests</h4>
+                                    <span id="outgoingCount" class="network-count">0</span>
+                                </div>
+                                <div id="outgoingRequests" class="network-list">
+                                    <p class="network-empty">You have not sent any requests yet.</p>
+                                </div>
+                            </section>
+                            <section class="network-column">
+                                <div class="network-column__header">
+                                    <h4>Friends</h4>
+                                    <span id="friendsCount" class="network-count">0</span>
+                                </div>
+                                <div id="friendsList" class="network-list">
+                                    <p class="network-empty">Join communities and start connecting with other students.</p>
+                                </div>
+                            </section>
+                        </div>
+                        <p id="networkStatus" class="network-status" aria-live="polite"></p>
+                    </section>
+
                     <!-- Results Summary -->
                     <div id="resultsContainer" style="display: none;">
                         <h3 style="margin-bottom: 1.5rem;">Your Results</h3>

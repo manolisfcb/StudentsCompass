@@ -162,6 +162,7 @@ class CommunityService:
             user_id=user_id,
             title=post_data.title,
             content=post_data.content,
+            post_type=post_data.post_type,
         )
         self.session.add(post)
         await self.session.commit()
@@ -275,6 +276,7 @@ class CommunityService:
                 "user_id": str(post.user_id),
                 "title": post.title,
                 "content": post.content,
+                "post_type": post.post_type,
                 "created_at": post.created_at.isoformat(),
                 "author_name": author,
                 "like_count": lc,

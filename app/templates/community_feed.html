@@ -68,8 +68,40 @@
           <!-- 2-column layout -->
           <div id="feed-layout" class="feed-layout">
             <div class="feed-main">
+              <section id="community-prompt-card" class="prompt-card" hidden>
+                <div class="prompt-card__copy">
+                  <span class="prompt-card__eyebrow">Weekly prompt</span>
+                  <h2 id="prompt-title">Build momentum with one useful post</h2>
+                  <p id="prompt-body">Share a practical update, question, or resource with the community this week.</p>
+                </div>
+                <div class="prompt-card__actions">
+                  <button id="prompt-use-btn" class="btn-primary" type="button">Use this prompt</button>
+                  <button id="prompt-intro-btn" class="btn-secondary" type="button">Introduce yourself</button>
+                  <button id="prompt-feedback-btn" class="btn-secondary" type="button">Ask for feedback</button>
+                </div>
+              </section>
+
               <!-- Composer -->
               <div class="composer" id="composer">
+                <div class="composer-toolbar">
+                  <label class="composer-select-wrap" for="compose-type">
+                    <span>Post type</span>
+                    <select id="compose-type" class="composer-select" aria-label="Post type">
+                      <option value="discussion">Discussion</option>
+                      <option value="question">Question</option>
+                      <option value="resource">Resource</option>
+                      <option value="win">Win</option>
+                      <option value="accountability">Accountability</option>
+                      <option value="introduction">Introduction</option>
+                    </select>
+                  </label>
+                  <p id="compose-hint" class="composer-hint">Start a useful conversation with a concrete takeaway or question.</p>
+                </div>
+                <div class="composer-quick-actions">
+                  <button id="compose-quick-intro" class="btn-secondary" type="button">Intro template</button>
+                  <button id="compose-quick-feedback" class="btn-secondary" type="button">Feedback request</button>
+                  <button id="compose-quick-win" class="btn-secondary" type="button">Share a win</button>
+                </div>
                 <input type="text" id="compose-title" class="composer-title" placeholder="Title (optional)" aria-label="Post title">
                 <textarea id="compose-body" class="composer-body" placeholder="What do you want to share with the community?" rows="3" aria-label="Post content"></textarea>
                 <div class="composer-footer">

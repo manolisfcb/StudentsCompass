@@ -183,6 +183,180 @@ let currentProfileData = null;
             noData.style.display = 'block';
         }
 
+        function renderRequestList(containerId, countId, items, emptyMessage, options = {}) {
+            const container = document.getElementById(containerId);
+            const count = document.getElementById(countId);
+            count.textContent = String(items.length);
+
+            if (!items.length) {
+                container.innerHTML = `<p class="network-empty">${emptyMessage}</p>`;
+                return;
+            }
+
+            container.innerHTML = items.map((item) => {
+                const person = options.direction === 'incoming' ? item.sender : item.receiver;
+                const actions = options.direction === 'incoming'
+                    ? `
+                        <button class="network-action network-action--primary" data-network-action="accept" data-request-id="${item.id}">Accept</button>
+                        <button class="network-action" data-network-action="reject" data-request-id="${item.id}">Ignore</button>
+                    `
+                    : `<button class="network-action" data-network-action="cancel" data-request-id="${item.id}">Cancel</button>`;
+
+                return `
+                    <article class="network-item">
+                        <div class="network-item__identity">
+                            <div class="network-avatar">${initialsFromName(person.display_name)}</div>
+                            <div>
+                                <h5>${escapeHtml(person.display_name)}</h5>
+                                <p>${options.direction === 'incoming' ? 'Wants to connect with you' : 'Waiting for a reply'}</p>
+                            </div>
+                        </div>
+                        <div class="network-item__actions">
+                            ${actions}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function renderFriendsList(items) {
+            const container = document.getElementById('friendsList');
+            const count = document.getElementById('friendsCount');
+            count.textContent = String(items.length);
+
+            if (!items.length) {
+                container.innerHTML = '<p class="network-empty">Join communities and start connecting with other students.</p>';
+                return;
+            }
+
+            container.innerHTML = items.map((item) => `
+                <article class="network-item">
+                    <div class="network-item__identity">
+                        <div class="network-avatar">${initialsFromName(item.friend.display_name)}</div>
+                        <div>
+                            <h5>${escapeHtml(item.friend.display_name)}</h5>
+                            <p>Connected ${formatDate(item.created_at)}</p>
+                        </div>
+                    </div>
+                    <div class="network-item__actions">
+                        <button class="network-action" data-network-action="remove-friend" data-user-id="${item.friend.id}">Remove</button>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value ?? '';
+            return div.innerHTML;
+        }
+
+        function initialsFromName(name) {
+            return (name || 'SC')
+                .split(' ')
+                .filter(Boolean)
+                .map((part) => part[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2);
+        }
+
+        async function loadFriendNetwork(statusMessage = '') {
+            const networkStatus = document.getElementById('networkStatus');
+            networkStatus.textContent = statusMessage || 'Loading your network...';
+
+            try {
+                const [incomingRes, outgoingRes, friendsRes] = await Promise.all([
+                    fetch('/api/v1/friends/requests/incoming', {
+                        credentials: 'include',
+                        cache: 'no-store',
+                    }),
+                    fetch('/api/v1/friends/requests/outgoing', {
+                        credentials: 'include',
+                        cache: 'no-store',
+                    }),
+                    fetch('/api/v1/friends', {
+                        credentials: 'include',
+                        cache: 'no-store',
+                    }),
+                ]);
+
+                const responses = [incomingRes, outgoingRes, friendsRes];
+                if (responses.some((response) => response.status === 401 || response.status === 403)) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (responses.some((response) => !response.ok)) {
+                    throw new Error('Could not load your network');
+                }
+
+                const [incoming, outgoing, friends] = await Promise.all([
+                    incomingRes.json(),
+                    outgoingRes.json(),
+                    friendsRes.json(),
+                ]);
+
+                renderRequestList('incomingRequests', 'incomingCount', incoming, 'No incoming requests right now.', {
+                    direction: 'incoming',
+                });
+                renderRequestList('outgoingRequests', 'outgoingCount', outgoing, 'You have not sent any requests yet.', {
+                    direction: 'outgoing',
+                });
+                renderFriendsList(friends);
+                networkStatus.textContent = statusMessage;
+            } catch (error) {
+                console.error('Error loading friend network:', error);
+                networkStatus.textContent = error?.message || 'Could not load your network.';
+            }
+        }
+
+        async function handleNetworkAction(action, requestId, userId) {
+            const networkStatus = document.getElementById('networkStatus');
+            networkStatus.textContent = 'Updating your network...';
+
+            let url = '';
+            let method = 'POST';
+            let successMessage = 'Network updated.';
+
+            if (action === 'accept') {
+                url = `/api/v1/friends/requests/${requestId}/accept`;
+                successMessage = 'Friend request accepted.';
+            } else if (action === 'reject') {
+                url = `/api/v1/friends/requests/${requestId}/reject`;
+                successMessage = 'Friend request ignored.';
+            } else if (action === 'cancel') {
+                url = `/api/v1/friends/requests/${requestId}/cancel`;
+                successMessage = 'Friend request cancelled.';
+            } else if (action === 'remove-friend') {
+                url = `/api/v1/friends/${userId}`;
+                method = 'DELETE';
+                successMessage = 'Friend removed from your network.';
+            } else {
+                return;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method,
+                    credentials: 'include',
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data?.detail || 'Could not update your network');
+                }
+
+                await loadFriendNetwork(successMessage);
+            } catch (error) {
+                networkStatus.textContent = error?.message || 'Could not update your network.';
+            }
+        }
+
         // Load profile on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadEditableProfile().catch((error) => {
@@ -190,11 +364,38 @@ let currentProfileData = null;
                 showNoData();
             });
             loadProfile();
+            loadFriendNetwork();
             setupCVUpload();
             loadResumes();
             const profileForm = document.getElementById('profileForm');
             if (profileForm) {
                 profileForm.addEventListener('submit', saveEditableProfile);
+            }
+            const refreshNetworkButton = document.getElementById('refreshNetworkButton');
+            if (refreshNetworkButton) {
+                refreshNetworkButton.addEventListener('click', loadFriendNetwork);
+            }
+            const networkCard = document.querySelector('.network-card');
+            if (networkCard) {
+                networkCard.addEventListener('click', async (event) => {
+                    const actionButton = event.target.closest('[data-network-action]');
+                    if (!actionButton) {
+                        return;
+                    }
+
+                    actionButton.disabled = true;
+                    try {
+                        await handleNetworkAction(
+                            actionButton.dataset.networkAction,
+                            actionButton.dataset.requestId,
+                            actionButton.dataset.userId,
+                        );
+                    } finally {
+                        if (document.body.contains(actionButton)) {
+                            actionButton.disabled = false;
+                        }
+                    }
+                });
             }
             const refreshBtn = document.getElementById('refreshCvList');
             if (refreshBtn) {

@@ -126,6 +126,150 @@
             padding: 1.75rem;
             margin-bottom: 2rem;
         }
+        .network-card {
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        .network-card__header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .network-card__header h3 {
+            margin: 0 0 0.35rem;
+        }
+        .network-card__header p {
+            margin: 0;
+            color: var(--gray);
+            max-width: 60ch;
+        }
+        .network-refresh {
+            padding: 0.8rem 1.1rem !important;
+        }
+        .network-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .network-column {
+            padding: 1rem;
+            border-radius: 22px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(248, 250, 252, 0.9);
+        }
+        .network-column__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.9rem;
+        }
+        .network-column__header h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .network-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            min-height: 2rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+        .network-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .network-item {
+            display: grid;
+            gap: 0.85rem;
+            padding: 0.95rem;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            background: rgba(255, 255, 255, 0.96);
+        }
+        .network-item__identity {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+        .network-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary-color);
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .network-item__identity h5 {
+            margin: 0 0 0.2rem;
+            font-size: 0.95rem;
+        }
+        .network-item__identity p {
+            margin: 0;
+            color: var(--gray);
+            font-size: 0.86rem;
+        }
+        .network-item__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+        }
+        .network-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 2.35rem;
+            padding: 0.6rem 0.95rem;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 118, 110, 0.16);
+            background: rgba(255, 255, 255, 0.96);
+            color: var(--primary-color);
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+        .network-action:hover {
+            transform: translateY(-1px);
+            background: rgba(240, 253, 250, 0.9);
+            border-color: rgba(15, 118, 110, 0.28);
+        }
+        .network-action:disabled {
+            opacity: 0.6;
+            cursor: wait;
+            transform: none;
+        }
+        .network-action--primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, var(--primary-color), #0b5d57);
+            color: white;
+            box-shadow: 0 12px 24px rgba(15, 118, 110, 0.14);
+        }
+        .network-empty {
+            margin: 0;
+            color: var(--gray);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .network-status {
+            margin: 1rem 0 0;
+            color: var(--gray);
+            font-size: 0.92rem;
+            min-height: 1.25rem;
+        }
         .profile-form-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -254,6 +398,9 @@
             .results-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .network-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
@@ -275,6 +422,12 @@
             .profile-actions {
                 flex-direction: column;
                 align-items: stretch;
+            }
+            .network-card {
+                padding: 1.25rem;
+            }
+            .network-card__header {
+                flex-direction: column;
             }
             .profile-form-grid {
                 grid-template-columns: 1fr;

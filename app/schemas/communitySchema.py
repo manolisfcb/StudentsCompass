@@ -1,8 +1,18 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
+
+
+CommunityPostType = Literal[
+    "discussion",
+    "question",
+    "resource",
+    "win",
+    "accountability",
+    "introduction",
+]
 
 
 class CommunityCreate(BaseModel):
@@ -40,6 +50,7 @@ class CommunityMemberRead(BaseModel):
 class CommunityPostCreate(BaseModel):
     title: Optional[str] = None
     content: str
+    post_type: CommunityPostType = "discussion"
 
 
 class CommunityPostRead(BaseModel):
@@ -48,6 +59,7 @@ class CommunityPostRead(BaseModel):
     user_id: UUID
     title: Optional[str] = None
     content: str
+    post_type: CommunityPostType = "discussion"
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -60,6 +72,7 @@ class CommunityPostEnriched(BaseModel):
     user_id: UUID
     title: Optional[str] = None
     content: str
+    post_type: CommunityPostType = "discussion"
     created_at: datetime
     author_name: str
     like_count: int = 0
