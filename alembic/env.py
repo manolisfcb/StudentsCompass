@@ -24,6 +24,8 @@ from app.models.userStatsModel import UserStatsModel
 from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
 from app.models.communityModel import CommunityModel, CommunityMemberModel
 from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeModel, CommunityPostCommentModel
+from app.models.friendshipModel import FriendRequestModel, FriendshipModel
+from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel
 
 
 

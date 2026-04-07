@@ -16,6 +16,7 @@ class CommunityPostModel(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(200), nullable=True)
     content = Column(Text, nullable=False)
+    post_type = Column(String(32), nullable=False, default="discussion")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

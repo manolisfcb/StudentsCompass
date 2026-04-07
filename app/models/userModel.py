@@ -27,6 +27,40 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     community_posts = relationship("CommunityPostModel", back_populates="user", cascade="all, delete-orphan")
     community_post_likes = relationship("CommunityPostLikeModel", back_populates="user", cascade="all, delete-orphan")
     community_post_comments = relationship("CommunityPostCommentModel", back_populates="user", cascade="all, delete-orphan")
+    sent_friend_requests = relationship(
+        "FriendRequestModel",
+        foreign_keys="FriendRequestModel.sender_id",
+        back_populates="sender",
+        cascade="all, delete-orphan",
+    )
+    received_friend_requests = relationship(
+        "FriendRequestModel",
+        foreign_keys="FriendRequestModel.receiver_id",
+        back_populates="receiver",
+        cascade="all, delete-orphan",
+    )
+    friendships = relationship(
+        "FriendshipModel",
+        foreign_keys="FriendshipModel.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    friend_of = relationship(
+        "FriendshipModel",
+        foreign_keys="FriendshipModel.friend_id",
+        back_populates="friend",
+        cascade="all, delete-orphan",
+    )
+    conversation_participants = relationship(
+        "ConversationParticipantModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    sent_messages = relationship(
+        "MessageModel",
+        back_populates="sender",
+        cascade="all, delete-orphan",
+    )
     questionnaires = relationship("UserQuestionnaire", back_populates="user")
     resumes = relationship("ResumeModel", back_populates="user")
     job_analyses = relationship("JobAnalysisModel", back_populates="user", lazy="dynamic")

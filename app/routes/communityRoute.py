@@ -224,7 +224,7 @@ async def list_community_posts_enriched(
     community_id: UUID,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
-):
+) -> list[CommunityPostEnriched]:
     service = CommunityService(session)
     community = await service.get_community_by_id(community_id)
     if not community:
@@ -239,7 +239,7 @@ async def list_comments_enriched(
     post_id: UUID,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
-):
+) -> list[CommunityPostCommentEnriched]:
     service = CommunityService(session)
     post = await service.get_post_by_id(post_id)
     if not post:
