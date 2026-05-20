@@ -2,13 +2,24 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8080
 
-RUN pip install --no-cache-dir uv \
-    && uv pip install --system -r pyproject.toml
+COPY requirements.txt ./
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
 
-COPY . .
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
 
-ENV PORT=8080
+RUN addgroup --system app \
+    && adduser --system --ingroup app --home /app app
 
-CMD ["sh", "-c", "uvicorn app.app:app --host 0.0.0.0 --port ${PORT}"]
+USER app
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "exec uvicorn app.app:app --host 0.0.0.0 --port ${PORT}"]
