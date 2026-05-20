@@ -41,38 +41,43 @@ router = APIRouter()
 templates = configure_template_helpers(Jinja2Templates(directory="app/templates"))
 RESOURCE_DETAIL_ACCESS_ENABLED = True
 
+
+def render_template(request: Request, name: str, context: dict | None = None):
+    return templates.TemplateResponse(request, name, context or {})
+
+
 @router.get("/")
 async def root(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+    return render_template(request, "home.html")
 
 
 @router.get("/home")
 async def home(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+    return render_template(request, "home.html")
 
 
 @router.get("/about")
 async def about(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request})
+    return render_template(request, "about.html")
 
 
 @router.get("/login")
 async def login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return render_template(request, "login.html")
 
 @router.get("/register")
 async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return render_template(request, "register.html")
 
 @router.get("/api/v1/auth/register")
 async def register(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return render_template(request, "register.html")
 
 @router.get("/dashboard")
 async def dashboard(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return render_template(request, "dashboard.html")
 
 @router.get("/company-dashboard")
 async def company_dashboard(
@@ -82,10 +87,10 @@ async def company_dashboard(
 ):
     if company is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "company-dashboard.html",
         {
-            "request": request,
             "company_recruiter": company_recruiter,
         },
     )
@@ -99,10 +104,10 @@ async def company_candidates_page(
 ):
     if company is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "company-candidates.html",
         {
-            "request": request,
             "company_recruiter": company_recruiter,
         },
     )
@@ -118,10 +123,10 @@ async def company_team_page(
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     if company_recruiter.role != "owner":
         return RedirectResponse(url="/company-dashboard", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "company-team.html",
         {
-            "request": request,
             "company_recruiter": company_recruiter,
         },
     )
@@ -130,13 +135,13 @@ async def company_team_page(
 async def questionnaire(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("questionnaire.html", {"request": request})
+    return render_template(request, "questionnaire.html")
 
 @router.get("/user-profile")
 async def user_profile(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("userProfile.html", {"request": request})
+    return render_template(request, "userProfile.html")
 
 
 @router.get("/resources")
@@ -149,10 +154,10 @@ async def resources(
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     service = ResourceService(session)
     resources = await service.list_published_resources()
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "resources.html",
         {
-            "request": request,
             "resources": resources,
             "resource_detail_access_enabled": RESOURCE_DETAIL_ACCESS_ENABLED,
             "mandatory_course_titles": list(ResourceService.MANDATORY_RESOURCE_TITLES),
@@ -195,10 +200,10 @@ async def resource_detail(
 
     payload["selected_lesson_id"] = selected_lesson_id
 
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "resource_detail.html",
         {
-            "request": request,
             "resource": resource,
             "resource_payload_json": json.dumps(payload),
             "selected_lesson_id": selected_lesson_id,
@@ -239,10 +244,10 @@ async def roadmaps_page(
         roadmaps = []
         schema_not_ready = True
 
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "roadmaps_list.html",
         {
-            "request": request,
             "saved_roadmaps": saved_roadmaps,
             "roadmaps": roadmaps,
             "search": search or "",
@@ -310,10 +315,10 @@ async def roadmap_detail_page(
             if first_item_id is None:
                 first_item_id = key
 
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "roadmap_detail.html",
         {
-            "request": request,
             "roadmap": detail,
             "grouped_tasks": grouped_tasks,
             "detail_items_json": json.dumps(detail_items, default=str),
@@ -326,38 +331,38 @@ async def roadmap_detail_page(
 async def community(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("community.html", {"request": request})
+    return render_template(request, "community.html")
 
 
 @router.get("/community/{community_id}")
 async def community_feed(request: Request, community_id: str, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("community_feed.html", {"request": request})
+    return render_template(request, "community_feed.html")
 
 
 @router.get("/jobs")
 async def jobs_board(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("jobs.html", {"request": request, "user": user})
+    return render_template(request, "jobs.html", {"user": user})
 
 
 @router.get("/admin/login")
 async def admin_login_page(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user and user.is_superuser:
         return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("admin_login.html", {"request": request, "page_title": "Admin Login"})
+    return render_template(request, "admin_login.html", {"page_title": "Admin Login"})
 
 
 @router.get("/admin")
 async def admin_panel_page(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
     if user is None or not user.is_superuser:
         return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "admin.html",
         {
-            "request": request,
             "page_title": "Admin Panel",
             "body_class": "admin-body",
         },
