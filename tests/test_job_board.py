@@ -150,7 +150,7 @@ async def test_job_search_returns_students_compass_first_and_then_linkedin(
             )
         ]
 
-    monkeypatch.setattr("app.routes.jobRoute.fetch_linkedin_jobs", fake_linkedin_jobs)
+    monkeypatch.setattr("app.services.jobSearchService.fetch_linkedin_jobs", fake_linkedin_jobs)
 
     response = await client.post(
         "/api/v1/jobs/search",
@@ -191,7 +191,7 @@ async def test_job_search_falls_back_to_linkedin_when_no_internal_matches(
             )
         ]
 
-    monkeypatch.setattr("app.routes.jobRoute.fetch_linkedin_jobs", fake_linkedin_jobs)
+    monkeypatch.setattr("app.services.jobSearchService.fetch_linkedin_jobs", fake_linkedin_jobs)
 
     response = await client.post(
         "/api/v1/jobs/search",

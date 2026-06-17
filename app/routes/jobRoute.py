@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request,
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.JobsScraper.linkedin_scraper import fetch_linkedin_jobs
 from app.db import get_session
 from app.services.userService import current_active_user
 from app.models.userModel import User
@@ -25,6 +24,7 @@ from app.services.companyService import current_active_company
 from app.services.companyService import current_company_job_manager_recruiter
 from app.services.jobPostingService import JobPostingService
 from app.services.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAILURE_MESSAGE
+from app.services.jobSearchService import JobSearchQuery, JobSearchService
 from app.models.companyRecruiterModel import CompanyRecruiter
 
 LOGGER = logging.getLogger(__name__)
@@ -100,34 +100,6 @@ class JobSearchResultsResponse(BaseModel):
     linkedin: List[JobResponse]
 
 
-def _serialize_internal_job(job: JobPosting) -> JobResponse:
-    company = job.company
-    return JobResponse(
-        id=str(job.id),
-        company_id=str(job.company_id),
-        title=job.title,
-        company=company.company_name if company else "Students Compass Company",
-        location=job.location or (company.location if company else "") or "Location not specified",
-        url=job.application_url,
-        listed_at=job.created_at.isoformat() if job.created_at else None,
-        description=job.description,
-        requirements=job.requirements,
-        responsibilities=job.responsibilities,
-        job_type=job.job_type,
-        workplace_type=job.workplace_type,
-        seniority_level=job.seniority_level,
-        salary_range=job.salary_range,
-        benefits=job.benefits,
-        listed_context=job.listed_context,
-        source_context=job.source_context,
-        company_description=company.description if company else None,
-        company_website=company.website if company else None,
-        company_location=company.location if company else None,
-        source="students_compass",
-        source_label="Students Compass",
-    )
-
-
 @router.get("/jobs/board", response_model=List[JobBoardPostingRead])
 async def list_job_board_postings(
     keywords: Optional[str] = None,
@@ -182,43 +154,13 @@ async def search_jobs(
     """Search Students Compass first, then append LinkedIn results after internal matches."""
     try:
         del user
-        service = JobPostingService(session)
-        internal_jobs = await service.list_public_job_postings(
-            keywords=request.keywords,
-            location=request.location,
-            limit=max(1, min(request.limit, 100)),
-        )
-        internal_payload = [_serialize_internal_job(job) for job in internal_jobs]
-
-        LOGGER.debug(
-            f"Searching LinkedIn after Students Compass lookup: keywords={request.keywords}, "
-            f"location={request.location}, limit={request.limit}, remote={request.remote}"
-        )
-        
-        jobs = fetch_linkedin_jobs(
-            keywords=request.keywords,
-            location=request.location,
-            limit=request.limit,
-            remote=request.remote,
-            throttle_seconds=0.5,
-        )
-        
-        linkedin_payload = [
-            JobResponse(
-                title=j.title,
-                company=j.company,
-                location=j.location,
-                url=j.url,
-                listed_at=j.listed_at,
-                company_location=j.location,
-                source="linkedin",
-                source_label="LinkedIn",
+        return await JobSearchService(session).search(
+            JobSearchQuery(
+                keywords=request.keywords,
+                location=request.location,
+                limit=request.limit,
+                remote=request.remote,
             )
-            for j in jobs
-        ]
-        return JobSearchResultsResponse(
-            students_compass=internal_payload,
-            linkedin=linkedin_payload,
         )
     except Exception as e:
         LOGGER.exception("Job search failed")
