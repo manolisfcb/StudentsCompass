@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import json
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -24,6 +25,8 @@ from app.services.userService import current_active_user
 
 router = APIRouter()
 
+T = TypeVar("T")
+
 _ROADMAP_TABLES = (
     "roadmaps",
     "user_roadmaps",
@@ -44,6 +47,18 @@ def _is_missing_roadmap_tables_error(exc: Exception) -> bool:
     return any(table_name in message for table_name in _ROADMAP_TABLES)
 
 
+async def _run_roadmap_operation(operation: Callable[[], Awaitable[T]]) -> T:
+    try:
+        return await operation()
+    except ProgrammingError as exc:
+        if _is_missing_roadmap_tables_error(exc):
+            raise HTTPException(
+                status_code=503,
+                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
+            ) from exc
+        raise
+
+
 # ── Roadmaps ──────────────────────────────────────────────────────────────────
 
 @router.get("/roadmaps", response_model=list[RoadmapListItemRead])
@@ -54,15 +69,9 @@ async def list_roadmaps(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        return await service.list_public_roadmaps(user_id=current_user.id, search=search, sort=sort)
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    return await _run_roadmap_operation(
+        lambda: service.list_public_roadmaps(user_id=current_user.id, search=search, sort=sort)
+    )
 
 
 @router.get("/me/roadmaps", response_model=list[SavedRoadmapRead])
@@ -71,15 +80,7 @@ async def get_my_roadmaps(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        return await service.list_saved_roadmaps(user_id=current_user.id)
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    return await _run_roadmap_operation(lambda: service.list_saved_roadmaps(user_id=current_user.id))
 
 
 @router.get("/roadmaps/{slug}", response_model=RoadmapDetailRead)
@@ -89,15 +90,9 @@ async def get_roadmap(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        roadmap = await service.get_roadmap_detail(user_id=current_user.id, slug=slug)
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    roadmap = await _run_roadmap_operation(
+        lambda: service.get_roadmap_detail(user_id=current_user.id, slug=slug)
+    )
     if not roadmap:
         raise HTTPException(status_code=404, detail="Roadmap not found")
     return roadmap
@@ -110,15 +105,7 @@ async def save_roadmap(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        result = await service.save_roadmap(user_id=current_user.id, slug=slug)
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    result = await _run_roadmap_operation(lambda: service.save_roadmap(user_id=current_user.id, slug=slug))
     if not result:
         raise HTTPException(status_code=404, detail="Roadmap not found")
     return result
@@ -131,15 +118,7 @@ async def unsave_roadmap(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        result = await service.unsave_roadmap(user_id=current_user.id, slug=slug)
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    result = await _run_roadmap_operation(lambda: service.unsave_roadmap(user_id=current_user.id, slug=slug))
     if not result:
         raise HTTPException(status_code=404, detail="Roadmap not found")
     return result
@@ -155,19 +134,13 @@ async def patch_task_progress(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        response = await service.update_task_progress(
+    response = await _run_roadmap_operation(
+        lambda: service.update_task_progress(
             user_id=current_user.id,
             task_id=task_id,
             status=payload.status,
         )
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    )
     if not response:
         raise HTTPException(status_code=404, detail="Task not found")
     return response
@@ -183,19 +156,13 @@ async def submit_project(
     current_user: User = Depends(current_active_user),
 ):
     service = RoadmapService(session)
-    try:
-        result = await service.submit_project(
+    result = await _run_roadmap_operation(
+        lambda: service.submit_project(
             user_id=current_user.id,
             project_id=project_id,
             payload=payload,
         )
-    except ProgrammingError as exc:
-        if _is_missing_roadmap_tables_error(exc):
-            raise HTTPException(
-                status_code=503,
-                detail="Roadmaps schema is not ready. Run: alembic upgrade head",
-            ) from exc
-        raise
+    )
     if not result:
         raise HTTPException(status_code=404, detail="Project not found")
     return result
