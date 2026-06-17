@@ -5,9 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.services.userService import current_active_user
 from app.models.userModel import User
-from app.models.resumeModel import ResumeModel
-from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
-from sqlalchemy import select
 import logging
 from uuid import UUID
 from collections import deque
@@ -297,29 +294,13 @@ async def start_cv_analysis(
 ):
     """Start CV analysis job - returns immediately with job_id"""
     try:
-        # Check if user has a CV
-        result = await session.execute(
-            select(ResumeModel)
-            .where(ResumeModel.user_id == user.id)
-            .order_by(ResumeModel.created_at.desc())
-            .limit(1)
-        )
-        resume = result.scalar_one_or_none()
+        analysis_service = CVAnalysisService(session)
+        resume = await analysis_service.get_latest_resume(user.id)
         
         if not resume:
             raise HTTPException(status_code=404, detail="No CV found. Please upload your CV first.")
         
-        # If this resume has already been analyzed, return cached job directly
-        result = await session.execute(
-            select(JobAnalysisModel)
-            .where(JobAnalysisModel.user_id == user.id)
-            .where(JobAnalysisModel.resume_id == resume.id)
-            .where(JobAnalysisModel.status == JobStatus.COMPLETED)
-            .where(JobAnalysisModel.keywords.is_not(None))
-            .order_by(JobAnalysisModel.completed_at.desc())
-            .limit(1)
-        )
-        cached_job = result.scalar_one_or_none()
+        cached_job = await analysis_service.get_cached_analysis(user_id=user.id, resume_id=resume.id)
         if cached_job and cached_job.keywords:
             return JobInitResponse(
                 job_id=str(cached_job.id),
@@ -327,16 +308,7 @@ async def start_cv_analysis(
                 message="CV already analyzed. Using cached keywords."
             )
 
-        # If there's already a running job for this same resume, reuse it
-        result = await session.execute(
-            select(JobAnalysisModel)
-            .where(JobAnalysisModel.user_id == user.id)
-            .where(JobAnalysisModel.resume_id == resume.id)
-            .where(JobAnalysisModel.status.in_([JobStatus.PENDING, JobStatus.PROCESSING]))
-            .order_by(JobAnalysisModel.created_at.desc())
-            .limit(1)
-        )
-        running_job = result.scalar_one_or_none()
+        running_job = await analysis_service.get_running_analysis(user_id=user.id, resume_id=resume.id)
         if running_job:
             return JobInitResponse(
                 job_id=str(running_job.id),
@@ -344,18 +316,10 @@ async def start_cv_analysis(
                 message="CV analysis already in progress for this resume."
             )
 
-        await CVAnalysisService(session).ensure_daily_limit(user.id)
+        await analysis_service.ensure_daily_limit(user.id)
         _check_llm_rate_limit(request)
 
-        # Create new job
-        job = JobAnalysisModel(
-            user_id=user.id,
-            resume_id=resume.id,
-            status=JobStatus.PENDING
-        )
-        session.add(job)
-        await session.commit()
-        await session.refresh(job)
+        job = await analysis_service.create_pending_analysis(user_id=user.id, resume_id=resume.id)
         
         LOGGER.info(f"Created job {job.id} for user {user.id}")
         
@@ -384,12 +348,7 @@ async def get_job_status(
 ):
     """Get status of CV analysis job (for polling)"""
     try:
-        result = await session.execute(
-            select(JobAnalysisModel)
-            .where(JobAnalysisModel.id == job_id)
-            .where(JobAnalysisModel.user_id == user.id)
-        )
-        job = result.scalar_one_or_none()
+        job = await CVAnalysisService(session).get_user_job(job_id=job_id, user_id=user.id)
         
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
@@ -418,66 +377,12 @@ async def get_job_keywords(
 ):
     """Check if user has CV (for initial check)"""
     try:
-        # Check if user has a CV
-        result = await session.execute(
-            select(ResumeModel)
-            .where(ResumeModel.user_id == user.id)
-            .order_by(ResumeModel.created_at.desc())
-            .limit(1)
-        )
-        resume = result.scalar_one_or_none()
-        
-        if not resume:
-            # No CV - return user name as fallback
-            keywords = ""
-            if user.first_name:
-                keywords += user.first_name
-            if user.last_name:
-                if keywords:
-                    keywords += " "
-                keywords += user.last_name
-            return KeywordsResponse(
-                keywords=keywords or "developer",
-                has_cv=False,
-            )
-        
-        # Check if there's a completed job for this exact resume
-        result = await session.execute(
-            select(JobAnalysisModel)
-            .where(JobAnalysisModel.user_id == user.id)
-            .where(JobAnalysisModel.resume_id == resume.id)
-            .where(JobAnalysisModel.status == JobStatus.COMPLETED)
-            .order_by(JobAnalysisModel.completed_at.desc())
-            .limit(1)
-        )
-        last_job = result.scalar_one_or_none()
-
-        # Backward compatibility: if old rows didn't store resume_id, fallback to latest completed
-        if not last_job:
-            result = await session.execute(
-                select(JobAnalysisModel)
-                .where(JobAnalysisModel.user_id == user.id)
-                .where(JobAnalysisModel.status == JobStatus.COMPLETED)
-                .order_by(JobAnalysisModel.completed_at.desc())
-                .limit(1)
-            )
-            last_job = result.scalar_one_or_none()
-        
-        if last_job and last_job.keywords:
-            # Return cached keywords from last successful job
-            return KeywordsResponse(
-                keywords=last_job.keywords,
-                has_cv=True,
-                cv_filename=resume.original_filename,
-                summary=resume.ai_summary or last_job.summary,
-            )
-        
-        # Has CV but no analysis yet
         return KeywordsResponse(
-            keywords="",
-            has_cv=True,
-            cv_filename=resume.original_filename,
-            summary=resume.ai_summary,
+            **await CVAnalysisService(session).get_keyword_snapshot(
+                user_id=user.id,
+                first_name=user.first_name,
+                last_name=user.last_name,
+            )
         )
         
     except Exception as e:

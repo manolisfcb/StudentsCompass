@@ -9,6 +9,7 @@ from fastapi_users.password import PasswordHelper
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
 from app.models.aiUsageModel import AIUsageEventModel
+from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.jobPostingModel import JobPosting
 from app.models.resumeModel import ResumeModel
 from app.services.aiUsageService import AIFeature
@@ -52,6 +53,56 @@ async def test_cv_keyword_analysis_respects_daily_ai_usage_limit(
 
     assert response.status_code == 429
     assert "daily limit" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_get_job_keywords_without_cv_returns_user_name(
+    client: AsyncClient,
+    auth_headers: dict,
+):
+    response = await client.get("/api/v1/jobs/keywords", headers=auth_headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["has_cv"] is False
+    assert data["keywords"] == "Test User"
+
+
+@pytest.mark.asyncio
+async def test_get_job_keywords_returns_cached_resume_analysis(
+    client: AsyncClient,
+    auth_headers: dict,
+    test_user,
+    db_session: AsyncSession,
+):
+    resume = ResumeModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        view_url="https://example.com/resume.pdf",
+        storage_file_id="resumes/user.pdf",
+        original_filename="resume.pdf",
+        folder_id="test-bucket",
+        ai_summary="Stored resume summary.",
+    )
+    completed_job = JobAnalysisModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        resume_id=resume.id,
+        status=JobStatus.COMPLETED,
+        keywords="Python, SQL",
+        summary="Cached summary.",
+    )
+    db_session.add_all([resume, completed_job])
+    await db_session.commit()
+
+    response = await client.get("/api/v1/jobs/keywords", headers=auth_headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["has_cv"] is True
+    assert data["keywords"] == "Python, SQL"
+    assert data["cv_filename"] == "resume.pdf"
+    assert data["summary"] == "Stored resume summary."
 
 
 @pytest.mark.asyncio

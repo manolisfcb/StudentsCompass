@@ -81,6 +81,95 @@ class CVAnalysisService:
             reference_id=job_id,
         )
 
+    async def get_latest_resume(self, user_id: UUID) -> ResumeModel | None:
+        return await self.session.scalar(
+            select(ResumeModel)
+            .where(ResumeModel.user_id == user_id)
+            .order_by(ResumeModel.created_at.desc())
+            .limit(1)
+        )
+
+    async def get_cached_analysis(self, *, user_id: UUID, resume_id: UUID) -> JobAnalysisModel | None:
+        return await self.session.scalar(
+            select(JobAnalysisModel)
+            .where(JobAnalysisModel.user_id == user_id)
+            .where(JobAnalysisModel.resume_id == resume_id)
+            .where(JobAnalysisModel.status == JobStatus.COMPLETED)
+            .where(JobAnalysisModel.keywords.is_not(None))
+            .order_by(JobAnalysisModel.completed_at.desc())
+            .limit(1)
+        )
+
+    async def get_running_analysis(self, *, user_id: UUID, resume_id: UUID) -> JobAnalysisModel | None:
+        return await self.session.scalar(
+            select(JobAnalysisModel)
+            .where(JobAnalysisModel.user_id == user_id)
+            .where(JobAnalysisModel.resume_id == resume_id)
+            .where(JobAnalysisModel.status.in_([JobStatus.PENDING, JobStatus.PROCESSING]))
+            .order_by(JobAnalysisModel.created_at.desc())
+            .limit(1)
+        )
+
+    async def create_pending_analysis(self, *, user_id: UUID, resume_id: UUID) -> JobAnalysisModel:
+        job = JobAnalysisModel(
+            user_id=user_id,
+            resume_id=resume_id,
+            status=JobStatus.PENDING,
+        )
+        self.session.add(job)
+        await self.session.commit()
+        await self.session.refresh(job)
+        return job
+
+    async def get_user_job(self, *, job_id: UUID, user_id: UUID) -> JobAnalysisModel | None:
+        return await self.session.scalar(
+            select(JobAnalysisModel)
+            .where(JobAnalysisModel.id == job_id)
+            .where(JobAnalysisModel.user_id == user_id)
+        )
+
+    async def get_keyword_snapshot(
+        self,
+        *,
+        user_id: UUID,
+        first_name: str | None,
+        last_name: str | None,
+    ) -> dict:
+        resume = await self.get_latest_resume(user_id)
+        if not resume:
+            fallback_name = " ".join(part for part in (first_name, last_name) if part)
+            return {
+                "keywords": fallback_name or "developer",
+                "has_cv": False,
+            }
+
+        last_job = await self.get_cached_analysis(user_id=user_id, resume_id=resume.id)
+
+        # Backward compatibility: if old rows didn't store resume_id, fallback to latest completed.
+        if not last_job:
+            last_job = await self.session.scalar(
+                select(JobAnalysisModel)
+                .where(JobAnalysisModel.user_id == user_id)
+                .where(JobAnalysisModel.status == JobStatus.COMPLETED)
+                .order_by(JobAnalysisModel.completed_at.desc())
+                .limit(1)
+            )
+
+        if last_job and last_job.keywords:
+            return {
+                "keywords": last_job.keywords,
+                "has_cv": True,
+                "cv_filename": resume.original_filename,
+                "summary": resume.ai_summary or last_job.summary,
+            }
+
+        return {
+            "keywords": "",
+            "has_cv": True,
+            "cv_filename": resume.original_filename,
+            "summary": resume.ai_summary,
+        }
+
     async def process_job(self, *, job_id: UUID, user_id: UUID, resume_id: UUID) -> None:
         try:
             job = await self._get_job(job_id)
