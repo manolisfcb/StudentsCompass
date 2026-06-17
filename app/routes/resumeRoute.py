@@ -41,7 +41,7 @@ async def upload_resume(
         LOGGER.debug("Initializing ResumeService")
         resume_service = ResumeService(session)
         file_bytes = await cv.read()
-        file_info = await resume_service.upload_pdf_to_s3(file_bytes, cv.filename, cv.content_type)
+        file_info = await resume_service.upload_resume_file(file_bytes, cv.filename, cv.content_type)
         LOGGER.debug(f"File uploaded to S3: {file_info}")
         
         # Save resume info to database

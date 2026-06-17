@@ -3,17 +3,17 @@ from sqlalchemy import select
 from app.schemas.resumeSchema import CreateResumeSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from app.services.s3Service import S3Service
 import logging
 from app.models.resumeEmbeddingsModel import ResumeEmbedding 
 from datetime import datetime
+from app.services.storageService import StorageService, get_storage_service
 
 LOGGER = logging.getLogger(__name__)
 
 class ResumeService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, storage_service: StorageService | None = None):
         self.session = session
-        self.s3_service = S3Service()
+        self.storage_service = storage_service or get_storage_service()
         
     async def create_resume(self, resume_create: CreateResumeSchema) -> ResumeModel:
         resume = ResumeModel(
@@ -78,14 +78,18 @@ class ResumeService:
         await self.session.refresh(resume)
         return resume
     
-    async def upload_pdf_to_s3(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
-        """Upload PDF file to S3 bucket"""
+    async def _upload_resume_file_to_storage(
+        self,
+        file_bytes: bytes,
+        file_name: str,
+        mime_type: str = "application/pdf",
+    ) -> dict:
+        """Upload resume file to the configured storage provider."""
         # Generate unique filename with timestamp
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         unique_filename = f"{timestamp}_{file_name}"
         
-        # Upload to S3
-        upload_result = await self.s3_service.upload_file(file_bytes, unique_filename, mime_type)
+        upload_result = await self.storage_service.upload_file(file_bytes, unique_filename, mime_type)
         
         return {
             "file_key": upload_result["file_key"],
@@ -93,21 +97,36 @@ class ResumeService:
             "original_filename": file_name
         }
 
+    async def upload_resume_file(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
+        """Upload resume file using the backward-compatible storage hook."""
+        return await self.upload_pdf_to_s3(file_bytes, file_name, mime_type)
+
+    async def upload_pdf_to_s3(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
+        """Backward-compatible alias for existing callers."""
+        return await self._upload_resume_file_to_storage(file_bytes, file_name, mime_type)
+
+    async def _download_resume_file_from_storage(self, file_key: str) -> bytes:
+        """Download resume file from the configured storage provider."""
+        return await self.storage_service.download_file(file_key)
+
+    async def download_resume_file(self, file_key: str) -> bytes:
+        """Download resume file using the backward-compatible storage hook."""
+        return await self.download_file_from_s3(file_key)
+
     async def download_file_from_s3(self, file_key: str) -> bytes:
-        """Download file from S3"""
-        return await self.s3_service.download_file(file_key)
+        """Backward-compatible alias for existing callers."""
+        return await self._download_resume_file_from_storage(file_key)
 
     async def delete_resume(self, resume_id: UUID, user_id: UUID) -> bool:
         resume = await self.session.get(ResumeModel, resume_id)
         if not resume or resume.user_id != user_id:
             return False
 
-        # Try deleting from S3, but don't fail DB deletion if file missing
+        # Try deleting from storage, but don't fail DB deletion if file missing
         try:
-            await self.s3_service.delete_file(resume.storage_file_id)
+            await self.storage_service.delete_file(resume.storage_file_id)
         except Exception as e:
-            # Log and continue (e.g., file already removed)
-            LOGGER.warning("S3 delete failed for %s: %s", resume.storage_file_id, e)
+            LOGGER.warning("Storage delete failed for %s: %s", resume.storage_file_id, e)
 
         await self.session.delete(resume)
         await self.session.commit()

@@ -126,7 +126,7 @@ class ResumeCourseAuditService:
         filename: str,
         content_type: str,
     ) -> tuple[dict, ResumeCourseEvaluationModel]:
-        file_info = await self.resume_service.upload_pdf_to_s3(file_bytes, filename, content_type)
+        file_info = await self.resume_service.upload_resume_file(file_bytes, filename, content_type)
         resume = await self.resume_service.create_resume(
             CreateResumeSchema(
                 view_url=file_info["view_url"],

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request,
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.JobsScraper.scrapper_propio import fetch_linkedin_jobs
+from app.core.JobsScraper.linkedin_scraper import fetch_linkedin_jobs
 from app.db import get_session
 from app.services.userService import current_active_user
 from app.models.userModel import User
@@ -459,7 +459,7 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, sess
             # Download CV from S3
             LOGGER.info(f"Downloading CV for job {job_id}: {resume.storage_file_id}")
             resume_service = ResumeService(session)
-            file_content = await resume_service.download_file_from_s3(resume.storage_file_id)
+            file_content = await resume_service.download_resume_file(resume.storage_file_id)
 
             LOGGER.info(f"Extracting text from CV for job {job_id}")
             resume_text = await extract_resume_text_from_bytes(
