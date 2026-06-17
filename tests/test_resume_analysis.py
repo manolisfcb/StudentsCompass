@@ -35,7 +35,7 @@ async def test_process_cv_analysis_persists_summary_and_resume_phone(
             resume_key_skills=["Python", "FastAPI"],
         )
 
-    monkeypatch.setattr("app.services.resumeService.ResumeService.download_file_from_s3", fake_download)
+    monkeypatch.setattr("app.services.resumeService.ResumeService.download_resume_file", fake_download)
     monkeypatch.setattr("app.routes.jobRoute.extract_resume_text_from_bytes", fake_extract_resume_text_from_bytes)
     monkeypatch.setattr("app.routes.jobRoute.ask_llm_model", fake_ask_llm_model)
 

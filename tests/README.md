@@ -60,13 +60,12 @@ open htmlcov/index.html
 - `test_user`: Usuario de prueba pre-creado
 - `test_company`: Empresa de prueba pre-creada
 - `auth_headers`: Headers de autenticación para test_user
-- `mock_s3_service`: Mock del servicio S3 (evita llamadas reales a AWS)
 - `mock_genai`: Mock de Google GenAI (evita llamadas reales a la API)
 
 ## Convenciones
 
 - Los tests usan SQLite en memoria (rápido y aislado)
-- Los servicios externos (S3, GenAI) están mockeados
+- Los servicios externos se mockean dentro de cada test cuando aplica
 - Cada test corre con una base de datos limpia
 - Los nombres de tests deben ser descriptivos: `test_<acción>_<resultado>`
 

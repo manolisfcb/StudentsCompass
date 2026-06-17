@@ -138,24 +138,24 @@ class ResumeService:
         }
 
     async def upload_resume_file(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
-        """Upload resume file using the backward-compatible storage hook."""
-        return await self.upload_pdf_to_s3(file_bytes, file_name, mime_type)
+        """Upload resume file using the configured storage provider."""
+        return await self._upload_resume_file_to_storage(file_bytes, file_name, mime_type)
 
     async def upload_pdf_to_s3(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
         """Backward-compatible alias for existing callers."""
-        return await self._upload_resume_file_to_storage(file_bytes, file_name, mime_type)
+        return await self.upload_resume_file(file_bytes, file_name, mime_type)
 
     async def _download_resume_file_from_storage(self, file_key: str) -> bytes:
         """Download resume file from the configured storage provider."""
         return await self.storage_service.download_file(file_key)
 
     async def download_resume_file(self, file_key: str) -> bytes:
-        """Download resume file using the backward-compatible storage hook."""
-        return await self.download_file_from_s3(file_key)
+        """Download resume file using the configured storage provider."""
+        return await self._download_resume_file_from_storage(file_key)
 
     async def download_file_from_s3(self, file_key: str) -> bytes:
         """Backward-compatible alias for existing callers."""
-        return await self._download_resume_file_from_storage(file_key)
+        return await self.download_resume_file(file_key)
 
     async def delete_resume(self, resume_id: UUID, user_id: UUID) -> bool:
         resume = await self.session.get(ResumeModel, resume_id)

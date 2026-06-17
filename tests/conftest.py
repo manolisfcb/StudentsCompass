@@ -227,27 +227,6 @@ async def company_auth_headers(client: AsyncClient, test_company_recruiter: Comp
 
 
 @pytest.fixture
-def mock_s3_service(monkeypatch):
-    """Mock S3 service to avoid actual AWS calls during tests."""
-    class MockS3Service:
-        async def upload_file(self, file_bytes: bytes, filename: str, mime_type: str):
-            return {
-                "file_key": f"test/{filename}",
-                "file_url": f"https://test-bucket.s3.amazonaws.com/test/{filename}"
-            }
-        
-        async def download_file(self, file_key: str):
-            return b"Mock PDF content"
-        
-        async def delete_file(self, file_key: str):
-            return True
-    
-    from app.services import s3Service
-    monkeypatch.setattr(s3Service, "S3Service", MockS3Service)
-    return MockS3Service()
-
-
-@pytest.fixture
 def mock_genai(monkeypatch):
     """Mock Google GenAI to avoid actual API calls during tests."""
     class MockGenAI:

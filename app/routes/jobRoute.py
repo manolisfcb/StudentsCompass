@@ -456,7 +456,7 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, sess
                 LOGGER.warning(f"No CV found for user {user_id} with resume_id {resume_id}")
                 return
             
-            # Download CV from S3
+            # Download CV from the configured storage provider.
             LOGGER.info(f"Downloading CV for job {job_id}: {resume.storage_file_id}")
             resume_service = ResumeService(session)
             file_content = await resume_service.download_resume_file(resume.storage_file_id)
