@@ -100,7 +100,7 @@ async def get_course_audit_attempts(
 ):
     audit_service = ResumeCourseAuditService(session)
     attempts_today = await audit_service.get_daily_attempts(user.id)
-    daily_limit = audit_service.DAILY_LIMIT
+    daily_limit = await audit_service.get_daily_limit(user.id)
     return ResumeCourseAuditAttemptsRead(
         attempts_today=attempts_today,
         daily_limit=daily_limit,

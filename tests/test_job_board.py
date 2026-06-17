@@ -8,7 +8,10 @@ from fastapi_users.password import PasswordHelper
 
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
+from app.models.aiUsageModel import AIUsageEventModel
 from app.models.jobPostingModel import JobPosting
+from app.models.resumeModel import ResumeModel
+from app.services.aiUsageService import AIFeature
 
 
 class DummyLinkedInJob:
@@ -18,6 +21,37 @@ class DummyLinkedInJob:
         self.location = location
         self.url = url
         self.listed_at = listed_at
+
+
+@pytest.mark.asyncio
+async def test_cv_keyword_analysis_respects_daily_ai_usage_limit(
+    client: AsyncClient,
+    auth_headers: dict,
+    test_user,
+    db_session: AsyncSession,
+):
+    resume = ResumeModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        view_url="https://example.com/resume.pdf",
+        storage_file_id="resumes/user.pdf",
+        original_filename="resume.pdf",
+        folder_id="test-bucket",
+    )
+    db_session.add(resume)
+    db_session.add_all(
+        [
+            AIUsageEventModel(user_id=test_user.id, feature=AIFeature.CV_JOB_SEARCH),
+            AIUsageEventModel(user_id=test_user.id, feature=AIFeature.CV_JOB_SEARCH),
+            AIUsageEventModel(user_id=test_user.id, feature=AIFeature.CV_JOB_SEARCH),
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.post("/api/v1/jobs/keywords/analyze", headers=auth_headers)
+
+    assert response.status_code == 429
+    assert "daily limit" in response.json()["detail"].lower()
 
 
 @pytest.mark.asyncio

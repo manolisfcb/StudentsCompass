@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ResumeAnalizer.resume_audit_llm import (
@@ -23,12 +22,11 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationStatus,
 )
 from app.schemas.resumeSchema import CreateResumeSchema
+from app.services.aiUsageService import AIFeature, AIUsageService
 from app.services.resumeService import ResumeService
 
 
 class ResumeCourseAuditService:
-    DAILY_LIMIT = 3
-
     def __init__(
         self,
         session: AsyncSession,
@@ -37,51 +35,28 @@ class ResumeCourseAuditService:
     ) -> None:
         self.session = session
         self.resume_service = ResumeService(session)
+        self.ai_usage_service = AIUsageService(session)
         self.evaluator = evaluator or GeminiResumeAuditEvaluator()
 
-    @staticmethod
-    def _today_utc_bounds() -> tuple[datetime, datetime]:
-        now = datetime.utcnow()
-        start = datetime(now.year, now.month, now.day)
-        end = start + timedelta(days=1)
-        return start, end
-
-    @staticmethod
-    def _time_until_next_utc_day_label() -> str:
-        now = datetime.utcnow()
-        _, next_day_start = ResumeCourseAuditService._today_utc_bounds()
-        remaining_seconds = max(0, int((next_day_start - now).total_seconds()))
-        total_minutes = (remaining_seconds + 59) // 60
-        hours = total_minutes // 60
-        minutes = total_minutes % 60
-        if hours <= 0:
-            return f"{minutes}m"
-        if minutes <= 0:
-            return f"{hours}h"
-        return f"{hours}h {minutes}m"
-
     async def get_daily_attempts(self, user_id: UUID) -> int:
-        start, end = self._today_utc_bounds()
-        result = await self.session.execute(
-            select(func.count(ResumeCourseEvaluationModel.id)).where(
-                ResumeCourseEvaluationModel.user_id == user_id,
-                ResumeCourseEvaluationModel.created_at >= start,
-                ResumeCourseEvaluationModel.created_at < end,
-            )
+        summary = await self.ai_usage_service.get_summary(
+            user_id=user_id,
+            feature=AIFeature.RESUME_COURSE_AUDIT,
         )
-        return int(result.scalar_one() or 0)
+        return summary.used_today
+
+    async def get_daily_limit(self, user_id: UUID) -> int:
+        summary = await self.ai_usage_service.get_summary(
+            user_id=user_id,
+            feature=AIFeature.RESUME_COURSE_AUDIT,
+        )
+        return summary.daily_limit
 
     async def ensure_daily_limit(self, user_id: UUID) -> None:
-        attempts_today = await self.get_daily_attempts(user_id)
-        if attempts_today >= self.DAILY_LIMIT:
-            retry_in = self._time_until_next_utc_day_label()
-            raise HTTPException(
-                status_code=429,
-                detail=(
-                    f"You reached your daily limit of {self.DAILY_LIMIT} resume audit attempts. "
-                    f"Try again in {retry_in}."
-                ),
-            )
+        await self.ai_usage_service.ensure_available(
+            user_id=user_id,
+            feature=AIFeature.RESUME_COURSE_AUDIT,
+        )
 
     async def create_pending_evaluation(self, *, user_id: UUID, resume_id: UUID) -> ResumeCourseEvaluationModel:
         evaluation = ResumeCourseEvaluationModel(
@@ -126,6 +101,8 @@ class ResumeCourseAuditService:
         filename: str,
         content_type: str,
     ) -> tuple[dict, ResumeCourseEvaluationModel]:
+        await self.ensure_daily_limit(user_id)
+
         file_info = await self.resume_service.upload_resume_file(file_bytes, filename, content_type)
         resume = await self.resume_service.create_resume(
             CreateResumeSchema(
@@ -155,6 +132,12 @@ class ResumeCourseAuditService:
             )
 
         try:
+            await self.ai_usage_service.record_usage(
+                user_id=user_id,
+                feature=AIFeature.RESUME_COURSE_AUDIT,
+                reference_type="resume_course_evaluation",
+                reference_id=evaluation.id,
+            )
             result = await self.evaluator.evaluate(extracted_text)
         except Exception as exc:  # noqa: BLE001
             await self.fail_evaluation(evaluation, str(exc))
@@ -164,7 +147,10 @@ class ResumeCourseAuditService:
             ) from exc
 
         completed = await self.complete_evaluation(evaluation, result)
-        attempts_today = await self.get_daily_attempts(user_id)
+        usage_summary = await self.ai_usage_service.get_summary(
+            user_id=user_id,
+            feature=AIFeature.RESUME_COURSE_AUDIT,
+        )
         return {
             "resume_id": str(resume.id),
             "file_url": file_info["view_url"],
@@ -178,7 +164,7 @@ class ResumeCourseAuditService:
             "main_weaknesses": result.main_weaknesses,
             "improvements": result.improvements,
             "scores": result.scores.model_dump(),
-            "attempts_today": attempts_today,
-            "daily_limit": self.DAILY_LIMIT,
-            "attempts_remaining": max(0, self.DAILY_LIMIT - attempts_today),
+            "attempts_today": usage_summary.used_today,
+            "daily_limit": usage_summary.daily_limit,
+            "attempts_remaining": usage_summary.remaining_today,
         }, completed

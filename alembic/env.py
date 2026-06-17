@@ -20,6 +20,7 @@ from app.models.companyRecruiterModel import CompanyRecruiter
 from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
 from app.models.jobPostingModel import JobPosting
 from app.models.jobAnalysisModel import JobAnalysisModel
+from app.models.aiUsageModel import AIQuotaGrantModel, AIUsageEventModel
 from app.models.userStatsModel import UserStatsModel
 from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
 from app.models.communityModel import CommunityModel, CommunityMemberModel

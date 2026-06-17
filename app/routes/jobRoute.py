@@ -8,13 +8,14 @@ from app.services.userService import current_active_user
 from app.models.userModel import User
 from app.models.resumeModel import ResumeModel
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
-from sqlalchemy import select, func
+from sqlalchemy import select
 import logging
 from app.core.ResumeAnalizer.contact_parser import extract_phone_number
 from app.core.ResumeAnalizer.llm_model import ask_llm_model
 from app.core.ResumeAnalizer.resume_text_extractor import extract_resume_text_from_bytes
+from app.services.aiUsageService import AIFeature, AIUsageService
 from app.services.resumeService import ResumeService
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import UUID
 from collections import deque
 from time import monotonic
@@ -39,10 +40,9 @@ router = APIRouter()
 LLM_RATE_LIMIT_PER_MINUTE = 5
 LLM_RATE_LIMIT_WINDOW_SECONDS = 60
 _llm_rate_limit_store: dict[str, deque[float]] = {}
-LLM_DAILY_LIMIT_PER_USER = 2
 
 DAILY_LIMIT_MESSAGE = (
-    f"You reached your daily limit of {LLM_DAILY_LIMIT_PER_USER} AI CV analyses. "
+    "You reached your daily limit of AI CV analyses. "
     "Please try again tomorrow or use Manual mode."
 )
 LLM_QUOTA_MESSAGE = (
@@ -57,25 +57,25 @@ LLM_GENERAL_FAILURE_MESSAGE = (
 )
 
 
-def _today_utc_bounds() -> tuple[datetime, datetime]:
-    now = datetime.utcnow()
-    start = datetime(now.year, now.month, now.day)
-    end = start + timedelta(days=1)
-    return start, end
-
-
 async def _check_llm_daily_limit(session: AsyncSession, user_id: UUID) -> None:
-    start, end = _today_utc_bounds()
-    result = await session.execute(
-        select(func.count(JobAnalysisModel.id)).where(
-            JobAnalysisModel.user_id == user_id,
-            JobAnalysisModel.created_at >= start,
-            JobAnalysisModel.created_at < end,
+    try:
+        await AIUsageService(session).ensure_available(
+            user_id=user_id,
+            feature=AIFeature.CV_JOB_SEARCH,
         )
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE) from exc
+        raise
+
+
+async def _record_llm_usage(session: AsyncSession, *, user_id: UUID, job_id: UUID) -> None:
+    await AIUsageService(session).record_usage(
+        user_id=user_id,
+        feature=AIFeature.CV_JOB_SEARCH,
+        reference_type="job_analysis",
+        reference_id=job_id,
     )
-    requests_today = int(result.scalar_one() or 0)
-    if requests_today >= LLM_DAILY_LIMIT_PER_USER:
-        raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE)
 
 
 def _friendly_analysis_error_message(error: Exception) -> str:
@@ -480,6 +480,7 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, sess
                 return
 
             LOGGER.info(f"Analyzing CV with LLM for job {job_id}")
+            await _record_llm_usage(session, user_id=user_id, job_id=job_id)
             resume_feature = await ask_llm_model(resume_text)
 
             if resume_feature.resume_keywords and len(resume_feature.resume_keywords) > 0:
