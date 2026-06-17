@@ -7,8 +7,6 @@ from app.services.userService import current_active_user
 from app.models.userModel import User
 import logging
 from uuid import UUID
-from collections import deque
-from time import monotonic
 from app.models.companyModel import Company
 from app.models.jobPostingModel import JobPosting
 from app.schemas.jobPostingSchema import (
@@ -22,43 +20,12 @@ from app.services.companyService import current_company_job_manager_recruiter
 from app.services.jobPostingService import JobPostingService
 from app.services.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAILURE_MESSAGE
 from app.services.jobSearchService import JobSearchQuery, JobSearchService
+from app.services.aiRequestRateLimitService import ai_analysis_rate_limiter
 from app.models.companyRecruiterModel import CompanyRecruiter
 
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# Rate limit LLM analysis: 5 requests per IP per minute
-LLM_RATE_LIMIT_PER_MINUTE = 5
-LLM_RATE_LIMIT_WINDOW_SECONDS = 60
-_llm_rate_limit_store: dict[str, deque[float]] = {}
-
-def _get_client_ip(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
-
-
-def _check_llm_rate_limit(request: Request) -> None:
-    ip = _get_client_ip(request)
-    now = monotonic()
-    timestamps = _llm_rate_limit_store.get(ip)
-    if timestamps is None:
-        timestamps = deque()
-        _llm_rate_limit_store[ip] = timestamps
-
-    while timestamps and now - timestamps[0] > LLM_RATE_LIMIT_WINDOW_SECONDS:
-        timestamps.popleft()
-
-    if len(timestamps) >= LLM_RATE_LIMIT_PER_MINUTE:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many analysis requests right now. Please wait a minute and try again.",
-        )
-
-    timestamps.append(now)
-
 
 class JobSearchRequest(BaseModel):
     keywords: str
@@ -317,7 +284,7 @@ async def start_cv_analysis(
             )
 
         await analysis_service.ensure_daily_limit(user.id)
-        _check_llm_rate_limit(request)
+        ai_analysis_rate_limiter.check_request(request)
 
         job = await analysis_service.create_pending_analysis(user_id=user.id, resume_id=resume.id)
         
