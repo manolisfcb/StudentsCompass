@@ -119,21 +119,8 @@ async def list_resumes(
     response.headers["Cache-Control"] = "no-store, private"
     response.headers["Pragma"] = "no-cache"
     resume_service = ResumeService(session)
-    resumes = [resume for resume in await resume_service.list_user_resumes(user.id) if resume.user_id == user.id]
-    return [
-        ResumeReadSchema(
-            id=r.id,
-            user_id=r.user_id,
-            view_url=r.view_url,
-            original_filename=r.original_filename,
-            storage_file_id=r.storage_file_id,
-            folder_id=r.folder_id,
-            ai_summary=r.ai_summary,
-            contact_phone=r.contact_phone,
-            created_at=r.created_at.isoformat() if r.created_at else None,
-        )
-        for r in resumes
-    ]
+    resumes = await resume_service.list_user_resumes(user.id)
+    return [ResumeReadSchema.from_model(resume) for resume in resumes]
 
 
 @router.delete("/profile/cv/{resume_id}")

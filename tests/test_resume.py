@@ -3,6 +3,7 @@ Tests for resume/CV endpoints
 """
 import io
 import uuid
+from datetime import datetime
 
 import pytest
 from httpx import AsyncClient
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.resumeModel import ResumeModel
 from app.models.userModel import User
+from app.schemas.resumeSchema import ResumeReadSchema
 
 
 class FakeResumeStorageService:
@@ -145,3 +147,31 @@ class TestResume:
         )
         
         assert response.status_code == 404
+
+
+def test_resume_read_schema_serializes_model_created_at():
+    created_at = datetime(2026, 1, 2, 3, 4, 5)
+    user_id = uuid.uuid4()
+    resume = ResumeModel(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        view_url="https://example.com/resume.pdf",
+        original_filename="resume.pdf",
+        storage_file_id="resumes/resume.pdf",
+        folder_id="resume-bucket",
+        ai_summary="Backend candidate",
+        contact_phone="+1 416 555 0101",
+        created_at=created_at,
+    )
+
+    payload = ResumeReadSchema.from_model(resume)
+
+    assert payload.id == resume.id
+    assert payload.user_id == user_id
+    assert payload.view_url == "https://example.com/resume.pdf"
+    assert payload.original_filename == "resume.pdf"
+    assert payload.storage_file_id == "resumes/resume.pdf"
+    assert payload.folder_id == "resume-bucket"
+    assert payload.ai_summary == "Backend candidate"
+    assert payload.contact_phone == "+1 416 555 0101"
+    assert payload.created_at == "2026-01-02T03:04:05"
