@@ -10,12 +10,6 @@ from app.models.resumeModel import ResumeModel
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from sqlalchemy import select
 import logging
-from app.core.ResumeAnalizer.contact_parser import extract_phone_number
-from app.core.ResumeAnalizer.llm_model import ask_llm_model
-from app.core.ResumeAnalizer.resume_text_extractor import extract_resume_text_from_bytes
-from app.services.aiUsageService import AIFeature, AIUsageService
-from app.services.resumeService import ResumeService
-from datetime import datetime
 from uuid import UUID
 from collections import deque
 from time import monotonic
@@ -30,6 +24,7 @@ from app.schemas.jobPostingSchema import (
 from app.services.companyService import current_active_company
 from app.services.companyService import current_company_job_manager_recruiter
 from app.services.jobPostingService import JobPostingService
+from app.services.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAILURE_MESSAGE
 from app.models.companyRecruiterModel import CompanyRecruiter
 
 LOGGER = logging.getLogger(__name__)
@@ -40,65 +35,6 @@ router = APIRouter()
 LLM_RATE_LIMIT_PER_MINUTE = 5
 LLM_RATE_LIMIT_WINDOW_SECONDS = 60
 _llm_rate_limit_store: dict[str, deque[float]] = {}
-
-DAILY_LIMIT_MESSAGE = (
-    "You reached your daily limit of AI CV analyses. "
-    "Please try again tomorrow or use Manual mode."
-)
-LLM_QUOTA_MESSAGE = (
-    "Our AI analyzer has reached its provider limit right now. "
-    "Please try again later or continue with Manual mode."
-)
-LLM_TIMEOUT_MESSAGE = (
-    "AI analysis is taking longer than expected. Please try again in a few minutes."
-)
-LLM_GENERAL_FAILURE_MESSAGE = (
-    "We could not analyze your CV right now. Please try again later or use Manual mode."
-)
-
-
-async def _check_llm_daily_limit(session: AsyncSession, user_id: UUID) -> None:
-    try:
-        await AIUsageService(session).ensure_available(
-            user_id=user_id,
-            feature=AIFeature.CV_JOB_SEARCH,
-        )
-    except HTTPException as exc:
-        if exc.status_code == 429:
-            raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE) from exc
-        raise
-
-
-async def _record_llm_usage(session: AsyncSession, *, user_id: UUID, job_id: UUID) -> None:
-    await AIUsageService(session).record_usage(
-        user_id=user_id,
-        feature=AIFeature.CV_JOB_SEARCH,
-        reference_type="job_analysis",
-        reference_id=job_id,
-    )
-
-
-def _friendly_analysis_error_message(error: Exception) -> str:
-    raw = str(error or "").strip().lower()
-
-    quota_markers = (
-        "quota",
-        "credit",
-        "resource_exhausted",
-        "insufficient",
-        "billing",
-        "rate limit",
-        "429",
-    )
-    if any(marker in raw for marker in quota_markers):
-        return LLM_QUOTA_MESSAGE
-
-    timeout_markers = ("timeout", "timed out", "deadline exceeded")
-    if any(marker in raw for marker in timeout_markers):
-        return LLM_TIMEOUT_MESSAGE
-
-    return LLM_GENERAL_FAILURE_MESSAGE
-
 
 def _get_client_ip(request: Request) -> str:
     forwarded_for = request.headers.get("x-forwarded-for")
@@ -400,124 +336,13 @@ class JobStatusResponse(BaseModel):
 
 async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, session_factory):
     """Background task to process CV and extract keywords plus a recruiter-facing summary."""
-    # Create new session for background task
     async for session in session_factory():
-        try:
-            # Update job status to processing
-            result = await session.execute(
-                select(JobAnalysisModel).where(JobAnalysisModel.id == job_id)
-            )
-            job = result.scalar_one_or_none()
-            if not job:
-                LOGGER.error(f"Job {job_id} not found")
-                return
-            
-            job.status = JobStatus.PROCESSING
-            await session.commit()
-            
-            # Check if this resume has already been analyzed before (cache hit)
-            result = await session.execute(
-                select(JobAnalysisModel)
-                .where(JobAnalysisModel.user_id == user_id)
-                .where(JobAnalysisModel.resume_id == resume_id)
-                .where(JobAnalysisModel.status == JobStatus.COMPLETED)
-                .where(JobAnalysisModel.keywords.is_not(None))
-                .where(JobAnalysisModel.id != job_id)
-                .order_by(JobAnalysisModel.completed_at.desc())
-                .limit(1)
-            )
-            cached_job = result.scalar_one_or_none()
-
-            if cached_job and cached_job.keywords:
-                job.status = JobStatus.COMPLETED
-                job.keywords = cached_job.keywords
-                job.summary = cached_job.summary
-                if not resume.ai_summary and cached_job.summary:
-                    resume.ai_summary = cached_job.summary
-                job.completed_at = datetime.utcnow()
-                await session.commit()
-                LOGGER.info(f"Job {job_id} completed from cache (resume_id={resume_id})")
-                return
-
-            # Get specific CV for this job
-            result = await session.execute(
-                select(ResumeModel)
-                .where(ResumeModel.user_id == user_id)
-                .where(ResumeModel.id == resume_id)
-                .limit(1)
-            )
-            resume = result.scalar_one_or_none()
-            
-            if not resume:
-                job.status = JobStatus.FAILED
-                job.error_message = "No CV found"
-                job.completed_at = datetime.utcnow()
-                await session.commit()
-                LOGGER.warning(f"No CV found for user {user_id} with resume_id {resume_id}")
-                return
-            
-            # Download CV from the configured storage provider.
-            LOGGER.info(f"Downloading CV for job {job_id}: {resume.storage_file_id}")
-            resume_service = ResumeService(session)
-            file_content = await resume_service.download_resume_file(resume.storage_file_id)
-
-            LOGGER.info(f"Extracting text from CV for job {job_id}")
-            resume_text = await extract_resume_text_from_bytes(
-                file_content,
-                filename=resume.original_filename,
-                content_type="",
-            )
-            extracted_phone = extract_phone_number(resume_text)
-
-            if not resume_text or len(resume_text.strip()) < 50:
-                job.status = JobStatus.COMPLETED
-                job.keywords = "developer"
-                job.summary = None
-                resume.contact_phone = extracted_phone
-                job.completed_at = datetime.utcnow()
-                await session.commit()
-                LOGGER.warning(f"CV text too short for job {job_id}")
-                return
-
-            LOGGER.info(f"Analyzing CV with LLM for job {job_id}")
-            await _record_llm_usage(session, user_id=user_id, job_id=job_id)
-            resume_feature = await ask_llm_model(resume_text)
-
-            if resume_feature.resume_keywords and len(resume_feature.resume_keywords) > 0:
-                keywords = ", ".join(resume_feature.resume_keywords[:5])
-            elif resume_feature.resume_key_skills and len(resume_feature.resume_key_skills) > 0:
-                keywords = ", ".join(resume_feature.resume_key_skills[:5])
-            else:
-                keywords = "developer"
-
-            summary = (resume_feature.resume_summary or "").strip() or None
-
-            job.status = JobStatus.COMPLETED
-            job.keywords = keywords
-            job.summary = summary
-            job.completed_at = datetime.utcnow()
-            resume.ai_summary = summary
-            resume.contact_phone = extracted_phone
-            await session.commit()
-
-            LOGGER.info(f"Job {job_id} completed successfully with keywords: {keywords}")
-        
-        except Exception as e:
-            LOGGER.exception(f"Error processing job {job_id}")
-            try:
-                result = await session.execute(
-                    select(JobAnalysisModel).where(JobAnalysisModel.id == job_id)
-                )
-                job = result.scalar_one_or_none()
-                if job:
-                    job.status = JobStatus.FAILED
-                    job.error_message = _friendly_analysis_error_message(e)
-                    job.completed_at = datetime.utcnow()
-                    await session.commit()
-            except Exception as commit_error:
-                LOGGER.exception(f"Failed to update job {job_id} status after error")
-        
-        break  # Exit after first iteration
+        await CVAnalysisService(session).process_job(
+            job_id=job_id,
+            user_id=user_id,
+            resume_id=resume_id,
+        )
+        break
 
 
 @router.post("/jobs/keywords/analyze", response_model=JobInitResponse)
@@ -577,7 +402,7 @@ async def start_cv_analysis(
                 message="CV analysis already in progress for this resume."
             )
 
-        await _check_llm_daily_limit(session, user.id)
+        await CVAnalysisService(session).ensure_daily_limit(user.id)
         _check_llm_rate_limit(request)
 
         # Create new job

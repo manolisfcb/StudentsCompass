@@ -36,8 +36,11 @@ async def test_process_cv_analysis_persists_summary_and_resume_phone(
         )
 
     monkeypatch.setattr("app.services.resumeService.ResumeService.download_resume_file", fake_download)
-    monkeypatch.setattr("app.routes.jobRoute.extract_resume_text_from_bytes", fake_extract_resume_text_from_bytes)
-    monkeypatch.setattr("app.routes.jobRoute.ask_llm_model", fake_ask_llm_model)
+    monkeypatch.setattr(
+        "app.services.cvAnalysisService.extract_resume_text_from_bytes",
+        fake_extract_resume_text_from_bytes,
+    )
+    monkeypatch.setattr("app.services.cvAnalysisService.ask_llm_model", fake_ask_llm_model)
 
     resume = ResumeModel(
         id=uuid.uuid4(),
@@ -69,3 +72,48 @@ async def test_process_cv_analysis_persists_summary_and_resume_phone(
     assert refreshed_job.summary == "Backend-focused student with hands-on Python API experience."
     assert refreshed_resume.ai_summary == "Backend-focused student with hands-on Python API experience."
     assert refreshed_resume.contact_phone == "+1 416 555 0101"
+
+
+@pytest.mark.asyncio
+async def test_process_cv_analysis_reuses_cached_resume_analysis(
+    db_session: AsyncSession,
+    test_user: User,
+):
+    resume = ResumeModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        view_url="https://example.com/resume.pdf",
+        storage_file_id="resumes/user.pdf",
+        original_filename="candidate_resume.pdf",
+        folder_id="test-bucket",
+        ai_summary=None,
+    )
+    cached_job = JobAnalysisModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        resume_id=resume.id,
+        status=JobStatus.COMPLETED,
+        keywords="Python, FastAPI",
+        summary="Cached backend resume summary.",
+    )
+    pending_job = JobAnalysisModel(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        resume_id=resume.id,
+        status=JobStatus.PENDING,
+    )
+    db_session.add_all([resume, cached_job, pending_job])
+    await db_session.commit()
+
+    async def session_factory():
+        yield db_session
+
+    await process_cv_analysis(pending_job.id, test_user.id, resume.id, session_factory)
+
+    refreshed_job = await db_session.scalar(select(JobAnalysisModel).where(JobAnalysisModel.id == pending_job.id))
+    refreshed_resume = await db_session.scalar(select(ResumeModel).where(ResumeModel.id == resume.id))
+
+    assert refreshed_job.status == JobStatus.COMPLETED
+    assert refreshed_job.keywords == "Python, FastAPI"
+    assert refreshed_job.summary == "Cached backend resume summary."
+    assert refreshed_resume.ai_summary == "Cached backend resume summary."
