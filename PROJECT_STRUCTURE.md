@@ -109,7 +109,6 @@ StudentsCompass/
 │   │   ├── resources.html         # Listado de recursos educativos
 │   │   ├── resource_detail.html   # Detalle de un recurso
 │   │   ├── company-dashboard.html # Dashboard para empresas
-│   │   ├── dashboard_old.html     # Dashboard anterior (legacy)
 │   │   └── includes/             # Componentes parciales reutilizables
 │   │
 │   ├── static/                # 📁 Archivos Estáticos

@@ -1,5 +1,7 @@
 .env
 .venv/
+.DS_Store
+test.db
 
 __pycache__/
 *.pyc
