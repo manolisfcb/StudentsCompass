@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
+from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.questionnaireModel import UserQuestionnaire
+from app.models.userModel import User
 from app.schemas.questionnaireSchema import QuestionnaireRead, QuestionnaireSubmit, QuestionnaireResult
 from uuid import UUID
 
@@ -67,3 +70,27 @@ class QuestionnaireService:
             top_careers=sorted_scores,
             created_at=user_questionnaire.created_at
         )
+
+    async def get_user_questionnaire_profile(self, user: User) -> dict:
+        result = await self.session.execute(
+            select(UserQuestionnaire)
+            .where(UserQuestionnaire.user_id == user.id)
+            .order_by(UserQuestionnaire.created_at.desc())
+            .limit(1)
+        )
+        user_questionnaire = result.scalar_one_or_none()
+
+        if not user_questionnaire:
+            raise HTTPException(status_code=404, detail="No questionnaire responses found")
+
+        questionnaire = await self.get_questionnaire()
+        return {
+            "user_id": str(user.id),
+            "user_name": f"{user.first_name or ''} {user.last_name or ''}".strip() or user.email.split("@")[0],
+            "user_email": user.email,
+            "created_at": user_questionnaire.created_at.isoformat(),
+            "version": user_questionnaire.version,
+            "answers": user_questionnaire.answers,
+            "results": user_questionnaire.results,
+            "questionnaire": questionnaire,
+        }
