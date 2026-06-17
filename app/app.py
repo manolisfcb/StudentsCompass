@@ -35,6 +35,7 @@ from app.routes.messageRoute import router as message_router
 from app.routes.resourceRoute import router as resource_router
 from app.routes.roadmapRoute import router as roadmap_router
 from app.routes.adminRoute import router as admin_router
+from app.core.ResumeAnalizer.resume_text_extractor import shutdown_resume_text_extractors
 from app.services.roadmapSeedService import seed_roadmaps_on_startup_if_dev
 from app.middleware.rate_limit import RequestRateLimiter
 from fastapi import Response
@@ -107,7 +108,10 @@ async def lifespan(app: FastAPI):
     # Controlled via ENV/AUTO_CREATE_TABLES in app/db.py
     await create_db_and_tables()
     await seed_roadmaps_on_startup_if_dev()
-    yield
+    try:
+        yield
+    finally:
+        shutdown_resume_text_extractors()
 
 
 app = FastAPI(lifespan=lifespan)

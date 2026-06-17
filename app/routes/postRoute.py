@@ -5,7 +5,7 @@ from app.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from fastapi import UploadFile, Form, File
-from app.services.images import upload_media
+from app.services.mediaStorageService import get_media_storage_service
 from app.services.userService import current_active_user
 from app.models.userModel import User
 
@@ -18,7 +18,7 @@ async def create_post(
     user: User = Depends(current_active_user),
 ):
     post_service = PostService(session)
-    return await post_service.create_post(post) if post else HTTPException(status_code=400, detail="Invalid post data")
+    return await post_service.create_post(post, user_id=user.id) if post else HTTPException(status_code=400, detail="Invalid post data")
     
     
 @router.get("/posts/{post_id}", response_model=PostRead)
@@ -51,7 +51,7 @@ async def upload_file(
 ):
 
     try:
-        post_data = upload_media(
+        post_data = get_media_storage_service().upload_media(
             file=file,
             file_name=file.filename,
             folder="posts/"
@@ -66,7 +66,7 @@ async def upload_file(
         file_name=post_data.name 
     )
     post_service = PostService(session)
-    return await post_service.create_post(post) if post else HTTPException(status_code=400, detail="Invalid post data")
+    return await post_service.create_post(post, user_id=user.id) if post else HTTPException(status_code=400, detail="Invalid post data")
 
 
 @router.delete("/delete_post/{post_id}")

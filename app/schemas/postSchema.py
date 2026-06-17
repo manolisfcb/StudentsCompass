@@ -1,8 +1,8 @@
-from pydantic import BaseModel, ConfigDict
-from pydantic import BaseModel
-from uuid import UUID
-from fastapi import Form
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 
 class PostCreate(BaseModel):
     caption: str

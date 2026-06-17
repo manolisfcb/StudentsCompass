@@ -8,12 +8,13 @@ class PostService:
     def __init__(self, session: AsyncSession):
         self.session = session
         
-    async def create_post(self, post_create: PostCreate) -> PostModel:
+    async def create_post(self, post_create: PostCreate, user_id: UUID | None = None) -> PostModel:
         new_post = PostModel(
             caption=post_create.caption,
             url=post_create.url,
             file_type=post_create.file_type,
-            file_name=post_create.file_name
+            file_name=post_create.file_name,
+            user_id=user_id,
         )
         self.session.add(new_post)
         await self.session.commit()

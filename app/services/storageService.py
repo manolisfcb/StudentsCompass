@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Protocol
 
 
@@ -24,3 +25,7 @@ def get_storage_service(*, bucket_name: str | None = None) -> StorageService:
     from app.services.s3Service import S3Service
 
     return S3Service(bucket_name=bucket_name)
+
+
+def get_resume_storage_location_id() -> str | None:
+    return os.getenv("BUCKET_NAME")

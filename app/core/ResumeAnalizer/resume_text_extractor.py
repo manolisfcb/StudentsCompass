@@ -7,9 +7,24 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from xml.etree import ElementTree as ET
 
-from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf
+from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf, shutdown_pdf_executor
 
-_docx_executor = ThreadPoolExecutor(max_workers=3)
+_docx_executor: ThreadPoolExecutor | None = None
+
+
+def _get_docx_executor() -> ThreadPoolExecutor:
+    global _docx_executor
+    if _docx_executor is None:
+        _docx_executor = ThreadPoolExecutor(max_workers=3)
+    return _docx_executor
+
+
+def shutdown_resume_text_extractors() -> None:
+    global _docx_executor
+    if _docx_executor is not None:
+        _docx_executor.shutdown(wait=True)
+        _docx_executor = None
+    shutdown_pdf_executor()
 
 
 def _extract_text_from_docx_sync(docx_path: str) -> str:
@@ -47,7 +62,7 @@ async def extract_resume_text_from_bytes(
             or suffix == ".docx"
         ):
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(_docx_executor, _extract_text_from_docx_sync, temp_path)
+            return await loop.run_in_executor(_get_docx_executor(), _extract_text_from_docx_sync, temp_path)
         return ""
     finally:
         if os.path.exists(temp_path):

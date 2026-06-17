@@ -21,7 +21,6 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,
 )
-from app.schemas.resumeSchema import CreateResumeSchema
 from app.services.aiUsageService import AIFeature, AIUsageService
 from app.services.resumeService import ResumeService
 
@@ -96,22 +95,19 @@ class ResumeCourseAuditService:
         self,
         *,
         user_id: UUID,
-        bucket_name: str,
+        storage_location_id: str,
         file_bytes: bytes,
         filename: str,
         content_type: str,
     ) -> tuple[dict, ResumeCourseEvaluationModel]:
         await self.ensure_daily_limit(user_id)
 
-        file_info = await self.resume_service.upload_resume_file(file_bytes, filename, content_type)
-        resume = await self.resume_service.create_resume(
-            CreateResumeSchema(
-                view_url=file_info["view_url"],
-                original_filename=filename,
-                storage_file_id=file_info["file_key"],
-                folder_id=bucket_name,
-                user_id=user_id,
-            )
+        resume, file_info = await self.resume_service.create_resume_from_upload(
+            user_id=user_id,
+            storage_location_id=storage_location_id,
+            file_bytes=file_bytes,
+            file_name=filename,
+            mime_type=content_type,
         )
 
         evaluation = await self.create_pending_evaluation(user_id=user_id, resume_id=resume.id)

@@ -4,11 +4,30 @@ from app.schemas.resumeSchema import CreateResumeSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
-from app.models.resumeEmbeddingsModel import ResumeEmbedding 
 from datetime import datetime
 from app.services.storageService import StorageService, get_storage_service
 
 LOGGER = logging.getLogger(__name__)
+
+RESUME_UPLOAD_CONTENT_TYPES = frozenset(
+    {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+    }
+)
+
+RESUME_AUDIT_CONTENT_TYPES = frozenset(
+    {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    }
+)
+
+
+def is_allowed_resume_content_type(content_type: str | None, allowed_types: frozenset[str]) -> bool:
+    return bool(content_type and content_type in allowed_types)
+
 
 class ResumeService:
     def __init__(self, session: AsyncSession, storage_service: StorageService | None = None):
@@ -29,6 +48,27 @@ class ResumeService:
         await self.session.commit()
         await self.session.refresh(resume)
         return resume
+
+    async def create_resume_from_upload(
+        self,
+        *,
+        user_id: UUID,
+        storage_location_id: str,
+        file_bytes: bytes,
+        file_name: str,
+        mime_type: str,
+    ) -> tuple[ResumeModel, dict]:
+        file_info = await self.upload_resume_file(file_bytes, file_name, mime_type)
+        resume = await self.create_resume(
+            CreateResumeSchema(
+                view_url=file_info["view_url"],
+                original_filename=file_name,
+                storage_file_id=file_info["file_key"],
+                folder_id=storage_location_id,
+                user_id=user_id,
+            )
+        )
+        return resume, file_info
     
     async def create_resume_embedding(self, resume_id: UUID, model_name: str, dims: int, embedding: list[float]) -> None:
         # Desactivado: No guardar embeddings

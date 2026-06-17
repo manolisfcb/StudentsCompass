@@ -1,59 +1,66 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.resumeService import ResumeService
+from app.services.resumeService import (
+    RESUME_AUDIT_CONTENT_TYPES,
+    RESUME_UPLOAD_CONTENT_TYPES,
+    ResumeService,
+    is_allowed_resume_content_type,
+)
 from app.services.resumeCourseAuditService import ResumeCourseAuditService
 from app.schemas.resumeSchema import (
-    CreateResumeSchema,
     ResumeCourseAuditAttemptsRead,
     ResumeCourseAuditRead,
     ResumeReadSchema,
 )
 from app.db import get_session
 from app.services.userService import current_active_user
+from app.services.storageService import get_resume_storage_location_id
 from app.models.userModel import User
 from uuid import UUID
-import os
 import logging
 LOGGER = logging.getLogger(__name__)
 
 
 LOGGER.setLevel(logging.DEBUG)
 
-BUCKET_NAME = os.getenv("BUCKET_NAME")
-
 router = APIRouter()
+
+
+def _require_resume_storage_location_id() -> str:
+    storage_location_id = get_resume_storage_location_id()
+    if not storage_location_id:
+        LOGGER.error("Resume storage location is not configured")
+        raise HTTPException(
+            status_code=500,
+            detail="Server misconfiguration: missing resume storage configuration",
+        )
+    return storage_location_id
 
 
 @router.post("/profile/cv/upload")
 async def upload_resume(
     cv: UploadFile = File(..., alias="cv"),
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(current_active_user)):
+    user: User = Depends(current_active_user),
+):
     LOGGER.debug(f"Received file: {cv.filename}, content type: {cv.content_type}")
-    if cv.content_type not in {"application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"}:
+    if not is_allowed_resume_content_type(cv.content_type, RESUME_UPLOAD_CONTENT_TYPES):
         raise HTTPException(status_code=400, detail="Only PDF or DOC/DOCX files are allowed.")
     
-    if not BUCKET_NAME:
-        LOGGER.error("BUCKET_NAME is not set")
-        raise HTTPException(status_code=500, detail="Server misconfiguration: missing S3 bucket name")
+    storage_location_id = _require_resume_storage_location_id()
 
     try:
         LOGGER.debug("Initializing ResumeService")
         resume_service = ResumeService(session)
         file_bytes = await cv.read()
-        file_info = await resume_service.upload_resume_file(file_bytes, cv.filename, cv.content_type)
-        LOGGER.debug(f"File uploaded to S3: {file_info}")
-        
-        # Save resume info to database
-        resume_create = CreateResumeSchema(
-            view_url=file_info["view_url"],
-            original_filename=cv.filename,
-            storage_file_id=file_info["file_key"],
-            folder_id=BUCKET_NAME,
-            user_id=user.id
+        resume, file_info = await resume_service.create_resume_from_upload(
+            user_id=user.id,
+            storage_location_id=storage_location_id,
+            file_bytes=file_bytes,
+            file_name=cv.filename,
+            mime_type=cv.content_type,
         )
-        resume = await resume_service.create_resume(resume_create)
-        LOGGER.debug(f"Resume record created: {resume.id}")
+        LOGGER.debug("Resume uploaded to storage and record created: %s", resume.id)
         
         # Desactivado: No se generan ni guardan embeddings para el resume
         return {"file_url": file_info["view_url"], "resume_id": resume.id}
@@ -69,15 +76,10 @@ async def upload_resume_for_course_audit(
     user: User = Depends(current_active_user),
 ):
     LOGGER.debug(f"Course audit upload received: {cv.filename}, type={cv.content_type}")
-    valid_types = {
-        "application/pdf",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    }
-    if cv.content_type not in valid_types:
+    if not is_allowed_resume_content_type(cv.content_type, RESUME_AUDIT_CONTENT_TYPES):
         raise HTTPException(status_code=400, detail="Only PDF or DOCX files are allowed for AI audit.")
 
-    if not BUCKET_NAME:
-        raise HTTPException(status_code=500, detail="Server misconfiguration: missing S3 bucket name")
+    storage_location_id = _require_resume_storage_location_id()
 
     audit_service = ResumeCourseAuditService(session)
     await audit_service.ensure_daily_limit(user.id)
@@ -85,7 +87,7 @@ async def upload_resume_for_course_audit(
     file_bytes = await cv.read()
     payload, _ = await audit_service.upload_and_evaluate_resume(
         user_id=user.id,
-        bucket_name=BUCKET_NAME,
+        storage_location_id=storage_location_id,
         file_bytes=file_bytes,
         filename=cv.filename,
         content_type=cv.content_type,

@@ -1,10 +1,13 @@
 """
 Pytest fixtures and configuration for tests
 """
+import asyncio
+import os
+import uuid
+from typing import AsyncGenerator, Generator
+
 import pytest
 import pytest_asyncio
-import asyncio
-from typing import AsyncGenerator, Generator
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import event
@@ -16,8 +19,14 @@ from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
 from app.services.userService import UserManager, get_user_manager
 from fastapi_users.password import PasswordHelper
-import uuid
-import os
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Close resources that otherwise keep non-daemon test threads alive."""
+    from app.core.ResumeAnalizer.resume_text_extractor import shutdown_resume_text_extractors
+
+    asyncio.run(test_engine.dispose())
+    shutdown_resume_text_extractors()
 
 # Test database URL (use in-memory SQLite for tests)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
