@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Response
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.models.userModel import User
+from app.services.profileService import ProfileService
 from app.services.userService import current_active_user
 from app.schemas.userSchema import UserRead, UserUpdate
 
@@ -28,25 +28,7 @@ async def update_profile(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    update_data = payload.model_dump(exclude_unset=True)
-    if update_data.get("email") in {"", None}:
-        update_data.pop("email", None)
-
-    if "email" in update_data and update_data["email"] != user.email:
-        result = await session.execute(
-            select(User.id).where(
-                User.email == update_data["email"],
-                User.id != user.id,
-            )
-        )
-        if result.scalar_one_or_none() is not None:
-            raise HTTPException(status_code=400, detail="Email already in use")
-
-    for field, value in update_data.items():
-        setattr(user, field, value)
-
-    await session.commit()
-    await session.refresh(user)
+    user = await ProfileService(session).update_user_profile(user=user, payload=payload)
     response.headers["Cache-Control"] = "no-store, private"
     response.headers["Pragma"] = "no-cache"
     return user
