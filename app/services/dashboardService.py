@@ -142,45 +142,28 @@ class DashboardService:
             
             logger.info(f"Found {len(applications)} applications for user {user_id}")
             
-            # Calculate stats
-            total_applications = len(applications)
-            in_review = sum(1 for app in applications if app.status == ApplicationStatus.IN_REVIEW)
-            interviews = sum(1 for app in applications if app.status == ApplicationStatus.INTERVIEW)
-            offers = sum(1 for app in applications if app.status == ApplicationStatus.OFFER)
-            applied = sum(1 for app in applications if app.status == ApplicationStatus.APPLIED)
+            application_stats = DashboardService._build_student_application_stats(applications)
             
-            logger.info(f"Stats calculated - Total: {total_applications}, In Review: {in_review}, Interviews: {interviews}, Offers: {offers}")
+            logger.info(
+                "Stats calculated - Total: %s, In Review: %s, Interviews: %s, Offers: %s",
+                application_stats["total_applications"],
+                application_stats["in_review"],
+                application_stats["interviews"],
+                application_stats["offers"],
+            )
             
             # Get or create user stats (authoritative progress values)
             user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
             user_stats = await DashboardService._sync_user_stats_with_resource_progress(user_id, session, user_stats)
-
-            progress_data = {
-                "resume": user_stats.resume_progress,
-                "linkedin": user_stats.linkedin_progress,
-                "interview_prep": user_stats.interview_progress,
-                "portfolio": 0,
-            }
-
-            overall_progress = round(
-                (progress_data["resume"] + progress_data["linkedin"] + progress_data["interview_prep"]) / 3,
-                1,
-            )
-            progress_data["overall"] = overall_progress
+            progress_data = DashboardService._build_student_progress_data(user_stats)
 
             logger.info(f"Progress data: {progress_data}")
             
             # Get recent applications with company info
-            recent_applications = []
-            for app in applications[:5]:  # Last 5 applications
-                recent_applications.append({
-                    "id": str(app.id),
-                    "job_title": app.job_title,
-                    "company_id": str(app.company_id),
-                    "status": app.status.value,
-                    "application_date": app.application_date.isoformat() if app.application_date else None,
-                    "notes": app.notes
-                })
+            recent_applications = DashboardService._serialize_recent_applications(
+                applications[:5],
+                include_notes=True,
+            )
             
             # Fetch user info to avoid extra client calls
             user_result = await session.execute(select(User).where(User.id == user_id))
@@ -196,11 +179,11 @@ class DashboardService:
                 },
                 "stats": {
                     "overall_progress": progress_data["overall"],
-                    "total_applications": total_applications,
-                    "in_review": in_review,
-                    "interviews_scheduled": interviews,
-                    "offers_received": offers,
-                    "applied": applied
+                    "total_applications": application_stats["total_applications"],
+                    "in_review": application_stats["in_review"],
+                    "interviews_scheduled": application_stats["interviews"],
+                    "offers_received": application_stats["offers"],
+                    "applied": application_stats["applied"]
                 },
                 "progress": {
                     "resume": progress_data["resume"],
@@ -209,10 +192,10 @@ class DashboardService:
                     "portfolio": progress_data["portfolio"]
                 },
                 "application_breakdown": {
-                    "applied": applied,
-                    "in_review": in_review,
-                    "interviews": interviews,
-                    "offers": offers
+                    "applied": application_stats["applied"],
+                    "in_review": application_stats["in_review"],
+                    "interviews": application_stats["interviews"],
+                    "offers": application_stats["offers"]
                 },
                 "resource_navigation": await DashboardService._get_core_resource_navigation(user_id, session),
                 "recent_applications": recent_applications,
@@ -260,45 +243,65 @@ class DashboardService:
         applications = result.scalars().all()
         
         # Calculate stats on-the-fly
-        total_applications = len(applications)
-        
-        in_review = sum(1 for app in applications if app.status == ApplicationStatus.IN_REVIEW)
-        interviews = sum(1 for app in applications if app.status == ApplicationStatus.INTERVIEW)
-        offers = sum(1 for app in applications if app.status == ApplicationStatus.OFFER)
+        application_stats = DashboardService._build_student_application_stats(applications)
         
         # Use saved stats as authoritative progress values
         user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
         user_stats = await DashboardService._sync_user_stats_with_resource_progress(user_id, session, user_stats)
+        progress_data = DashboardService._build_student_progress_data(user_stats)
+        
+        return {
+            "stats": {
+                "total_applications": application_stats["total_applications"],
+                "in_review": application_stats["in_review"],
+                "interviews_scheduled": application_stats["interviews"],
+                "offers_received": application_stats["offers"]
+            },
+            "progress": progress_data,
+            "recent_applications": DashboardService._serialize_recent_applications(
+                sorted(applications, key=lambda x: x.application_date, reverse=True)[:5]
+            )
+        }
+
+    @staticmethod
+    def _build_student_application_stats(applications) -> Dict[str, int]:
+        return {
+            "total_applications": len(applications),
+            "in_review": sum(1 for app in applications if app.status == ApplicationStatus.IN_REVIEW),
+            "interviews": sum(1 for app in applications if app.status == ApplicationStatus.INTERVIEW),
+            "offers": sum(1 for app in applications if app.status == ApplicationStatus.OFFER),
+            "applied": sum(1 for app in applications if app.status == ApplicationStatus.APPLIED),
+        }
+
+    @staticmethod
+    def _build_student_progress_data(user_stats: UserStatsModel) -> Dict[str, int | float]:
         progress_data = {
             "resume": user_stats.resume_progress,
             "linkedin": user_stats.linkedin_progress,
             "interview_prep": user_stats.interview_progress,
             "portfolio": 0,
-            "overall": round(
-                (user_stats.resume_progress + user_stats.linkedin_progress + user_stats.interview_progress) / 3,
-                1,
-            ),
         }
-        
-        return {
-            "stats": {
-                "total_applications": total_applications,
-                "in_review": in_review,
-                "interviews_scheduled": interviews,
-                "offers_received": offers
-            },
-            "progress": progress_data,
-            "recent_applications": [
-                {
-                    "id": str(app.id),
-                    "job_title": app.job_title,
-                    "company_id": str(app.company_id),
-                    "status": app.status.value,
-                    "application_date": app.application_date.isoformat() if app.application_date else None
-                }
-                for app in sorted(applications, key=lambda x: x.application_date, reverse=True)[:5]
-            ]
-        }
+        progress_data["overall"] = round(
+            (progress_data["resume"] + progress_data["linkedin"] + progress_data["interview_prep"]) / 3,
+            1,
+        )
+        return progress_data
+
+    @staticmethod
+    def _serialize_recent_applications(applications, *, include_notes: bool = False) -> list[Dict]:
+        recent_applications = []
+        for app in applications:
+            payload = {
+                "id": str(app.id),
+                "job_title": app.job_title,
+                "company_id": str(app.company_id),
+                "status": app.status.value,
+                "application_date": app.application_date.isoformat() if app.application_date else None,
+            }
+            if include_notes:
+                payload["notes"] = app.notes
+            recent_applications.append(payload)
+        return recent_applications
     
     @staticmethod
     async def _calculate_progress(user_id: UUID, session: AsyncSession) -> Dict:
