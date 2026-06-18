@@ -89,7 +89,7 @@ StudentsCompass/
 │   │
 │   ├── core/                  # 🧠 Módulos Especializados (IA y Scraping)
 │   │   ├── JobsScraper/           # Scraping de ofertas de empleo (Apify)
-│   │   └── ResumeAnalizer/        # Análisis de CVs con IA (Google Gemini)
+│   │   └── resume_analyzer/        # Análisis de CVs con IA (Google Gemini)
 │   │
 │   ├── views/                 # 🖼️ Vistas (renderización de templates)
 │   │   └── views.py              # Rutas que sirven páginas HTML

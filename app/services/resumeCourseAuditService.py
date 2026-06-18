@@ -6,17 +6,17 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.ResumeAnalizer.resume_audit_llm import (
+from app.core.resume_analyzer.resume_audit_llm import (
     GeminiResumeAuditEvaluator,
     ResumeAuditEvaluator,
     serialize_resume_audit_result,
 )
-from app.core.ResumeAnalizer.prompts.resume_audit_prompt import PROMPT_VERSION
-from app.core.ResumeAnalizer.resume_audit_schema import (
+from app.core.resume_analyzer.prompts.resume_audit_prompt import PROMPT_VERSION
+from app.core.resume_analyzer.resume_audit_schema import (
     ResumeAuditResult,
     format_resume_audit_report,
 )
-from app.core.ResumeAnalizer.resume_text_extractor import extract_resume_text_from_bytes
+from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,

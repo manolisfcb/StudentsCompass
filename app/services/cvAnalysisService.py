@@ -8,9 +8,9 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.ResumeAnalizer.contact_parser import extract_phone_number
-from app.core.ResumeAnalizer.llm_model import ask_llm_model
-from app.core.ResumeAnalizer.resume_text_extractor import extract_resume_text_from_bytes
+from app.core.resume_analyzer.contact_parser import extract_phone_number
+from app.core.resume_analyzer.llm_model import ask_llm_model
+from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.resumeModel import ResumeModel
 from app.services.aiUsageService import AIFeature, AIUsageService

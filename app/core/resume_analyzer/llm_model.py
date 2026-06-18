@@ -7,7 +7,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 
-from app.core.ResumeAnalizer.resume_feature import ResumeFeatureRequest
+from app.core.resume_analyzer.resume_feature import ResumeFeatureRequest
 
 load_dotenv()
 

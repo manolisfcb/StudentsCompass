@@ -7,7 +7,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from xml.etree import ElementTree as ET
 
-from app.core.ResumeAnalizer.read_pdf_data import extract_text_from_pdf, shutdown_pdf_executor
+from app.core.resume_analyzer.read_pdf_data import extract_text_from_pdf, shutdown_pdf_executor
 
 _docx_executor: ThreadPoolExecutor | None = None
 

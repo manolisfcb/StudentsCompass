@@ -9,7 +9,7 @@ from fastapi_users.password import PasswordHelper
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.ResumeAnalizer.resume_text_extractor import extract_resume_text_from_bytes
+from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.db import get_session
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.companyModel import Company

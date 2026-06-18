@@ -53,7 +53,7 @@ El problema para el capstone: el valor academico de Data Analysis todavia no est
 | Embeddings | Modelo y tabla existen, servicio devuelve `None` | Alto academico | Reactivar o rediseñar como parte del motor analitico |
 | Scraper duplicado | `linkedin_scraper.py` y `scrapper_propio.py` duplican logica | Medio | Mantener uno, renombrar a ingles, documentar limitaciones |
 | Legacy frontend | `dashboard_old.html/css/js` trackeados | Bajo/medio | Remover si no hay dependencia activa |
-| Naming | `ResumeAnalizer`, `mockIaInetrviews`, `scrapper_propio` | Bajo | Normalizar nombres antes de defensa |
+| Naming | `resume_analyzer` ya normalizado; revisar otros typos si aparecen | Bajo | Mantener nombres en ingles consistentes antes de defensa |
 | Dependencias | `boto3`, `imagekitio`, `google-genai`, `sentence-transformers`, `pgvector`, `apify-client` | Medio | Dejar solo dependencias alineadas al capstone |
 | Data local | `data/` pesa mucho y contiene zips grandes no trackeados | Medio | Mover datasets a storage gobernado o documentar como data source local |
 
@@ -62,7 +62,7 @@ El problema para el capstone: el valor academico de Data Analysis todavia no est
 Se debe conservar porque ayuda al capstone:
 
 - `app/models/resumeModel.py`: base para perfiles/CVs.
-- `app/core/ResumeAnalizer/`: extraccion y analisis de CV, aunque conviene renombrar.
+- `app/core/resume_analyzer/`: extraccion y analisis de CV.
 - `app/models/resourceModel.py`: puede convertirse en catalogo de cursos/recursos optimizables.
 - `app/models/jobPostingModel.py`: base para ofertas laborales.
 - `app/models/resumeEmbeddingsModel.py`: base para pgvector.

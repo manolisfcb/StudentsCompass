@@ -11,11 +11,11 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 
-from app.core.ResumeAnalizer.prompts.resume_audit_prompt import (
+from app.core.resume_analyzer.prompts.resume_audit_prompt import (
     build_resume_audit_system_prompt,
     build_resume_audit_user_prompt,
 )
-from app.core.ResumeAnalizer.resume_audit_schema import ResumeAuditResult
+from app.core.resume_analyzer.resume_audit_schema import ResumeAuditResult
 
 load_dotenv()
 

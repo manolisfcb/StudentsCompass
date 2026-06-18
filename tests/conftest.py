@@ -23,7 +23,7 @@ from fastapi_users.password import PasswordHelper
 
 def pytest_sessionfinish(session, exitstatus):
     """Close resources that otherwise keep non-daemon test threads alive."""
-    from app.core.ResumeAnalizer.resume_text_extractor import shutdown_resume_text_extractors
+    from app.core.resume_analyzer.resume_text_extractor import shutdown_resume_text_extractors
 
     asyncio.run(test_engine.dispose())
     shutdown_resume_text_extractors()

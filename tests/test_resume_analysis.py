@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.ResumeAnalizer.resume_feature import ResumeFeatureRequest
+from app.core.resume_analyzer.resume_feature import ResumeFeatureRequest
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.resumeModel import ResumeModel
 from app.models.userModel import User
