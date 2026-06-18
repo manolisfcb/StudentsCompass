@@ -139,7 +139,7 @@ class FriendshipService:
         requests = result.scalars().all()
         senders = await self._get_users_by_ids([request.sender_id for request in requests])
         return [
-            self._serialize_request(
+            self.build_request_read(
                 request=request,
                 sender=senders.get(request.sender_id),
                 receiver=None,
@@ -159,7 +159,7 @@ class FriendshipService:
         requests = result.scalars().all()
         receivers = await self._get_users_by_ids([request.receiver_id for request in requests])
         return [
-            self._serialize_request(
+            self.build_request_read(
                 request=request,
                 sender=None,
                 receiver=receivers.get(request.receiver_id),
@@ -257,7 +257,7 @@ class FriendshipService:
                 statuses.append(FriendshipStatusRead(user_id=target_user_id, status="none"))
         return statuses
 
-    def _serialize_request(
+    def build_request_read(
         self,
         *,
         request: FriendRequestModel,

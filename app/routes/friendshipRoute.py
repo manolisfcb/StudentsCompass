@@ -42,14 +42,7 @@ async def send_friend_request(
         raise HTTPException(status_code=409, detail="This user already sent you a friend request")
 
     request = await service.send_request(sender_id=current_user.id, receiver_id=payload.receiver_id)
-    return FriendRequestRead(
-        id=request.id,
-        status=request.status,
-        created_at=request.created_at,
-        responded_at=request.responded_at,
-        sender=service._build_user_summary(current_user),
-        receiver=service._build_user_summary(receiver),
-    )
+    return service.build_request_read(request=request, sender=current_user, receiver=receiver)
 
 
 @router.get("/friends/requests/incoming", response_model=list[FriendRequestRead])
@@ -85,14 +78,7 @@ async def accept_friend_request(
 
     sender = await service.get_user(request.sender_id)
     accepted = await service.accept_request(request)
-    return FriendRequestRead(
-        id=accepted.id,
-        status=accepted.status,
-        created_at=accepted.created_at,
-        responded_at=accepted.responded_at,
-        sender=service._build_user_summary(sender),
-        receiver=service._build_user_summary(current_user),
-    )
+    return service.build_request_read(request=accepted, sender=sender, receiver=current_user)
 
 
 @router.post("/friends/requests/{request_id}/reject", response_model=FriendRequestRead)
@@ -110,14 +96,7 @@ async def reject_friend_request(
 
     sender = await service.get_user(request.sender_id)
     rejected = await service.reject_request(request)
-    return FriendRequestRead(
-        id=rejected.id,
-        status=rejected.status,
-        created_at=rejected.created_at,
-        responded_at=rejected.responded_at,
-        sender=service._build_user_summary(sender),
-        receiver=service._build_user_summary(current_user),
-    )
+    return service.build_request_read(request=rejected, sender=sender, receiver=current_user)
 
 
 @router.post("/friends/requests/{request_id}/cancel", response_model=FriendRequestRead)
@@ -135,14 +114,7 @@ async def cancel_friend_request(
 
     receiver = await service.get_user(request.receiver_id)
     cancelled = await service.cancel_request(request)
-    return FriendRequestRead(
-        id=cancelled.id,
-        status=cancelled.status,
-        created_at=cancelled.created_at,
-        responded_at=cancelled.responded_at,
-        sender=service._build_user_summary(current_user),
-        receiver=service._build_user_summary(receiver),
-    )
+    return service.build_request_read(request=cancelled, sender=current_user, receiver=receiver)
 
 
 @router.get("/friends", response_model=list[FriendshipRead])
