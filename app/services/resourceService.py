@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime
 import mimetypes
-import os
 from typing import Iterable
 
 from sqlalchemy import select
@@ -22,7 +21,11 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationStatus,
 )
 from app.services.resourceLessonContentCodec import ResourceLessonContentCodec
-from app.services.s3Service import S3Service
+from app.services.storageService import (
+    StorageService,
+    get_resource_storage_location_id,
+    get_storage_service,
+)
 
 
 class ResourceService:
@@ -32,14 +35,19 @@ class ResourceService:
         "Resume Templates",
     )
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, storage_service: StorageService | None = None):
         self.session = session
         self.lesson_content_codec = ResourceLessonContentCodec()
-        self.resources_bucket = os.getenv("RESOURCES_BUCKET_NAME") or os.getenv("BUCKET_NAME")
+        self.resources_bucket = get_resource_storage_location_id()
         try:
-            self.s3_service = S3Service(bucket_name=self.resources_bucket) if self.resources_bucket else None
+            if storage_service:
+                self.storage_service = storage_service
+            elif self.resources_bucket:
+                self.storage_service = get_storage_service(bucket_name=self.resources_bucket)
+            else:
+                self.storage_service = None
         except Exception:
-            self.s3_service = None
+            self.storage_service = None
 
     @staticmethod
     def _percent(completed: int, total: int) -> int:
@@ -248,10 +256,10 @@ class ResourceService:
             raise ValueError("File key is required.")
         if not safe_key.startswith("resources/"):
             raise ValueError("Invalid resource file key.")
-        if not self.s3_service:
+        if not self.storage_service:
             raise ValueError("Resource storage is not configured.")
 
-        file_bytes = await self.s3_service.download_file(safe_key)
+        file_bytes = await self.storage_service.download_file(safe_key)
         media_type = mimetypes.guess_type(safe_key)[0] or "application/octet-stream"
         filename = safe_key.rsplit("/", 1)[-1] or "resource_file"
         return file_bytes, media_type, filename

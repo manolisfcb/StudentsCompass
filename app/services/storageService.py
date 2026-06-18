@@ -29,3 +29,7 @@ def get_storage_service(*, bucket_name: str | None = None) -> StorageService:
 
 def get_resume_storage_location_id() -> str | None:
     return os.getenv("BUCKET_NAME")
+
+
+def get_resource_storage_location_id() -> str | None:
+    return os.getenv("RESOURCES_BUCKET_NAME") or os.getenv("BUCKET_NAME")

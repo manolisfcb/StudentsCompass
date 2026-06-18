@@ -9,7 +9,6 @@ injected into any route that should be admin-only.
 from __future__ import annotations
 
 import uuid
-import os
 from datetime import datetime
 from typing import Optional, Sequence
 
@@ -29,7 +28,11 @@ from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
 from app.models.userStatsModel import UserStatsModel
 from app.services.resourceLessonContentCodec import ResourceLessonContentCodec
-from app.services.s3Service import S3Service
+from app.services.storageService import (
+    StorageService,
+    get_resource_storage_location_id,
+    get_storage_service,
+)
 from app.services.userService import current_active_user
 from app.schemas.resourceSchema import ResourceCreate
 
@@ -55,9 +58,10 @@ async def current_admin_user(user: User = Depends(current_active_user)) -> User:
 class AdminService:
     """Encapsulates read/write operations the admin panel needs."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, storage_service: StorageService | None = None):
         self.session = session
         self.lesson_content_codec = ResourceLessonContentCodec()
+        self.storage_service = storage_service
 
     # ── Dashboard stats ────────────────────────────────────────────────
     async def get_dashboard_stats(self) -> dict:
@@ -297,9 +301,9 @@ class AdminService:
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         unique_name = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_name}"
 
-        resources_bucket = os.getenv("RESOURCES_BUCKET_NAME") or os.getenv("BUCKET_NAME")
-        s3_service = S3Service(bucket_name=resources_bucket)
-        upload_result = await s3_service.upload_file(
+        resources_bucket = get_resource_storage_location_id()
+        storage_service = self.storage_service or get_storage_service(bucket_name=resources_bucket)
+        upload_result = await storage_service.upload_file(
             file_bytes=file_bytes,
             file_name=unique_name,
             content_type=content_type or "application/octet-stream",
