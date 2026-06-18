@@ -18,7 +18,7 @@ async def create_post(
     user: User = Depends(current_active_user),
 ):
     post_service = PostService(session)
-    return await post_service.create_post(post, user_id=user.id) if post else HTTPException(status_code=400, detail="Invalid post data")
+    return await post_service.create_post(post, user_id=user.id)
     
     
 @router.get("/posts/{post_id}", response_model=PostRead)
@@ -66,7 +66,7 @@ async def upload_file(
         file_name=post_data.name 
     )
     post_service = PostService(session)
-    return await post_service.create_post(post, user_id=user.id) if post else HTTPException(status_code=400, detail="Invalid post data")
+    return await post_service.create_post(post, user_id=user.id)
 
 
 @router.delete("/delete_post/{post_id}")
