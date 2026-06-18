@@ -23,6 +23,15 @@ from app.models.jobAnalysisModel import JobAnalysisModel
 from app.models.aiUsageModel import AIQuotaGrantModel, AIUsageEventModel
 from app.models.userStatsModel import UserStatsModel
 from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
+from app.models.skillModel import (
+    CourseModel,
+    CourseSkillModel,
+    JobSkillModel,
+    OptimizationRunModel,
+    ResumeSkillModel,
+    SkillAliasModel,
+    SkillModel,
+)
 from app.models.communityModel import CommunityModel, CommunityMemberModel
 from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeModel, CommunityPostCommentModel
 from app.models.friendshipModel import FriendRequestModel, FriendshipModel

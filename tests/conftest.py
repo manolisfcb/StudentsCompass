@@ -77,11 +77,21 @@ async def setup_db() -> AsyncGenerator[None, None]:
     from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
     from app.models.jobPostingModel import JobPosting
     from app.models.resumeModel import ResumeModel
+    from app.models.resourceModel import ResourceLessonModel, ResourceLessonProgressModel, ResourceModel, ResourceModuleModel
     from app.models.questionnaireModel import UserQuestionnaire
     from app.models.postModel import PostModel
     from app.models.jobAnalysisModel import JobAnalysisModel
     from app.models.aiUsageModel import AIQuotaGrantModel, AIUsageEventModel
     from app.models.resumeEmbeddingsModel import ResumeEmbedding
+    from app.models.skillModel import (
+        CourseModel,
+        CourseSkillModel,
+        JobSkillModel,
+        OptimizationRunModel,
+        ResumeSkillModel,
+        SkillAliasModel,
+        SkillModel,
+    )
     from app.models.userStatsModel import UserStatsModel
     from app.models.communityModel import CommunityModel, CommunityMemberModel
     from app.models.communityPostModel import (
