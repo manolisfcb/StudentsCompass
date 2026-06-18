@@ -33,3 +33,7 @@ def get_resume_storage_location_id() -> str | None:
 
 def get_resource_storage_location_id() -> str | None:
     return os.getenv("RESOURCES_BUCKET_NAME") or os.getenv("BUCKET_NAME")
+
+
+def get_media_storage_location_id() -> str | None:
+    return os.getenv("MEDIA_BUCKET_NAME") or os.getenv("BUCKET_NAME")

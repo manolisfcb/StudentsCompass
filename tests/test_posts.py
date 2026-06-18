@@ -10,7 +10,7 @@ from app.services.mediaStorageService import MediaUploadResult
 
 
 class FakeMediaStorageService:
-    def upload_media(self, file, file_name: str, folder: str = "images/") -> MediaUploadResult:
+    async def upload_media(self, file, file_name: str, folder: str = "images/") -> MediaUploadResult:
         assert file_name == "photo.png"
         assert folder == "posts/"
         return MediaUploadResult(

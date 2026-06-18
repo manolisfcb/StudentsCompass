@@ -51,7 +51,7 @@ async def upload_file(
 ):
 
     try:
-        post_data = get_media_storage_service().upload_media(
+        post_data = await get_media_storage_service().upload_media(
             file=file,
             file_name=file.filename,
             folder="posts/"
