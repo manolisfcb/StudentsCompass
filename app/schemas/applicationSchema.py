@@ -1,8 +1,11 @@
 from pydantic import BaseModel, Field, UUID4
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from enum import Enum
 from app.schemas.interviewSchema import InterviewAvailabilityRead
+
+if TYPE_CHECKING:
+    from app.services.applicationService import ApprovedResumeOption
 
 
 class ApplicationStatus(str, Enum):
@@ -69,3 +72,21 @@ class ApplicationEligibleResumeRead(BaseModel):
     overall_score: float
     approved_at: datetime
     is_latest: bool = False
+
+    @classmethod
+    def from_option(
+        cls,
+        option: "ApprovedResumeOption",
+        *,
+        is_latest: bool = False,
+    ) -> "ApplicationEligibleResumeRead":
+        return cls(
+            id=option.resume.id,
+            original_filename=option.resume.original_filename,
+            created_at=option.resume.created_at,
+            ai_summary=option.resume.ai_summary,
+            contact_phone=option.resume.contact_phone,
+            overall_score=round(option.overall_score, 1),
+            approved_at=option.approved_at,
+            is_latest=is_latest,
+        )

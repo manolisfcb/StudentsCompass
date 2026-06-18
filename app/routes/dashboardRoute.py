@@ -125,16 +125,7 @@ async def get_eligible_resumes_for_application(
     application_service = ApplicationService(session)
     approved_resumes = await application_service.list_approved_resumes(user_id=user.id)
     return [
-        ApplicationEligibleResumeRead(
-            id=option.resume.id,
-            original_filename=option.resume.original_filename,
-            created_at=option.resume.created_at,
-            ai_summary=option.resume.ai_summary,
-            contact_phone=option.resume.contact_phone,
-            overall_score=round(option.overall_score, 1),
-            approved_at=option.approved_at,
-            is_latest=index == 0,
-        )
+        ApplicationEligibleResumeRead.from_option(option, is_latest=index == 0)
         for index, option in enumerate(approved_resumes)
     ]
 

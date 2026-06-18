@@ -1,6 +1,8 @@
 """
 Tests for application endpoints
 """
+from datetime import datetime
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +21,8 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationStatus,
 )
 from app.models.resumeModel import ResumeModel
+from app.schemas.applicationSchema import ApplicationEligibleResumeRead
+from app.services.applicationService import ApprovedResumeOption
 import uuid
 
 
@@ -44,6 +48,39 @@ async def create_approved_resume(*, db_session: AsyncSession, test_user: User, f
     db_session.add_all([resume, evaluation])
     await db_session.commit()
     return resume
+
+
+def test_application_eligible_resume_read_serializes_option():
+    resume = ResumeModel(
+        id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        view_url="https://example.com/resume.pdf",
+        storage_file_id="resumes/resume.pdf",
+        original_filename="resume.pdf",
+        folder_id="test-bucket",
+        ai_summary="Approved resume summary",
+        contact_phone="+1 555 0100",
+        created_at=datetime(2026, 1, 2, 3, 4, 5),
+    )
+    approved_at = datetime(2026, 1, 3, 4, 5, 6)
+
+    payload = ApplicationEligibleResumeRead.from_option(
+        ApprovedResumeOption(
+            resume=resume,
+            overall_score=8.74,
+            approved_at=approved_at,
+        ),
+        is_latest=True,
+    )
+
+    assert payload.id == resume.id
+    assert payload.original_filename == "resume.pdf"
+    assert payload.created_at == resume.created_at
+    assert payload.ai_summary == "Approved resume summary"
+    assert payload.contact_phone == "+1 555 0100"
+    assert payload.overall_score == 8.7
+    assert payload.approved_at == approved_at
+    assert payload.is_latest is True
 
 
 class TestApplications:
