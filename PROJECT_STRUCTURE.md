@@ -12,7 +12,7 @@ Student Compass es una plataforma de navegación de carrera profesional para est
 - **Base de datos:** PostgreSQL (con soporte para SQLite en testing) + **Alembic** para migraciones
 - **Frontend:** Templates HTML con **Jinja2** + CSS/JS estáticos
 - **IA:** Integración con **Google GenAI** (Gemini) y **Sentence Transformers** para embeddings
-- **Almacenamiento:** **AWS S3** (via boto3) + **ImageKit** para imágenes
+- **Almacenamiento:** **AWS S3** (via boto3) como storage principal; **ImageKit** queda como provider opcional para media de posts
 - **Autenticación:** **FastAPI-Users** (JWT)
 - **Scraping:** **Apify** + **BeautifulSoup4**
 
@@ -264,7 +264,7 @@ Todos los endpoints de la API están bajo el prefijo `/api/v1`, excepto las vist
 | **Scraping** | Apify Client | ≥ 2.4.0 |
 | **HTML Parsing** | BeautifulSoup4 | ≥ 4.12.3 |
 | **Storage (Cloud)** | boto3 (AWS S3) | ≥ 1.35.0 |
-| **Imágenes** | ImageKit + Pillow | ≥ 5.0.0 / ≥ 12.1.0 |
+| **Media opcional** | ImageKit + Pillow | ≥ 5.0.0 / ≥ 12.1.0 |
 | **Templates** | Jinja2 | ≥ 3.1.6 |
 | **Config** | python-dotenv | ≥ 1.2.1 |
 | **BD Testing** | aiosqlite | ≥ 0.22.1 |

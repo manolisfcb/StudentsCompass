@@ -47,9 +47,9 @@ El problema para el capstone: el valor academico de Data Analysis todavia no est
 
 | Area | Estado actual | Riesgo | Accion recomendada |
 | --- | --- | --- | --- |
-| Credenciales Google | `app/credentials/google_oauth_client.json` esta trackeado | Alto | Rotar secret, remover del repo y purgar historial |
+| Credenciales Google Drive | No hay credenciales trackeadas; credenciales locales ignoradas fueron eliminadas | Cerrado | Mantener `app/credentials/` fuera del repo |
 | Archivos basura | `.DS_Store` y `test.db` trackeados | Medio | Sacar del repo, ignorar y limpiar |
-| Storage dividido | S3, Google Drive docs/credenciales, ImageKit | Alto | Consolidar storage; comparar S3 vs Supabase Storage sin migrar por moda |
+| Storage dividido | S3 queda como storage principal; ImageKit queda solo como media provider opcional para posts | Bajo | Mantener S3 por ahora |
 | Embeddings | Modelo y tabla existen, servicio devuelve `None` | Alto academico | Reactivar o rediseñar como parte del motor analitico |
 | Scraper duplicado | `linkedin_scraper.py` y `scrapper_propio.py` duplican logica | Medio | Mantener uno, renombrar a ingles, documentar limitaciones |
 | Legacy frontend | `dashboard_old.html/css/js` trackeados | Bajo/medio | Remover si no hay dependencia activa |
@@ -81,13 +81,11 @@ Recomendado para limpieza del repo:
 - `app/static/css/dashboard_old.css`.
 - `app/static/js/dashboard_old.js`.
 - `app/core/JobsScraper/scrapper_propio.py` si `linkedin_scraper.py` queda como version canonical.
-- Credenciales en `app/credentials/`.
-- `OAUTH_SETUP.md` si ya no se usara Google Drive.
-- `app/services/images.py` si se elimina ImageKit.
-- `app/services/s3Service.py` si se migra todo a Supabase Storage.
+- Credenciales en `app/credentials/`: no deben existir en Git.
+- `OAUTH_SETUP.md` si reaparece documentacion de Google Drive.
 - Dependencias de storage eliminado en `pyproject.toml` y `requirements.txt`.
 
-No borrar aun sin una rama dedicada y tests, porque algunas rutas actuales dependen de S3 para CVs y recursos.
+No borrar S3: queda como storage principal por decision de Fase 0.
 
 ### Que se debe refactorizar
 
@@ -113,7 +111,7 @@ Lo que existe hoy:
 - Auth propia con FastAPI Users.
 - S3 para CVs y archivos de recursos.
 - ImageKit para uploads de posts/media.
-- Google Drive como documentacion/credenciales heredadas, sin evidencia de uso vivo en codigo.
+- Google Drive eliminado de la arquitectura; no hay uso vivo en codigo.
 
 Por eso, Supabase debe tratarse como una decision de producto, no como una migracion automatica.
 
@@ -338,10 +336,9 @@ Objetivo: dejar el repo limpio, reducir proveedores externos y preparar una base
 
 ### 0.1 Seguridad inmediata
 
-- Rotar el Google OAuth client secret.
-- Revisar Google Cloud Console y revocar credenciales antiguas.
-- Remover `app/credentials/google_oauth_client.json` del tracking.
-- Purgar secretos del historial con `git filter-repo` o BFG.
+- Google Drive queda fuera del proyecto.
+- Si alguna credencial Google fue usada anteriormente, debe quedar revocada fuera del repo.
+- No hay credenciales Google trackeadas actualmente.
 - Verificar que `.env` nunca haya sido trackeado.
 - Confirmar que `app/credentials/` queda ignorado.
 
@@ -355,7 +352,7 @@ Objetivo: dejar el repo limpio, reducir proveedores externos y preparar una base
   - `ResumeAnalizer` -> `resume_analyzer`
   - `mockIaInetrviews.py` -> `mock_ai_interviews.py`
   - `scrapper_propio.py` -> eliminado o `linkedin_scraper.py`
-- Revisar `package.json`: parece contener dependencias para generacion de presentaciones, no frontend de la app.
+- Remover `package.json` y `package-lock.json`: eran dependencias de generacion de presentaciones, no frontend de la app.
 
 ### 0.3 Decision de storage
 
@@ -363,20 +360,20 @@ Inventario actual:
 
 - CVs: S3 via `S3Service`.
 - Recursos: S3 via `ResourceService`/`AdminService`.
-- Imagenes: ImageKit via `images.py`.
-- Google Drive: documentacion y credenciales, pero no debe seguir si ya no se usa.
+- Imagenes/posts: ImageKit por defecto, con provider S3 disponible via `MEDIA_STORAGE_PROVIDER=s3`.
+- Google Drive: eliminado.
 - Data local: `data/` con zips grandes y resumes.
 
 Decision recomendada:
 
-> No migrar a Supabase Storage automaticamente. Eliminar Google Drive si no se usa. Mantener S3 si ya funciona bien. Eliminar ImageKit solo si posts/media no son parte del producto o si se reemplaza por el storage principal.
+> Mantener S3 como storage principal por ahora. No migrar a Supabase Storage automaticamente. Google Drive queda eliminado. Mantener ImageKit solo mientras posts/media lo necesiten; usar `MEDIA_STORAGE_PROVIDER=s3` cuando se decida consolidar media en S3.
 
 Pasos:
 
 - Crear `StorageService` abstracto.
 - Mantener `S3StorageService` como adapter actual.
-- Implementar `SupabaseStorageService` solo si un spike tecnico demuestra que conviene.
-- Cambiar `ResumeService` y `ResourceService` para depender de la interfaz.
+- Implementar `SupabaseStorageService` solo si un spike tecnico futuro demuestra que conviene.
+- `ResumeService`, `ResourceService` y media uploads ya dependen de adapters de storage.
 - Migrar metadata:
   - `folder_id` -> `storage_bucket`
   - `storage_file_id` -> `storage_path`
@@ -390,7 +387,7 @@ Estado actual:
 - JWT en cookies.
 - Dos dominios auth: usuarios y reclutadores.
 
-Decision recomendada:
+Decision cerrada de Fase 0:
 
 > Mantener FastAPI Users durante el capstone. Evaluar Supabase Auth despues de que el motor analitico funcione.
 
@@ -418,9 +415,9 @@ Estado actual:
 - SQLite para tests.
 - pgvector ya presente.
 
-Decision recomendada:
+Decision cerrada de Fase 0:
 
-> Mantener Postgres generico via `DATABASE_URL`. Supabase Postgres es una opcion valida, pero no obligatoria.
+> Mantener Postgres generico via `DATABASE_URL`. Supabase Postgres es una opcion valida futura, pero no obligatoria ahora.
 
 Esto permite:
 
@@ -436,13 +433,13 @@ Al final de la fase 0, el repo deberia quedar asi:
 ```text
 External providers:
 - Postgres administrado
-- Un solo storage principal: S3 o Supabase Storage
+- Un solo storage principal: S3
 - Google GenAI o proveedor LLM elegido
 
 Eliminados:
 - Google Drive
 - Storage secundario innecesario
-- ImageKit, salvo necesidad real de media/posts
+- ImageKit queda solo como provider opcional de posts/media hasta consolidar media en S3
 - Credenciales trackeadas
 - Archivos legacy
 - Archivos basura
@@ -701,11 +698,11 @@ Limitaciones honestas:
 
 ### P0 - Seguridad y limpieza
 
-- Rotar Google OAuth secret.
-- Purgar credenciales del historial.
-- Remover `.DS_Store`, `test.db`, dashboard legacy.
-- Eliminar Google Drive si ya no se usa.
-- Decidir storage unico.
+- Google Drive eliminado del repo y del workspace local.
+- `app/credentials/` ignorado; no hay credenciales trackeadas.
+- `.DS_Store`, `test.db`, dashboard legacy y duplicados no estan trackeados.
+- Storage principal decidido: S3.
+- Auth/database decididos: mantener FastAPI Users y Postgres via `DATABASE_URL`.
 
 ### P1 - Base analitica
 
@@ -742,11 +739,11 @@ En español:
 Para el capstone, la mejor ruta es:
 
 1. Mantener FastAPI.
-2. Mantener Postgres via `DATABASE_URL`; Supabase Postgres es opcion, no requisito.
-3. Mantener S3 si ya funciona bien para producto; evaluar Supabase Storage con spike antes de migrar.
+2. Mantener Postgres via `DATABASE_URL`; Supabase Postgres no es requisito ahora.
+3. Mantener S3 como storage principal.
 4. Mantener FastAPI Users por ahora.
-5. Eliminar Google Drive si no se usa.
-6. Eliminar ImageKit solo si posts/media no son parte del producto o si se reemplaza por el storage principal.
+5. Google Drive queda eliminado.
+6. Mantener ImageKit solo como provider opcional de posts/media hasta consolidar media en S3.
 7. Reactivar pgvector.
 8. Construir el motor OR-Tools como el centro academico.
 9. Usar StudentsCompass solo como demo/interface.
