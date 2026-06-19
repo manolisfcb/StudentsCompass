@@ -1,8 +1,8 @@
 import pytest
 
-from app.services.adminService import AdminService
-from app.services.resourceService import ResourceService
-from app.services.storageService import get_resource_storage_location_id
+from app.services.admin.adminService import AdminService
+from app.services.resources.resourceService import ResourceService
+from app.services.storage.storageService import get_resource_storage_location_id
 
 
 class FakeResourceStorageService:

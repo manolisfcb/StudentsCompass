@@ -20,7 +20,7 @@ import os
 
 from contextlib import asynccontextmanager
 from app.routes.postRoute import router as post_router
-from app.services.userService import fastapi_users, current_active_user, auth_backend
+from app.services.accounts.userService import fastapi_users, current_active_user, auth_backend
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
 from app.views.views import router as views_router
 from app.routes.questionnaireRoute import router as questionnaire_router
@@ -37,7 +37,7 @@ from app.routes.roadmapRoute import router as roadmap_router
 from app.routes.adminRoute import router as admin_router
 from app.routes.capstoneAnalyticsRoute import router as capstone_analytics_router
 from app.core.resume_analyzer.resume_text_extractor import shutdown_resume_text_extractors
-from app.services.roadmapSeedService import seed_roadmaps_on_startup_if_dev
+from app.services.roadmaps.roadmapSeedService import seed_roadmaps_on_startup_if_dev
 from app.middleware.rate_limit import RequestRateLimiter
 from fastapi import Response
 from fastapi.responses import FileResponse

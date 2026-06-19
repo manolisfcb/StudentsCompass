@@ -41,7 +41,7 @@ from app.models.jobAnalysisModel import *     # noqa: F401,F403
 
 async def create_superuser(email: str, password: str):
     """Register a brand-new user and flag it as superuser."""
-    from app.services.userService import get_user_manager, get_user_db
+    from app.services.accounts.userService import get_user_manager, get_user_db
 
     async with async_session() as session:
         # Check if already exists
@@ -62,7 +62,7 @@ async def create_superuser(email: str, password: str):
         from fastapi_users.db import SQLAlchemyUserDatabase
         user_db = SQLAlchemyUserDatabase(session, User)
 
-        from app.services.userService import UserManager
+        from app.services.accounts.userService import UserManager
         manager = UserManager(user_db)
 
         from app.schemas.userSchema import UserCreate

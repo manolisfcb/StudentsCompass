@@ -22,7 +22,7 @@ class StorageService(Protocol):
 
 
 def get_storage_service(*, bucket_name: str | None = None) -> StorageService:
-    from app.services.s3Service import S3Service
+    from app.services.storage.s3Service import S3Service
 
     return S3Service(bucket_name=bucket_name)
 

@@ -4,8 +4,8 @@ from uuid import UUID
 
 from app.db import get_session
 from app.models.userModel import User
-from app.services.userService import current_active_user
-from app.services.communityService import CommunityService
+from app.services.accounts.userService import current_active_user
+from app.services.community.communityService import CommunityService
 from app.schemas.communitySchema import (
     CommunityCreate,
     CommunityRead,

@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 
-from app.services.aiRequestRateLimitService import AI_ANALYSIS_RATE_LIMIT_MESSAGE, AIRequestRateLimitService
+from app.services.ai.aiRequestRateLimitService import AI_ANALYSIS_RATE_LIMIT_MESSAGE, AIRequestRateLimitService
 
 
 def test_ai_request_rate_limiter_blocks_after_limit():

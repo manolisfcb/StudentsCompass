@@ -20,8 +20,8 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,
 )
-from app.services.resourceLessonContentCodec import ResourceLessonContentCodec
-from app.services.storageService import (
+from app.services.resources.resourceLessonContentCodec import ResourceLessonContentCodec
+from app.services.storage.storageService import (
     StorageService,
     get_resource_storage_location_id,
     get_storage_service,

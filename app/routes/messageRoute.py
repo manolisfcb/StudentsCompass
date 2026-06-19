@@ -12,8 +12,8 @@ from app.schemas.messageSchema import (
     MessageCreate,
     MessageRead,
 )
-from app.services.messageService import MessageService
-from app.services.userService import current_active_user
+from app.services.community.messageService import MessageService
+from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
 

@@ -29,9 +29,9 @@ from app.schemas.companyRecruiterSchema import (
     CompanyRecruiterRead,
 )
 from app.schemas.companySchema import CompanyCreate, CompanyRead, CompanyUpdate
-from app.services.companyApplicantService import CompanyApplicantService
-from app.services.companyRecruiterService import CompanyRecruiterService
-from app.services.companyService import (
+from app.services.companies.companyApplicantService import CompanyApplicantService
+from app.services.companies.companyRecruiterService import CompanyRecruiterService
+from app.services.companies.companyService import (
     auth_backend_company,
     current_active_company,
     current_active_company_recruiter,
@@ -39,9 +39,9 @@ from app.services.companyService import (
     current_company_owner_recruiter,
     fastapi_company_recruiters,
 )
-from app.services.applicationService import ApplicationService
-from app.services.interviewService import InterviewService
-from app.services.resumeService import ResumeService
+from app.services.applications.applicationService import ApplicationService
+from app.services.jobs.interviewService import InterviewService
+from app.services.resumes.resumeService import ResumeService
 
 router = APIRouter()
 

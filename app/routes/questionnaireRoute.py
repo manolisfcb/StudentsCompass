@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
-from app.services.userService import current_active_user
+from app.services.accounts.userService import current_active_user
 from app.models.userModel import User
 from app.schemas.questionnaireSchema import QuestionnaireRead, QuestionnaireSubmit, QuestionnaireResult
-from app.services.questionnaireService import QuestionnaireService
+from app.services.accounts.questionnaireService import QuestionnaireService
 
 router = APIRouter()
 

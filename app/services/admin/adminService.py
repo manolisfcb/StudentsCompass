@@ -27,13 +27,13 @@ from app.models.applicationModel import ApplicationModel
 from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
 from app.models.userStatsModel import UserStatsModel
-from app.services.resourceLessonContentCodec import ResourceLessonContentCodec
-from app.services.storageService import (
+from app.services.accounts.userService import current_active_user
+from app.services.resources.resourceLessonContentCodec import ResourceLessonContentCodec
+from app.services.storage.storageService import (
     StorageService,
     get_resource_storage_location_id,
     get_storage_service,
 )
-from app.services.userService import current_active_user
 from app.schemas.resourceSchema import ResourceCreate
 
 

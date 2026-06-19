@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% set page_title = "Career Optimization Lab" %}
+{% set page_description = "Compare your resume skills against target roles and get role-aligned learning recommendations inside Students Compass." %}
+{% set page_css = "career_lab" %}
+{% set page_js = "career_lab" %}
+{% block content %}
+  {% include "includes/header.html" %}
+
+  <main class="dashboard-layout">
+    {% include "includes/sidebar.html" %}
+
+    <main class="dashboard career-lab-page">
+      <div class="career-lab-container">
+        <section class="career-lab-hero page-shell-header">
+          <div class="career-lab-hero-copy">
+            <span class="career-lab-kicker">Analytical career engine</span>
+            <h2>Career Optimization Lab</h2>
+            <p>Turn your uploaded CV into a skill profile, compare it with a target role, and convert the gap into a focused learning route.</p>
+          </div>
+
+          <form class="career-lab-controls" id="careerLabForm">
+            <label>
+              <span>Resume</span>
+              <select id="resumeSelect" aria-label="Select resume">
+                <option value="">Loading resumes...</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Target role</span>
+              <select id="targetRoleSelect" aria-label="Select target role">
+                <option value="">Loading target roles...</option>
+              </select>
+            </label>
+
+            <button type="submit" id="runAnalysisBtn">
+              <span>Analyze Gap</span>
+            </button>
+          </form>
+        </section>
+
+        <section class="career-lab-empty" id="careerLabEmpty" hidden>
+          <div>
+            <h3>No resume available yet</h3>
+            <p>Upload a CV from your profile so Students Compass can turn it into a skill profile and compare it against target roles.</p>
+          </div>
+          <a href="/user-profile">Upload CV</a>
+        </section>
+
+        <section class="career-lab-status" id="careerLabStatus" aria-live="polite">
+          Select a resume and target role to generate your first gap analysis.
+        </section>
+
+        <section class="analytics-readiness" aria-label="Career analytics readiness">
+          <div class="readiness-copy">
+            <span id="analyticsReadinessBadge">Checking analytics...</span>
+            <strong id="analyticsReadinessTitle">Preparing market signal status</strong>
+            <p id="analyticsReadinessCopy">Students Compass is checking whether the skill catalog, learning resources, and job posting signals are ready.</p>
+          </div>
+          <div class="readiness-stats" id="analyticsReadinessStats">
+            <span><strong>--</strong> skills</span>
+            <span><strong>--</strong> courses</span>
+            <span><strong>--</strong> job signals</span>
+          </div>
+        </section>
+
+        <section class="career-lab-metrics" aria-label="Career readiness metrics">
+          <article class="lab-metric-card">
+            <span>Match score</span>
+            <strong id="matchScore">--</strong>
+            <small>Current CV vs target role</small>
+          </article>
+          <article class="lab-metric-card warning">
+            <span>Skill gaps</span>
+            <strong id="missingSkillsCount">--</strong>
+            <small>Missing role requirements</small>
+          </article>
+          <article class="lab-metric-card resource">
+            <span>Resources</span>
+            <strong id="recommendedCourseCount">--</strong>
+            <small>Recommended next steps</small>
+          </article>
+          <article class="lab-metric-card source">
+            <span>Data source</span>
+            <strong id="requirementsSource">--</strong>
+            <small>Role requirements basis</small>
+          </article>
+        </section>
+
+        <section class="career-lab-grid">
+          <article class="lab-panel lab-panel-large">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Skill Gap Map</h3>
+                <p>Current profile compared with role requirements.</p>
+              </div>
+            </div>
+            <div class="radar-wrap">
+              <canvas id="skillRadar" width="520" height="420" aria-label="Skill gap radar chart"></canvas>
+            </div>
+            <div class="radar-legend">
+              <span><i class="legend-current"></i> Current profile</span>
+              <span><i class="legend-required"></i> Required role level</span>
+            </div>
+          </article>
+
+          <article class="lab-panel">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Current vs Required</h3>
+                <p>Matched and missing skills at a glance.</p>
+              </div>
+            </div>
+            <div class="skill-bar-list" id="skillComparisonList">
+              <p class="panel-placeholder">Run an analysis to compare your CV with a role.</p>
+            </div>
+          </article>
+
+          <article class="lab-panel">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Areas to Improve</h3>
+                <p>Highest priority gaps for this role.</p>
+              </div>
+            </div>
+            <div class="improvement-list" id="improvementList">
+              <p class="panel-placeholder">Missing skills will appear here after analysis.</p>
+            </div>
+          </article>
+
+          <article class="lab-panel lab-panel-route">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Recommended Learning Route</h3>
+                <p>Resources mapped to the skills you still need.</p>
+              </div>
+              <a href="/resources">Open Resources</a>
+            </div>
+            <div class="course-route-list" id="courseRouteList">
+              <p class="panel-placeholder">Recommended courses will appear here after analysis.</p>
+            </div>
+          </article>
+
+          <article class="lab-panel">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Market Signals</h3>
+                <p>How this connects to employer demand.</p>
+              </div>
+            </div>
+            <div class="market-signal-list">
+              <div class="market-signal">
+                <span>Job Board</span>
+                <strong>Can power requirements</strong>
+                <p id="marketSourceCopy">When job postings are synced, this lab can use real market requirements instead of starter role profiles.</p>
+              </div>
+              <div class="market-signal">
+                <span>Capstone scope</span>
+                <strong>Phase 1 ready</strong>
+                <p>Clear gap analysis first; route optimization can become the next layer.</p>
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+  </main>
+
+  {% include "includes/footer.html" %}
+{% endblock %}

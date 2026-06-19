@@ -16,7 +16,7 @@ from app.models.interviewAvailabilityModel import (
 )
 from app.models.userModel import User
 from app.schemas.interviewSchema import InterviewAvailabilityPublishRequest
-from app.services.emailNotificationService import EmailNotificationService
+from app.services.notifications.emailNotificationService import EmailNotificationService
 
 
 class InterviewService:

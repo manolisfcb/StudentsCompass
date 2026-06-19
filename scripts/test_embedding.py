@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.services.embeddingService import generate_embedding, MODEL_NAME, EMBEDDING_DIMS
+from app.services.analytics.embeddingService import generate_embedding, MODEL_NAME, EMBEDDING_DIMS
 
 
 async def test_embedding():

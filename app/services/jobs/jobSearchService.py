@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.JobsScraper.linkedin_scraper import fetch_linkedin_jobs
 from app.models.jobPostingModel import JobPosting
-from app.services.jobPostingService import JobPostingService
+from app.services.jobs.jobPostingService import JobPostingService
 
 LOGGER = logging.getLogger(__name__)
 

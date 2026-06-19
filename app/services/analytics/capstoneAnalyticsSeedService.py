@@ -5,7 +5,44 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.aiUsageModel import AIQuotaGrantModel, AIUsageEventModel  # noqa: F401
+from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel  # noqa: F401
+from app.models.applicationAnalyticsModel import ApplicationStatusEventModel  # noqa: F401
+from app.models.applicationModel import ApplicationModel  # noqa: F401
+from app.models.communityModel import CommunityMemberModel, CommunityModel  # noqa: F401
+from app.models.communityPostModel import (  # noqa: F401
+    CommunityPostCommentModel,
+    CommunityPostLikeModel,
+    CommunityPostModel,
+)
+from app.models.companyModel import Company  # noqa: F401
+from app.models.companyRecruiterModel import CompanyRecruiter  # noqa: F401
+from app.models.emailNotificationLogModel import EmailNotificationLogModel  # noqa: F401
+from app.models.friendshipModel import FriendRequestModel, FriendshipModel  # noqa: F401
+from app.models.interviewAvailabilityModel import InterviewAvailabilityModel  # noqa: F401
+from app.models.jobAnalysisModel import JobAnalysisModel  # noqa: F401
+from app.models.jobPostingModel import JobPosting  # noqa: F401
+from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel  # noqa: F401
+from app.models.postModel import PostModel  # noqa: F401
+from app.models.questionnaireModel import UserQuestionnaire  # noqa: F401
+from app.models.resourceModel import ResourceModel  # noqa: F401
+from app.models.resourceModel import ResourceLessonModel, ResourceLessonProgressModel, ResourceModuleModel  # noqa: F401
+from app.models.resumeCourseEvaluationModel import ResumeCourseEvaluationModel  # noqa: F401
+from app.models.resumeEmbeddingsModel import ResumeEmbedding  # noqa: F401
+from app.models.resumeModel import ResumeModel  # noqa: F401
+from app.models.roadmapModel import (  # noqa: F401
+    RoadmapModel,
+    RoadmapStageModel,
+    StageProjectModel,
+    StageTaskModel,
+    UserProjectSubmissionModel,
+    UserRoadmapModel,
+    UserStageProgressModel,
+    UserTaskProgressModel,
+)
 from app.models.skillModel import CourseModel, CourseSkillModel, JobSkillModel, SkillAliasModel, SkillModel
+from app.models.userStatsModel import UserStatsModel  # noqa: F401
+from app.models.userModel import User  # noqa: F401
 
 
 CAPSTONE_SKILL_SEED_DATA: list[dict[str, Any]] = [

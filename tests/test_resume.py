@@ -92,7 +92,7 @@ class TestResume:
     ):
         fake_storage = FakeResumeStorageService()
         monkeypatch.setenv("BUCKET_NAME", "test-resume-bucket")
-        monkeypatch.setattr("app.services.resumeService.get_storage_service", lambda: fake_storage)
+        monkeypatch.setattr("app.services.resumes.resumeService.get_storage_service", lambda: fake_storage)
 
         response = await client.post(
             "/api/v1/profile/cv/upload",

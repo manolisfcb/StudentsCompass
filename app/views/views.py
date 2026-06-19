@@ -9,13 +9,13 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.services.companyService import (
+from app.services.companies.companyService import (
     current_active_company_optional,
     current_active_company_recruiter_optional,
 )
-from app.services.resourceService import ResourceService
-from app.services.roadmapService import RoadmapService
-from app.services.userService import current_active_user_optional
+from app.services.resources.resourceService import ResourceService
+from app.services.roadmaps.roadmapService import RoadmapService
+from app.services.accounts.userService import current_active_user_optional
 from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
@@ -78,6 +78,13 @@ async def dashboard(request: Request, user: Optional[User] = Depends(current_act
     if user is None:
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     return render_template(request, "dashboard.html")
+
+
+@router.get("/career-lab")
+async def career_lab(request: Request, user: Optional[User] = Depends(current_active_user_optional)):
+    if user is None:
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return render_template(request, "career_lab.html")
 
 @router.get("/company-dashboard")
 async def company_dashboard(

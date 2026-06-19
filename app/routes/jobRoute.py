@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
-from app.services.userService import current_active_user
+from app.services.accounts.userService import current_active_user
 from app.models.userModel import User
 import logging
 from uuid import UUID
@@ -15,12 +15,12 @@ from app.schemas.jobPostingSchema import (
     JobPostingRead,
     JobPostingUpdate,
 )
-from app.services.companyService import current_active_company
-from app.services.companyService import current_company_job_manager_recruiter
-from app.services.jobPostingService import JobPostingService
-from app.services.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAILURE_MESSAGE
-from app.services.jobSearchService import JobSearchQuery, JobSearchService
-from app.services.aiRequestRateLimitService import ai_analysis_rate_limiter
+from app.services.companies.companyService import current_active_company
+from app.services.companies.companyService import current_company_job_manager_recruiter
+from app.services.jobs.jobPostingService import JobPostingService
+from app.services.ai.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAILURE_MESSAGE
+from app.services.jobs.jobSearchService import JobSearchQuery, JobSearchService
+from app.services.ai.aiRequestRateLimitService import ai_analysis_rate_limiter
 from app.models.companyRecruiterModel import CompanyRecruiter
 
 LOGGER = logging.getLogger(__name__)

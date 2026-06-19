@@ -16,8 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.models.userModel import User
-from app.services.adminService import AdminService, current_admin_user
-from app.services.resourceService import ResourceService
+from app.services.admin.adminService import AdminService, current_admin_user
+from app.services.resources.resourceService import ResourceService
 from app.schemas.resourceSchema import ResourceCreate
 
 router = APIRouter()

@@ -13,8 +13,9 @@ from app.core.resume_analyzer.llm_model import ask_llm_model
 from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.resumeModel import ResumeModel
-from app.services.aiUsageService import AIFeature, AIUsageService
-from app.services.resumeService import ResumeService
+from app.services.ai.aiUsageService import AIFeature, AIUsageService
+from app.services.analytics.embeddingService import ResumeEmbeddingService
+from app.services.resumes.resumeService import ResumeService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -243,8 +244,19 @@ class CVAnalysisService:
         resume.ai_summary = summary
         resume.contact_phone = extracted_phone
         await self.session.commit()
+        await self._sync_resume_embedding(resume=resume, text=summary or resume_text)
 
         LOGGER.info("Job %s completed successfully with keywords: %s", job.id, keywords)
+
+    async def _sync_resume_embedding(self, *, resume: ResumeModel, text: str | None) -> None:
+        try:
+            embedding_service = ResumeEmbeddingService(self.session)
+            await embedding_service.upsert_resume_embedding_from_text(
+                resume_id=resume.id,
+                text=text,
+            )
+        except Exception:  # noqa: BLE001
+            LOGGER.exception("Resume embedding sync failed for resume %s", resume.id)
 
     async def _get_job(self, job_id: UUID) -> JobAnalysisModel | None:
         return await self.session.scalar(select(JobAnalysisModel).where(JobAnalysisModel.id == job_id))

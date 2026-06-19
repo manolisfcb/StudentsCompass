@@ -29,7 +29,7 @@ from app.models.resumeCourseEvaluationModel import (
 )
 from app.models.resumeModel import ResumeModel
 from app.schemas.applicationSchema import ApplicationCreate, ApplicationUpdate
-from app.services.emailNotificationService import EmailNotificationService
+from app.services.notifications.emailNotificationService import EmailNotificationService
 
 
 @dataclass

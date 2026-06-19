@@ -20,8 +20,8 @@ from app.schemas.roadmapSchema import (
     TaskProgressUpdateRequest,
     TaskProgressUpdateResponse,
 )
-from app.services.roadmapService import RoadmapService
-from app.services.userService import current_active_user
+from app.services.roadmaps.roadmapService import RoadmapService
+from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
 

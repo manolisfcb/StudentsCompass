@@ -1,20 +1,20 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.resumeService import (
+from app.services.resumes.resumeService import (
     RESUME_AUDIT_CONTENT_TYPES,
     RESUME_UPLOAD_CONTENT_TYPES,
     ResumeService,
     is_allowed_resume_content_type,
 )
-from app.services.resumeCourseAuditService import ResumeCourseAuditService
+from app.services.resumes.resumeCourseAuditService import ResumeCourseAuditService
 from app.schemas.resumeSchema import (
     ResumeCourseAuditAttemptsRead,
     ResumeCourseAuditRead,
     ResumeReadSchema,
 )
 from app.db import get_session
-from app.services.userService import current_active_user
-from app.services.storageService import get_resume_storage_location_id
+from app.services.accounts.userService import current_active_user
+from app.services.storage.storageService import get_resume_storage_location_id
 from app.models.userModel import User
 from uuid import UUID
 import logging

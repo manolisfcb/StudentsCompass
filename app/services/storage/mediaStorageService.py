@@ -12,7 +12,7 @@ from typing import Protocol
 from fastapi import UploadFile
 from imagekitio import ImageKit
 
-from app.services.storageService import (
+from app.services.storage.storageService import (
     StorageService,
     get_media_storage_location_id,
     get_storage_service,

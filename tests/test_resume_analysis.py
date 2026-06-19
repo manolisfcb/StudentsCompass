@@ -35,12 +35,12 @@ async def test_process_cv_analysis_persists_summary_and_resume_phone(
             resume_key_skills=["Python", "FastAPI"],
         )
 
-    monkeypatch.setattr("app.services.resumeService.ResumeService.download_resume_file", fake_download)
+    monkeypatch.setattr("app.services.resumes.resumeService.ResumeService.download_resume_file", fake_download)
     monkeypatch.setattr(
-        "app.services.cvAnalysisService.extract_resume_text_from_bytes",
+        "app.services.ai.cvAnalysisService.extract_resume_text_from_bytes",
         fake_extract_resume_text_from_bytes,
     )
-    monkeypatch.setattr("app.services.cvAnalysisService.ask_llm_model", fake_ask_llm_model)
+    monkeypatch.setattr("app.services.ai.cvAnalysisService.ask_llm_model", fake_ask_llm_model)
 
     resume = ResumeModel(
         id=uuid.uuid4(),

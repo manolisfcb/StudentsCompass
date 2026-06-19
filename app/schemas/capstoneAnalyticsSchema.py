@@ -24,6 +24,7 @@ class CapstoneRequiredSkillRead(BaseModel):
     importance_score: float | None = None
     evidence_text: str | None = None
     extraction_method: str | None = None
+    source_type: str | None = None
 
 
 class CapstoneCourseSkillCoverageRead(BaseModel):
@@ -51,6 +52,7 @@ class CapstoneGapAnalysisRead(BaseModel):
     status: str
     resume_id: str
     target_role: str
+    requirements_source: str
     coverage_ratio: float
     current_skills: list[CapstoneSkillRead]
     required_skills: list[CapstoneRequiredSkillRead]
@@ -62,3 +64,52 @@ class CapstoneGapAnalysisRead(BaseModel):
 class CapstoneSkillExtractionRead(BaseModel):
     resume_id: str
     extracted_skills: list[CapstoneSkillRead]
+
+
+class CapstoneJobSkillExtractionRead(BaseModel):
+    job_posting_id: str
+    extracted_skills: list[CapstoneRequiredSkillRead]
+
+
+class CapstoneJobSkillBatchExtractionRead(BaseModel):
+    jobs_scanned: int
+    jobs_with_matches: int
+    job_skill_links: int
+
+
+class CapstoneAnalyticsSeedSummaryRead(BaseModel):
+    skills: int
+    aliases: int
+    courses: int
+    course_skills: int
+    role_skills: int
+
+
+class CapstoneAnalyticsStatusRead(BaseModel):
+    schema_ready: bool
+    catalog_ready: bool
+    skills_count: int
+    aliases_count: int
+    courses_count: int
+    course_skills_count: int
+    role_seed_requirements_count: int
+    real_job_skill_links_count: int
+    synced_job_postings_count: int
+    supported_seed_roles: list[str]
+    resume_embeddings_count: int
+    embedding_provider: str
+    embedding_model_name: str
+    semantic_matching_ready: bool
+    next_action: str | None = None
+
+
+class CapstoneAnalyticsRoleRead(BaseModel):
+    target_role: str
+    requirement_source: str
+    required_skills_count: int
+    synced_job_postings_count: int
+    is_market_backed: bool
+
+
+class CapstoneAnalyticsRolesRead(BaseModel):
+    roles: list[CapstoneAnalyticsRoleRead]

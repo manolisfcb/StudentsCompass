@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
-from app.services.companyService import current_active_company, current_active_company_recruiter
-from app.services.userService import current_active_user
-from app.services.applicationService import ApplicationService
-from app.services.dashboardService import DashboardService
+from app.services.companies.companyService import current_active_company, current_active_company_recruiter
+from app.services.accounts.userService import current_active_user
+from app.services.applications.applicationService import ApplicationService
+from app.services.applications.dashboardService import DashboardService
 from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
@@ -18,7 +18,7 @@ from app.schemas.interviewSchema import InterviewAvailabilitySelectionRequest
 from typing import Dict, List
 from uuid import UUID
 import logging
-from app.services.interviewService import InterviewService
+from app.services.jobs.interviewService import InterviewService
 
 logger = logging.getLogger(__name__)
 

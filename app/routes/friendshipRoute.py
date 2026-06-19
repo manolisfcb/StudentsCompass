@@ -11,8 +11,8 @@ from app.schemas.friendshipSchema import (
     FriendshipRead,
     FriendshipStatusRead,
 )
-from app.services.friendshipService import FriendshipService
-from app.services.userService import current_active_user
+from app.services.community.friendshipService import FriendshipService
+from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
 

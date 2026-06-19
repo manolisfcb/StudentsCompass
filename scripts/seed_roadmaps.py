@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 from app.db import async_session
-from app.services.roadmapSeedService import seed_roadmaps
+from app.services.roadmaps.roadmapSeedService import seed_roadmaps
 
 
 async def run() -> None:

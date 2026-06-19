@@ -4,7 +4,7 @@ import pytest
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app.services.mediaStorageService import (
+from app.services.storage.mediaStorageService import (
     S3MediaStorageService,
     get_media_storage_provider,
     get_media_storage_service,
@@ -55,7 +55,7 @@ def test_media_storage_service_rejects_unknown_provider():
 def test_media_storage_service_supports_s3_provider(monkeypatch: pytest.MonkeyPatch):
     fake_storage = FakeStorageService()
     monkeypatch.setenv("MEDIA_STORAGE_PROVIDER", "s3")
-    monkeypatch.setattr("app.services.mediaStorageService.get_storage_service", lambda bucket_name=None: fake_storage)
+    monkeypatch.setattr("app.services.storage.mediaStorageService.get_storage_service", lambda bucket_name=None: fake_storage)
 
     service = get_media_storage_service()
 

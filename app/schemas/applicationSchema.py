@@ -5,7 +5,7 @@ from enum import Enum
 from app.schemas.interviewSchema import InterviewAvailabilityRead
 
 if TYPE_CHECKING:
-    from app.services.applicationService import ApprovedResumeOption
+    from app.services.applications.applicationService import ApprovedResumeOption
 
 
 class ApplicationStatus(str, Enum):

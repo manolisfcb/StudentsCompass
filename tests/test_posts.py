@@ -6,7 +6,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.models.postModel import PostModel
-from app.services.mediaStorageService import MediaUploadResult
+from app.services.storage.mediaStorageService import MediaUploadResult
 
 
 class FakeMediaStorageService:

@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
 from datetime import datetime
-from app.services.storageService import StorageService, get_storage_service
+from app.services.analytics.embeddingService import ResumeEmbeddingService, generate_embedding
+from app.services.storage.storageService import StorageService, get_storage_service
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,9 +72,25 @@ class ResumeService:
         return resume, file_info
     
     async def create_resume_embedding(self, resume_id: UUID, model_name: str, dims: int, embedding: list[float]) -> None:
-        # Desactivado: No guardar embeddings
-        LOGGER.info("create_resume_embedding called, but embedding generation is disabled. No embedding will be saved.")
-        return None
+        embedding_service = ResumeEmbeddingService(self.session)
+        await embedding_service.upsert_resume_embedding(
+            resume_id=resume_id,
+            model_name=model_name,
+            dims=dims,
+            embedding=embedding,
+        )
+
+    async def create_resume_embedding_from_text(self, resume_id: UUID, text: str | None, model_name: str) -> bool:
+        embedding = await generate_embedding(text or "")
+        if embedding is None:
+            return False
+        await self.create_resume_embedding(
+            resume_id=resume_id,
+            model_name=model_name,
+            dims=len(embedding),
+            embedding=embedding,
+        )
+        return True
 
     async def list_user_resumes(self, user_id: UUID) -> list[ResumeModel]:
         result = await self.session.execute(

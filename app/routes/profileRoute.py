@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.models.userModel import User
-from app.services.profileService import ProfileService
-from app.services.userService import current_active_user
+from app.services.accounts.profileService import ProfileService
+from app.services.accounts.userService import current_active_user
 from app.schemas.userSchema import UserRead, UserUpdate
 
 router = APIRouter()

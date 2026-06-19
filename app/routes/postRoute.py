@@ -1,12 +1,12 @@
 from app.schemas.postSchema import PostCreate, PostRead
 from fastapi import APIRouter, Depends, HTTPException
-from app.services.postService import PostService
+from app.services.community.postService import PostService
 from app.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from fastapi import UploadFile, Form, File
-from app.services.mediaStorageService import get_media_storage_service
-from app.services.userService import current_active_user
+from app.services.storage.mediaStorageService import get_media_storage_service
+from app.services.accounts.userService import current_active_user
 from app.models.userModel import User
 
 router = APIRouter()

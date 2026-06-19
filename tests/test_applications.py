@@ -22,7 +22,7 @@ from app.models.resumeCourseEvaluationModel import (
 )
 from app.models.resumeModel import ResumeModel
 from app.schemas.applicationSchema import ApplicationEligibleResumeRead
-from app.services.applicationService import ApprovedResumeOption
+from app.services.applications.applicationService import ApprovedResumeOption
 import uuid
 
 

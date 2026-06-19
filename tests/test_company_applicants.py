@@ -14,7 +14,7 @@ from app.models.emailNotificationLogModel import EmailNotificationLogModel
 from app.models.interviewAvailabilityModel import InterviewAvailabilityModel, InterviewAvailabilityStatus
 from app.models.resumeModel import ResumeModel
 from app.models.userModel import User
-from app.services.resumeService import ResumeService
+from app.services.resumes.resumeService import ResumeService
 
 
 @pytest.mark.asyncio

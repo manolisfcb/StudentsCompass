@@ -21,8 +21,8 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,
 )
-from app.services.aiUsageService import AIFeature, AIUsageService
-from app.services.resumeService import ResumeService
+from app.services.ai.aiUsageService import AIFeature, AIUsageService
+from app.services.resumes.resumeService import ResumeService
 
 
 class ResumeCourseAuditService:

@@ -4,7 +4,7 @@ import pytest
 
 from app.models.aiUsageModel import AIQuotaGrantModel
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
-from app.services.aiUsageService import AIFeature, AIUsageService
+from app.services.ai.aiUsageService import AIFeature, AIUsageService
 
 
 @pytest.mark.asyncio

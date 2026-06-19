@@ -12,8 +12,8 @@ from app.schemas.resourceSchema import (
     ResourceProgressRead,
     ResourceRead,
 )
-from app.services.resourceService import ResourceService
-from app.services.userService import current_active_user
+from app.services.resources.resourceService import ResourceService
+from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
 

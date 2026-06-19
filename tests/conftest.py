@@ -17,7 +17,7 @@ from app.db import Base, get_session
 from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
-from app.services.userService import UserManager, get_user_manager
+from app.services.accounts.userService import UserManager, get_user_manager
 from fastapi_users.password import PasswordHelper
 
 
