@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -6,10 +8,12 @@ from sqlalchemy.exc import ProgrammingError
 from app.models.resumeModel import ResumeModel
 from app.models.resumeEmbeddingsModel import ResumeEmbedding
 from app.models.jobPostingModel import JobPosting
+from app.models.userModel import User
 from app.routes.capstoneAnalyticsRoute import _run_capstone_operation
 from app.models.skillModel import (
     CourseModel,
     CourseSkillModel,
+    JobSkillModel,
     OptimizationRunModel,
     ResumeSkillModel,
     SkillAliasModel,
@@ -17,6 +21,7 @@ from app.models.skillModel import (
 )
 from app.services.analytics.capstoneAnalyticsService import CapstoneAnalyticsService
 from app.services.analytics.capstoneAnalyticsSeedService import seed_capstone_analytics_minimum
+from app.services.analytics.semanticMatchingService import SemanticMatchingService
 
 
 @pytest.mark.asyncio
@@ -78,7 +83,29 @@ async def test_capstone_analytics_status_reports_catalog_readiness(client, db_se
     assert ready_payload["embedding_provider"] == "hash"
     assert ready_payload["embedding_model_name"]
     assert ready_payload["semantic_matching_ready"] is False
+    assert ready_payload["local_embedding_provider_configured"] is False
+    assert ready_payload["embedding_fallback_provider"] == "hash"
+    assert ready_payload["embedding_model_cache_strategy"]
+    assert ready_payload["embedding_production_recommendation"]
     assert "Data Analyst" in ready_payload["supported_seed_roles"]
+
+
+@pytest.mark.asyncio
+async def test_capstone_catalog_quality_reports_product_readiness_gaps(client, db_session, auth_headers):
+    await seed_capstone_analytics_minimum(db_session)
+
+    response = await client.get("/api/v1/capstone/catalog/quality", headers=auth_headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["quality_version"] == "catalog_quality_v1"
+    assert 0 < payload["quality_score"] < 1
+    assert payload["skills_count"] == 25
+    assert payload["courses_count"] == 12
+    assert payload["mapped_course_ratio"] == 1
+    assert payload["metadata_completeness"]["overall"] == 1
+    assert payload["next_actions"]
+    assert any("Expand the skill catalog" in action for action in payload["next_actions"])
 
 
 @pytest.mark.asyncio
@@ -263,7 +290,16 @@ async def test_capstone_gap_analysis_returns_missing_skills_and_recommended_cour
     assert {"python", "sql", "communication"}.issubset(current_skill_names)
     assert "excel" in missing_skill_names
     assert payload["coverage_ratio"] > 0
+    assert payload["overall_readiness_score"] == payload["match_score"]
+    assert payload["context_similarity_score"] == 0
+    assert payload["context_match_level"] == "fallback_disabled"
+    assert payload["semantic_context_ready"] is False
+    assert "role_required_skills" in payload["context_evidence_sources"]
     assert payload["recommended_courses"]
+    assert payload["priority_missing_skills"]
+    assert payload["priority_missing_skills"][0]["priority_rank"] == 1
+    assert payload["gap_insights"]
+    assert payload["market_signals"]["source"] == "role_seed"
     assert any(
         covered_skill["normalized_name"] == "excel"
         for course in payload["recommended_courses"]
@@ -276,6 +312,126 @@ async def test_capstone_gap_analysis_returns_missing_skills_and_recommended_cour
     assert embedding is not None
     assert embedding.dims == 384
     assert len(embedding.embedding) == 384
+
+
+@pytest.mark.asyncio
+async def test_semantic_matching_separates_exact_and_semantic_matches(monkeypatch):
+    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
+
+    vectors = {
+        "python python programming": [1.0, 0.0],
+        "data visualization data_visualization analytics": [0.0, 1.0],
+        "tableau tableau analytics": [0.0, 0.96],
+    }
+
+    async def fake_embedding(text: str):
+        return vectors[text.lower()]
+
+    service = SemanticMatchingService(embedding_fn=fake_embedding, semantic_ready_override=True)
+    summary = await service.analyze_required_skill_matches(
+        current_skills=[
+            {
+                "skill_id": "python-id",
+                "normalized_name": "python",
+                "display_name": "Python",
+                "category": "programming",
+                "confidence_score": 0.9,
+            },
+            {
+                "skill_id": "tableau-id",
+                "normalized_name": "tableau",
+                "display_name": "Tableau",
+                "category": "analytics",
+                "confidence_score": 0.85,
+            },
+        ],
+        required_skills=[
+            {
+                "skill_id": "python-id",
+                "normalized_name": "python",
+                "display_name": "Python",
+                "category": "programming",
+                "importance_score": 0.9,
+            },
+            {
+                "skill_id": "data-viz-id",
+                "normalized_name": "data_visualization",
+                "display_name": "Data Visualization",
+                "category": "analytics",
+                "importance_score": 0.8,
+            },
+        ],
+    )
+
+    assert summary.analysis_version == "semantic_gap_v1"
+    assert summary.exact_match_count == 1
+    assert summary.semantic_match_count == 1
+    assert summary.missing_skills == []
+    assert summary.semantic_matched_skills[0]["matched_skill_display_name"] == "Tableau"
+    assert summary.match_score > 0.8
+
+
+@pytest.mark.asyncio
+async def test_semantic_context_similarity_uses_full_resume_and_role_text(monkeypatch):
+    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
+
+    async def fake_embedding(text: str):
+        if "dashboards" in text.lower():
+            return [1.0, 0.0]
+        return [0.94, 0.1]
+
+    service = SemanticMatchingService(embedding_fn=fake_embedding, semantic_ready_override=True)
+    summary = await service.analyze_context_similarity(
+        resume_text="Built dashboards, SQL reporting, and stakeholder summaries.",
+        role_text="Data Analyst role requiring dashboards, SQL, and business reporting.",
+        evidence_sources=["resume_summary", "job_postings"],
+    )
+
+    assert summary.semantic_context_ready is True
+    assert summary.context_similarity_score > 0.95
+    assert summary.context_match_level == "strong"
+    assert "job_postings" in summary.evidence_sources
+
+
+@pytest.mark.asyncio
+async def test_capstone_gap_analysis_falls_back_when_local_embedding_model_fails(
+    db_session,
+    test_user,
+    monkeypatch,
+):
+    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
+
+    def fail_local_embedding(text: str):
+        raise RuntimeError("model unavailable")
+
+    monkeypatch.setattr(
+        "app.services.analytics.embeddingService._generate_local_embedding",
+        fail_local_embedding,
+    )
+    await seed_capstone_analytics_minimum(db_session)
+    resume = ResumeModel(
+        view_url="https://storage.example/resume.pdf",
+        user_id=test_user.id,
+        storage_file_id="resumes/test.pdf",
+        original_filename="resume.pdf",
+        folder_id="resumes",
+        ai_summary="Experienced with Python and SQL.",
+    )
+    db_session.add(resume)
+    await db_session.commit()
+    await db_session.refresh(resume)
+
+    payload = await CapstoneAnalyticsService(db_session).analyze_gap(
+        resume_id=resume.id,
+        user_id=test_user.id,
+        target_role="Data Analyst",
+    )
+
+    assert payload["status"] == "ok"
+    assert payload["analysis_version"] == "semantic_gap_v1"
+    assert payload["exact_match_count"] >= 1
+    assert payload["match_score"] > 0
+    assert 0 <= payload["overall_readiness_score"] <= 1
 
 
 @pytest.mark.asyncio
@@ -302,9 +458,183 @@ async def test_capstone_gap_analysis_endpoint_returns_gap_payload(client, db_ses
     assert response.status_code == 200
     payload = response.json()
     assert payload["target_role"] == "Data Analyst"
+    assert payload["analysis_version"] == "semantic_gap_v1"
+    assert "match_score" in payload
+    assert "overall_readiness_score" in payload
+    assert "context_similarity_score" in payload
+    assert "semantic_matched_skills" in payload
+    assert payload["priority_missing_skills"]
+    assert payload["gap_insights"]
+    assert payload["market_signals"]["target_role"] == "Data Analyst"
     assert payload["current_skills"]
     assert payload["missing_skills"]
     assert payload["recommended_courses"]
+
+
+@pytest.mark.asyncio
+async def test_capstone_learning_route_optimization_respects_constraints_and_persists_run(
+    client,
+    db_session,
+    test_user,
+    auth_headers,
+):
+    await seed_capstone_analytics_minimum(db_session)
+    resume = ResumeModel(
+        view_url="https://storage.example/resume.pdf",
+        user_id=test_user.id,
+        storage_file_id="resumes/test.pdf",
+        original_filename="resume.pdf",
+        folder_id="resumes",
+        ai_summary="Experienced with Python and SQL.",
+    )
+    db_session.add(resume)
+    await db_session.commit()
+    await db_session.refresh(resume)
+
+    response = await client.post(
+        "/api/v1/capstone/learning-route/optimize",
+        headers=auth_headers,
+        json={
+            "resume_id": str(resume.id),
+            "target_role": "Data Analyst",
+            "budget": 100,
+            "available_hours": 30,
+            "max_courses": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["objective_version"] == "heuristic_route_v1"
+    assert payload["match_score_before"] >= 0
+    assert payload["total_cost"] <= 100
+    assert payload["total_hours"] <= 30
+    assert len(payload["selected_courses"]) <= 2
+    assert payload["projected_match_score_after"] >= payload["match_score_before"]
+    assert payload["route_summary"]
+    if payload["selected_courses"]:
+        assert payload["selected_courses"][0]["sequence_order"] == 1
+        assert payload["selected_courses"][0]["selection_reason"]
+        assert payload["selected_courses"][0]["covered_priority_skills"]
+
+    optimization_run = await db_session.get(
+        OptimizationRunModel,
+        uuid.UUID(payload["optimization_run_id"]),
+    )
+    assert optimization_run is not None
+    assert optimization_run.status == "completed"
+    assert optimization_run.objective_version == "heuristic_route_v1"
+    assert optimization_run.total_cost == payload["total_cost"]
+    assert optimization_run.skill_coverage["route_summary"] == payload["route_summary"]
+
+    runs_response = await client.get(
+        "/api/v1/capstone/learning-route/runs",
+        headers=auth_headers,
+    )
+
+    assert runs_response.status_code == 200
+    runs_payload = runs_response.json()
+    assert runs_payload["runs"][0]["optimization_run_id"] == payload["optimization_run_id"]
+    assert runs_payload["runs"][0]["selected_courses_count"] == len(payload["selected_courses"])
+
+
+@pytest.mark.asyncio
+async def test_capstone_learning_route_optimization_returns_404_for_other_user_resume(
+    client,
+    db_session,
+    auth_headers,
+):
+    other_user = User(
+        id=uuid.uuid4(),
+        email="other-capstone@example.com",
+        hashed_password="hashed",
+        is_active=True,
+        is_superuser=False,
+        is_verified=True,
+    )
+    db_session.add(other_user)
+    await db_session.commit()
+
+    other_resume = ResumeModel(
+        view_url="https://storage.example/resume.pdf",
+        user_id=other_user.id,
+        storage_file_id="resumes/other.pdf",
+        original_filename="other.pdf",
+        folder_id="resumes",
+        ai_summary="Experienced with Python.",
+    )
+    db_session.add(other_resume)
+    await db_session.commit()
+    await db_session.refresh(other_resume)
+
+    response = await client.post(
+        "/api/v1/capstone/learning-route/optimize",
+        headers=auth_headers,
+        json={
+            "resume_id": str(other_resume.id),
+            "target_role": "Data Analyst",
+        },
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_capstone_learning_route_optimization_returns_empty_route_when_no_courses_cover_gaps(
+    client,
+    db_session,
+    test_user,
+    auth_headers,
+):
+    await seed_capstone_analytics_minimum(db_session)
+    skill = SkillModel(
+        normalized_name="rust",
+        display_name="Rust",
+        category="programming",
+        source="test",
+    )
+    db_session.add(skill)
+    await db_session.flush()
+    db_session.add(
+        JobSkillModel(
+            skill_id=skill.id,
+            target_role="Rust Analyst",
+            importance_score=0.9,
+            extraction_method="role_seed",
+            evidence_text="Required by a custom test role.",
+        )
+    )
+    resume = ResumeModel(
+        view_url="https://storage.example/resume.pdf",
+        user_id=test_user.id,
+        storage_file_id="resumes/test.pdf",
+        original_filename="resume.pdf",
+        folder_id="resumes",
+        ai_summary="Experienced with SQL.",
+    )
+    db_session.add(resume)
+    await db_session.commit()
+    await db_session.refresh(resume)
+
+    response = await client.post(
+        "/api/v1/capstone/learning-route/optimize",
+        headers=auth_headers,
+        json={
+            "resume_id": str(resume.id),
+            "target_role": "Rust Analyst",
+            "budget": 50,
+            "available_hours": 5,
+            "max_courses": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["selected_courses"] == []
+    assert payload["covered_skills"] == []
+    assert [gap["normalized_name"] for gap in payload["remaining_gaps"]] == ["rust"]
+    assert payload["route_summary"]
 
 
 @pytest.mark.asyncio
@@ -398,3 +728,7 @@ async def test_capstone_gap_analysis_prefers_real_job_skills_over_role_seed(
     assert required_names == {"sql", "tableau"}
     assert missing_names == {"tableau"}
     assert "excel" not in required_names
+    assert payload["market_signals"]["source"] == "job_postings"
+    assert payload["market_signals"]["synced_job_postings_count"] == 1
+    assert all(skill["market_demand_count"] == 1 for skill in payload["required_skills"])
+    assert payload["priority_missing_skills"][0]["normalized_name"] == "tableau"

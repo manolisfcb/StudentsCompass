@@ -10,9 +10,13 @@ from app.schemas.capstoneAnalyticsSchema import (
     CapstoneAnalyticsRolesRead,
     CapstoneAnalyticsSeedSummaryRead,
     CapstoneAnalyticsStatusRead,
+    CapstoneCatalogQualityRead,
     CapstoneGapAnalysisRead,
     CapstoneJobSkillBatchExtractionRead,
     CapstoneJobSkillExtractionRead,
+    CapstoneLearningRouteOptimizationRead,
+    CapstoneLearningRouteOptimizeRequest,
+    CapstoneLearningRouteRunsRead,
     CapstoneSkillExtractionRead,
     CapstoneSkillExtractionRequest,
 )
@@ -134,6 +138,16 @@ async def get_capstone_analytics_roles(
     return await _run_capstone_operation(lambda: service.get_supported_roles())
 
 
+@router.get("/capstone/catalog/quality", response_model=CapstoneCatalogQualityRead)
+async def get_capstone_catalog_quality(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    del user
+    service = CapstoneAnalyticsService(session)
+    return await _run_capstone_operation(lambda: service.get_catalog_quality())
+
+
 @router.post("/capstone/analytics/seed", response_model=CapstoneAnalyticsSeedSummaryRead)
 async def seed_capstone_analytics_catalog(
     user: User = Depends(current_active_user),
@@ -197,3 +211,37 @@ async def get_capstone_gap_analysis(
     if payload["status"] == "resume_not_found":
         raise HTTPException(status_code=404, detail="Resume not found")
     return payload
+
+
+@router.post("/capstone/learning-route/optimize", response_model=CapstoneLearningRouteOptimizationRead)
+async def optimize_capstone_learning_route(
+    payload: CapstoneLearningRouteOptimizeRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    optimization_payload = await _run_capstone_operation(
+        lambda: service.optimize_learning_route(
+            resume_id=payload.resume_id,
+            user_id=user.id,
+            target_role=payload.target_role,
+            budget=payload.budget,
+            available_hours=payload.available_hours,
+            max_courses=payload.max_courses,
+        )
+    )
+    if optimization_payload["status"] == "resume_not_found":
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return optimization_payload
+
+
+@router.get("/capstone/learning-route/runs", response_model=CapstoneLearningRouteRunsRead)
+async def list_capstone_learning_route_runs(
+    limit: int = Query(20, ge=1, le=50),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    return await _run_capstone_operation(
+        lambda: service.list_learning_route_runs(user_id=user.id, limit=limit)
+    )

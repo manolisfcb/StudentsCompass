@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% set page_title = "Career Optimization Lab" %}
-{% set page_description = "Compare your resume skills against target roles and get role-aligned learning recommendations inside Students Compass." %}
+{% set page_title = "Career Intelligence Lab" %}
+{% set page_description = "Compare your resume skills against target roles, understand readiness, and generate an optimized learning route inside Students Compass." %}
 {% set page_css = "career_lab" %}
 {% set page_js = "career_lab" %}
 {% block content %}
@@ -13,9 +13,9 @@
       <div class="career-lab-container">
         <section class="career-lab-hero page-shell-header">
           <div class="career-lab-hero-copy">
-            <span class="career-lab-kicker">Analytical career engine</span>
-            <h2>Career Optimization Lab</h2>
-            <p>Turn your uploaded CV into a skill profile, compare it with a target role, and convert the gap into a focused learning route.</p>
+            <span class="career-lab-kicker">Career intelligence</span>
+            <h2>Career Intelligence Lab</h2>
+            <p>Turn your uploaded CV into a readiness signal, compare it with a target role, and convert prioritized gaps into a focused learning route.</p>
           </div>
 
           <form class="career-lab-controls" id="careerLabForm">
@@ -65,26 +65,45 @@
         </section>
 
         <section class="career-lab-metrics" aria-label="Career readiness metrics">
+          <article class="lab-metric-card primary-score" id="readinessScoreCard">
+            <span>Readiness score</span>
+            <strong id="overallReadinessScore">--</strong>
+            <small>Overall role readiness</small>
+          </article>
           <article class="lab-metric-card">
             <span>Match score</span>
             <strong id="matchScore">--</strong>
-            <small>Current CV vs target role</small>
+            <small>Skill match only</small>
+          </article>
+          <article class="lab-metric-card context">
+            <span>Context score</span>
+            <strong id="contextSimilarityScore">--</strong>
+            <small id="contextMatchLevel">Semantic context pending</small>
           </article>
           <article class="lab-metric-card warning">
             <span>Skill gaps</span>
             <strong id="missingSkillsCount">--</strong>
-            <small>Missing role requirements</small>
+            <small>Prioritized missing skills</small>
           </article>
-          <article class="lab-metric-card resource">
-            <span>Resources</span>
-            <strong id="recommendedCourseCount">--</strong>
-            <small>Recommended next steps</small>
-          </article>
-          <article class="lab-metric-card source">
-            <span>Data source</span>
+        </section>
+
+        <section class="career-lab-submetrics" aria-label="Semantic and catalog signals">
+          <div class="submetric">
+            <span>Semantic status</span>
+            <strong id="semanticStatus">Pending</strong>
+          </div>
+          <div class="submetric">
+            <span>Requirement source</span>
             <strong id="requirementsSource">--</strong>
-            <small>Role requirements basis</small>
-          </article>
+          </div>
+          <div class="submetric">
+            <span>Recommended courses</span>
+            <strong id="recommendedCourseCount">--</strong>
+          </div>
+          <div class="submetric">
+            <span>Semantic matches</span>
+            <strong id="semanticMatchCount">--</strong>
+          </div>
         </section>
 
         <section class="career-lab-grid">
@@ -119,8 +138,8 @@
           <article class="lab-panel">
             <div class="lab-panel-header">
               <div>
-                <h3>Areas to Improve</h3>
-                <p>Highest priority gaps for this role.</p>
+                <h3>Priority Gaps</h3>
+                <p>Ranked by role importance and market demand.</p>
               </div>
             </div>
             <div class="improvement-list" id="improvementList">
@@ -128,16 +147,15 @@
             </div>
           </article>
 
-          <article class="lab-panel lab-panel-route">
+          <article class="lab-panel">
             <div class="lab-panel-header">
               <div>
-                <h3>Recommended Learning Route</h3>
-                <p>Resources mapped to the skills you still need.</p>
+                <h3>Gap Insights</h3>
+                <p>What the analysis means for your next move.</p>
               </div>
-              <a href="/resources">Open Resources</a>
             </div>
-            <div class="course-route-list" id="courseRouteList">
-              <p class="panel-placeholder">Recommended courses will appear here after analysis.</p>
+            <div class="insight-list" id="insightsList">
+              <p class="panel-placeholder">Insights will appear after analysis.</p>
             </div>
           </article>
 
@@ -148,17 +166,79 @@
                 <p>How this connects to employer demand.</p>
               </div>
             </div>
-            <div class="market-signal-list">
-              <div class="market-signal">
-                <span>Job Board</span>
-                <strong>Can power requirements</strong>
-                <p id="marketSourceCopy">When job postings are synced, this lab can use real market requirements instead of starter role profiles.</p>
+            <div class="market-signal-list" id="marketSignalsList">
+              <p class="panel-placeholder" id="marketSourceCopy">Run an analysis to see role demand signals.</p>
+            </div>
+          </article>
+
+          <article class="lab-panel lab-panel-route">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Route Optimization</h3>
+                <p>Fit the next courses to your time and budget.</p>
               </div>
-              <div class="market-signal">
-                <span>Capstone scope</span>
-                <strong>Phase 1 ready</strong>
-                <p>Clear gap analysis first; route optimization can become the next layer.</p>
+              <a href="/resources">Open Resources</a>
+            </div>
+            <form class="route-optimization-form" id="routeOptimizationForm">
+              <label>
+                <span>Budget</span>
+                <input id="routeBudget" type="number" min="0" step="1" value="150">
+              </label>
+              <label>
+                <span>Hours</span>
+                <input id="routeHours" type="number" min="0" step="1" value="40">
+              </label>
+              <label>
+                <span>Max courses</span>
+                <input id="routeMaxCourses" type="number" min="1" max="20" step="1" value="4">
+              </label>
+              <button type="submit" id="generateRouteBtn">Generate Learning Route</button>
+            </form>
+            <div class="route-summary-strip" id="routeSummaryStrip" hidden>
+              <span>Before <strong id="routeScoreBefore">--</strong></span>
+              <span>After <strong id="routeScoreAfter">--</strong></span>
+              <span>Cost <strong id="routeTotalCost">--</strong></span>
+              <span>Hours <strong id="routeTotalHours">--</strong></span>
+            </div>
+            <p class="route-summary-copy" id="routeSummaryCopy" hidden></p>
+            <div class="course-route-list optimized-route-list" id="courseRouteList">
+              <p class="panel-placeholder">Generate a route to turn priority gaps into a timeline.</p>
+            </div>
+          </article>
+
+          <article class="lab-panel">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Route History</h3>
+                <p>Your latest optimized routes.</p>
               </div>
+            </div>
+            <div class="route-history-list" id="routeHistoryList">
+              <p class="panel-placeholder">No route history yet.</p>
+            </div>
+          </article>
+
+          <article class="lab-panel diagnostics-panel">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Catalog Readiness</h3>
+                <p>Quiet diagnostics for recommendation quality.</p>
+              </div>
+            </div>
+            <div class="catalog-quality" id="catalogQualityPanel">
+              <p class="panel-placeholder">Checking catalog quality...</p>
+            </div>
+          </article>
+
+          <article class="lab-panel diagnostics-panel">
+            <div class="lab-panel-header">
+              <div>
+                <h3>Embedding Status</h3>
+                <p>Semantic matching provider and fallback state.</p>
+              </div>
+            </div>
+            <div class="embedding-status-list" id="embeddingStatusList">
+              <p class="panel-placeholder">Checking semantic matching status...</p>
             </div>
           </article>
         </section>

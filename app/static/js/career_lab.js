@@ -3,7 +3,10 @@
     resumes: [],
     roles: [],
     latestAnalysis: null,
+    latestRoute: null,
     analyticsStatus: null,
+    catalogQuality: null,
+    routeRuns: [],
   };
 
   const els = {};
@@ -43,14 +46,34 @@
     els.analyticsReadinessTitle = document.getElementById('analyticsReadinessTitle');
     els.analyticsReadinessCopy = document.getElementById('analyticsReadinessCopy');
     els.analyticsReadinessStats = document.getElementById('analyticsReadinessStats');
+    els.overallReadinessScore = document.getElementById('overallReadinessScore');
     els.matchScore = document.getElementById('matchScore');
+    els.contextSimilarityScore = document.getElementById('contextSimilarityScore');
+    els.contextMatchLevel = document.getElementById('contextMatchLevel');
     els.missingSkillsCount = document.getElementById('missingSkillsCount');
     els.recommendedCourseCount = document.getElementById('recommendedCourseCount');
     els.requirementsSource = document.getElementById('requirementsSource');
+    els.semanticStatus = document.getElementById('semanticStatus');
+    els.semanticMatchCount = document.getElementById('semanticMatchCount');
     els.skillComparisonList = document.getElementById('skillComparisonList');
     els.improvementList = document.getElementById('improvementList');
+    els.insightsList = document.getElementById('insightsList');
     els.courseRouteList = document.getElementById('courseRouteList');
-    els.marketSourceCopy = document.getElementById('marketSourceCopy');
+    els.routeForm = document.getElementById('routeOptimizationForm');
+    els.routeBudget = document.getElementById('routeBudget');
+    els.routeHours = document.getElementById('routeHours');
+    els.routeMaxCourses = document.getElementById('routeMaxCourses');
+    els.generateRouteButton = document.getElementById('generateRouteBtn');
+    els.routeSummaryStrip = document.getElementById('routeSummaryStrip');
+    els.routeSummaryCopy = document.getElementById('routeSummaryCopy');
+    els.routeScoreBefore = document.getElementById('routeScoreBefore');
+    els.routeScoreAfter = document.getElementById('routeScoreAfter');
+    els.routeTotalCost = document.getElementById('routeTotalCost');
+    els.routeTotalHours = document.getElementById('routeTotalHours');
+    els.routeHistoryList = document.getElementById('routeHistoryList');
+    els.catalogQualityPanel = document.getElementById('catalogQualityPanel');
+    els.embeddingStatusList = document.getElementById('embeddingStatusList');
+    els.marketSignalsList = document.getElementById('marketSignalsList');
     els.radar = document.getElementById('skillRadar');
   }
 
@@ -72,6 +95,31 @@
 
   function clampPercent(value) {
     return Math.max(0, Math.min(100, Number(value) || 0));
+  }
+
+  function scorePercent(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return '--';
+    return `${Math.round(clampPercent(numeric <= 1 ? numeric * 100 : numeric))}%`;
+  }
+
+  function formatMoney(value, currency) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return 'Free';
+    return `${currency || 'CAD'} ${numeric.toFixed(0)}`;
+  }
+
+  function formatHours(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return 'Self-paced';
+    return `${numeric.toFixed(numeric % 1 ? 1 : 0)}h`;
+  }
+
+  function formatDateTime(value) {
+    if (!value) return 'Recent';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Recent';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function safeExternalUrl(value) {
@@ -114,10 +162,15 @@
   }
 
   async function apiFetch(url, options) {
+    const requestOptions = options || {};
     const response = await fetch(url, {
       credentials: 'include',
       cache: 'no-store',
-      ...(options || {}),
+      ...requestOptions,
+      headers: {
+        ...(requestOptions.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(requestOptions.headers || {}),
+      },
     });
     if (response.status === 401 || response.status === 403) {
       window.location.href = '/login';
@@ -138,6 +191,9 @@
 
   function updateRunButtonState() {
     els.runButton.disabled = !state.resumes.length || !els.resumeSelect.value || !els.targetRoleSelect.value;
+    if (els.generateRouteButton) {
+      els.generateRouteButton.disabled = !state.resumes.length || !els.resumeSelect.value || !els.targetRoleSelect.value;
+    }
   }
 
   async function loadResumes() {
@@ -207,6 +263,30 @@
     }
   }
 
+  async function loadCatalogQuality() {
+    if (!els.catalogQualityPanel) return;
+    try {
+      const quality = await apiFetch('/api/v1/capstone/catalog/quality');
+      if (!quality) return;
+      state.catalogQuality = quality;
+      renderCatalogQuality(quality);
+    } catch (error) {
+      els.catalogQualityPanel.innerHTML = `<p class="panel-placeholder">Catalog quality is unavailable: ${escapeHtml(error.message || 'Request failed')}.</p>`;
+    }
+  }
+
+  async function loadRouteRuns() {
+    if (!els.routeHistoryList) return;
+    try {
+      const payload = await apiFetch('/api/v1/capstone/learning-route/runs?limit=5');
+      if (!payload) return;
+      state.routeRuns = Array.isArray(payload.runs) ? payload.runs : [];
+      renderRouteHistory(state.routeRuns);
+    } catch (error) {
+      els.routeHistoryList.innerHTML = `<p class="panel-placeholder">Route history is unavailable: ${escapeHtml(error.message || 'Request failed')}.</p>`;
+    }
+  }
+
   function renderAnalyticsStatus(status) {
     const hasMarketSignals = Number(status.real_job_skill_links_count || 0) > 0;
     const catalogReady = Boolean(status.catalog_ready);
@@ -239,6 +319,8 @@
       <span><strong>${escapeHtml(status.synced_job_postings_count)}</strong> synced jobs</span>
       <span><strong>${escapeHtml(status.resume_embeddings_count)}</strong> embeddings</span>
     `;
+
+    renderEmbeddingStatus(status);
   }
 
   function renderAnalyticsStatusError(message) {
@@ -253,6 +335,52 @@
       <span><strong>--</strong> courses</span>
       <span><strong>--</strong> synced jobs</span>
       <span><strong>--</strong> embeddings</span>
+    `;
+    if (els.embeddingStatusList) {
+      els.embeddingStatusList.innerHTML = `<p class="panel-placeholder">${escapeHtml(message)}</p>`;
+    }
+  }
+
+  function renderEmbeddingStatus(status) {
+    if (!els.embeddingStatusList) return;
+    const ready = Boolean(status.semantic_matching_ready);
+    const rows = [
+      ['Provider', status.embedding_provider || 'Unknown'],
+      ['Semantic matching ready', ready ? 'Yes' : 'Fallback mode'],
+      ['Local package available', status.local_embedding_package_available ? 'Yes' : 'No'],
+      ['Hash fallback count', String(status.embedding_fallback_to_hash_count ?? 0)],
+    ];
+    els.embeddingStatusList.innerHTML = `
+      <div class="diagnostic-badge ${ready ? 'ready' : 'warning'}">${ready ? 'Semantic ready' : 'Fallback active'}</div>
+      <div class="diagnostic-list">
+        ${rows.map(([label, value]) => `
+          <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+        `).join('')}
+      </div>
+      <p class="diagnostic-note">${escapeHtml(status.embedding_production_recommendation || 'Use a production semantic provider before relying on context scoring at scale.')}</p>
+    `;
+  }
+
+  function renderCatalogQuality(quality) {
+    if (!els.catalogQualityPanel) return;
+    const metadata = quality.metadata_completeness || {};
+    const actions = Array.isArray(quality.next_actions) ? quality.next_actions : [];
+    els.catalogQualityPanel.innerHTML = `
+      <div class="quality-score">
+        <span>Quality score</span>
+        <strong>${scorePercent(quality.quality_score)}</strong>
+      </div>
+      <div class="diagnostic-list">
+        <div><span>Skills</span><strong>${escapeHtml(quality.skills_count ?? '--')}</strong></div>
+        <div><span>Courses</span><strong>${escapeHtml(quality.courses_count ?? '--')}</strong></div>
+        <div><span>Mapped courses</span><strong>${scorePercent(quality.mapped_course_ratio)}</strong></div>
+        <div><span>Metadata</span><strong>${scorePercent(metadata.overall)}</strong></div>
+      </div>
+      <div class="next-action-list">
+        ${(actions.length ? actions : ['Catalog diagnostics are ready.']).slice(0, 3).map((action) => `
+          <p>${escapeHtml(action)}</p>
+        `).join('')}
+      </div>
     `;
   }
 
@@ -287,16 +415,22 @@
       return;
     }
 
-    const matchScore = Math.round((Number(analysis.coverage_ratio) || 0) * 100);
-    const missing = analysis.missing_skills || [];
+    const missing = analysis.priority_missing_skills || analysis.missing_skills || [];
     const recommendations = analysis.recommended_courses || [];
 
-    els.matchScore.textContent = `${matchScore}%`;
+    els.overallReadinessScore.textContent = scorePercent(analysis.overall_readiness_score);
+    els.matchScore.textContent = scorePercent(analysis.match_score ?? analysis.coverage_ratio);
+    els.contextSimilarityScore.textContent = scorePercent(analysis.context_similarity_score);
+    els.contextMatchLevel.textContent = analysis.semantic_context_ready
+      ? `${analysis.context_match_level || 'Context'} semantic match`
+      : 'Semantic context in fallback';
     els.missingSkillsCount.textContent = String(missing.length);
     els.recommendedCourseCount.textContent = String(recommendations.length);
     els.requirementsSource.textContent = sourceLabel(analysis.requirements_source);
-    els.marketSourceCopy.textContent = sourceExplanation(analysis.requirements_source);
-
+    els.semanticStatus.textContent = analysis.semantic_context_ready
+      ? 'Semantic context active'
+      : 'Hash/fallback mode';
+    els.semanticMatchCount.textContent = String(analysis.semantic_match_count || 0);
     if (!analysis.required_skills?.length) {
       setStatus('The analytical catalog is not seeded yet for this role. Add starter skills or sync job postings to activate the lab.', 'error');
     } else {
@@ -305,7 +439,9 @@
 
     renderSkillComparison(analysis);
     renderImprovements(analysis);
-    renderCourses(analysis);
+    renderInsights(analysis);
+    renderMarketSignals(analysis);
+    renderCourseRecommendations(analysis);
     drawRadar(analysis);
   }
 
@@ -339,7 +475,7 @@
   }
 
   function renderImprovements(analysis) {
-    const missing = analysis.missing_skills || [];
+    const missing = analysis.priority_missing_skills || analysis.missing_skills || [];
     if (!missing.length) {
       els.improvementList.innerHTML = '<p class="panel-placeholder">No major gaps found for this role. Keep strengthening your proof through projects and applications.</p>';
       return;
@@ -347,33 +483,93 @@
 
     els.improvementList.innerHTML = missing
       .slice()
-      .sort((a, b) => Number(b.importance_score || 0) - Number(a.importance_score || 0))
+      .sort((a, b) => Number(b.priority_score || b.importance_score || 0) - Number(a.priority_score || a.importance_score || 0))
       .slice(0, 6)
       .map((skill) => `
         <div class="improvement-item">
-          <span>${escapeHtml(skill.category || 'Skill gap')}</span>
+          <span>${escapeHtml(skill.priority_rank ? `Priority ${skill.priority_rank}` : skill.category || 'Skill gap')}</span>
           <strong>${escapeHtml(skill.display_name)}</strong>
-          <p>${escapeHtml(skill.evidence_text || 'Required by the selected role profile.')}</p>
+          <p>${escapeHtml(skill.reason || skill.evidence_text || 'Required by the selected role profile.')}</p>
         </div>
       `).join('');
   }
 
-  function renderCourses(analysis) {
+  function renderInsights(analysis) {
+    const insights = analysis.gap_insights || [];
+    if (!els.insightsList) return;
+    if (!insights.length) {
+      els.insightsList.innerHTML = '<p class="panel-placeholder">No insights available yet. Run an analysis after the catalog has role requirements.</p>';
+      return;
+    }
+
+    els.insightsList.innerHTML = insights.slice(0, 6).map((insight) => `
+      <div class="insight-item ${escapeHtml(insight.severity || 'info')}">
+        <span>${escapeHtml(insight.insight_type || 'Insight')}</span>
+        <strong>${escapeHtml(insight.skill_name || severityLabel(insight.severity))}</strong>
+        <p>${escapeHtml(insight.message)}</p>
+      </div>
+    `).join('');
+  }
+
+  function severityLabel(severity) {
+    if (severity === 'positive') return 'Good signal';
+    if (severity === 'high') return 'High priority';
+    if (severity === 'medium') return 'Watch this';
+    return 'Context';
+  }
+
+  function renderMarketSignals(analysis) {
+    if (!els.marketSignalsList) return;
+    const signals = analysis.market_signals || {};
+    const skills = Array.isArray(signals.skills) ? signals.skills : [];
+    const sourceCopy = sourceExplanation(signals.source || analysis.requirements_source);
+    const syncedCount = Number(signals.synced_job_postings_count || 0);
+
+    if (!skills.length) {
+      els.marketSignalsList.innerHTML = `
+        <div class="market-signal">
+          <span>${escapeHtml(sourceLabel(signals.source || analysis.requirements_source))}</span>
+          <strong>${syncedCount ? `${syncedCount} synced postings` : 'No market skills yet'}</strong>
+          <p>${escapeHtml(sourceCopy)}</p>
+        </div>
+      `;
+      return;
+    }
+
+    els.marketSignalsList.innerHTML = `
+      <div class="market-signal">
+        <span>${escapeHtml(sourceLabel(signals.source || analysis.requirements_source))}</span>
+        <strong>${syncedCount ? `${syncedCount} synced postings` : 'Starter role profile'}</strong>
+        <p>${escapeHtml(sourceCopy)}</p>
+      </div>
+      ${skills.slice(0, 5).map((skill) => `
+        <div class="market-signal compact">
+          <span>${scorePercent(skill.demand_score)} demand</span>
+          <strong>${escapeHtml(skill.display_name)}</strong>
+          <p>${escapeHtml(skill.job_posting_count || 0)} synced posting(s) mention this skill.</p>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  function renderCourseRecommendations(analysis) {
     const courses = analysis.recommended_courses || [];
     if (!courses.length) {
       els.courseRouteList.innerHTML = '<p class="panel-placeholder">No course recommendations yet. This usually means there are no mapped resources for the current gaps.</p>';
       return;
     }
 
+    if (els.routeSummaryStrip) els.routeSummaryStrip.hidden = true;
+    if (els.routeSummaryCopy) els.routeSummaryCopy.hidden = true;
     els.courseRouteList.innerHTML = courses.slice(0, 5).map((course, index) => {
       const covered = (course.skills_covered || []).map((skill) => skill.display_name).slice(0, 3).join(', ');
-      const cost = course.cost ? `${course.currency || 'CAD'} ${Number(course.cost).toFixed(0)}` : 'Free or internal';
-      const duration = course.duration_hours ? `${Number(course.duration_hours).toFixed(0)}h` : 'Self-paced';
+      const cost = formatMoney(course.cost, course.currency);
+      const duration = formatHours(course.duration_hours);
       const resourceUrl = safeExternalUrl(course.url);
       const link = resourceUrl ? `<a href="${escapeHtml(resourceUrl)}" target="_blank" rel="noopener">Open resource</a>` : '';
       return `
         <div class="course-route-item">
-          <span>Step ${index + 1}</span>
+          <span>Recommendation ${index + 1}</span>
           <strong>${escapeHtml(course.title)}</strong>
           <p>${escapeHtml(course.provider || 'Students Compass')} ${covered ? `covers ${escapeHtml(covered)}` : 'supports this learning route'}.</p>
           <div class="course-route-meta">
@@ -385,6 +581,128 @@
         </div>
       `;
     }).join('');
+  }
+
+  async function generateLearningRoute(event) {
+    event.preventDefault();
+    const resumeId = els.resumeSelect.value;
+    const targetRole = els.targetRoleSelect.value;
+    if (!resumeId || !targetRole) return;
+
+    els.generateRouteButton.disabled = true;
+    els.courseRouteList.innerHTML = '<p class="panel-placeholder">Optimizing a route across your budget, hours, and priority gaps...</p>';
+    setStatus('Generating an optimized learning route...');
+
+    const payload = {
+      resume_id: resumeId,
+      target_role: targetRole,
+      budget: Number(els.routeBudget.value || 150),
+      available_hours: Number(els.routeHours.value || 40),
+      max_courses: Number(els.routeMaxCourses.value || 4),
+    };
+
+    try {
+      const route = await apiFetch('/api/v1/capstone/learning-route/optimize', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (!route) return;
+      state.latestRoute = route;
+      renderOptimizedRoute(route);
+      await loadRouteRuns();
+      setStatus(`Learning route ready for ${route.target_role}.`);
+    } catch (error) {
+      els.courseRouteList.innerHTML = `<p class="panel-placeholder">Route optimization failed: ${escapeHtml(error.message || 'Request failed')}.</p>`;
+      setStatus(error.message || 'Unable to generate learning route right now.', 'error');
+    } finally {
+      updateRunButtonState();
+    }
+  }
+
+  function renderOptimizedRoute(route) {
+    const courses = route.selected_courses || [];
+    const remaining = route.remaining_gaps || [];
+
+    if (els.routeSummaryStrip) {
+      els.routeSummaryStrip.hidden = false;
+      els.routeScoreBefore.textContent = scorePercent(route.match_score_before);
+      els.routeScoreAfter.textContent = scorePercent(route.projected_match_score_after);
+      els.routeTotalCost.textContent = formatMoney(route.total_cost);
+      els.routeTotalHours.textContent = formatHours(route.total_hours);
+    }
+
+    if (els.routeSummaryCopy) {
+      els.routeSummaryCopy.hidden = false;
+      els.routeSummaryCopy.textContent = route.route_summary || 'Optimized route generated.';
+    }
+
+    if (!courses.length) {
+      els.courseRouteList.innerHTML = `
+        <div class="route-empty-state">
+          <strong>No mapped courses found for these gaps yet.</strong>
+          <p>The current catalog does not cover ${remaining.length ? 'these remaining gaps' : 'the missing gaps'} under your constraints.</p>
+          ${remaining.length ? `
+            <div class="chip-list">
+              ${remaining.slice(0, 8).map((gap) => `<span>${escapeHtml(gap.display_name)}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+      return;
+    }
+
+    els.courseRouteList.innerHTML = courses
+      .slice()
+      .sort((a, b) => Number(a.sequence_order || 0) - Number(b.sequence_order || 0))
+      .map((course, index) => {
+        const order = course.sequence_order || index + 1;
+        const covered = course.covered_priority_skills || [];
+        const resourceUrl = safeExternalUrl(course.url);
+        const link = resourceUrl ? `<a href="${escapeHtml(resourceUrl)}" target="_blank" rel="noopener">Open resource</a>` : '';
+        return `
+          <div class="course-route-item timeline-item">
+            <span>Step ${escapeHtml(order)}</span>
+            <strong>${escapeHtml(course.title)}</strong>
+            <p>${escapeHtml(course.selection_reason || 'Selected because it covers priority gaps within your constraints.')}</p>
+            <div class="course-route-meta">
+              <small>${escapeHtml(course.provider || 'Students Compass')}</small>
+              <small>${escapeHtml(formatMoney(course.cost, course.currency))}</small>
+              <small>${escapeHtml(formatHours(course.duration_hours))}</small>
+              <small>${escapeHtml(course.difficulty || 'Recommended')}</small>
+            </div>
+            ${covered.length ? `
+              <div class="chip-list">
+                ${covered.slice(0, 5).map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}
+              </div>
+            ` : ''}
+            ${link}
+          </div>
+        `;
+      }).join('');
+  }
+
+  function renderRouteHistory(runs) {
+    if (!els.routeHistoryList) return;
+    if (!runs.length) {
+      els.routeHistoryList.innerHTML = '<p class="panel-placeholder">No route history yet. Generate a learning route to save your first run.</p>';
+      return;
+    }
+
+    els.routeHistoryList.innerHTML = runs.map((run) => `
+      <div class="route-history-item">
+        <div class="route-history-top">
+          <strong>${escapeHtml(run.target_role)}</strong>
+          <span>${escapeHtml(formatDateTime(run.created_at))}</span>
+        </div>
+        <div class="route-history-metrics">
+          <small>${scorePercent(run.match_score_before)} to ${scorePercent(run.projected_match_score_after)}</small>
+          <small>${escapeHtml(formatMoney(run.total_cost))}</small>
+          <small>${escapeHtml(formatHours(run.total_hours))}</small>
+          <small>${escapeHtml(run.selected_courses_count || 0)} courses</small>
+        </div>
+        <p>${escapeHtml(run.route_summary || 'Route generated for this target role.')}</p>
+      </div>
+    `).join('');
   }
 
   function drawRadar(analysis) {
@@ -498,11 +816,18 @@
 
     drawRadar(null);
     els.form.addEventListener('submit', runAnalysis);
+    if (els.routeForm) els.routeForm.addEventListener('submit', generateLearningRoute);
     els.resumeSelect.addEventListener('change', updateRunButtonState);
     els.targetRoleSelect.addEventListener('change', updateRunButtonState);
 
     try {
-      await Promise.all([loadAnalyticsStatus(), loadTargetRoles(), loadResumes()]);
+      await Promise.all([
+        loadAnalyticsStatus(),
+        loadCatalogQuality(),
+        loadRouteRuns(),
+        loadTargetRoles(),
+        loadResumes(),
+      ]);
     } catch (error) {
       setStatus(error.message || 'Unable to load resumes.', 'error');
       els.resumeSelect.innerHTML = '<option value="">Could not load resumes</option>';

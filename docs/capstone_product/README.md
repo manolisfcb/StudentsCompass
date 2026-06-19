@@ -8,6 +8,10 @@ academic submission.
 ## Current Documentation
 
 - `phase_1_status.md`: current Phase 1 product and capstone status.
+- `phase_2_plan.md`: Phase 2 scope, implementation plan, and acceptance
+  criteria.
+- `matching_methodology.md`: exact and semantic matching methodology.
+- `optimization_methodology.md`: learning route optimization methodology.
 - `service_architecture.md`: backend service-domain structure and import policy.
 
 ## Documentation Rule
