@@ -8,7 +8,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PORT=8080 \
+    PORT=8000 \
     FORWARDED_ALLOW_IPS=*
 
 COPY requirements.txt ./
@@ -24,6 +24,6 @@ RUN addgroup --system app \
 
 USER app
 
-EXPOSE 8080
+EXPOSE 8000
 
 CMD ["sh", "-c", "exec uvicorn app.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips ${FORWARDED_ALLOW_IPS}"]
