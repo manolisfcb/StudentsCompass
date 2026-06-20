@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 ENV = os.getenv("ENV", "development").lower()
 
 
@@ -36,6 +36,12 @@ class Base(DeclarativeBase):
 
 
 def _build_engine():
+    if not DATABASE_URL:
+        raise RuntimeError(
+            "DATABASE_URL must be configured before starting the API. "
+            "Set it in the deployment environment; .env is not copied into the Docker image."
+        )
+
     # Reuse warm connections across requests so each call does not pay a fresh
     # TCP + TLS handshake to the remote database. ``statement_cache_size=0`` is
     # required because the Neon "-pooler" endpoint is PgBouncer in transaction
@@ -70,4 +76,3 @@ async def create_db_and_tables():
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
-
