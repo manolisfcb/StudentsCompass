@@ -7,6 +7,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 
+from app.core.resume_analyzer.llm_errors import is_non_retryable_llm_error
 from app.core.resume_analyzer.resume_feature import ResumeFeatureRequest
 
 load_dotenv()
@@ -139,7 +140,11 @@ async def ask_llm_model(
 
             except Exception as e:
                 last_err = e
-                # reintentar en errores transitorios (red/429/500) sin overthink:
+                # No reintentar errores de quota/billing/auth: solo multiplican
+                # el coste sin posibilidad de éxito.
+                if is_non_retryable_llm_error(e):
+                    raise RuntimeError(f"LLM API/validation error: {e}") from e
+                # reintentar en errores transitorios (red/500) sin overthink:
                 if attempt >= retries:
                     raise RuntimeError(f"LLM API/validation error: {e}") from e
                 await asyncio.sleep(0.5 * (attempt + 1))

@@ -11,6 +11,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 
+from app.core.resume_analyzer.llm_errors import is_non_retryable_llm_error
 from app.core.resume_analyzer.prompts.resume_audit_prompt import (
     build_resume_audit_system_prompt,
     build_resume_audit_user_prompt,
@@ -122,6 +123,9 @@ class GeminiResumeAuditEvaluator(ResumeAuditEvaluator):
                     return parsed
                 except Exception as exc:  # noqa: BLE001
                     last_error = exc
+                    # Quota/billing/auth errors will never succeed on retry.
+                    if is_non_retryable_llm_error(exc):
+                        break
                     if attempt >= self.retries:
                         break
                     await asyncio.sleep(0.6 * (attempt + 1))

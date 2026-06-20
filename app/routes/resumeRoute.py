@@ -1,5 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Response
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.config import MAX_UPLOAD_BYTES
 from app.services.resumes.resumeService import (
     RESUME_AUDIT_CONTENT_TYPES,
     RESUME_UPLOAD_CONTENT_TYPES,
@@ -14,7 +15,7 @@ from app.schemas.resumeSchema import (
     ResumeReadSchema,
 )
 from app.db import get_session
-from app.services.accounts.userService import current_active_user
+from app.services.accounts.userService import current_active_user, current_ai_user
 from app.services.storage.storageService import get_resume_storage_location_id
 from app.models.userModel import User
 from uuid import UUID
@@ -25,6 +26,26 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 router = APIRouter()
+
+
+async def _read_upload_within_limit(cv: UploadFile, request: Request) -> bytes:
+    """Read an upload while enforcing a hard size cap.
+
+    Rejects early via Content-Length (so an oversized body is not buffered into
+    memory) and re-checks the actual bytes. Prevents memory exhaustion and
+    storage abuse from very large files.
+    """
+    too_large = HTTPException(
+        status_code=413,
+        detail=f"File is too large. Maximum allowed size is {MAX_UPLOAD_BYTES // 1_000_000} MB.",
+    )
+    content_length = request.headers.get("content-length")
+    if content_length and content_length.isdigit() and int(content_length) > MAX_UPLOAD_BYTES:
+        raise too_large
+    data = await cv.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise too_large
+    return data
 
 
 def _require_resume_storage_location_id() -> str:
@@ -40,6 +61,7 @@ def _require_resume_storage_location_id() -> str:
 
 @router.post("/profile/cv/upload")
 async def upload_resume(
+    request: Request,
     cv: UploadFile = File(..., alias="cv"),
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
@@ -47,13 +69,14 @@ async def upload_resume(
     LOGGER.debug(f"Received file: {cv.filename}, content type: {cv.content_type}")
     if not is_allowed_resume_content_type(cv.content_type, RESUME_UPLOAD_CONTENT_TYPES):
         raise HTTPException(status_code=400, detail="Only PDF or DOC/DOCX files are allowed.")
-    
+
+    # Size cap is the first gate: reject oversized uploads before any other work.
+    file_bytes = await _read_upload_within_limit(cv, request)
     storage_location_id = _require_resume_storage_location_id()
 
     try:
         LOGGER.debug("Initializing ResumeService")
         resume_service = ResumeService(session)
-        file_bytes = await cv.read()
         resume, file_info = await resume_service.create_resume_from_upload(
             user_id=user.id,
             storage_location_id=storage_location_id,
@@ -72,20 +95,23 @@ async def upload_resume(
 
 @router.post("/profile/cv/course-audit-upload", response_model=ResumeCourseAuditRead)
 async def upload_resume_for_course_audit(
+    request: Request,
     cv: UploadFile = File(..., alias="cv"),
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_ai_user),
 ):
     LOGGER.debug(f"Course audit upload received: {cv.filename}, type={cv.content_type}")
     if not is_allowed_resume_content_type(cv.content_type, RESUME_AUDIT_CONTENT_TYPES):
         raise HTTPException(status_code=400, detail="Only PDF or DOCX files are allowed for AI audit.")
 
+    # Size cap is the first gate: reject oversized uploads before any other work.
+    file_bytes = await _read_upload_within_limit(cv, request)
     storage_location_id = _require_resume_storage_location_id()
 
     audit_service = ResumeCourseAuditService(session)
+    # Cheap pre-check for fast rejection; the atomic reservation happens inside
+    # upload_and_evaluate_resume before any LLM spend.
     await audit_service.ensure_daily_limit(user.id)
-
-    file_bytes = await cv.read()
     payload, _ = await audit_service.upload_and_evaluate_resume(
         user_id=user.id,
         storage_location_id=storage_location_id,

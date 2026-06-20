@@ -28,7 +28,9 @@ argon2-cffi==25.1.0
 argon2-cffi-bindings==25.1.0
     # via argon2-cffi
 async-timeout==5.0.1
-    # via asyncpg
+    # via
+    #   asyncpg
+    #   redis
 asyncpg==0.31.0
     # via studentscompass (pyproject.toml)
 bcrypt==5.0.0
@@ -223,6 +225,8 @@ pyyaml==6.0.3
     #   huggingface-hub
     #   transformers
     #   uvicorn
+redis==8.0.0
+    # via studentscompass (pyproject.toml)
 regex==2026.5.9
     # via transformers
 requests==2.34.2

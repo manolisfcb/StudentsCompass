@@ -21,7 +21,8 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,
 )
-from app.services.ai.aiUsageService import AIFeature, AIUsageService
+from app.services.ai.aiBudgetGuard import AIBudgetExhausted, ensure_llm_budget
+from app.services.ai.aiUsageService import AIFeature, AIUsageService, QuotaReservation
 from app.services.resumes.resumeService import ResumeService
 
 
@@ -53,6 +54,13 @@ class ResumeCourseAuditService:
 
     async def ensure_daily_limit(self, user_id: UUID) -> None:
         await self.ai_usage_service.ensure_available(
+            user_id=user_id,
+            feature=AIFeature.RESUME_COURSE_AUDIT,
+        )
+
+    async def reserve_slot(self, user_id: UUID) -> QuotaReservation:
+        """Atomically claim a daily slot before any LLM spend (TOCTOU-safe)."""
+        return await self.ai_usage_service.reserve(
             user_id=user_id,
             feature=AIFeature.RESUME_COURSE_AUDIT,
         )
@@ -100,7 +108,8 @@ class ResumeCourseAuditService:
         filename: str,
         content_type: str,
     ) -> tuple[dict, ResumeCourseEvaluationModel]:
-        await self.ensure_daily_limit(user_id)
+        # Atomically claim a daily slot before any spend (TOCTOU-safe).
+        reservation = await self.reserve_slot(user_id)
 
         resume, file_info = await self.resume_service.create_resume_from_upload(
             user_id=user_id,
@@ -118,6 +127,8 @@ class ResumeCourseAuditService:
             content_type=content_type,
         )
         if len((extracted_text or "").strip()) < 80:
+            # No LLM call happens, so the reserved slot is returned.
+            await reservation.release()
             await self.fail_evaluation(
                 evaluation,
                 "Could not extract enough resume text for analysis.",
@@ -128,20 +139,29 @@ class ResumeCourseAuditService:
             )
 
         try:
-            await self.ai_usage_service.record_usage(
-                user_id=user_id,
-                feature=AIFeature.RESUME_COURSE_AUDIT,
-                reference_type="resume_course_evaluation",
-                reference_id=evaluation.id,
-            )
+            # Global cost ceiling / kill switch — fail closed to "Manual mode".
+            await ensure_llm_budget()
             result = await self.evaluator.evaluate(extracted_text)
+        except AIBudgetExhausted as exc:
+            await reservation.release()
+            await self.fail_evaluation(evaluation, str(exc))
+            raise HTTPException(
+                status_code=503,
+                detail="Our AI analyzer is temporarily unavailable. Please try again later or use Manual mode.",
+            ) from exc
         except Exception as exc:  # noqa: BLE001
+            await reservation.release()
             await self.fail_evaluation(evaluation, str(exc))
             raise HTTPException(
                 status_code=502,
                 detail="The AI evaluator is unavailable right now. Please try again later.",
             ) from exc
 
+        await self.ai_usage_service.commit_usage(
+            reservation,
+            reference_type="resume_course_evaluation",
+            reference_id=evaluation.id,
+        )
         completed = await self.complete_evaluation(evaluation, result)
         usage_summary = await self.ai_usage_service.get_summary(
             user_id=user_id,

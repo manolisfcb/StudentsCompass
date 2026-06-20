@@ -14,12 +14,18 @@ async def test_career_lab_renders_for_authenticated_student(client, auth_headers
     response = await client.get("/career-lab", headers=auth_headers)
 
     assert response.status_code == 200
-    assert "Career Intelligence Lab" in response.text
+    assert "Career Optimization Lab" in response.text
+    assert "careerLabUploadForm" in response.text
+    assert "careerLabCvFile" in response.text
     assert "analyticsReadinessBadge" in response.text
     assert "overallReadinessScore" in response.text
     assert "contextSimilarityScore" in response.text
+    assert "Dashboard Summary" in response.text
+    assert "summaryBestBaseline" in response.text
     assert "Skill Gap Scores" in response.text
     assert "routeOptimizationForm" in response.text
+    assert "Baseline Comparison" in response.text
+    assert "baselineMethodList" in response.text
     assert "routeHistoryList" in response.text
     assert "catalogQualityPanel" in response.text
     assert "marketSignalsList" in response.text

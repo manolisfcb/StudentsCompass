@@ -6,6 +6,12 @@ import os
 import uuid
 from typing import AsyncGenerator, Generator
 
+# Force the production engine to NullPool for the test process. pytest-asyncio
+# runs each test on its own event loop, which does not mix with a reused
+# connection pool; NullPool keeps the suite deterministic. Production still uses
+# a real pool. Must be set before app.db (imported via app.app) builds the engine.
+os.environ.setdefault("DB_DISABLE_POOL", "1")
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
@@ -18,6 +24,7 @@ from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
 from app.services.accounts.userService import UserManager, get_user_manager
+from app.services.ratelimit.counterStore import reset_counter_store
 from fastapi_users.password import PasswordHelper
 
 
@@ -121,7 +128,8 @@ async def client(setup_db) -> AsyncGenerator[AsyncClient, None]:
     
     app.dependency_overrides[get_session] = override_get_session
     rate_limiter._events.clear()
-    
+    await reset_counter_store()
+
     # Create test client
     async with AsyncClient(
         transport=ASGITransport(app=app),

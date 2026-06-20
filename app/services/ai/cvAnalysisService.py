@@ -13,7 +13,8 @@ from app.core.resume_analyzer.llm_model import ask_llm_model
 from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.resumeModel import ResumeModel
-from app.services.ai.aiUsageService import AIFeature, AIUsageService
+from app.services.ai.aiBudgetGuard import ensure_llm_budget
+from app.services.ai.aiUsageService import AIFeature, AIUsageService, QuotaReservation
 from app.services.analytics.embeddingService import ResumeEmbeddingService
 from app.services.resumes.resumeService import ResumeService
 
@@ -63,9 +64,10 @@ class CVAnalysisService:
         self.resume_service = ResumeService(session)
         self.ai_usage_service = AIUsageService(session)
 
-    async def ensure_daily_limit(self, user_id: UUID) -> None:
+    async def reserve_slot(self, user_id: UUID) -> QuotaReservation:
+        """Atomically claim a daily slot before any LLM spend (TOCTOU-safe)."""
         try:
-            await self.ai_usage_service.ensure_available(
+            return await self.ai_usage_service.reserve(
                 user_id=user_id,
                 feature=AIFeature.CV_JOB_SEARCH,
             )
@@ -74,10 +76,9 @@ class CVAnalysisService:
                 raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE) from exc
             raise
 
-    async def record_usage(self, *, user_id: UUID, job_id: UUID) -> None:
-        await self.ai_usage_service.record_usage(
-            user_id=user_id,
-            feature=AIFeature.CV_JOB_SEARCH,
+    async def _commit_usage(self, reservation: QuotaReservation, *, job_id: UUID) -> None:
+        await self.ai_usage_service.commit_usage(
+            reservation,
             reference_type="job_analysis",
             reference_id=job_id,
         )
@@ -171,11 +172,19 @@ class CVAnalysisService:
             "summary": resume.ai_summary,
         }
 
-    async def process_job(self, *, job_id: UUID, user_id: UUID, resume_id: UUID) -> None:
+    async def process_job(
+        self,
+        *,
+        job_id: UUID,
+        user_id: UUID,
+        resume_id: UUID,
+        reservation: QuotaReservation | None = None,
+    ) -> None:
         try:
             job = await self._get_job(job_id)
             if not job:
                 LOGGER.error("Job %s not found", job_id)
+                await self._release(reservation)
                 return
 
             job.status = JobStatus.PROCESSING
@@ -184,6 +193,7 @@ class CVAnalysisService:
             resume = await self._get_user_resume(user_id=user_id, resume_id=resume_id)
             if not resume:
                 await self._fail_job(job, "No CV found")
+                await self._release(reservation)
                 LOGGER.warning("No CV found for user %s with resume_id %s", user_id, resume_id)
                 return
 
@@ -193,16 +203,31 @@ class CVAnalysisService:
                 current_job_id=job_id,
             )
             if cached_job and cached_job.keywords:
+                # No LLM call happens on a cache hit, so the reserved slot is freed.
+                await self._release(reservation)
                 await self._complete_from_cache(job=job, resume=resume, cached_job=cached_job)
                 LOGGER.info("Job %s completed from cache (resume_id=%s)", job_id, resume_id)
                 return
 
-            await self._process_resume(job=job, resume=resume, user_id=user_id)
+            await self._process_resume(job=job, resume=resume, user_id=user_id, reservation=reservation)
         except Exception as exc:  # noqa: BLE001
             LOGGER.exception("Error processing job %s", job_id)
+            await self._release(reservation)
             await self._fail_current_job(job_id, friendly_analysis_error_message(exc))
 
-    async def _process_resume(self, *, job: JobAnalysisModel, resume: ResumeModel, user_id: UUID) -> None:
+    @staticmethod
+    async def _release(reservation: QuotaReservation | None) -> None:
+        if reservation is not None:
+            await reservation.release()
+
+    async def _process_resume(
+        self,
+        *,
+        job: JobAnalysisModel,
+        resume: ResumeModel,
+        user_id: UUID,
+        reservation: QuotaReservation | None = None,
+    ) -> None:
         LOGGER.info("Downloading CV for job %s: %s", job.id, resume.storage_file_id)
         file_content = await self.resume_service.download_resume_file(resume.storage_file_id)
 
@@ -215,6 +240,8 @@ class CVAnalysisService:
         extracted_phone = extract_phone_number(resume_text)
 
         if not resume_text or len(resume_text.strip()) < 50:
+            # No LLM call for unusable text, so the reserved slot is returned.
+            await self._release(reservation)
             job.status = JobStatus.COMPLETED
             job.keywords = "developer"
             job.summary = None
@@ -224,9 +251,13 @@ class CVAnalysisService:
             LOGGER.warning("CV text too short for job %s", job.id)
             return
 
+        # Global cost ceiling / kill switch — fail closed to "Manual mode".
+        await ensure_llm_budget()
+
         LOGGER.info("Analyzing CV with LLM for job %s", job.id)
-        await self.record_usage(user_id=user_id, job_id=job.id)
         resume_feature = await ask_llm_model(resume_text)
+        if reservation is not None:
+            await self._commit_usage(reservation, job_id=job.id)
 
         if resume_feature.resume_keywords:
             keywords = ", ".join(resume_feature.resume_keywords[:5])

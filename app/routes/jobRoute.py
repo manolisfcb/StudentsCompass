@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
-from app.services.accounts.userService import current_active_user
+from app.services.accounts.userService import current_active_user, current_ai_user
 from app.models.userModel import User
 import logging
 from uuid import UUID
@@ -240,13 +240,14 @@ class JobStatusResponse(BaseModel):
     completed_at: Optional[str] = None
 
 
-async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, session_factory):
+async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, session_factory, reservation=None):
     """Background task to process CV and extract keywords plus a recruiter-facing summary."""
     async for session in session_factory():
         await CVAnalysisService(session).process_job(
             job_id=job_id,
             user_id=user_id,
             resume_id=resume_id,
+            reservation=reservation,
         )
         break
 
@@ -256,7 +257,7 @@ async def start_cv_analysis(
     background_tasks: BackgroundTasks,
     request: Request,
     session: AsyncSession = Depends(get_session),
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_ai_user),
 
 ):
     """Start CV analysis job - returns immediately with job_id"""
@@ -283,16 +284,24 @@ async def start_cv_analysis(
                 message="CV analysis already in progress for this resume."
             )
 
-        await analysis_service.ensure_daily_limit(user.id)
         ai_analysis_rate_limiter.check_request(request)
+        # Atomically claim a daily slot *before* dispatching any LLM work so
+        # concurrent requests cannot overspend the quota (TOCTOU-safe).
+        reservation = await analysis_service.reserve_slot(user.id)
 
-        job = await analysis_service.create_pending_analysis(user_id=user.id, resume_id=resume.id)
-        
+        try:
+            job = await analysis_service.create_pending_analysis(user_id=user.id, resume_id=resume.id)
+        except Exception:
+            await reservation.release()
+            raise
+
         LOGGER.info(f"Created job {job.id} for user {user.id}")
-        
+
         # Schedule background processing
         from app.db import get_session as get_session_factory
-        background_tasks.add_task(process_cv_analysis, job.id, user.id, resume.id, get_session_factory)
+        background_tasks.add_task(
+            process_cv_analysis, job.id, user.id, resume.id, get_session_factory, reservation
+        )
         
         return JobInitResponse(
             job_id=str(job.id),

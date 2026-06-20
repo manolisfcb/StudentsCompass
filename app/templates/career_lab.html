@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set page_title = "Career Intelligence Lab" %}
+{% set page_title = "Career Optimization Lab" %}
 {% set page_description = "Compare your resume skills against target roles, understand readiness, and generate an optimized learning route inside Students Compass." %}
 {% set page_css = "career_lab" %}
 {% set page_js = "career_lab" %}
@@ -13,8 +13,8 @@
       <div class="career-lab-container">
         <section class="career-lab-hero page-shell-header">
           <div class="career-lab-hero-copy">
-            <span class="career-lab-kicker">Career intelligence</span>
-            <h2>Career Intelligence Lab</h2>
+            <span class="career-lab-kicker">Career optimization</span>
+            <h2>Career Optimization Lab</h2>
             <p>Turn your uploaded CV into a readiness signal, compare it with a target role, and convert prioritized gaps into a focused learning route.</p>
           </div>
 
@@ -42,9 +42,26 @@
         <section class="career-lab-empty" id="careerLabEmpty" hidden>
           <div>
             <h3>No resume available yet</h3>
-            <p>Upload a CV from your profile so Students Compass can turn it into a skill profile and compare it against target roles.</p>
+            <p>Upload a CV here or from your profile so Students Compass can turn it into a skill profile and compare it against target roles.</p>
           </div>
           <a href="/user-profile">Upload CV</a>
+        </section>
+
+        <section class="career-lab-upload" aria-label="Upload CV inside Career Optimization Lab">
+          <div class="upload-copy">
+            <span>Upload CV</span>
+            <strong>Start or refresh your skill profile</strong>
+            <p>Use a PDF, DOC, or DOCX resume under 5MB. After upload, the Lab selects it automatically.</p>
+          </div>
+          <form class="career-lab-upload-form" id="careerLabUploadForm">
+            <label class="career-lab-file-picker" for="careerLabCvFile" id="careerLabUploadArea">
+              <input id="careerLabCvFile" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+              <span id="careerLabUploadFileName">Choose or drop a CV</span>
+            </label>
+            <button type="submit" id="careerLabUploadBtn" disabled>Upload CV</button>
+            <a href="/user-profile">Profile upload</a>
+          </form>
+          <p class="career-lab-upload-status" id="careerLabUploadStatus" aria-live="polite"></p>
         </section>
 
         <section class="career-lab-status" id="careerLabStatus" aria-live="polite">
@@ -127,6 +144,20 @@
           <div class="submetric">
             <span>Semantic matches</span>
             <strong id="semanticMatchCount">--</strong>
+          </div>
+        </section>
+
+        <section class="dashboard-summary" id="dashboardSummary" aria-label="Dashboard Summary">
+          <div class="dashboard-summary-copy">
+            <span>Dashboard Summary</span>
+            <strong id="dashboardSummaryTitle">Optimize a route to complete your dashboard.</strong>
+            <p id="dashboardSummaryCopy">Your projected score, cost, hours, and baseline winner will appear here after route optimization.</p>
+          </div>
+          <div class="dashboard-summary-stats">
+            <div><span>Projected</span><strong id="summaryProjectedScore">--</strong></div>
+            <div><span>Cost</span><strong id="summaryTotalCost">--</strong></div>
+            <div><span>Hours</span><strong id="summaryTotalHours">--</strong></div>
+            <div><span>Best baseline</span><strong id="summaryBestBaseline">--</strong></div>
           </div>
         </section>
 
@@ -231,6 +262,19 @@
               <div class="course-route-list optimized-route-list" id="courseRouteList">
                 <p class="panel-placeholder">Generate a route to turn priority gaps into a timeline.</p>
               </div>
+            </article>
+
+            <article class="lab-panel baseline-panel">
+              <div class="lab-panel-header">
+                <div>
+                  <h3>Baseline Comparison</h3>
+                  <p>Compare the optimized route against simple selection methods.</p>
+                </div>
+              </div>
+              <div class="baseline-summary" id="baselineSummary">
+                <p class="panel-placeholder">Generate a learning route to compare CP-SAT, heuristic, similarity, cost, rating, and random baselines.</p>
+              </div>
+              <div class="baseline-method-list" id="baselineMethodList"></div>
             </article>
 
             <article class="lab-panel">

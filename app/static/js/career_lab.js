@@ -8,6 +8,8 @@
     catalogQuality: null,
     routeRuns: [],
     skillReview: null,
+    latestBaselineEvaluation: null,
+    selectedUploadFile: null,
   };
 
   const els = {};
@@ -42,6 +44,12 @@
     els.runButton = document.getElementById('runAnalysisBtn');
     els.empty = document.getElementById('careerLabEmpty');
     els.status = document.getElementById('careerLabStatus');
+    els.uploadForm = document.getElementById('careerLabUploadForm');
+    els.uploadArea = document.getElementById('careerLabUploadArea');
+    els.uploadFileInput = document.getElementById('careerLabCvFile');
+    els.uploadButton = document.getElementById('careerLabUploadBtn');
+    els.uploadFileName = document.getElementById('careerLabUploadFileName');
+    els.uploadStatus = document.getElementById('careerLabUploadStatus');
     els.analyticsReadiness = document.querySelector('.analytics-readiness');
     els.analyticsReadinessBadge = document.getElementById('analyticsReadinessBadge');
     els.analyticsReadinessTitle = document.getElementById('analyticsReadinessTitle');
@@ -77,6 +85,15 @@
     els.routeTotalCost = document.getElementById('routeTotalCost');
     els.routeTotalHours = document.getElementById('routeTotalHours');
     els.routeHistoryList = document.getElementById('routeHistoryList');
+    els.dashboardSummary = document.getElementById('dashboardSummary');
+    els.dashboardSummaryTitle = document.getElementById('dashboardSummaryTitle');
+    els.dashboardSummaryCopy = document.getElementById('dashboardSummaryCopy');
+    els.summaryProjectedScore = document.getElementById('summaryProjectedScore');
+    els.summaryTotalCost = document.getElementById('summaryTotalCost');
+    els.summaryTotalHours = document.getElementById('summaryTotalHours');
+    els.summaryBestBaseline = document.getElementById('summaryBestBaseline');
+    els.baselineSummary = document.getElementById('baselineSummary');
+    els.baselineMethodList = document.getElementById('baselineMethodList');
     els.catalogQualityPanel = document.getElementById('catalogQualityPanel');
     els.embeddingStatusList = document.getElementById('embeddingStatusList');
     els.marketSignalsList = document.getElementById('marketSignalsList');
@@ -173,17 +190,96 @@
     return 'No role requirements were found yet. Seed the analytical catalog or sync job postings to activate market matching.';
   }
 
+  function setUploadStatus(message, type) {
+    if (!els.uploadStatus) return;
+    els.uploadStatus.textContent = message || '';
+    els.uploadStatus.classList.toggle('error', type === 'error');
+    els.uploadStatus.classList.toggle('success', type === 'success');
+  }
+
+  function validateUploadFile(file) {
+    if (!file) return 'Choose a CV file first.';
+    const allowedTypes = new Set([
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ]);
+    const allowedExtensions = /\.(pdf|doc|docx)$/i;
+    if (!allowedTypes.has(file.type) && !allowedExtensions.test(file.name || '')) {
+      return 'Only PDF, DOC, or DOCX files are allowed.';
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return 'File size must be less than 5MB.';
+    }
+    return '';
+  }
+
+  function setSelectedUploadFile(file) {
+    const validationError = validateUploadFile(file);
+    if (validationError) {
+      state.selectedUploadFile = null;
+      if (els.uploadFileInput) els.uploadFileInput.value = '';
+      if (els.uploadFileName) els.uploadFileName.textContent = 'Choose or drop a CV';
+      setUploadStatus(validationError, 'error');
+      updateRunButtonState();
+      return;
+    }
+
+    state.selectedUploadFile = file;
+    if (els.uploadFileName) els.uploadFileName.textContent = file.name;
+    setUploadStatus('Ready to upload.', 'success');
+    updateRunButtonState();
+  }
+
+  async function uploadResumeFromLab(event) {
+    event.preventDefault();
+    const file = state.selectedUploadFile;
+    const validationError = validateUploadFile(file);
+    if (validationError) {
+      setUploadStatus(validationError, 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('cv', file);
+    if (els.uploadButton) els.uploadButton.disabled = true;
+    setUploadStatus('Uploading CV...', '');
+
+    try {
+      const payload = await apiFetch('/api/v1/profile/cv/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      state.selectedUploadFile = null;
+      if (els.uploadFileInput) els.uploadFileInput.value = '';
+      if (els.uploadFileName) els.uploadFileName.textContent = 'Choose or drop a CV';
+      setUploadStatus('CV uploaded. Resume selector refreshed.', 'success');
+      await loadResumes(payload?.resume_id);
+      setStatus('CV uploaded. Choose a target role and run your gap analysis.');
+    } catch (error) {
+      setUploadStatus(`${error.message || 'Upload failed.'} You can also upload from your profile.`, 'error');
+    } finally {
+      updateRunButtonState();
+    }
+  }
+
   async function apiFetch(url, options) {
     const requestOptions = options || {};
-    const response = await fetch(url, {
-      credentials: 'include',
-      cache: 'no-store',
-      ...requestOptions,
-      headers: {
-        ...(requestOptions.body ? { 'Content-Type': 'application/json' } : {}),
-        ...(requestOptions.headers || {}),
-      },
-    });
+    const isFormData = requestOptions.body instanceof FormData;
+    let response;
+    try {
+      response = await fetch(url, {
+        credentials: 'include',
+        cache: 'no-store',
+        ...requestOptions,
+        headers: {
+          ...(requestOptions.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+          ...(requestOptions.headers || {}),
+        },
+      });
+    } catch (error) {
+      throw new Error('StudentsCompass API is unreachable. Make sure the local server is running, then reload this page.');
+    }
     if (response.status === 401 || response.status === 403) {
       window.location.href = '/login';
       return null;
@@ -209,9 +305,12 @@
     if (els.manualSkillButton) {
       els.manualSkillButton.disabled = !state.resumes.length || !els.resumeSelect.value;
     }
+    if (els.uploadButton) {
+      els.uploadButton.disabled = !state.selectedUploadFile;
+    }
   }
 
-  async function loadResumes() {
+  async function loadResumes(preferredResumeId) {
     updateRunButtonState();
     const resumes = await apiFetch('/api/v1/profile/cv');
     if (!resumes) return;
@@ -220,17 +319,21 @@
     if (!state.resumes.length) {
       els.resumeSelect.innerHTML = '<option value="">No resume uploaded</option>';
       els.empty.hidden = false;
-      setStatus('Upload a CV first so the Career Lab can analyze your current skill profile.');
+      setStatus('Upload a CV first so the Career Optimization Lab can analyze your current skill profile.');
       drawRadar(null);
       renderSkillReview(null);
       updateRunButtonState();
       return;
     }
 
+    const preferredIndex = preferredResumeId
+      ? state.resumes.findIndex((resume) => String(resume.id) === String(preferredResumeId))
+      : 0;
+    const selectedIndex = preferredIndex >= 0 ? preferredIndex : 0;
     els.empty.hidden = true;
     els.resumeSelect.innerHTML = state.resumes.map((resume, index) => {
       const label = `${resume.original_filename || 'Resume'} - ${formatDate(resume.created_at)}`;
-      return `<option value="${escapeHtml(resume.id)}" ${index === 0 ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+      return `<option value="${escapeHtml(resume.id)}" ${index === selectedIndex ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     }).join('');
     updateRunButtonState();
     setStatus('Ready. Pick a target role and run your gap analysis.');
@@ -582,6 +685,7 @@
     const missing = analysis.priority_missing_skills || analysis.missing_skills || [];
     const recommendations = analysis.recommended_courses || [];
 
+    resetRouteDashboard();
     els.overallReadinessScore.textContent = scorePercent(analysis.overall_readiness_score);
     els.matchScore.textContent = scorePercent(analysis.match_score ?? analysis.coverage_ratio);
     els.contextSimilarityScore.textContent = scorePercent(analysis.context_similarity_score);
@@ -784,6 +888,7 @@
 
     els.generateRouteButton.disabled = true;
     els.courseRouteList.innerHTML = '<p class="panel-placeholder">Optimizing a route across your budget, hours, and priority gaps...</p>';
+    renderBaselineLoading();
     setStatus('Generating an optimized learning route...');
 
     const payload = {
@@ -802,10 +907,14 @@
       if (!route) return;
       state.latestRoute = route;
       renderOptimizedRoute(route);
+      renderDashboardSummary(route, null);
       await loadRouteRuns();
+      await evaluateBaselines(payload, route);
       setStatus(`Learning route ready for ${route.target_role}.`);
     } catch (error) {
       els.courseRouteList.innerHTML = `<p class="panel-placeholder">Route optimization failed: ${escapeHtml(error.message || 'Request failed')}.</p>`;
+      renderBaselineComparison(null);
+      renderDashboardSummary(null, null);
       setStatus(error.message || 'Unable to generate learning route right now.', 'error');
     } finally {
       updateRunButtonState();
@@ -872,6 +981,140 @@
           </div>
         `;
       }).join('');
+  }
+
+  async function evaluateBaselines(payload, route) {
+    try {
+      const evaluation = await apiFetch('/api/v1/capstone/learning-route/evaluate-baselines', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (!evaluation) return;
+      state.latestBaselineEvaluation = evaluation;
+      renderBaselineComparison(evaluation);
+      renderDashboardSummary(route, evaluation);
+    } catch (error) {
+      state.latestBaselineEvaluation = null;
+      if (els.baselineSummary) {
+        els.baselineSummary.innerHTML = `
+          <p class="panel-placeholder error">Baseline comparison is unavailable: ${escapeHtml(error.message || 'Request failed')}.</p>
+        `;
+      }
+      if (els.baselineMethodList) els.baselineMethodList.innerHTML = '';
+      renderDashboardSummary(route, null);
+    }
+  }
+
+  function renderBaselineLoading() {
+    if (els.baselineSummary) {
+      els.baselineSummary.innerHTML = '<p class="panel-placeholder">Comparing route methods under the same budget, hours, and course limits...</p>';
+    }
+    if (els.baselineMethodList) els.baselineMethodList.innerHTML = '';
+  }
+
+  function renderBaselineComparison(evaluation) {
+    if (!els.baselineSummary || !els.baselineMethodList) return;
+    if (!evaluation) {
+      els.baselineSummary.innerHTML = '<p class="panel-placeholder">Generate a learning route to compare CP-SAT, heuristic, similarity, cost, rating, and random baselines.</p>';
+      els.baselineMethodList.innerHTML = '';
+      return;
+    }
+
+    const winner = evaluation.winner_summary || {};
+    const methods = Array.isArray(evaluation.methods) ? evaluation.methods : [];
+    const order = [
+      'cp_sat_route_v1',
+      'heuristic_route_v1',
+      'similarity_only',
+      'cheapest_feasible',
+      'highest_rated_feasible',
+      'random_feasible_seeded',
+    ];
+    const orderedMethods = methods.slice().sort((a, b) => {
+      const aRank = order.indexOf(a.method);
+      const bRank = order.indexOf(b.method);
+      return (aRank === -1 ? 99 : aRank) - (bRank === -1 ? 99 : bRank);
+    });
+
+    els.baselineSummary.innerHTML = `
+      <div class="baseline-winner">
+        <span>Winner</span>
+        <strong>${escapeHtml(methodLabel(winner.best_method))}</strong>
+        <p>${escapeHtml(winner.summary || 'Baseline comparison completed.')}</p>
+      </div>
+    `;
+
+    els.baselineMethodList.innerHTML = orderedMethods.map((method) => {
+      const metrics = method.metrics || {};
+      const isWinner = method.method === winner.best_method;
+      return `
+        <div class="baseline-method ${isWinner ? 'winner' : ''}">
+          <div class="baseline-method-top">
+            <span>${escapeHtml(isWinner ? 'Best method' : 'Method')}</span>
+            <strong>${escapeHtml(methodLabel(method.method))}</strong>
+            <small>${escapeHtml(method.solver_status || method.objective_version || 'Evaluated')}</small>
+          </div>
+          <div class="baseline-metrics">
+            <div><span>Coverage</span><strong>${scorePercent(metrics.weighted_skill_coverage)}</strong></div>
+            <div><span>Critical</span><strong>${scorePercent(metrics.critical_skill_coverage)}</strong></div>
+            <div><span>Cost</span><strong>${escapeHtml(formatMoney(metrics.total_cost))}</strong></div>
+            <div><span>Hours</span><strong>${escapeHtml(formatHours(metrics.total_hours))}</strong></div>
+            <div><span>Courses</span><strong>${escapeHtml(metrics.selected_courses_count ?? 0)}</strong></div>
+            <div><span>Redundancy</span><strong>${scorePercent(metrics.redundancy_rate)}</strong></div>
+            <div><span>Gain</span><strong>${scorePercent(metrics.projected_readiness_gain)}</strong></div>
+            <div><span>Runtime</span><strong>${escapeHtml(scoreDecimal(metrics.runtime_ms))}ms</strong></div>
+          </div>
+          <p>${escapeHtml(method.explanation || 'Comparison method evaluated under the same constraints.')}</p>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function methodLabel(method) {
+    const labels = {
+      cp_sat_route_v1: 'OR-Tools CP-SAT',
+      heuristic_route_v1: 'MVP heuristic',
+      similarity_only: 'Similarity only',
+      cheapest_feasible: 'Cheapest feasible',
+      highest_rated_feasible: 'Highest rated',
+      random_feasible_seeded: 'Seeded random',
+    };
+    return labels[method] || method || '--';
+  }
+
+  function renderDashboardSummary(route, evaluation) {
+    if (!els.dashboardSummary) return;
+    const winner = evaluation?.winner_summary?.best_method;
+    if (!route) {
+      els.dashboardSummaryTitle.textContent = 'Optimize a route to complete your dashboard.';
+      els.dashboardSummaryCopy.textContent = 'Your projected score, cost, hours, and baseline winner will appear here after route optimization.';
+      els.summaryProjectedScore.textContent = '--';
+      els.summaryTotalCost.textContent = '--';
+      els.summaryTotalHours.textContent = '--';
+      els.summaryBestBaseline.textContent = '--';
+      return;
+    }
+
+    els.dashboardSummaryTitle.textContent = `Optimized route ready for ${route.target_role}.`;
+    els.dashboardSummaryCopy.textContent = evaluation
+      ? 'Dashboard complete: route optimization and baseline comparison are both available.'
+      : 'Route optimization is available. Baseline comparison will appear when the evaluation finishes.';
+    els.summaryProjectedScore.textContent = scorePercent(route.projected_match_score_after);
+    els.summaryTotalCost.textContent = formatMoney(route.total_cost);
+    els.summaryTotalHours.textContent = formatHours(route.total_hours);
+    els.summaryBestBaseline.textContent = methodLabel(winner);
+  }
+
+  function resetRouteDashboard() {
+    state.latestRoute = null;
+    state.latestBaselineEvaluation = null;
+    if (els.routeSummaryStrip) els.routeSummaryStrip.hidden = true;
+    if (els.routeSummaryCopy) els.routeSummaryCopy.hidden = true;
+    if (els.courseRouteList) {
+      els.courseRouteList.innerHTML = '<p class="panel-placeholder">Generate a route to turn priority gaps into a timeline.</p>';
+    }
+    renderBaselineComparison(null);
+    renderDashboardSummary(null, null);
   }
 
   function renderRouteHistory(runs) {
@@ -1010,12 +1253,37 @@
     drawRadar(null);
     els.form.addEventListener('submit', runAnalysis);
     if (els.routeForm) els.routeForm.addEventListener('submit', generateLearningRoute);
+    if (els.uploadForm) els.uploadForm.addEventListener('submit', uploadResumeFromLab);
+    if (els.uploadFileInput) {
+      els.uploadFileInput.addEventListener('change', (event) => {
+        setSelectedUploadFile(event.target.files?.[0]);
+      });
+    }
+    if (els.uploadArea) {
+      els.uploadArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        els.uploadArea.classList.add('dragging');
+      });
+      els.uploadArea.addEventListener('dragleave', () => {
+        els.uploadArea.classList.remove('dragging');
+      });
+      els.uploadArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        els.uploadArea.classList.remove('dragging');
+        setSelectedUploadFile(event.dataTransfer?.files?.[0]);
+      });
+    }
     els.resumeSelect.addEventListener('change', async () => {
       state.latestAnalysis = null;
+      resetRouteDashboard();
       updateRunButtonState();
       await loadResumeSkillReview();
     });
-    els.targetRoleSelect.addEventListener('change', updateRunButtonState);
+    els.targetRoleSelect.addEventListener('change', () => {
+      state.latestAnalysis = null;
+      resetRouteDashboard();
+      updateRunButtonState();
+    });
     if (els.skillReviewList) els.skillReviewList.addEventListener('click', handleSkillReviewAction);
     if (els.manualSkillForm) els.manualSkillForm.addEventListener('submit', addManualSkill);
 

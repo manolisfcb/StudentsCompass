@@ -77,3 +77,23 @@ auth_backend = AuthenticationBackend(
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager=get_user_manager, auth_backends=[auth_backend])
 current_active_user = fastapi_users.current_user(active=True)
 current_active_user_optional = fastapi_users.current_user(active=True, optional=True)
+
+
+async def current_ai_user(user: User = Depends(current_active_user)) -> User:
+    """Auth dependency for endpoints that spend on the LLM.
+
+    Verification-ready gate: when ``REQUIRE_VERIFIED_FOR_AI`` is enabled it
+    requires a verified email (the main defense against account farming for free
+    AI quota). Kept OFF by default until a real email provider is wired so no
+    existing user is locked out; meanwhile the cost bleed is capped by the
+    atomic per-user quota, the global budget guard and registration limits.
+    """
+    from app import config
+    from fastapi import HTTPException, status
+
+    if config.REQUIRE_VERIFIED_FOR_AI and not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email address to use AI features.",
+        )
+    return user

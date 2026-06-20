@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from uuid import UUID
 
@@ -33,6 +34,8 @@ from app.services.analytics.skillGapScoringService import SkillGapScoringService
 from app.services.analytics.skillExtractionService import SkillExtractionMatch, SkillExtractionService
 from app.services.analytics.skillNormalizer import SkillNormalizer
 
+
+LOGGER = logging.getLogger(__name__)
 
 SkillMatch = SkillExtractionMatch
 
@@ -127,14 +130,58 @@ class CapstoneAnalyticsService:
         extraction_method: str = "resume_summary_rules_v1",
     ) -> list[ResumeSkillModel]:
         resume = await self.get_user_resume(resume_id=resume_id, user_id=user_id)
-        if resume is None or not resume.ai_summary:
+        if resume is None:
             return []
+        if resume.ai_summary:
+            return await self.extract_resume_skills_from_text(
+                resume_id=resume.id,
+                user_id=user_id,
+                text=resume.ai_summary,
+                extraction_method=extraction_method,
+                source_section="ai_summary",
+            )
+        # No AI summary yet (e.g. the CV was uploaded without running the
+        # quota-limited Jobs analysis). Fall back to rule-based extraction over
+        # the raw resume text so the Career Lab still reads real skills.
+        return await self._extract_resume_skills_from_file_text(resume=resume, user_id=user_id)
+
+    async def _extract_resume_skills_from_file_text(
+        self,
+        *,
+        resume: ResumeModel,
+        user_id: UUID,
+    ) -> list[ResumeSkillModel]:
+        """Rule-based skill extraction straight from the stored CV file.
+
+        Decouples the Career Lab from ``ai_summary`` (which is only populated by
+        the separate, quota-limited Jobs CV analysis). No LLM call, no quota.
+        """
+        from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
+        from app.services.resumes.resumeService import ResumeService
+
+        if not resume.storage_file_id:
+            return []
+        try:
+            resume_service = ResumeService(self.session)
+            file_content = await resume_service.download_resume_file(resume.storage_file_id)
+            resume_text = await extract_resume_text_from_bytes(
+                file_content,
+                filename=resume.original_filename,
+                content_type="",
+            )
+        except Exception:  # noqa: BLE001 — storage/extraction issues must not 500 the analysis
+            LOGGER.exception("Could not read resume file for skill extraction (resume %s)", resume.id)
+            return []
+
+        if not resume_text or len(resume_text.strip()) < 30:
+            return []
+
         return await self.extract_resume_skills_from_text(
             resume_id=resume.id,
             user_id=user_id,
-            text=resume.ai_summary,
-            extraction_method=extraction_method,
-            source_section="ai_summary",
+            text=resume_text,
+            extraction_method="resume_text_rules_v1",
+            source_section="resume_text",
         )
 
     async def extract_job_skills_from_job_posting(
@@ -630,15 +677,19 @@ class CapstoneAnalyticsService:
             select(func.count(ResumeSkillModel.id)).where(ResumeSkillModel.resume_id == resume.id)
         )
         existing_count = int(existing_result.scalar_one() or 0)
-        if existing_count or not resume.ai_summary:
+        if existing_count:
             return
-        await self.extract_resume_skills_from_text(
-            resume_id=resume.id,
-            user_id=user_id,
-            text=resume.ai_summary,
-            extraction_method="resume_summary_rules_v1",
-            source_section="ai_summary",
-        )
+        if resume.ai_summary:
+            await self.extract_resume_skills_from_text(
+                resume_id=resume.id,
+                user_id=user_id,
+                text=resume.ai_summary,
+                extraction_method="resume_summary_rules_v1",
+                source_section="ai_summary",
+            )
+            return
+        # No AI summary: extract straight from the CV text (no LLM / no quota).
+        await self._extract_resume_skills_from_file_text(resume=resume, user_id=user_id)
 
     async def _sync_resume_embedding_if_possible(self, resume: ResumeModel) -> None:
         if not resume.ai_summary:

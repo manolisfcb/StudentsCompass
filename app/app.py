@@ -115,7 +115,16 @@ async def lifespan(app: FastAPI):
         shutdown_resume_text_extractors()
 
 
-app = FastAPI(lifespan=lifespan)
+# Hide interactive API docs / schema in production to avoid exposing the full
+# endpoint map. Still available in dev for convenience.
+from app.config import IS_PRODUCTION
+
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
+)
 rate_limiter = RequestRateLimiter.from_env()
 
 # Configure CORS origins from environment.
@@ -145,7 +154,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def apply_rate_limits(request, call_next):
-    allowed, retry_after = rate_limiter.check(request)
+    allowed, retry_after = await rate_limiter.check(request)
     if not allowed:
         return JSONResponse(
             status_code=429,
