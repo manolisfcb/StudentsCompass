@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import re
-from dataclasses import dataclass
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -23,43 +22,42 @@ from app.services.analytics.embeddingService import ResumeEmbeddingService, get_
 from app.services.analytics.capstoneAnalyticsSeedService import CAPSTONE_ROLE_SKILL_SEED_DATA
 from app.services.analytics.courseCatalogQueries import load_active_course_links
 from app.services.analytics.learningRouteOptimizerService import (
-    HeuristicLearningRouteOptimizer,
     LearningRouteConstraints,
+    get_learning_route_optimizer,
+)
+from app.services.analytics.learningRouteBaselineEvaluationService import (
+    LearningRouteBaselineEvaluationService,
 )
 from app.services.analytics.semanticMatchingService import SemanticMatchingService
+from app.services.analytics.skillGapScoringService import SkillGapScoringService
+from app.services.analytics.skillExtractionService import SkillExtractionMatch, SkillExtractionService
+from app.services.analytics.skillNormalizer import SkillNormalizer
 
 
-@dataclass(frozen=True)
-class SkillMatch:
-    skill: SkillModel
-    matched_text: str
+SkillMatch = SkillExtractionMatch
+
+RESUME_SKILL_STATUS_DETECTED = "detected"
+RESUME_SKILL_STATUS_CONFIRMED = "confirmed"
+RESUME_SKILL_STATUS_REJECTED = "rejected"
+RESUME_SKILL_STATUS_MANUAL = "manual"
+ACTIVE_RESUME_SKILL_STATUSES = {
+    RESUME_SKILL_STATUS_DETECTED,
+    RESUME_SKILL_STATUS_CONFIRMED,
+    RESUME_SKILL_STATUS_MANUAL,
+}
 
 
 class CapstoneAnalyticsService:
     def __init__(self, session: AsyncSession):
         self.session = session
+        self.skill_extraction_service = SkillExtractionService(session)
 
     @staticmethod
     def normalize_skill_text(value: str) -> str:
-        cleaned = re.sub(r"[^a-z0-9+#]+", " ", (value or "").lower()).strip()
-        return re.sub(r"\s+", " ", cleaned)
+        return SkillNormalizer.normalize_text(value)
 
     async def build_skill_lookup(self) -> dict[str, SkillModel]:
-        skills_result = await self.session.execute(select(SkillModel))
-        skills = list(skills_result.scalars().all())
-
-        aliases_result = await self.session.execute(
-            select(SkillAliasModel).options(selectinload(SkillAliasModel.skill))
-        )
-        aliases = list(aliases_result.scalars().all())
-
-        lookup: dict[str, SkillModel] = {}
-        for skill in skills:
-            lookup[self.normalize_skill_text(skill.normalized_name.replace("_", " "))] = skill
-            lookup[self.normalize_skill_text(skill.display_name)] = skill
-        for alias in aliases:
-            lookup[self.normalize_skill_text(alias.alias)] = alias.skill
-        return lookup
+        return await self.skill_extraction_service.build_skill_lookup()
 
     async def extract_known_skills_from_text(
         self,
@@ -67,20 +65,10 @@ class CapstoneAnalyticsService:
         *,
         lookup: dict[str, SkillModel] | None = None,
     ) -> list[SkillMatch]:
-        if lookup is None:
-            lookup = await self.build_skill_lookup()
-        normalized_text = f" {self.normalize_skill_text(text)} "
-
-        matches_by_skill: dict[UUID, SkillMatch] = {}
-        for candidate, skill in sorted(lookup.items(), key=lambda item: len(item[0]), reverse=True):
-            if f" {candidate} " not in normalized_text:
-                continue
-            matches_by_skill.setdefault(
-                skill.id,
-                SkillMatch(skill=skill, matched_text=candidate),
-            )
-
-        return sorted(matches_by_skill.values(), key=lambda match: match.skill.display_name.lower())
+        return await self.skill_extraction_service.extract_known_skills_from_text(
+            text,
+            lookup=lookup,
+        )
 
     async def extract_resume_skills_from_text(
         self,
@@ -95,7 +83,11 @@ class CapstoneAnalyticsService:
         if resume is None:
             return []
 
-        matches = await self.extract_known_skills_from_text(text)
+        matches = await self.skill_extraction_service.extract_known_skills_from_text(
+            text,
+            extraction_method=extraction_method,
+            source_section=source_section,
+        )
         created_or_existing: list[ResumeSkillModel] = []
 
         for match in matches:
@@ -115,10 +107,11 @@ class CapstoneAnalyticsService:
                 resume_id=resume.id,
                 user_id=user_id,
                 skill_id=match.skill.id,
-                confidence_score=0.75,
-                extraction_method=extraction_method,
-                evidence_text=match.matched_text,
-                source_section=source_section,
+                confidence_score=match.confidence_score,
+                extraction_method=match.extraction_method,
+                evidence_text=match.evidence_text,
+                source_section=match.source_section,
+                status=RESUME_SKILL_STATUS_DETECTED,
             )
             self.session.add(resume_skill)
             created_or_existing.append(resume_skill)
@@ -159,7 +152,11 @@ class CapstoneAnalyticsService:
         if not text.strip():
             return []
 
-        matches = await self.extract_known_skills_from_text(text, lookup=lookup)
+        matches = await self.skill_extraction_service.extract_known_skills_from_text(
+            text,
+            lookup=lookup,
+            extraction_method=extraction_method,
+        )
         created_or_existing: list[JobSkillModel] = []
         target_role = self._infer_target_role(job_posting.title)
 
@@ -184,8 +181,8 @@ class CapstoneAnalyticsService:
                 skill_id=match.skill.id,
                 target_role=target_role,
                 importance_score=0.75,
-                extraction_method=extraction_method,
-                evidence_text=match.matched_text,
+                extraction_method=match.extraction_method,
+                evidence_text=match.evidence_text,
             )
             self.session.add(job_skill)
             created_or_existing.append(job_skill)
@@ -255,6 +252,7 @@ class CapstoneAnalyticsService:
     async def get_analytics_status(self) -> dict:
         skills_count = await self._count(SkillModel)
         aliases_count = await self._count(SkillAliasModel)
+        resume_skill_status_counts = await self._count_resume_skills_by_status()
         courses_count = await self._count(CourseModel)
         course_skills_count = await self._count(CourseSkillModel)
 
@@ -299,6 +297,11 @@ class CapstoneAnalyticsService:
             "catalog_ready": catalog_ready,
             "skills_count": skills_count,
             "aliases_count": aliases_count,
+            "resume_skills_count": sum(resume_skill_status_counts.values()),
+            "detected_resume_skills_count": resume_skill_status_counts.get(RESUME_SKILL_STATUS_DETECTED, 0),
+            "confirmed_resume_skills_count": resume_skill_status_counts.get(RESUME_SKILL_STATUS_CONFIRMED, 0),
+            "rejected_resume_skills_count": resume_skill_status_counts.get(RESUME_SKILL_STATUS_REJECTED, 0),
+            "manual_resume_skills_count": resume_skill_status_counts.get(RESUME_SKILL_STATUS_MANUAL, 0),
             "courses_count": courses_count,
             "course_skills_count": course_skills_count,
             "role_seed_requirements_count": role_seed_requirements_count,
@@ -353,16 +356,15 @@ class CapstoneAnalyticsService:
 
     async def get_catalog_quality(self) -> dict:
         skills_count = await self._count(SkillModel)
-        courses_count = await self._count(CourseModel)
-        active_courses_result = await self.session.execute(
-            select(func.count(CourseModel.id)).where(CourseModel.is_active.is_(True))
-        )
-        active_courses_count = int(active_courses_result.scalar_one() or 0)
         role_counts = await self._count_role_requirements(require_real_job_posting=False)
         market_role_counts = await self._count_role_requirements(require_real_job_posting=True)
 
+        # Load courses once and derive the count metrics from the result set
+        # instead of issuing separate COUNT queries for the same table.
         course_rows_result = await self.session.execute(select(CourseModel))
         courses = list(course_rows_result.scalars().all())
+        courses_count = len(courses)
+        active_courses_count = sum(1 for course in courses if course.is_active)
         completeness = self._calculate_course_metadata_completeness(courses)
 
         course_skill_result = await self.session.execute(
@@ -411,7 +413,14 @@ class CapstoneAnalyticsService:
             "next_actions": next_actions,
         }
 
-    async def analyze_gap(self, *, resume_id: UUID, user_id: UUID, target_role: str) -> dict:
+    async def analyze_gap(
+        self,
+        *,
+        resume_id: UUID,
+        user_id: UUID,
+        target_role: str,
+        include_course_recommendations: bool = True,
+    ) -> dict:
         resume = await self.get_user_resume(resume_id=resume_id, user_id=user_id)
         if resume is None:
             return {"status": "resume_not_found", "resume_id": str(resume_id)}
@@ -450,7 +459,13 @@ class CapstoneAnalyticsService:
         )
 
         priority_missing_skills = self._prioritize_missing_skills(match_summary.missing_skills)
-        recommendations = await self._recommend_courses_for_missing_skills(priority_missing_skills)
+        # The optimize flow runs its own course selection, so it skips this load
+        # to avoid querying the course catalog twice in one request.
+        recommendations = (
+            await self._recommend_courses_for_missing_skills(priority_missing_skills)
+            if include_course_recommendations
+            else []
+        )
         gap_insights = self._build_gap_insights(
             match_summary=match_summary,
             priority_missing_skills=priority_missing_skills,
@@ -502,6 +517,7 @@ class CapstoneAnalyticsService:
             resume_id=resume_id,
             user_id=user_id,
             target_role=target_role,
+            include_course_recommendations=False,
         )
         if gap_payload["status"] != "ok":
             return gap_payload
@@ -511,9 +527,9 @@ class CapstoneAnalyticsService:
             available_hours=available_hours,
             max_courses=max_courses,
         )
-        optimizer = HeuristicLearningRouteOptimizer(self.session)
+        optimizer = get_learning_route_optimizer(self.session)
         route_payload = await optimizer.optimize(
-            missing_skills=gap_payload["missing_skills"],
+            missing_skills=gap_payload["priority_missing_skills"],
             match_score_before=gap_payload["overall_readiness_score"],
             constraints=constraints,
         )
@@ -539,6 +555,9 @@ class CapstoneAnalyticsService:
                 "remaining_gaps": route_payload["remaining_gaps"],
                 "selected_courses": route_payload["selected_courses"],
                 "route_summary": route_payload["route_summary"],
+                "solver_status": route_payload.get("solver_status"),
+                "objective_value": route_payload.get("objective_value"),
+                "model_explanation": route_payload.get("model_explanation"),
             },
             constraints={
                 "budget": budget,
@@ -555,6 +574,45 @@ class CapstoneAnalyticsService:
             "optimization_run_id": str(optimization_run.id),
             "target_role": target_role,
             **route_payload,
+        }
+
+    async def evaluate_learning_route_baselines(
+        self,
+        *,
+        resume_id: UUID,
+        user_id: UUID,
+        target_role: str,
+        budget: float | None,
+        available_hours: float | None,
+        max_courses: int | None,
+    ) -> dict:
+        gap_payload = await self.analyze_gap(
+            resume_id=resume_id,
+            user_id=user_id,
+            target_role=target_role,
+            include_course_recommendations=False,
+        )
+        if gap_payload["status"] != "ok":
+            return gap_payload
+
+        constraints = LearningRouteConstraints(
+            budget=budget,
+            available_hours=available_hours,
+            max_courses=max_courses,
+        )
+        evaluator = LearningRouteBaselineEvaluationService(self.session)
+        evaluation_payload = await evaluator.evaluate(
+            missing_skills=gap_payload["priority_missing_skills"],
+            match_score_before=gap_payload["overall_readiness_score"],
+            constraints=constraints,
+        )
+
+        return {
+            "status": "ok",
+            "resume_id": str(resume_id),
+            "target_role": target_role,
+            "match_score_before": gap_payload["overall_readiness_score"],
+            **evaluation_payload,
         }
 
     async def list_learning_route_runs(self, *, user_id: UUID, limit: int = 20) -> dict:
@@ -685,15 +743,26 @@ class CapstoneAnalyticsService:
             return "Data Analyst"
         return None
 
-    async def get_resume_skills(self, resume_id: UUID) -> list[dict]:
+    async def get_resume_skills(self, resume_id: UUID, *, include_rejected: bool = False) -> list[dict]:
         result = await self.session.execute(
             select(ResumeSkillModel)
             .options(selectinload(ResumeSkillModel.skill))
             .where(ResumeSkillModel.resume_id == resume_id)
         )
-        resume_skills = result.scalars().all()
+        resume_skills = [
+            resume_skill
+            for resume_skill in result.scalars().all()
+            if include_rejected or resume_skill.status in ACTIVE_RESUME_SKILL_STATUSES
+        ]
+        best_by_skill_id: dict[UUID, ResumeSkillModel] = {}
+        for resume_skill in resume_skills:
+            existing = best_by_skill_id.get(resume_skill.skill_id)
+            if existing is None or self._resume_skill_rank(resume_skill) > self._resume_skill_rank(existing):
+                best_by_skill_id[resume_skill.skill_id] = resume_skill
+
         return [
             {
+                "resume_skill_id": str(resume_skill.id),
                 "skill_id": str(resume_skill.skill_id),
                 "normalized_name": resume_skill.skill.normalized_name,
                 "display_name": resume_skill.skill.display_name,
@@ -701,9 +770,119 @@ class CapstoneAnalyticsService:
                 "confidence_score": resume_skill.confidence_score,
                 "evidence_text": resume_skill.evidence_text,
                 "extraction_method": resume_skill.extraction_method,
+                "source_section": resume_skill.source_section,
+                "status": resume_skill.status,
+                "reviewed_at": resume_skill.reviewed_at,
             }
-            for resume_skill in sorted(resume_skills, key=lambda item: item.skill.display_name.lower())
+            for resume_skill in sorted(best_by_skill_id.values(), key=lambda item: item.skill.display_name.lower())
         ]
+
+    async def list_resume_skills_for_review(self, *, resume_id: UUID, user_id: UUID) -> dict | None:
+        resume = await self.get_user_resume(resume_id=resume_id, user_id=user_id)
+        if resume is None:
+            return None
+        return {
+            "resume_id": str(resume.id),
+            "skills": await self.get_resume_skills(resume.id, include_rejected=True),
+        }
+
+    async def update_resume_skill_review_status(
+        self,
+        *,
+        resume_id: UUID,
+        user_id: UUID,
+        resume_skill_id: UUID,
+        status: str,
+    ) -> dict | None:
+        if status not in {RESUME_SKILL_STATUS_CONFIRMED, RESUME_SKILL_STATUS_REJECTED}:
+            return None
+        resume_skill = await self._get_user_resume_skill(
+            resume_id=resume_id,
+            user_id=user_id,
+            resume_skill_id=resume_skill_id,
+        )
+        if resume_skill is None:
+            return None
+
+        resume_skill.status = status
+        resume_skill.reviewed_at = datetime.utcnow()
+        resume_skill.reviewed_by_user_id = user_id
+        if status == RESUME_SKILL_STATUS_CONFIRMED:
+            resume_skill.confidence_score = max(float(resume_skill.confidence_score or 0), 0.95)
+        self.session.add(resume_skill)
+        await self.session.commit()
+        return await self.list_resume_skills_for_review(resume_id=resume_id, user_id=user_id)
+
+    async def add_manual_resume_skill(
+        self,
+        *,
+        resume_id: UUID,
+        user_id: UUID,
+        skill_id: UUID | None = None,
+        normalized_name: str | None = None,
+        evidence_text: str | None = None,
+        source_section: str | None = None,
+    ) -> dict | None:
+        resume = await self.get_user_resume(resume_id=resume_id, user_id=user_id)
+        if resume is None:
+            return None
+
+        skill = await self._find_skill(skill_id=skill_id, normalized_name=normalized_name)
+        if skill is None:
+            return {"status": "skill_not_found", "resume_id": str(resume.id), "skills": []}
+
+        existing_result = await self.session.execute(
+            select(ResumeSkillModel).where(
+                ResumeSkillModel.resume_id == resume.id,
+                ResumeSkillModel.skill_id == skill.id,
+            )
+        )
+        existing = existing_result.scalars().first()
+        if existing:
+            existing.status = RESUME_SKILL_STATUS_MANUAL
+            existing.extraction_method = "manual_review_v1"
+            existing.confidence_score = 1.0
+            existing.evidence_text = evidence_text or existing.evidence_text or "Added manually by student."
+            existing.source_section = source_section or existing.source_section or "student_review"
+            existing.reviewed_at = datetime.utcnow()
+            existing.reviewed_by_user_id = user_id
+            self.session.add(existing)
+        else:
+            self.session.add(
+                ResumeSkillModel(
+                    resume_id=resume.id,
+                    user_id=user_id,
+                    skill_id=skill.id,
+                    confidence_score=1.0,
+                    extraction_method="manual_review_v1",
+                    evidence_text=evidence_text or "Added manually by student.",
+                    source_section=source_section or "student_review",
+                    status=RESUME_SKILL_STATUS_MANUAL,
+                    reviewed_at=datetime.utcnow(),
+                    reviewed_by_user_id=user_id,
+                )
+            )
+
+        await self.session.commit()
+        return await self.list_resume_skills_for_review(resume_id=resume_id, user_id=user_id)
+
+    async def delete_resume_skill(
+        self,
+        *,
+        resume_id: UUID,
+        user_id: UUID,
+        resume_skill_id: UUID,
+    ) -> dict | None:
+        resume_skill = await self._get_user_resume_skill(
+            resume_id=resume_id,
+            user_id=user_id,
+            resume_skill_id=resume_skill_id,
+        )
+        if resume_skill is None:
+            return None
+        await self.session.delete(resume_skill)
+        await self.session.commit()
+        return await self.list_resume_skills_for_review(resume_id=resume_id, user_id=user_id)
 
     async def _get_role_market_signals(self, *, target_role: str, required_skills: list[dict]) -> dict:
         required_by_id = {skill["skill_id"]: skill for skill in required_skills}
@@ -780,39 +959,7 @@ class CapstoneAnalyticsService:
 
     @staticmethod
     def _prioritize_missing_skills(missing_skills: list[dict]) -> list[dict]:
-        prioritized = []
-        for skill in missing_skills:
-            importance = float(skill.get("importance_score") or 0.75)
-            demand_score = float(skill.get("market_demand_score") or 0.0)
-            priority_score = importance * (1.0 + demand_score * 0.35)
-            demand_count = int(skill.get("market_demand_count") or 0)
-            if demand_count:
-                reason = (
-                    f"{skill['display_name']} is a missing required skill and appears in "
-                    f"{demand_count} synced market posting(s) for this role."
-                )
-            else:
-                reason = (
-                    f"{skill['display_name']} is a missing required skill in the current role profile."
-                )
-            prioritized.append(
-                {
-                    **skill,
-                    "priority_score": round(priority_score, 4),
-                    "priority_rank": 0,
-                    "reason": reason,
-                }
-            )
-
-        prioritized.sort(
-            key=lambda skill: (
-                -skill["priority_score"],
-                skill["display_name"].lower(),
-            )
-        )
-        for index, skill in enumerate(prioritized, start=1):
-            skill["priority_rank"] = index
-        return prioritized
+        return SkillGapScoringService.prioritize_missing_skills(missing_skills)
 
     @staticmethod
     def _build_gap_insights(
@@ -916,6 +1063,8 @@ class CapstoneAnalyticsService:
             "covered_skills_count": len(covered_skills),
             "remaining_gaps_count": len(remaining_gaps),
             "route_summary": skill_coverage.get("route_summary"),
+            "solver_status": skill_coverage.get("solver_status"),
+            "objective_value": skill_coverage.get("objective_value"),
             "created_at": run.created_at,
         }
 
@@ -996,6 +1145,59 @@ class CapstoneAnalyticsService:
     async def _count(self, model) -> int:
         result = await self.session.execute(select(func.count(model.id)))
         return int(result.scalar_one() or 0)
+
+    async def _count_resume_skills_by_status(self) -> dict[str, int]:
+        result = await self.session.execute(
+            select(
+                ResumeSkillModel.status,
+                func.count(ResumeSkillModel.id),
+            ).group_by(ResumeSkillModel.status)
+        )
+        return {str(status or RESUME_SKILL_STATUS_DETECTED): int(count or 0) for status, count in result.all()}
+
+    async def _get_user_resume_skill(
+        self,
+        *,
+        resume_id: UUID,
+        user_id: UUID,
+        resume_skill_id: UUID,
+    ) -> ResumeSkillModel | None:
+        result = await self.session.execute(
+            select(ResumeSkillModel)
+            .join(ResumeModel, ResumeModel.id == ResumeSkillModel.resume_id)
+            .where(
+                ResumeSkillModel.id == resume_skill_id,
+                ResumeSkillModel.resume_id == resume_id,
+                ResumeModel.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def _find_skill(
+        self,
+        *,
+        skill_id: UUID | None,
+        normalized_name: str | None,
+    ) -> SkillModel | None:
+        if skill_id:
+            return await self.session.get(SkillModel, skill_id)
+        if not normalized_name:
+            return None
+        normalized = SkillNormalizer.normalize_canonical_name(normalized_name)
+        result = await self.session.execute(
+            select(SkillModel).where(SkillModel.normalized_name == normalized)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    def _resume_skill_rank(resume_skill: ResumeSkillModel) -> tuple[int, float]:
+        status_rank = {
+            RESUME_SKILL_STATUS_MANUAL: 4,
+            RESUME_SKILL_STATUS_CONFIRMED: 3,
+            RESUME_SKILL_STATUS_DETECTED: 2,
+            RESUME_SKILL_STATUS_REJECTED: 1,
+        }.get(resume_skill.status or RESUME_SKILL_STATUS_DETECTED, 0)
+        return (status_rank, float(resume_skill.confidence_score or 0.0))
 
     async def _count_role_requirements(self, *, require_real_job_posting: bool) -> dict[str, int]:
         job_posting_filter = (
@@ -1089,6 +1291,7 @@ class CapstoneAnalyticsService:
 
     async def _recommend_courses_for_missing_skills(self, missing_skills: list[dict]) -> list[dict]:
         missing_skill_ids = [skill["skill_id"] for skill in missing_skills]
+        missing_by_id = {skill["skill_id"]: skill for skill in missing_skills}
         course_links = await load_active_course_links(self.session, missing_skill_ids)
 
         recommendations = []
@@ -1097,7 +1300,13 @@ class CapstoneAnalyticsService:
             recommendation_score = 0.0
             for link in links:
                 coverage_score = link.coverage_score if link.coverage_score is not None else 0.5
-                recommendation_score += coverage_score
+                gap_weight = float(
+                    missing_by_id.get(str(link.skill_id), {}).get("skill_gap_score")
+                    or missing_by_id.get(str(link.skill_id), {}).get("priority_score")
+                    or missing_by_id.get(str(link.skill_id), {}).get("importance_score")
+                    or 0.75
+                )
+                recommendation_score += coverage_score * gap_weight
                 skills_covered.append(
                     {
                         "skill_id": str(link.skill_id),

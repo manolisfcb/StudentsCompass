@@ -14,6 +14,17 @@ from app.schemas.friendshipSchema import (
     FriendshipStatusRead,
     FriendUserSummary,
 )
+from app.services.community.userDisplay import build_user_summary
+
+
+async def are_friends(session: AsyncSession, user_id: UUID, friend_id: UUID) -> bool:
+    result = await session.execute(
+        select(FriendshipModel.id).where(
+            FriendshipModel.user_id == user_id,
+            FriendshipModel.friend_id == friend_id,
+        )
+    )
+    return result.scalar_one_or_none() is not None
 
 
 class FriendshipService:
@@ -25,13 +36,7 @@ class FriendshipService:
         return result.scalar_one_or_none()
 
     async def are_friends(self, user_id: UUID, friend_id: UUID) -> bool:
-        result = await self.session.execute(
-            select(FriendshipModel.id).where(
-                FriendshipModel.user_id == user_id,
-                FriendshipModel.friend_id == friend_id,
-            )
-        )
-        return result.scalar_one_or_none() is not None
+        return await are_friends(self.session, user_id, friend_id)
 
     async def get_active_request_between(self, first_user_id: UUID, second_user_id: UUID) -> FriendRequestModel | None:
         result = await self.session.execute(
@@ -282,19 +287,11 @@ class FriendshipService:
         )
 
     async def _get_users_by_ids(self, user_ids: list[UUID]) -> dict[UUID, User]:
-        users: dict[UUID, User] = {}
-        for user_id in dict.fromkeys(user_ids):
-            user = await self.get_user(user_id)
-            if user:
-                users[user.id] = user
-        return users
+        unique_ids = list(dict.fromkeys(user_ids))
+        if not unique_ids:
+            return {}
+        result = await self.session.execute(select(User).where(User.id.in_(unique_ids)))
+        return {user.id: user for user in result.scalars().all()}
 
     def _build_user_summary(self, user: User) -> FriendUserSummary:
-        display_name = " ".join(part for part in [user.first_name, user.last_name] if part).strip()
-        return FriendUserSummary(
-            id=user.id,
-            display_name=display_name or user.nickname or user.email or "Student",
-            nickname=user.nickname,
-            first_name=user.first_name,
-            last_name=user.last_name,
-        )
+        return build_user_summary(user)

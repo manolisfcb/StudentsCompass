@@ -1,16 +1,35 @@
 from __future__ import annotations
 
-import math
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
-from app.services.analytics.embeddingService import generate_embedding, get_embedding_status
+import numpy as np
+
+from app.services.analytics.embeddingService import (
+    generate_embedding,
+    get_embedding_provider,
+    get_embedding_status,
+)
 
 
 EmbeddingFn = Callable[[str], Awaitable[list[float] | None]]
 
 SEMANTIC_MATCH_THRESHOLD = 0.72
 WEAK_MATCH_THRESHOLD = 0.48
+
+# Process-wide LRU cache for skill-text embeddings. Skill texts are short and
+# repeat heavily across gap-analysis requests, so caching the deterministic
+# default embedder avoids recomputing them on every request.
+_SKILL_EMBEDDING_CACHE: "OrderedDict[tuple[str, str], list[float]]" = OrderedDict()
+_SKILL_EMBEDDING_CACHE_MAXSIZE = 2048
+
+
+def _store_shared_skill_embedding(key: tuple[str, str], embedding: list[float]) -> None:
+    _SKILL_EMBEDDING_CACHE[key] = embedding
+    _SKILL_EMBEDDING_CACHE.move_to_end(key)
+    while len(_SKILL_EMBEDDING_CACHE) > _SKILL_EMBEDDING_CACHE_MAXSIZE:
+        _SKILL_EMBEDDING_CACHE.popitem(last=False)
 
 
 @dataclass(frozen=True)
@@ -43,6 +62,11 @@ class SemanticMatchingService:
     def __init__(self, embedding_fn: EmbeddingFn = generate_embedding, semantic_ready_override: bool | None = None):
         self.embedding_fn = embedding_fn
         self.semantic_ready_override = semantic_ready_override
+        # Only the deterministic default embedder is safe to share across requests
+        # in a process-wide cache. Injected functions (tests, custom callers) use a
+        # per-instance cache so they never read another caller's cached vectors.
+        self._use_shared_cache = embedding_fn is generate_embedding
+        self._local_cache: dict[str, list[float]] = {}
 
     async def analyze_required_skill_matches(
         self,
@@ -67,13 +91,19 @@ class SemanticMatchingService:
         semantic_ready = self._semantic_ready()
 
         # Embed each candidate skill once up front instead of recomputing its
-        # embedding for every required skill (was an N x M embedding blow-up).
-        candidate_embeddings: list[tuple[dict, list[float]]] = []
+        # embedding for every required skill (was an N x M embedding blow-up),
+        # then stack them into a single normalized matrix so each required skill
+        # is matched with one vectorized matrix-vector product instead of an
+        # inner Python loop of pairwise cosine calls.
+        candidate_pairs: list[tuple[dict, list[float]]] = []
         if semantic_ready and available_semantic_candidates:
             for candidate in available_semantic_candidates:
-                embedding = await self.embedding_fn(self._skill_text(candidate))
+                embedding = await self._embed_cached(self._skill_text(candidate))
                 if embedding:
-                    candidate_embeddings.append((candidate, embedding))
+                    candidate_pairs.append((candidate, embedding))
+
+        candidate_matrix, kept = _normalize_matrix([emb for _, emb in candidate_pairs])
+        candidate_skills = [candidate_pairs[i][0] for i in kept]
 
         for required in required_skills:
             current = exact_current_by_id.get(required["skill_id"])
@@ -85,8 +115,8 @@ class SemanticMatchingService:
                 continue
 
             semantic_match = None
-            if semantic_ready and candidate_embeddings:
-                semantic_match = await self._best_semantic_match(required, candidate_embeddings)
+            if semantic_ready and candidate_matrix is not None:
+                semantic_match = await self._best_semantic_match(required, candidate_matrix, candidate_skills)
 
             if semantic_match and semantic_match["similarity_score"] >= SEMANTIC_MATCH_THRESHOLD:
                 score = importance * semantic_match["similarity_score"] * 0.82
@@ -187,25 +217,56 @@ class SemanticMatchingService:
     async def _best_semantic_match(
         self,
         required_skill: dict,
-        candidate_embeddings: list[tuple[dict, list[float]]],
+        candidate_matrix: np.ndarray,
+        candidate_skills: list[dict],
     ) -> dict | None:
-        required_embedding = await self.embedding_fn(self._skill_text(required_skill))
+        required_embedding = await self._embed_cached(self._skill_text(required_skill))
         if not required_embedding:
             return None
 
-        best_payload = None
-        best_score = 0.0
-        for current_skill, current_embedding in candidate_embeddings:
-            similarity = _cosine_similarity(required_embedding, current_embedding)
-            if similarity > best_score:
-                best_score = similarity
-                best_payload = {
-                    "match_type": "semantic" if similarity >= SEMANTIC_MATCH_THRESHOLD else "weak",
-                    "matched_skill_id": current_skill["skill_id"],
-                    "matched_skill_display_name": current_skill["display_name"],
-                    "similarity_score": round(similarity, 4),
-                }
-        return best_payload
+        vector = np.asarray(required_embedding, dtype=np.float64)
+        if vector.shape[0] != candidate_matrix.shape[1]:
+            return None
+        norm = float(np.linalg.norm(vector))
+        if norm == 0.0:
+            return None
+
+        # candidate_matrix rows are already L2-normalized, so this matrix-vector
+        # product yields the cosine similarity against every candidate at once.
+        similarities = np.clip(candidate_matrix @ (vector / norm), 0.0, 1.0)
+        best_index = int(np.argmax(similarities))
+        best_score = float(similarities[best_index])
+        if best_score <= 0.0:
+            return None
+
+        matched_skill = candidate_skills[best_index]
+        return {
+            "match_type": "semantic" if best_score >= SEMANTIC_MATCH_THRESHOLD else "weak",
+            "matched_skill_id": matched_skill["skill_id"],
+            "matched_skill_display_name": matched_skill["display_name"],
+            "similarity_score": round(best_score, 4),
+        }
+
+    async def _embed_cached(self, text: str) -> list[float] | None:
+        """Embed ``text`` with a cache to avoid recomputing repeated skill texts."""
+        if self._use_shared_cache:
+            key = (get_embedding_provider(), text)
+            cached = _SKILL_EMBEDDING_CACHE.get(key)
+            if cached is not None:
+                _SKILL_EMBEDDING_CACHE.move_to_end(key)
+                return cached
+            embedding = await self.embedding_fn(text)
+            if embedding:
+                _store_shared_skill_embedding(key, embedding)
+            return embedding
+
+        cached = self._local_cache.get(text)
+        if cached is not None:
+            return cached
+        embedding = await self.embedding_fn(text)
+        if embedding:
+            self._local_cache[text] = embedding
+        return embedding
 
     @staticmethod
     def _skill_text(skill: dict) -> str:
@@ -228,12 +289,43 @@ class SemanticMatchingService:
         return bool(get_embedding_status()["semantic_matching_ready"])
 
 
+def _normalize_matrix(vectors: list[list[float]]) -> tuple[np.ndarray | None, list[int]]:
+    """Stack embeddings into an L2-normalized matrix for batched cosine matching.
+
+    Returns ``(matrix, kept_indices)`` where each matrix row is the normalized
+    form of ``vectors[kept_indices[row]]``. Vectors with a mismatched
+    dimensionality or a zero norm are dropped (they could never be a non-zero
+    cosine match), so the matrix rows stay aligned with ``kept_indices``.
+    """
+    if not vectors:
+        return None, []
+
+    dims = len(vectors[0])
+    rows: list[np.ndarray] = []
+    kept: list[int] = []
+    for index, vector in enumerate(vectors):
+        if len(vector) != dims:
+            continue
+        array = np.asarray(vector, dtype=np.float64)
+        norm = np.linalg.norm(array)
+        if norm == 0.0:
+            continue
+        rows.append(array / norm)
+        kept.append(index)
+
+    if not rows:
+        return None, []
+    return np.vstack(rows), kept
+
+
 def _cosine_similarity(left: list[float], right: list[float]) -> float:
     if not left or not right or len(left) != len(right):
         return 0.0
-    dot = sum(a * b for a, b in zip(left, right))
-    left_norm = math.sqrt(sum(value * value for value in left))
-    right_norm = math.sqrt(sum(value * value for value in right))
-    if left_norm == 0 or right_norm == 0:
+    left_array = np.asarray(left, dtype=np.float64)
+    right_array = np.asarray(right, dtype=np.float64)
+    left_norm = float(np.linalg.norm(left_array))
+    right_norm = float(np.linalg.norm(right_array))
+    if left_norm == 0.0 or right_norm == 0.0:
         return 0.0
-    return max(0.0, min(dot / (left_norm * right_norm), 1.0))
+    similarity = float(np.dot(left_array, right_array) / (left_norm * right_norm))
+    return max(0.0, min(similarity, 1.0))

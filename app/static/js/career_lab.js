@@ -7,6 +7,7 @@
     analyticsStatus: null,
     catalogQuality: null,
     routeRuns: [],
+    skillReview: null,
   };
 
   const els = {};
@@ -46,6 +47,11 @@
     els.analyticsReadinessTitle = document.getElementById('analyticsReadinessTitle');
     els.analyticsReadinessCopy = document.getElementById('analyticsReadinessCopy');
     els.analyticsReadinessStats = document.getElementById('analyticsReadinessStats');
+    els.skillReviewCounts = document.getElementById('skillReviewCounts');
+    els.skillReviewList = document.getElementById('skillReviewList');
+    els.manualSkillForm = document.getElementById('manualSkillForm');
+    els.manualSkillInput = document.getElementById('manualSkillInput');
+    els.manualSkillButton = document.getElementById('manualSkillButton');
     els.overallReadinessScore = document.getElementById('overallReadinessScore');
     els.matchScore = document.getElementById('matchScore');
     els.contextSimilarityScore = document.getElementById('contextSimilarityScore');
@@ -101,6 +107,12 @@
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return '--';
     return `${Math.round(clampPercent(numeric <= 1 ? numeric * 100 : numeric))}%`;
+  }
+
+  function scoreDecimal(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return '--';
+    return numeric.toFixed(2);
   }
 
   function formatMoney(value, currency) {
@@ -194,6 +206,9 @@
     if (els.generateRouteButton) {
       els.generateRouteButton.disabled = !state.resumes.length || !els.resumeSelect.value || !els.targetRoleSelect.value;
     }
+    if (els.manualSkillButton) {
+      els.manualSkillButton.disabled = !state.resumes.length || !els.resumeSelect.value;
+    }
   }
 
   async function loadResumes() {
@@ -207,6 +222,7 @@
       els.empty.hidden = false;
       setStatus('Upload a CV first so the Career Lab can analyze your current skill profile.');
       drawRadar(null);
+      renderSkillReview(null);
       updateRunButtonState();
       return;
     }
@@ -218,6 +234,23 @@
     }).join('');
     updateRunButtonState();
     setStatus('Ready. Pick a target role and run your gap analysis.');
+    await loadResumeSkillReview();
+  }
+
+  async function loadResumeSkillReview() {
+    if (!els.skillReviewList || !els.resumeSelect.value) {
+      renderSkillReview(null);
+      return;
+    }
+
+    try {
+      const payload = await apiFetch(`/api/v1/capstone/resumes/${encodeURIComponent(els.resumeSelect.value)}/skills`);
+      if (!payload) return;
+      state.skillReview = payload;
+      renderSkillReview(payload);
+    } catch (error) {
+      els.skillReviewList.innerHTML = `<p class="panel-placeholder">Skill review is unavailable: ${escapeHtml(error.message || 'Request failed')}.</p>`;
+    }
   }
 
   async function loadTargetRoles() {
@@ -386,6 +419,10 @@
 
   async function runAnalysis(event) {
     event.preventDefault();
+    await runAnalysisForCurrentSelection({ syncSkills: true });
+  }
+
+  async function runAnalysisForCurrentSelection({ syncSkills } = { syncSkills: true }) {
     const resumeId = els.resumeSelect.value;
     const targetRole = els.targetRoleSelect.value;
     if (!resumeId || !targetRole) return;
@@ -394,9 +431,12 @@
     setStatus('Analyzing your resume skills and comparing them with role requirements...');
 
     try {
-      await apiFetch(`/api/v1/capstone/resumes/${encodeURIComponent(resumeId)}/skills/sync`, {
-        method: 'POST',
-      });
+      if (syncSkills) {
+        await apiFetch(`/api/v1/capstone/resumes/${encodeURIComponent(resumeId)}/skills/sync`, {
+          method: 'POST',
+        });
+      }
+      await loadResumeSkillReview();
       const params = new URLSearchParams({ resume_id: resumeId, target_role: targetRole });
       const analysis = await apiFetch(`/api/v1/capstone/gap-analysis?${params.toString()}`);
       if (!analysis) return;
@@ -404,6 +444,130 @@
       renderAnalysis(analysis);
     } catch (error) {
       setStatus(error.message || 'Unable to run career analysis right now.', 'error');
+    } finally {
+      updateRunButtonState();
+    }
+  }
+
+  function renderSkillReview(payload) {
+    if (!els.skillReviewList || !els.skillReviewCounts) return;
+    const skills = Array.isArray(payload?.skills) ? payload.skills : [];
+    const counts = skills.reduce((acc, skill) => {
+      const status = skill.status || 'detected';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+
+    els.skillReviewCounts.innerHTML = `
+      <span><strong>${escapeHtml(counts.detected || 0)}</strong> detected</span>
+      <span><strong>${escapeHtml(counts.confirmed || 0)}</strong> confirmed</span>
+      <span><strong>${escapeHtml(counts.manual || 0)}</strong> manual</span>
+      <span><strong>${escapeHtml(counts.rejected || 0)}</strong> rejected</span>
+    `;
+
+    if (!els.resumeSelect.value) {
+      els.skillReviewList.innerHTML = '<p class="panel-placeholder">Select a resume to review detected skills.</p>';
+      return;
+    }
+
+    if (!skills.length) {
+      els.skillReviewList.innerHTML = '<p class="panel-placeholder">No skills detected yet. Run an analysis to sync this resume with the skill catalog.</p>';
+      return;
+    }
+
+    const ordered = skills.slice().sort((a, b) => {
+      const rank = { manual: 0, confirmed: 1, detected: 2, rejected: 3 };
+      return (rank[a.status] ?? 2) - (rank[b.status] ?? 2)
+        || String(a.display_name || '').localeCompare(String(b.display_name || ''));
+    });
+
+    els.skillReviewList.innerHTML = ordered.map((skill) => {
+      const status = skill.status || 'detected';
+      const isConfirmed = status === 'confirmed';
+      const isRejected = status === 'rejected';
+      const isManual = status === 'manual';
+      return `
+        <div class="skill-review-item ${escapeHtml(status)}" data-resume-skill-id="${escapeHtml(skill.resume_skill_id || '')}">
+          <div class="skill-review-main">
+            <span>${escapeHtml(status)}</span>
+            <strong>${escapeHtml(skill.display_name)}</strong>
+            <small>${escapeHtml(skill.evidence_text || skill.normalized_name || 'Catalog skill')}</small>
+          </div>
+          <div class="skill-review-actions">
+            <button type="button" data-skill-action="confirmed" ${isConfirmed || isManual ? 'disabled' : ''}>Confirm</button>
+            <button type="button" data-skill-action="rejected" ${isRejected || isManual ? 'disabled' : ''}>Reject</button>
+            <button type="button" data-skill-action="delete">Remove</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function handleSkillReviewAction(event) {
+    const button = event.target.closest('[data-skill-action]');
+    if (!button || !els.resumeSelect.value) return;
+    const item = button.closest('[data-resume-skill-id]');
+    const resumeSkillId = item?.dataset.resumeSkillId;
+    if (!resumeSkillId) return;
+
+    const action = button.dataset.skillAction;
+    button.disabled = true;
+
+    try {
+      if (action === 'delete') {
+        const payload = await apiFetch(
+          `/api/v1/capstone/resumes/${encodeURIComponent(els.resumeSelect.value)}/skills/${encodeURIComponent(resumeSkillId)}`,
+          { method: 'DELETE' },
+        );
+        state.skillReview = payload;
+        renderSkillReview(payload);
+      } else {
+        const payload = await apiFetch(
+          `/api/v1/capstone/resumes/${encodeURIComponent(els.resumeSelect.value)}/skills/${encodeURIComponent(resumeSkillId)}`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ status: action }),
+          },
+        );
+        state.skillReview = payload;
+        renderSkillReview(payload);
+      }
+
+      if (state.latestAnalysis?.resume_id === els.resumeSelect.value) {
+        await runAnalysisForCurrentSelection({ syncSkills: false });
+      } else {
+        setStatus('Resume skills updated.');
+      }
+    } catch (error) {
+      setStatus(error.message || 'Unable to update resume skill.', 'error');
+      await loadResumeSkillReview();
+    }
+  }
+
+  async function addManualSkill(event) {
+    event.preventDefault();
+    if (!els.resumeSelect.value || !els.manualSkillInput.value.trim()) return;
+    els.manualSkillButton.disabled = true;
+
+    try {
+      const payload = await apiFetch(`/api/v1/capstone/resumes/${encodeURIComponent(els.resumeSelect.value)}/skills/manual`, {
+        method: 'POST',
+        body: JSON.stringify({
+          normalized_name: els.manualSkillInput.value.trim(),
+          source_section: 'student_review',
+          evidence_text: 'Added from Career Lab review.',
+        }),
+      });
+      state.skillReview = payload;
+      els.manualSkillInput.value = '';
+      renderSkillReview(payload);
+      if (state.latestAnalysis?.resume_id === els.resumeSelect.value) {
+        await runAnalysisForCurrentSelection({ syncSkills: false });
+      } else {
+        setStatus('Manual skill added to this resume.');
+      }
+    } catch (error) {
+      setStatus(error.message || 'Unable to add manual skill.', 'error');
     } finally {
       updateRunButtonState();
     }
@@ -481,17 +645,46 @@
       return;
     }
 
-    els.improvementList.innerHTML = missing
+    const sortedGaps = missing
       .slice()
-      .sort((a, b) => Number(b.priority_score || b.importance_score || 0) - Number(a.priority_score || a.importance_score || 0))
-      .slice(0, 6)
-      .map((skill) => `
+      .sort((a, b) => Number(b.skill_gap_score || b.priority_score || b.importance_score || 0) - Number(a.skill_gap_score || a.priority_score || a.importance_score || 0));
+    const maxGapScore = Math.max(...sortedGaps.map((skill) => Number(skill.skill_gap_score || skill.priority_score || 0)), 1);
+    const courseBySkill = buildCourseLookupBySkill(analysis.recommended_courses || []);
+
+    els.improvementList.innerHTML = sortedGaps.slice(0, 6).map((skill) => {
+      const gapScore = Number(skill.skill_gap_score || skill.priority_score || skill.importance_score || 0);
+      const gapWidth = clampPercent(Math.round((gapScore / maxGapScore) * 100));
+      const course = courseBySkill.get(skill.skill_id);
+      return `
         <div class="improvement-item">
-          <span>${escapeHtml(skill.priority_rank ? `Priority ${skill.priority_rank}` : skill.category || 'Skill gap')}</span>
-          <strong>${escapeHtml(skill.display_name)}</strong>
+          <div class="gap-score-top">
+            <span>${escapeHtml(skill.priority_rank ? `Rank ${skill.priority_rank}` : skill.category || 'Skill gap')}</span>
+            <strong>${escapeHtml(skill.display_name)}</strong>
+            <b>${escapeHtml(scoreDecimal(gapScore))}</b>
+          </div>
+          <div class="gap-score-track" aria-hidden="true"><span style="width:${gapWidth}%"></span></div>
+          <div class="gap-score-metrics">
+            <small>Weight ${escapeHtml(scoreDecimal(skill.required_skill_weight ?? skill.importance_score))}</small>
+            <small>Evidence ${escapeHtml(scorePercent(skill.student_skill_evidence || 0))}</small>
+            <small>${escapeHtml(skill.market_demand_count ? `${skill.market_demand_count} postings` : sourceLabel(analysis.requirements_source))}</small>
+          </div>
           <p>${escapeHtml(skill.reason || skill.evidence_text || 'Required by the selected role profile.')}</p>
+          ${course ? `<p class="gap-course-link">Course match: ${escapeHtml(course.title)}</p>` : ''}
         </div>
-      `).join('');
+      `;
+    }).join('');
+  }
+
+  function buildCourseLookupBySkill(courses) {
+    const lookup = new Map();
+    courses.forEach((course) => {
+      (course.skills_covered || []).forEach((skill) => {
+        if (!lookup.has(skill.skill_id)) {
+          lookup.set(skill.skill_id, course);
+        }
+      });
+    });
+    return lookup;
   }
 
   function renderInsights(analysis) {
@@ -817,8 +1010,14 @@
     drawRadar(null);
     els.form.addEventListener('submit', runAnalysis);
     if (els.routeForm) els.routeForm.addEventListener('submit', generateLearningRoute);
-    els.resumeSelect.addEventListener('change', updateRunButtonState);
+    els.resumeSelect.addEventListener('change', async () => {
+      state.latestAnalysis = null;
+      updateRunButtonState();
+      await loadResumeSkillReview();
+    });
     els.targetRoleSelect.addEventListener('change', updateRunButtonState);
+    if (els.skillReviewList) els.skillReviewList.addEventListener('click', handleSkillReviewAction);
+    if (els.manualSkillForm) els.manualSkillForm.addEventListener('submit', addManualSkill);
 
     try {
       await Promise.all([

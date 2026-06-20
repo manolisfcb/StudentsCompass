@@ -18,11 +18,15 @@ async def test_career_lab_renders_for_authenticated_student(client, auth_headers
     assert "analyticsReadinessBadge" in response.text
     assert "overallReadinessScore" in response.text
     assert "contextSimilarityScore" in response.text
+    assert "Skill Gap Scores" in response.text
     assert "routeOptimizationForm" in response.text
     assert "routeHistoryList" in response.text
     assert "catalogQualityPanel" in response.text
     assert "marketSignalsList" in response.text
     assert "insightsList" in response.text
+    assert "skillReviewCounts" in response.text
+    assert "manualSkillForm" in response.text
+    assert "skillReviewList" in response.text
     assert "Loading target roles..." in response.text
     assert "career_lab.css" in response.text
     assert "career_lab.js" in response.text

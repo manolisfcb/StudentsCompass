@@ -240,6 +240,230 @@
     color: #0f172a;
 }
 
+.resume-skill-review {
+    display: grid;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 20px;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.05);
+}
+
+.skill-review-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.skill-review-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+}
+
+.skill-review-header span,
+.manual-skill-form label span {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 0.35rem;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(15, 118, 110, 0.1);
+    color: var(--primary-color);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.skill-review-counts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.skill-review-counts span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    min-height: 34px;
+    margin: 0;
+    padding: 0.38rem 0.62rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.skill-review-counts strong {
+    color: #0f172a;
+}
+
+.manual-skill-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: end;
+}
+
+.manual-skill-form label {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.manual-skill-form input {
+    min-height: 42px;
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 750;
+}
+
+.manual-skill-form button,
+.skill-review-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    font: inherit;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.manual-skill-form button {
+    min-height: 42px;
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0f766e, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(15, 118, 110, 0.14);
+}
+
+.manual-skill-form button:disabled,
+.skill-review-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+    box-shadow: none;
+}
+
+.skill-review-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.75rem;
+}
+
+.skill-review-item {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-left: 4px solid #0ea5e9;
+    border-radius: 18px;
+    background: #ffffff;
+}
+
+.skill-review-item.confirmed {
+    border-left-color: #0f766e;
+}
+
+.skill-review-item.manual {
+    border-left-color: #2563eb;
+}
+
+.skill-review-item.rejected {
+    border-left-color: #94a3b8;
+    opacity: 0.72;
+}
+
+.skill-review-main {
+    min-width: 0;
+}
+
+.skill-review-main span {
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 0.4rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.12);
+    color: #0369a1;
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.skill-review-item.confirmed .skill-review-main span {
+    background: rgba(15, 118, 110, 0.1);
+    color: #0f766e;
+}
+
+.skill-review-item.manual .skill-review-main span {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+.skill-review-item.rejected .skill-review-main span {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.skill-review-main strong {
+    display: block;
+    color: #0f172a;
+    font-size: 0.98rem;
+}
+
+.skill-review-main small {
+    display: block;
+    margin-top: 0.28rem;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.skill-review-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.42rem;
+}
+
+.skill-review-actions button {
+    min-height: 34px;
+    padding: 0.48rem 0.58rem;
+    border-radius: 11px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.78rem;
+}
+
+.skill-review-actions button[data-skill-action="confirmed"] {
+    background: rgba(15, 118, 110, 0.1);
+    color: #0f766e;
+}
+
+.skill-review-actions button[data-skill-action="rejected"] {
+    background: rgba(251, 113, 133, 0.12);
+    color: #be123c;
+}
+
 .career-lab-metrics {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -350,9 +574,21 @@
 
 .career-lab-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(310px, 0.75fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
     gap: 1rem;
     align-items: start;
+}
+
+/*
+ * Each column is an independent vertical stack so the two columns never share
+ * row tracks. This keeps panels from "jumping" or leaving gaps when one column
+ * grows taller than the other as analysis content loads in.
+ */
+.career-lab-column {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+    min-width: 0;
 }
 
 .lab-panel {
@@ -364,9 +600,9 @@
     box-shadow: 0 18px 34px rgba(15, 23, 42, 0.06);
 }
 
-.lab-panel-large,
-.lab-panel-route {
-    grid-row: span 2;
+.diagnostics-panel {
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
 }
 
 .lab-panel-header {
@@ -519,6 +755,65 @@
     border-left: 4px solid #fb7185;
 }
 
+.gap-score-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem 0.75rem;
+    align-items: start;
+}
+
+.gap-score-top span {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+}
+
+.gap-score-top strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.gap-score-top b {
+    min-width: 3.25rem;
+    padding: 0.28rem 0.45rem;
+    border-radius: 12px;
+    background: rgba(251, 113, 133, 0.12);
+    color: #be123c;
+    font-size: 0.92rem;
+    font-weight: 850;
+    text-align: center;
+}
+
+.gap-score-track {
+    height: 8px;
+    margin-top: 0.65rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.gap-score-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #fb7185, #f59e0b);
+}
+
+.gap-score-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.65rem;
+}
+
+.gap-score-metrics small {
+    padding: 0.25rem 0.48rem;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.73rem;
+    font-weight: 800;
+}
+
 .improvement-item strong,
 .course-route-item strong,
 .market-signal strong,
@@ -547,6 +842,7 @@
 }
 
 .improvement-item p,
+.gap-course-link,
 .course-route-item p,
 .market-signal p,
 .insight-item p,
@@ -557,6 +853,11 @@
     color: #64748b;
     font-size: 0.86rem;
     line-height: 1.5;
+}
+
+.gap-course-link {
+    color: #0f766e;
+    font-weight: 800;
 }
 
 .course-route-item {
@@ -869,17 +1170,20 @@
         justify-content: flex-start;
     }
 
-    .lab-panel-large,
-    .lab-panel-route {
-        grid-row: auto;
-    }
-
     .career-lab-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .career-lab-submetrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .skill-review-header {
+        display: grid;
+    }
+
+    .skill-review-counts {
+        justify-content: flex-start;
     }
 }
 
@@ -904,7 +1208,13 @@
 
     .career-lab-submetrics,
     .route-optimization-form,
-    .route-summary-strip {
+    .route-summary-strip,
+    .manual-skill-form,
+    .skill-review-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .skill-review-list {
         grid-template-columns: 1fr;
     }
 

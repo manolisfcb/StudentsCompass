@@ -1,15 +1,20 @@
-from app.schemas.postSchema import PostCreate, PostRead
-from fastapi import APIRouter, Depends, HTTPException
-from app.services.community.postService import PostService
-from app.db import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
+import logging
 from uuid import UUID
-from fastapi import UploadFile, Form, File
-from app.services.storage.mediaStorageService import get_media_storage_service
-from app.services.accounts.userService import current_active_user
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_session
 from app.models.userModel import User
+from app.schemas.postSchema import PostCreate, PostRead
+from app.services.accounts.userService import current_active_user
+from app.services.community.postService import PostService
+from app.services.storage.mediaStorageService import get_media_storage_service
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 @router.post("/posts", response_model=PostCreate)
 async def create_post(
@@ -19,8 +24,8 @@ async def create_post(
 ):
     post_service = PostService(session)
     return await post_service.create_post(post, user_id=user.id)
-    
-    
+
+
 @router.get("/posts/{post_id}", response_model=PostRead)
 async def get_post(
     post_id: UUID,
@@ -56,14 +61,15 @@ async def upload_file(
             file_name=file.filename,
             folder="posts/"
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
-    
+    except Exception:
+        LOGGER.exception("Post media upload failed for user %s", user.id)
+        raise HTTPException(status_code=500, detail="File upload failed. Please try again.")
+
     post = PostCreate(
         caption=caption,
         url=post_data.url,
         file_type=post_data.file_type,
-        file_name=post_data.name 
+        file_name=post_data.name,
     )
     post_service = PostService(session)
     return await post_service.create_post(post, user_id=user.id)

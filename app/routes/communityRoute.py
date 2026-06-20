@@ -5,7 +5,7 @@ from uuid import UUID
 from app.db import get_session
 from app.models.userModel import User
 from app.services.accounts.userService import current_active_user
-from app.services.community.communityService import CommunityService
+from app.services.community.communityService import AlreadyMemberError, CommunityService
 from app.schemas.communitySchema import (
     CommunityCreate,
     CommunityRead,
@@ -99,7 +99,10 @@ async def join_community(
         raise HTTPException(status_code=404, detail="Community not found")
     if await service.is_member(community_id, user.id):
         raise HTTPException(status_code=409, detail="Already a member")
-    return await service.join_community(community_id, user.id)
+    try:
+        return await service.join_community(community_id, user.id)
+    except AlreadyMemberError:
+        raise HTTPException(status_code=409, detail="Already a member")
 
 
 @router.delete("/communities/{community_id}/leave")

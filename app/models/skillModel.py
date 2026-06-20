@@ -89,6 +89,7 @@ class ResumeSkillModel(Base):
         Index("ix_resume_skills_resume_id", "resume_id"),
         Index("ix_resume_skills_user_id", "user_id"),
         Index("ix_resume_skills_skill_id", "skill_id"),
+        Index("ix_resume_skills_status", "status"),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -99,11 +100,15 @@ class ResumeSkillModel(Base):
     extraction_method = Column(String(64), nullable=False, default="manual")
     evidence_text = Column(Text, nullable=True)
     source_section = Column(String(80), nullable=True)
+    status = Column(String(32), nullable=False, default="detected")
+    reviewed_at = Column(DateTime, nullable=True)
+    reviewed_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     skill = relationship("SkillModel", back_populates="resume_skills")
     resume = relationship("ResumeModel")
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_id])
+    reviewed_by_user = relationship("User", foreign_keys=[reviewed_by_user_id])
 
 
 class CourseModel(Base):

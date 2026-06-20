@@ -7,6 +7,7 @@ from app.services.resumes.resumeService import (
     is_allowed_resume_content_type,
 )
 from app.services.resumes.resumeCourseAuditService import ResumeCourseAuditService
+from app.services.analytics.embeddingService import ResumeEmbeddingService
 from app.schemas.resumeSchema import (
     ResumeCourseAuditAttemptsRead,
     ResumeCourseAuditRead,
@@ -121,6 +122,32 @@ async def list_resumes(
     resume_service = ResumeService(session)
     resumes = await resume_service.list_user_resumes(user.id)
     return [ResumeReadSchema.from_model(resume) for resume in resumes]
+
+
+@router.get("/profile/cv/{resume_id}/similar")
+async def find_similar_resumes(
+    resume_id: UUID,
+    limit: int = 10,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    """Return resumes whose stored embedding is closest to this resume's.
+
+    Demonstrable consumer of the pgvector ``<=>`` engine. It only verifies that
+    the caller owns the source resume and returns opaque resume IDs + scores;
+    the product decision on whether/how to surface other users' resumes (and the
+    associated PII/authorization policy) is intentionally left to the owner.
+    Requires a PostgreSQL backend with the ``vector`` extension.
+    """
+    resume_service = ResumeService(session)
+    resume = await resume_service.get_user_resume(resume_id=resume_id, user_id=user.id)
+    if resume is None:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    k = max(1, min(limit, 50))
+    embedding_service = ResumeEmbeddingService(session)
+    results = await embedding_service.find_similar_resumes(resume_id=resume_id, k=k)
+    return {"resume_id": resume_id, "results": results}
 
 
 @router.delete("/profile/cv/{resume_id}")

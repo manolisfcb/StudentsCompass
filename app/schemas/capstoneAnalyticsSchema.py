@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -11,12 +12,16 @@ class CapstoneSkillExtractionRequest(BaseModel):
 
 class CapstoneSkillRead(BaseModel):
     skill_id: str
+    resume_skill_id: str | None = None
     normalized_name: str
     display_name: str
     category: str | None = None
     confidence_score: float | None = None
     evidence_text: str | None = None
     extraction_method: str | None = None
+    source_section: str | None = None
+    status: str | None = None
+    reviewed_at: datetime | None = None
 
 
 class CapstoneRequiredSkillRead(BaseModel):
@@ -34,6 +39,9 @@ class CapstoneRequiredSkillRead(BaseModel):
     similarity_score: float | None = None
     market_demand_count: int | None = None
     market_demand_score: float | None = None
+    required_skill_weight: float | None = None
+    student_skill_evidence: float | None = None
+    skill_gap_score: float | None = None
     priority_score: float | None = None
     priority_rank: int | None = None
     reason: str | None = None
@@ -133,9 +141,11 @@ class CapstoneSelectedCourseRead(BaseModel):
     difficulty: str | None = None
     rating: float | None = None
     optimization_score: float
+    solver_sequence_position: int | None = None
     sequence_order: int | None = None
     selection_reason: str | None = None
     covered_priority_skills: list[str] = Field(default_factory=list)
+    constraint_notes: list[str] = Field(default_factory=list)
     skills_covered: list[CapstoneCourseSkillCoverageRead]
 
 
@@ -152,6 +162,53 @@ class CapstoneLearningRouteOptimizationRead(BaseModel):
     covered_skills: list[CapstoneRequiredSkillRead]
     remaining_gaps: list[CapstoneRequiredSkillRead]
     route_summary: str
+    solver_status: str | None = None
+    objective_value: float | None = None
+    model_explanation: str | None = None
+
+
+class CapstoneLearningRouteBaselineMetricsRead(BaseModel):
+    weighted_skill_coverage: float
+    critical_skill_coverage: float
+    covered_skills_count: int
+    remaining_gaps_count: int
+    selected_courses_count: int
+    total_cost: float
+    total_hours: float
+    score_per_dollar: float
+    score_per_hour: float
+    redundancy_rate: float
+    constraint_satisfaction: float
+    projected_readiness_gain: float
+    runtime_ms: float
+    explanation_completeness: float
+
+
+class CapstoneLearningRouteBaselineMethodRead(BaseModel):
+    method: str
+    objective_version: str
+    solver_status: str | None = None
+    metrics: CapstoneLearningRouteBaselineMetricsRead
+    selected_courses: list[CapstoneSelectedCourseRead]
+    explanation: str
+
+
+class CapstoneLearningRouteBaselineWinnerRead(BaseModel):
+    best_method: str | None = None
+    best_objective_version: str | None = None
+    summary: str
+
+
+class CapstoneLearningRouteBaselineEvaluationRead(BaseModel):
+    status: str
+    resume_id: str
+    target_role: str
+    match_score_before: float
+    evaluation_version: str
+    baseline_seed: int
+    constraints: dict
+    methods: list[CapstoneLearningRouteBaselineMethodRead]
+    winner_summary: CapstoneLearningRouteBaselineWinnerRead
 
 
 class CapstoneLearningRouteRunRead(BaseModel):
@@ -171,6 +228,8 @@ class CapstoneLearningRouteRunRead(BaseModel):
     covered_skills_count: int
     remaining_gaps_count: int
     route_summary: str | None = None
+    solver_status: str | None = None
+    objective_value: float | None = None
     created_at: datetime
 
 
@@ -181,6 +240,22 @@ class CapstoneLearningRouteRunsRead(BaseModel):
 class CapstoneSkillExtractionRead(BaseModel):
     resume_id: str
     extracted_skills: list[CapstoneSkillRead]
+
+
+class CapstoneResumeSkillReviewRead(BaseModel):
+    resume_id: str
+    skills: list[CapstoneSkillRead]
+
+
+class CapstoneResumeSkillReviewUpdateRequest(BaseModel):
+    status: Literal["confirmed", "rejected"]
+
+
+class CapstoneManualResumeSkillRequest(BaseModel):
+    skill_id: UUID | None = None
+    normalized_name: str | None = Field(None, min_length=1, max_length=120)
+    evidence_text: str | None = Field(None, max_length=500)
+    source_section: str | None = Field(None, max_length=80)
 
 
 class CapstoneJobSkillExtractionRead(BaseModel):
@@ -207,6 +282,11 @@ class CapstoneAnalyticsStatusRead(BaseModel):
     catalog_ready: bool
     skills_count: int
     aliases_count: int
+    resume_skills_count: int
+    detected_resume_skills_count: int
+    confirmed_resume_skills_count: int
+    rejected_resume_skills_count: int
+    manual_resume_skills_count: int
     courses_count: int
     course_skills_count: int
     role_seed_requirements_count: int

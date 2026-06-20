@@ -1,0 +1,1674 @@
+{
+  "categories": {
+    "ACCOUNTANT": 118,
+    "ADVOCATE": 118,
+    "AGRICULTURE": 63,
+    "APPAREL": 97,
+    "ARTS": 103,
+    "AUTOMOBILE": 36,
+    "AVIATION": 117,
+    "BANKING": 115,
+    "BPO": 22,
+    "BUSINESS-DEVELOPMENT": 120,
+    "CHEF": 118,
+    "CONSTRUCTION": 112,
+    "CONSULTANT": 115,
+    "DESIGNER": 107,
+    "DIGITAL-MEDIA": 96,
+    "ENGINEERING": 118,
+    "FINANCE": 118,
+    "FITNESS": 117,
+    "HEALTHCARE": 115,
+    "HR": 110,
+    "INFORMATION-TECHNOLOGY": 120,
+    "PUBLIC-RELATIONS": 111,
+    "SALES": 116,
+    "TEACHER": 102
+  },
+  "coverage_ratio": 0.9839,
+  "resumes_scanned": 2484,
+  "resumes_with_skills": 2444,
+  "source": "data/resumes 3/Resume/Resume.csv",
+  "top_skills": [
+    {
+      "category": "soft_skills",
+      "display_name": "Communication",
+      "normalized_name": "communication",
+      "resume_count": 1313
+    },
+    {
+      "category": "sales",
+      "display_name": "Sales",
+      "normalized_name": "sales",
+      "resume_count": 1311
+    },
+    {
+      "category": "service",
+      "display_name": "Customer Service",
+      "normalized_name": "customer_service",
+      "resume_count": 1029
+    },
+    {
+      "category": "soft_skills",
+      "display_name": "Leadership",
+      "normalized_name": "leadership",
+      "resume_count": 1026
+    },
+    {
+      "category": "business_tools",
+      "display_name": "Excel",
+      "normalized_name": "excel",
+      "resume_count": 1018
+    },
+    {
+      "category": "delivery",
+      "display_name": "Project Management",
+      "normalized_name": "project_management",
+      "resume_count": 680
+    },
+    {
+      "category": "finance",
+      "display_name": "Accounting",
+      "normalized_name": "accounting",
+      "resume_count": 576
+    },
+    {
+      "category": "soft_skills",
+      "display_name": "Problem Solving",
+      "normalized_name": "problem_solving",
+      "resume_count": 516
+    },
+    {
+      "category": "soft_skills",
+      "display_name": "Time Management",
+      "normalized_name": "time_management",
+      "resume_count": 420
+    },
+    {
+      "category": "quality",
+      "display_name": "Quality Assurance",
+      "normalized_name": "quality_assurance",
+      "resume_count": 385
+    },
+    {
+      "category": "finance",
+      "display_name": "Auditing",
+      "normalized_name": "auditing",
+      "resume_count": 361
+    },
+    {
+      "category": "hr",
+      "display_name": "Recruiting",
+      "normalized_name": "recruiting",
+      "resume_count": 354
+    },
+    {
+      "category": "business",
+      "display_name": "Budget Management",
+      "normalized_name": "budget_management",
+      "resume_count": 339
+    },
+    {
+      "category": "marketing",
+      "display_name": "Social Media Marketing",
+      "normalized_name": "social_media_marketing",
+      "resume_count": 292
+    },
+    {
+      "category": "soft_skills",
+      "display_name": "Teamwork",
+      "normalized_name": "teamwork",
+      "resume_count": 280
+    },
+    {
+      "category": "hr",
+      "display_name": "Training and Development",
+      "normalized_name": "training_development",
+      "resume_count": 248
+    },
+    {
+      "category": "operations",
+      "display_name": "Manufacturing",
+      "normalized_name": "manufacturing",
+      "resume_count": 236
+    },
+    {
+      "category": "finance",
+      "display_name": "Forecasting",
+      "normalized_name": "forecasting",
+      "resume_count": 233
+    },
+    {
+      "category": "business",
+      "display_name": "Strategic Planning",
+      "normalized_name": "strategic_planning",
+      "resume_count": 220
+    },
+    {
+      "category": "design_tools",
+      "display_name": "Adobe Photoshop",
+      "normalized_name": "adobe_photoshop",
+      "resume_count": 207
+    },
+    {
+      "category": "finance",
+      "display_name": "Accounts Payable",
+      "normalized_name": "accounts_payable",
+      "resume_count": 204
+    },
+    {
+      "category": "business_tools",
+      "display_name": "SAP",
+      "normalized_name": "sap",
+      "resume_count": 189
+    },
+    {
+      "category": "finance",
+      "display_name": "Financial Analysis",
+      "normalized_name": "financial_analysis",
+      "resume_count": 187
+    },
+    {
+      "category": "finance_tools",
+      "display_name": "QuickBooks",
+      "normalized_name": "quickbooks",
+      "resume_count": 186
+    },
+    {
+      "category": "data",
+      "display_name": "SQL",
+      "normalized_name": "sql",
+      "resume_count": 178
+    }
+  ],
+  "top_skills_by_category": {
+    "ACCOUNTANT": [
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 114
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 89
+      },
+      {
+        "category": "finance",
+        "display_name": "Auditing",
+        "normalized_name": "auditing",
+        "resume_count": 75
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounts Payable",
+        "normalized_name": "accounts_payable",
+        "resume_count": 69
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 66
+      },
+      {
+        "category": "finance_tools",
+        "display_name": "QuickBooks",
+        "normalized_name": "quickbooks",
+        "resume_count": 60
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounts Receivable",
+        "normalized_name": "accounts_receivable",
+        "resume_count": 56
+      },
+      {
+        "category": "finance",
+        "display_name": "Financial Analysis",
+        "normalized_name": "financial_analysis",
+        "resume_count": 52
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 51
+      },
+      {
+        "category": "business_tools",
+        "display_name": "SAP",
+        "normalized_name": "sap",
+        "resume_count": 33
+      }
+    ],
+    "ADVOCATE": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 71
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 70
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 57
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 55
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 48
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 36
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 22
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 19
+      },
+      {
+        "category": "hr",
+        "display_name": "Training and Development",
+        "normalized_name": "training_development",
+        "resume_count": 16
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Teamwork",
+        "normalized_name": "teamwork",
+        "resume_count": 16
+      }
+    ],
+    "AGRICULTURE": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 36
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 31
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 27
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 19
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 17
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 15
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 13
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 11
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Teamwork",
+        "normalized_name": "teamwork",
+        "resume_count": 10
+      },
+      {
+        "category": "analytics",
+        "display_name": "Statistics",
+        "normalized_name": "statistics",
+        "resume_count": 9
+      }
+    ],
+    "APPAREL": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 85
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 57
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 53
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 43
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 34
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 24
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 20
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 17
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 17
+      },
+      {
+        "category": "hr",
+        "display_name": "Training and Development",
+        "normalized_name": "training_development",
+        "resume_count": 14
+      }
+    ],
+    "ARTS": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 53
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 50
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 48
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 43
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 32
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 22
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 20
+      },
+      {
+        "category": "marketing",
+        "display_name": "Social Media Marketing",
+        "normalized_name": "social_media_marketing",
+        "resume_count": 17
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 16
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Teamwork",
+        "normalized_name": "teamwork",
+        "resume_count": 16
+      }
+    ],
+    "AUTOMOBILE": [
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 22
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 21
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 18
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 16
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 12
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 9
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 9
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 8
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 6
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 6
+      }
+    ],
+    "AVIATION": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 54
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 52
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 48
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 48
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 36
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 34
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 27
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 22
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 22
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 19
+      }
+    ],
+    "BANKING": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 85
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 61
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 60
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 58
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 57
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 39
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 30
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 27
+      },
+      {
+        "category": "finance",
+        "display_name": "Financial Analysis",
+        "normalized_name": "financial_analysis",
+        "resume_count": 24
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 22
+      }
+    ],
+    "BPO": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 14
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 12
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 11
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 8
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 8
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 8
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 7
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 7
+      },
+      {
+        "category": "business",
+        "display_name": "Vendor Management",
+        "normalized_name": "vendor_management",
+        "resume_count": 6
+      },
+      {
+        "category": "business_tools",
+        "display_name": "SAP",
+        "normalized_name": "sap",
+        "resume_count": 6
+      }
+    ],
+    "BUSINESS-DEVELOPMENT": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 111
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 66
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 57
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 51
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 36
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 34
+      },
+      {
+        "category": "business_tools",
+        "display_name": "CRM",
+        "normalized_name": "crm",
+        "resume_count": 34
+      },
+      {
+        "category": "finance",
+        "display_name": "Forecasting",
+        "normalized_name": "forecasting",
+        "resume_count": 32
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 28
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Negotiation",
+        "normalized_name": "negotiation",
+        "resume_count": 24
+      }
+    ],
+    "CHEF": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 63
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 56
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 46
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 46
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 36
+      },
+      {
+        "category": "business",
+        "display_name": "Budget Management",
+        "normalized_name": "budget_management",
+        "resume_count": 23
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 21
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 20
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 19
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 19
+      }
+    ],
+    "CONSTRUCTION": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 65
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 63
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 44
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 44
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 33
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 32
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 31
+      },
+      {
+        "category": "business",
+        "display_name": "Budget Management",
+        "normalized_name": "budget_management",
+        "resume_count": 30
+      },
+      {
+        "category": "engineering_tools",
+        "display_name": "AutoCAD",
+        "normalized_name": "autocad",
+        "resume_count": 26
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 26
+      }
+    ],
+    "CONSULTANT": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 62
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 54
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 53
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 48
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 44
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 42
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 37
+      },
+      {
+        "category": "data",
+        "display_name": "SQL",
+        "normalized_name": "sql",
+        "resume_count": 30
+      },
+      {
+        "category": "finance",
+        "display_name": "Auditing",
+        "normalized_name": "auditing",
+        "resume_count": 22
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 21
+      }
+    ],
+    "DESIGNER": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 52
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 45
+      },
+      {
+        "category": "design_tools",
+        "display_name": "Adobe Photoshop",
+        "normalized_name": "adobe_photoshop",
+        "resume_count": 44
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 40
+      },
+      {
+        "category": "design_tools",
+        "display_name": "Adobe Illustrator",
+        "normalized_name": "adobe_illustrator",
+        "resume_count": 39
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 37
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 35
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 31
+      },
+      {
+        "category": "engineering_tools",
+        "display_name": "AutoCAD",
+        "normalized_name": "autocad",
+        "resume_count": 27
+      },
+      {
+        "category": "design",
+        "display_name": "Graphic Design",
+        "normalized_name": "graphic_design",
+        "resume_count": 26
+      }
+    ],
+    "DIGITAL-MEDIA": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 63
+      },
+      {
+        "category": "marketing",
+        "display_name": "Social Media Marketing",
+        "normalized_name": "social_media_marketing",
+        "resume_count": 53
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 52
+      },
+      {
+        "category": "marketing",
+        "display_name": "Digital Marketing",
+        "normalized_name": "digital_marketing",
+        "resume_count": 38
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 35
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 32
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 32
+      },
+      {
+        "category": "design_tools",
+        "display_name": "Adobe Photoshop",
+        "normalized_name": "adobe_photoshop",
+        "resume_count": 30
+      },
+      {
+        "category": "marketing",
+        "display_name": "SEO",
+        "normalized_name": "seo",
+        "resume_count": 29
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 27
+      }
+    ],
+    "ENGINEERING": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 57
+      },
+      {
+        "category": "operations",
+        "display_name": "Manufacturing",
+        "normalized_name": "manufacturing",
+        "resume_count": 55
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 51
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 44
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 41
+      },
+      {
+        "category": "engineering_tools",
+        "display_name": "AutoCAD",
+        "normalized_name": "autocad",
+        "resume_count": 39
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 30
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 26
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 23
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 23
+      }
+    ],
+    "FINANCE": [
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 101
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 74
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 67
+      },
+      {
+        "category": "finance",
+        "display_name": "Auditing",
+        "normalized_name": "auditing",
+        "resume_count": 62
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 53
+      },
+      {
+        "category": "finance",
+        "display_name": "Forecasting",
+        "normalized_name": "forecasting",
+        "resume_count": 52
+      },
+      {
+        "category": "finance",
+        "display_name": "Financial Analysis",
+        "normalized_name": "financial_analysis",
+        "resume_count": 52
+      },
+      {
+        "category": "business",
+        "display_name": "Budget Management",
+        "normalized_name": "budget_management",
+        "resume_count": 51
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 51
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounts Payable",
+        "normalized_name": "accounts_payable",
+        "resume_count": 41
+      }
+    ],
+    "FITNESS": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 78
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 65
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 65
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 56
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 33
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 22
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 22
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 20
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 20
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 18
+      }
+    ],
+    "HEALTHCARE": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 69
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 57
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 55
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 51
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 45
+      },
+      {
+        "category": "healthcare",
+        "display_name": "Patient Care",
+        "normalized_name": "patient_care",
+        "resume_count": 33
+      },
+      {
+        "category": "healthcare",
+        "display_name": "Medical Records",
+        "normalized_name": "medical_records",
+        "resume_count": 32
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 31
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 30
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 29
+      }
+    ],
+    "HR": [
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 82
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 70
+      },
+      {
+        "category": "hr",
+        "display_name": "Employee Relations",
+        "normalized_name": "employee_relations",
+        "resume_count": 67
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 65
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 53
+      },
+      {
+        "category": "hr",
+        "display_name": "Training and Development",
+        "normalized_name": "training_development",
+        "resume_count": 49
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 47
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 43
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 34
+      },
+      {
+        "category": "hr",
+        "display_name": "Onboarding",
+        "normalized_name": "onboarding",
+        "resume_count": 26
+      }
+    ],
+    "INFORMATION-TECHNOLOGY": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 65
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 64
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 53
+      },
+      {
+        "category": "data",
+        "display_name": "SQL",
+        "normalized_name": "sql",
+        "resume_count": 49
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 38
+      },
+      {
+        "category": "technical_tools",
+        "display_name": "Linux",
+        "normalized_name": "linux",
+        "resume_count": 33
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 31
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 31
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 27
+      },
+      {
+        "category": "business",
+        "display_name": "Budget Management",
+        "normalized_name": "budget_management",
+        "resume_count": 25
+      }
+    ],
+    "PUBLIC-RELATIONS": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 82
+      },
+      {
+        "category": "marketing",
+        "display_name": "Social Media Marketing",
+        "normalized_name": "social_media_marketing",
+        "resume_count": 67
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 60
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 57
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 46
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 44
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 40
+      },
+      {
+        "category": "design_tools",
+        "display_name": "Adobe Photoshop",
+        "normalized_name": "adobe_photoshop",
+        "resume_count": 30
+      },
+      {
+        "category": "hr",
+        "display_name": "Recruiting",
+        "normalized_name": "recruiting",
+        "resume_count": 20
+      },
+      {
+        "category": "business",
+        "display_name": "Strategic Planning",
+        "normalized_name": "strategic_planning",
+        "resume_count": 17
+      }
+    ],
+    "SALES": [
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 116
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 87
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 75
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 41
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 37
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 33
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 23
+      },
+      {
+        "category": "delivery",
+        "display_name": "Project Management",
+        "normalized_name": "project_management",
+        "resume_count": 19
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 14
+      },
+      {
+        "category": "finance",
+        "display_name": "Accounting",
+        "normalized_name": "accounting",
+        "resume_count": 14
+      }
+    ],
+    "TEACHER": [
+      {
+        "category": "soft_skills",
+        "display_name": "Communication",
+        "normalized_name": "communication",
+        "resume_count": 61
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Leadership",
+        "normalized_name": "leadership",
+        "resume_count": 39
+      },
+      {
+        "category": "business_tools",
+        "display_name": "Excel",
+        "normalized_name": "excel",
+        "resume_count": 29
+      },
+      {
+        "category": "service",
+        "display_name": "Customer Service",
+        "normalized_name": "customer_service",
+        "resume_count": 27
+      },
+      {
+        "category": "sales",
+        "display_name": "Sales",
+        "normalized_name": "sales",
+        "resume_count": 24
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Problem Solving",
+        "normalized_name": "problem_solving",
+        "resume_count": 23
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Teamwork",
+        "normalized_name": "teamwork",
+        "resume_count": 19
+      },
+      {
+        "category": "soft_skills",
+        "display_name": "Time Management",
+        "normalized_name": "time_management",
+        "resume_count": 18
+      },
+      {
+        "category": "marketing",
+        "display_name": "Social Media Marketing",
+        "normalized_name": "social_media_marketing",
+        "resume_count": 8
+      },
+      {
+        "category": "quality",
+        "display_name": "Quality Assurance",
+        "normalized_name": "quality_assurance",
+        "resume_count": 8
+      }
+    ]
+  }
+}

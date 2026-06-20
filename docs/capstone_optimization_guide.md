@@ -560,25 +560,46 @@ Duracion: 5 semanas.
 
 Problema:
 
-Elegir cursos que cubran skills faltantes maximizando valor laboral y respetando restricciones.
+Elegir un conjunto y una secuencia de cursos que maximicen readiness laboral
+para un rol objetivo, cerrando skills faltantes de alto valor y respetando
+restricciones reales del estudiante: presupuesto, tiempo disponible, numero
+maximo de cursos, prerequisitos, dificultad y redundancia.
 
-Variable:
+Esta es la fase central del capstone. El diferencial no es recomendar cursos de
+forma generica, sino formular el problema como optimizacion restringida,
+resolverlo con OR-Tools CP-SAT y producir una explicacion auditable de por que
+cada curso fue seleccionado.
+
+Documento formal:
+
+- `docs/capstone_product/phase_6_optimization_model.md`.
+
+Variables principales:
 
 ```text
 x_i = 1 si el curso i es seleccionado
 x_i = 0 si no
+y_s = 1 si la skill s queda cubierta por la ruta
+u_s = cobertura agregada de la skill s
+m_s = 1 si la skill s queda sin cubrir
+r_s = cobertura redundante de la skill s
+pos_i = posicion del curso i dentro de la ruta
 ```
 
 Objetivo:
 
 ```text
 Maximize:
-  labor_market_value_covered
+  weighted_skill_gap_coverage
+  + labor_market_demand_coverage
+  + salary_impact_coverage
   + critical_skill_coverage
-  + salary_impact_score
-  - cost_penalty
-  - time_penalty
+  + course_quality_value
+  - normalized_cost_penalty
+  - normalized_time_penalty
   - redundancy_penalty
+  - difficulty_progression_penalty
+  - uncovered_gap_penalty
 ```
 
 Restricciones:
@@ -588,8 +609,12 @@ total_cost <= budget
 total_hours <= available_hours
 selected_courses <= max_courses
 critical_skills_covered >= minimum_required
-prerequisites must be satisfied
-difficulty progression must be reasonable
+coverage_s >= threshold_s if skill s is counted as covered
+inactive courses cannot be selected
+equivalent duplicate courses cannot be selected together
+prerequisite courses must be selected before dependent courses
+selected courses must have unique route positions
+difficulty progression must be reasonable or penalized
 ```
 
 Entregables:
@@ -599,6 +624,7 @@ Entregables:
 - Casos de prueba.
 - Documentacion matematica.
 - Output explicable.
+- Comparacion posterior contra baselines de Fase 7.
 
 ## Fase 7: Evaluacion contra baselines
 

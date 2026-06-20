@@ -135,11 +135,27 @@ for the authenticated user.
 ## OR-Tools Readiness
 
 The service layer defines a `LearningRouteOptimizer` contract and ships
-`HeuristicLearningRouteOptimizer` as the active implementation.
+`HeuristicLearningRouteOptimizer` as the baseline implementation.
 
-`ORToolsLearningRouteOptimizer` is intentionally a placeholder for a future
-optional backend. Phase 2 does not require OR-Tools as a dependency because the
-heuristic engine is enough to support MVP product behavior.
+Phase 6 adds `ORToolsLearningRouteOptimizer` and `cp_sat_route_v1`. When
+OR-Tools is installed, the capstone service selects the CP-SAT optimizer
+automatically. If OR-Tools is unavailable, the service falls back to the
+heuristic baseline instead of failing the user request.
+
+The formal Phase 6 mathematical model is documented in
+`phase_6_optimization_model.md`. The implemented CP-SAT cut covers the core
+model: course-selection variables, covered/uncovered skill variables, aggregate
+coverage thresholds, budget, available-hours, max-course constraints, weighted
+skill-gap value, labor-market demand, critical-skill value, course quality,
+cost/time penalties, redundancy penalty, uncovered-gap penalty, sequence
+assignment variables, unique route positions, difficulty progression, and
+prerequisite-skill ordering signals.
+
+The synthetic Phase 6 evidence suite is documented in
+`phase_6_validation_evidence.md`.
+
+The heuristic should now be treated as the MVP baseline that the Phase 6
+optimizer must beat or tie under the Phase 7 evaluation plan.
 
 ## Empty Route Behavior
 

@@ -4,12 +4,12 @@ import asyncio
 import hashlib
 import importlib.util
 import logging
-import math
 import os
 import re
 from functools import lru_cache
 from uuid import UUID
 
+import numpy as np
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +37,16 @@ def get_embedding_provider() -> str:
 
 def is_embedding_generation_enabled() -> bool:
     return get_embedding_provider() not in {"", "0", "false", "off", "disabled", "none"}
+
+
+def get_effective_model_name() -> str:
+    """Model name under which embeddings are stored for the configured provider.
+
+    Mirrors the model name reported by ``generate_embedding_with_model`` so that
+    corpus searches query the matching vector space (hash vectors never share a
+    space with sentence-transformer vectors).
+    """
+    return MODEL_NAME if get_embedding_provider() in LOCAL_PROVIDER_NAMES else HASH_MODEL_NAME
 
 
 def get_embedding_status() -> dict:
@@ -163,22 +173,69 @@ class ResumeEmbeddingService:
         result = await self.session.execute(select(func.count(ResumeEmbedding.id)))
         return int(result.scalar_one() or 0)
 
+    async def find_similar_resumes(
+        self,
+        *,
+        resume_id: UUID,
+        k: int = 10,
+        model_name: str | None = None,
+    ) -> list[dict]:
+        """Return the ``k`` nearest stored resume embeddings by cosine distance.
+
+        Uses pgvector's native ``<=>`` operator (via ``cosine_distance``) so the
+        ranking runs in the database against the HNSW index instead of pulling
+        every vector into Python. Always filters by ``model_name`` to compare
+        within a single vector space. Requires a PostgreSQL backend with the
+        ``vector`` extension; not supported on SQLite.
+        """
+        effective_model = model_name or get_effective_model_name()
+        source = await self.session.execute(
+            select(ResumeEmbedding.embedding).where(
+                ResumeEmbedding.resume_id == resume_id,
+                ResumeEmbedding.model_name == effective_model,
+            )
+        )
+        query_vector = source.scalar_one_or_none()
+        if query_vector is None:
+            return []
+
+        distance = ResumeEmbedding.embedding.cosine_distance(query_vector)
+        result = await self.session.execute(
+            select(ResumeEmbedding.resume_id, distance.label("distance"))
+            .where(
+                ResumeEmbedding.model_name == effective_model,
+                ResumeEmbedding.resume_id != resume_id,
+            )
+            .order_by(distance.asc())
+            .limit(k)
+        )
+        return [
+            {"resume_id": row.resume_id, "similarity": round(1.0 - float(row.distance), 6)}
+            for row in result.all()
+        ]
+
 
 def generate_hash_embedding(text: str, dims: int = EMBEDDING_DIMS) -> list[float]:
     tokens = re.findall(r"[a-z0-9+#]+", text.lower())
-    vector = [0.0 for _ in range(dims)]
+    if not tokens:
+        return [0.0 for _ in range(dims)]
 
-    for token in tokens:
+    # Hashing each token still needs a Python loop (the SHA256 cost dominates),
+    # but the accumulation/normalization is vectorized with numpy. np.bincount
+    # adds weights in token order, matching the original sequential accumulation.
+    indices = np.empty(len(tokens), dtype=np.int64)
+    weights = np.empty(len(tokens), dtype=np.float64)
+    for i, token in enumerate(tokens):
         digest = hashlib.sha256(token.encode("utf-8")).digest()
-        index = int.from_bytes(digest[:4], "big") % dims
+        indices[i] = int.from_bytes(digest[:4], "big") % dims
         sign = 1.0 if digest[4] % 2 else -1.0
-        weight = 1.0 + min(len(token), 20) / 20.0
-        vector[index] += sign * weight
+        weights[i] = sign * (1.0 + min(len(token), 20) / 20.0)
 
-    norm = math.sqrt(sum(value * value for value in vector))
-    if norm == 0:
-        return vector
-    return [round(value / norm, 8) for value in vector]
+    vector = np.bincount(indices, weights=weights, minlength=dims)
+    norm = float(np.linalg.norm(vector))
+    if norm == 0.0:
+        return vector.tolist()
+    return np.round(vector / norm, 8).tolist()
 
 
 @lru_cache(maxsize=1)

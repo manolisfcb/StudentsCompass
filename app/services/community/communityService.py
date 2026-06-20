@@ -1,4 +1,5 @@
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
@@ -10,6 +11,11 @@ from app.models.communityPostModel import (
 )
 from app.models.userModel import User
 from app.schemas.communitySchema import CommunityCreate, CommunityPostCreate, CommunityPostCommentCreate
+from app.services.community.userDisplay import build_display_name
+
+
+class AlreadyMemberError(Exception):
+    """Raised when a user is already a member of a community."""
 
 
 class CommunityService:
@@ -79,14 +85,15 @@ class CommunityService:
         return sorted_tags[: max(limit, 1)]
 
     async def create_community(self, community_data: CommunityCreate, user_id: UUID) -> CommunityModel:
-        member_count = community_data.member_count if community_data.member_count is not None else 1
+        # Always start at 1 (the creator). The member count is a server-owned
+        # counter and must not be taken from client input.
         community = CommunityModel(
             name=community_data.name,
             description=community_data.description,
             icon=community_data.icon,
             activity_status=community_data.activity_status,
             tags=self.normalize_tags(community_data.tags),
-            member_count=member_count,
+            member_count=1,
             created_by=user_id,
         )
         self.session.add(community)
@@ -115,7 +122,15 @@ class CommunityService:
         membership = CommunityMemberModel(community_id=community_id, user_id=user_id)
         self.session.add(membership)
         community.member_count = (community.member_count or 0) + 1
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError as exc:
+            # Two concurrent joins can both pass the is_member pre-check; the
+            # unique constraint guards the data, so surface a clean conflict
+            # instead of a 500 (the whole transaction, including the counter
+            # increment, is rolled back).
+            await self.session.rollback()
+            raise AlreadyMemberError("Already a member") from exc
         await self.session.refresh(membership)
         return membership
 
@@ -269,7 +284,7 @@ class CommunityService:
 
         enriched = []
         for post, first_name, last_name, nickname, lc, cc, my_like in rows:
-            author = _build_author_name(first_name, last_name, nickname)
+            author = build_display_name(first_name=first_name, last_name=last_name, nickname=nickname)
             enriched.append({
                 "id": str(post.id),
                 "community_id": str(post.community_id),
@@ -303,7 +318,7 @@ class CommunityService:
 
         enriched = []
         for comment, first_name, last_name, nickname in rows:
-            author = _build_author_name(first_name, last_name, nickname)
+            author = build_display_name(first_name=first_name, last_name=last_name, nickname=nickname)
             enriched.append({
                 "id": str(comment.id),
                 "post_id": str(comment.post_id),
@@ -321,14 +336,3 @@ class CommunityService:
             )
         )
         return result.scalar() or 0
-
-
-def _build_author_name(first_name: str | None, last_name: str | None, nickname: str | None) -> str:
-    """Build a display name from user fields."""
-    if first_name and last_name:
-        return f"{first_name} {last_name}"
-    if first_name:
-        return first_name
-    if nickname:
-        return nickname
-    return "Miembro"

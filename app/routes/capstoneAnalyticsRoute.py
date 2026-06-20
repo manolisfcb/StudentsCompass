@@ -15,8 +15,12 @@ from app.schemas.capstoneAnalyticsSchema import (
     CapstoneJobSkillBatchExtractionRead,
     CapstoneJobSkillExtractionRead,
     CapstoneLearningRouteOptimizationRead,
+    CapstoneLearningRouteBaselineEvaluationRead,
     CapstoneLearningRouteOptimizeRequest,
     CapstoneLearningRouteRunsRead,
+    CapstoneManualResumeSkillRequest,
+    CapstoneResumeSkillReviewRead,
+    CapstoneResumeSkillReviewUpdateRequest,
     CapstoneSkillExtractionRead,
     CapstoneSkillExtractionRequest,
 )
@@ -90,6 +94,97 @@ async def extract_resume_skills(
         resume_id=str(resume_id),
         extracted_skills=extracted_skills,
     )
+
+
+@router.get("/capstone/resumes/{resume_id}/skills", response_model=CapstoneResumeSkillReviewRead)
+async def list_resume_skills_for_review(
+    resume_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    payload = await _run_capstone_operation(
+        lambda: service.list_resume_skills_for_review(resume_id=resume_id, user_id=user.id)
+    )
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return payload
+
+
+@router.patch(
+    "/capstone/resumes/{resume_id}/skills/{resume_skill_id}",
+    response_model=CapstoneResumeSkillReviewRead,
+)
+async def update_resume_skill_review_status(
+    resume_id: UUID,
+    resume_skill_id: UUID,
+    payload: CapstoneResumeSkillReviewUpdateRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    updated = await _run_capstone_operation(
+        lambda: service.update_resume_skill_review_status(
+            resume_id=resume_id,
+            user_id=user.id,
+            resume_skill_id=resume_skill_id,
+            status=payload.status,
+        )
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Resume skill not found")
+    return updated
+
+
+@router.post(
+    "/capstone/resumes/{resume_id}/skills/manual",
+    response_model=CapstoneResumeSkillReviewRead,
+)
+async def add_manual_resume_skill(
+    resume_id: UUID,
+    payload: CapstoneManualResumeSkillRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    updated = await _run_capstone_operation(
+        lambda: service.add_manual_resume_skill(
+            resume_id=resume_id,
+            user_id=user.id,
+            skill_id=payload.skill_id,
+            normalized_name=payload.normalized_name,
+            evidence_text=payload.evidence_text,
+            source_section=payload.source_section,
+        )
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    if updated.get("status") == "skill_not_found":
+        raise HTTPException(status_code=404, detail="Skill not found")
+    return updated
+
+
+@router.delete(
+    "/capstone/resumes/{resume_id}/skills/{resume_skill_id}",
+    response_model=CapstoneResumeSkillReviewRead,
+)
+async def delete_resume_skill(
+    resume_id: UUID,
+    resume_skill_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    updated = await _run_capstone_operation(
+        lambda: service.delete_resume_skill(
+            resume_id=resume_id,
+            user_id=user.id,
+            resume_skill_id=resume_skill_id,
+        )
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Resume skill not found")
+    return updated
 
 
 @router.post("/capstone/resumes/{resume_id}/skills/sync", response_model=CapstoneSkillExtractionRead)
@@ -233,6 +328,31 @@ async def optimize_capstone_learning_route(
     if optimization_payload["status"] == "resume_not_found":
         raise HTTPException(status_code=404, detail="Resume not found")
     return optimization_payload
+
+
+@router.post(
+    "/capstone/learning-route/evaluate-baselines",
+    response_model=CapstoneLearningRouteBaselineEvaluationRead,
+)
+async def evaluate_capstone_learning_route_baselines(
+    payload: CapstoneLearningRouteOptimizeRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = CapstoneAnalyticsService(session)
+    evaluation_payload = await _run_capstone_operation(
+        lambda: service.evaluate_learning_route_baselines(
+            resume_id=payload.resume_id,
+            user_id=user.id,
+            target_role=payload.target_role,
+            budget=payload.budget,
+            available_hours=payload.available_hours,
+            max_courses=payload.max_courses,
+        )
+    )
+    if evaluation_payload["status"] == "resume_not_found":
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return evaluation_payload
 
 
 @router.get("/capstone/learning-route/runs", response_model=CapstoneLearningRouteRunsRead)
