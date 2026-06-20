@@ -26,4 +26,4 @@ USER app
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec uvicorn app.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips ${FORWARDED_ALLOW_IPS}"]
+CMD ["sh", "-c", "exec uvicorn app.app:app --host 0.0.0.0 --port \"${PORT}\" --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS}\""]
