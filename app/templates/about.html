@@ -1,9 +1,32 @@
 {% extends "base.html" %}
 {% set page_title = "About Us" %}
-{% set page_description = "Student Compass connects employers with career-ready graduates in Canada. Our proprietary AI-powered framework delivers pre-vetted, motivated talent — saving your company time, cost, and hiring risk." %}
+{% set page_description = "Learn how Student Compass prepares career-ready graduates for Canadian employers, in partnership with qevuno's private, ad-free app ecosystem." %}
 {% set body_class = "marketing-page marketing-about" %}
 {% set page_css = "about" %}
 {% set page_js = "about" %}
+{% block head_extra %}
+  <link rel="related" href="https://qevuno.com/" title="qevuno">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "name": "About Students Compass",
+      "url": "https://studentscompass.ca/about",
+      "description": {{ page_description | tojson }},
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Students Compass",
+        "url": "https://studentscompass.ca/"
+      },
+      "mentions": {
+        "@type": "Organization",
+        "name": "qevuno",
+        "url": "https://qevuno.com/"
+      },
+      "relatedLink": "https://qevuno.com/"
+    }
+  </script>
+{% endblock %}
 {% block content %}
     <header class="marketing-header about-top-header">
         <nav class="marketing-nav">
@@ -37,6 +60,12 @@
                 </div>
             </div>
         </section>
+
+        <aside class="about-partnership" aria-label="Technology partnership">
+            <div class="container">
+                <p>Students Compass works in partnership with <a href="https://qevuno.com/">qevuno</a>, a privacy-first ecosystem of fast, useful, and ad-free applications.</p>
+            </div>
+        </aside>
 
         <!-- ========== THE PROBLEM WE SOLVE ========== -->
         <section class="about-section about-section--stats">
