@@ -21,6 +21,14 @@ from app.services.storage.storageService import get_resume_storage_location_id
 from app.models.userModel import User
 from uuid import UUID
 import logging
+
+from app.core.errors import (
+    CODE_RESUME_STORAGE_UNCONFIGURED,
+    CODE_RESUME_UPLOAD,
+    new_error_reference,
+    server_failure,
+)
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -44,10 +52,17 @@ async def _read_upload_within_limit(cv: UploadFile, request: Request) -> bytes:
 def _require_resume_storage_location_id() -> str:
     storage_location_id = get_resume_storage_location_id()
     if not storage_location_id:
-        LOGGER.error("Resume storage location is not configured")
+        # The reason is for the log; the caller only learns the feature is down.
+        reference = new_error_reference()
+        LOGGER.error(
+            "request failed code=%s ref=%s: resume storage location is not configured",
+            CODE_RESUME_STORAGE_UNCONFIGURED,
+            reference,
+        )
         raise HTTPException(
-            status_code=500,
-            detail="Server misconfiguration: missing resume storage configuration",
+            status_code=503,
+            detail=f"CV uploads are temporarily unavailable. (ref: {reference})",
+            headers={"X-Error-Code": CODE_RESUME_STORAGE_UNCONFIGURED, "X-Error-Id": reference},
         )
     return storage_location_id
 
@@ -88,9 +103,15 @@ async def upload_resume(
         
         # Desactivado: No se generan ni guardan embeddings para el resume
         return {"file_url": file_info["view_url"], "resume_id": resume.id}
-    except Exception as e:
-        LOGGER.exception("Upload failed")
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+    except Exception as exc:
+        raise await server_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_RESUME_UPLOAD,
+            message="The CV could not be uploaded. Please try again.",
+            session=session,
+            context=f"user_id={user.id}",
+        )
 
 
 @router.post("/profile/cv/course-audit-upload", response_model=ResumeCourseAuditRead)

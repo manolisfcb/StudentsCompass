@@ -18,6 +18,8 @@ from app.schemas.jobPostingSchema import (
 from app.services.companies.companyService import current_active_company
 from app.services.companies.companyService import current_company_job_manager_recruiter
 from app.services.jobs.jobPostingService import JobPostingService
+from app.models.jobAnalysisModel import JobStatus
+from app.services.ai.cvAnalysisRunner import wake_runner
 from app.services.ai.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAILURE_MESSAGE
 from app.services.jobs.jobSearchService import JobSearchQuery, JobSearchService
 from app.services.ai.aiRequestRateLimitService import ai_analysis_rate_limiter
@@ -295,13 +297,27 @@ async def start_cv_analysis(
             await reservation.release()
             raise
 
+        if job.status != JobStatus.PENDING or job.attempts:
+            # Lost the insert race: this request joined a job that is already
+            # under way, so its slot goes back — the winner reserved its own.
+            await reservation.release()
+            LOGGER.info(f"Joined running job {job.id} for user {user.id}")
+            return JobInitResponse(
+                job_id=str(job.id),
+                status=job.status.value,
+                message="CV analysis already in progress for this resume.",
+            )
+
         LOGGER.info(f"Created job {job.id} for user {user.id}")
 
-        # Schedule background processing
+        # Dispatched twice on purpose: the background task keeps the current
+        # latency, and the durable runner is what finishes the job if this
+        # process does not survive. Claiming is atomic, so only one starts it.
         from app.db import get_session as get_session_factory
         background_tasks.add_task(
             process_cv_analysis, job.id, user.id, resume.id, get_session_factory, reservation
         )
+        wake_runner()
         
         return JobInitResponse(
             job_id=str(job.id),

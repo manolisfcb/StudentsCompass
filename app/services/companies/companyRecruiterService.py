@@ -17,6 +17,31 @@ from app.schemas.companyRecruiterSchema import (
 
 ALLOWED_COMPANY_RECRUITER_ROLES = ("owner", "admin", "recruiter", "viewer")
 
+# Seniority order, defined once. It was written twice — as a SQL CASE here and
+# as a dict in ApplicationService — with the same order but different values for
+# "anything else" (3 vs 99). Same ordering either way, which is exactly why the
+# duplication survived; one definition means the next change to it lands in both
+# places. Roles that can own an application, in the order they are preferred.
+COMPANY_RECRUITER_ROLE_RANK = {"owner": 0, "admin": 1, "recruiter": 2}
+UNRANKED_ROLE_RANK = 3
+ASSIGNABLE_COMPANY_RECRUITER_ROLES = tuple(COMPANY_RECRUITER_ROLE_RANK)
+
+
+def recruiter_role_rank(role: str | None) -> int:
+    """Seniority of one role, for sorting in Python."""
+    return COMPANY_RECRUITER_ROLE_RANK.get(role or "", UNRANKED_ROLE_RANK)
+
+
+def recruiter_role_rank_case():
+    """The same seniority, expressed for ORDER BY."""
+    return case(
+        *(
+            (CompanyRecruiter.role == role, rank)
+            for role, rank in COMPANY_RECRUITER_ROLE_RANK.items()
+        ),
+        else_=UNRANKED_ROLE_RANK,
+    )
+
 
 class CompanyRecruiterService:
     def __init__(self, session: AsyncSession):
@@ -24,12 +49,7 @@ class CompanyRecruiterService:
         self.password_helper = PasswordHelper()
 
     async def list_company_recruiters(self, company_id: UUID) -> Sequence[CompanyRecruiter]:
-        role_rank = case(
-            (CompanyRecruiter.role == "owner", 0),
-            (CompanyRecruiter.role == "admin", 1),
-            (CompanyRecruiter.role == "recruiter", 2),
-            else_=3,
-        )
+        role_rank = recruiter_role_rank_case()
         result = await self.session.execute(
             select(CompanyRecruiter)
             .where(CompanyRecruiter.company_id == company_id)

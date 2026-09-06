@@ -46,7 +46,14 @@ async def test_ai_usage_daily_extra_grant_expands_limit(db_session, test_user):
 
 
 @pytest.mark.asyncio
-async def test_ai_usage_counts_legacy_job_analysis_until_ledger_takes_over(db_session, test_user):
+async def test_legacy_rows_no_longer_count_by_themselves(db_session, test_user):
+    """The ledger is the authority now; a bare legacy count is not a charge.
+
+    Before reconciliation the quota read was ``max(ledger, legacy_count)``, which
+    charged for every ``job_analysis`` row — including the ones whose slot had
+    been explicitly released (a cache hit, an unreadable CV). Those rows are
+    still history, but only a ledger entry is a charge.
+    """
     db_session.add_all(
         [
             JobAnalysisModel(user_id=test_user.id, status=JobStatus.COMPLETED, keywords="python"),
@@ -58,5 +65,32 @@ async def test_ai_usage_counts_legacy_job_analysis_until_ledger_takes_over(db_se
     service = AIUsageService(db_session)
     summary = await service.get_summary(user_id=test_user.id, feature=AIFeature.CV_JOB_SEARCH)
 
-    assert summary.used_today == 2
-    assert summary.remaining_today == 1
+    assert summary.used_today == 0
+    assert summary.remaining_today == 3
+
+
+@pytest.mark.asyncio
+async def test_parity_reports_legacy_rows_missing_from_the_ledger(db_session, test_user):
+    """The evidence the backfill migration produces, re-runnable at any time."""
+    analysed = JobAnalysisModel(user_id=test_user.id, status=JobStatus.COMPLETED, keywords="python")
+    db_session.add(analysed)
+    await db_session.commit()
+
+    service = AIUsageService(db_session)
+    gaps = await service.legacy_parity_gaps(feature=AIFeature.CV_JOB_SEARCH, user_id=test_user.id)
+    assert [gap["reference_id"] for gap in gaps] == [analysed.id]
+
+    # Reconciling that row by identity — what the migration does — closes the gap
+    # and makes the same historical attempt count exactly once.
+    await service.record_usage(
+        user_id=test_user.id,
+        feature=AIFeature.CV_JOB_SEARCH,
+        source="legacy_backfill",
+        reference_type="job_analysis",
+        reference_id=analysed.id,
+    )
+    await db_session.commit()
+
+    assert await service.legacy_parity_gaps(feature=AIFeature.CV_JOB_SEARCH, user_id=test_user.id) == []
+    summary = await service.get_summary(user_id=test_user.id, feature=AIFeature.CV_JOB_SEARCH)
+    assert summary.used_today == 1

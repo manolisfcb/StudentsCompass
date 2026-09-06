@@ -26,6 +26,14 @@ def env_str(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
 
 
+def env_str_any(names: tuple[str, ...], default: str = "") -> str:
+    """First of ``names`` that is set wins (see ``env_int_any``)."""
+    for name in names:
+        if os.getenv(name) is not None:
+            return env_str(name, default)
+    return default
+
+
 def env_int_any(names: tuple[str, ...], default: int, *, minimum: int = 0) -> int:
     """First of ``names`` that is set wins. Lets a setting be renamed without
     breaking a deployment that still exports the old variable."""
@@ -116,7 +124,38 @@ POST_MEDIA_CONTENT_TYPES = frozenset(
     }
 )
 
+# --- Ingress / trusted proxies --------------------------------------------
+# Which immediate peers may speak for the real client through X-Forwarded-For.
+# Everything that keys on a client IP (request rate limits, AI per-IP limits)
+# resolves it through this policy, so the answer to "what is the client IP" has
+# exactly one definition.
+#
+# Accepted values:
+#   "private"  (default) - loopback + RFC1918/CGNAT/link-local/ULA peers. A
+#                          managed platform (Cloud Run, Fly, ECS, an ingress
+#                          controller) always reaches the container from such an
+#                          address, while a *direct* hit from the internet
+#                          arrives from a public peer and is therefore not
+#                          allowed to declare its own IP.
+#   "none"/""            - trust nobody; the socket peer is the client.
+#   "*"                  - trust any peer. Only correct when the container is
+#                          provably unreachable except through the proxy.
+#   list                 - comma-separated IPs and/or CIDRs (the tightest
+#                          option: the load balancer's own range).
+# FORWARDED_ALLOW_IPS is the previous name and is still read, so a deployment
+# that already exports it keeps working.
+TRUSTED_PROXY_IPS = env_str_any(("TRUSTED_PROXY_IPS", "FORWARDED_ALLOW_IPS"), "private")
+
 # --- Registration abuse controls ------------------------------------------
 REGISTER_RATE_LIMIT_MAX = env_int("REGISTER_RATE_LIMIT_MAX", 5, minimum=1)
 REGISTER_RATE_LIMIT_WINDOW_SECONDS = env_int("REGISTER_RATE_LIMIT_WINDOW_SECONDS", 3600, minimum=1)
 REGISTER_IP_DAILY_ACCOUNT_CAP = env_int("REGISTER_IP_DAILY_ACCOUNT_CAP", 5, minimum=1)
+
+# --- Credential-recovery abuse controls ------------------------------------
+# forgot-password / reset-password / request-verify-token send mail and let an
+# attacker probe which addresses exist, for both identities (students and
+# company recruiters). Low volume by nature, so the cap is tight.
+RECOVERY_RATE_LIMIT_MAX = env_int("RECOVERY_RATE_LIMIT_MAX", 5, minimum=1)
+RECOVERY_RATE_LIMIT_WINDOW_SECONDS = env_int(
+    "RECOVERY_RATE_LIMIT_WINDOW_SECONDS", 3600, minimum=1
+)

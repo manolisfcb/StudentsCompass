@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
@@ -93,7 +93,7 @@ class CommunityService:
             icon=community_data.icon,
             activity_status=community_data.activity_status,
             tags=self.normalize_tags(community_data.tags),
-            member_count=1,
+            member_count_cache=1,
             created_by=user_id,
         )
         self.session.add(community)
@@ -121,16 +121,20 @@ class CommunityService:
             raise ValueError("Community not found")
         membership = CommunityMemberModel(community_id=community_id, user_id=user_id)
         self.session.add(membership)
-        community.member_count = (community.member_count or 0) + 1
         try:
-            await self.session.commit()
+            # Flush before touching the cache: the unique constraint decides
+            # whether this join happens at all, and the counter must not be
+            # moved for a membership the database is about to refuse.
+            await self.session.flush()
         except IntegrityError as exc:
             # Two concurrent joins can both pass the is_member pre-check; the
             # unique constraint guards the data, so surface a clean conflict
-            # instead of a 500 (the whole transaction, including the counter
-            # increment, is rolled back).
+            # instead of a 500 (the whole transaction is rolled back).
             await self.session.rollback()
             raise AlreadyMemberError("Already a member") from exc
+
+        await self._bump_member_count_cache(community_id, 1)
+        await self.session.commit()
         await self.session.refresh(membership)
         return membership
 
@@ -149,8 +153,66 @@ class CommunityService:
         if not membership:
             raise ValueError("Not a member")
         await self.session.delete(membership)
-        community.member_count = max((community.member_count or 1) - 1, 0)
+        await self._bump_member_count_cache(community_id, -1)
         await self.session.commit()
+
+    async def _bump_member_count_cache(self, community_id: UUID, amount: int) -> None:
+        """Move the legacy cache column by ``amount``, in SQL.
+
+        Read-modify-write in Python lost increments whenever two people joined
+        at the same time: both read 7, both wrote 8. This cannot — but it is
+        still only a cache. The answer served to clients comes from the
+        membership rows themselves (``CommunityModel.member_count``), which is
+        why a drift here is a tidiness problem and no longer a wrong number.
+        """
+        column = CommunityModel.__table__.c.member_count
+        await self.session.execute(
+            update(CommunityModel)
+            .where(CommunityModel.id == community_id)
+            .values(member_count=func.max(column + amount, 0) if amount < 0 else column + amount)
+        )
+
+    async def member_count_drift(self, community_id: UUID | None = None) -> list[dict]:
+        """Where the cached number disagrees with the memberships.
+
+        Run it before and after changing what the API returns: it is the
+        evidence for whether the switch moves any number a user can see.
+        """
+        live_count = (
+            select(func.count(CommunityMemberModel.id))
+            .where(CommunityMemberModel.community_id == CommunityModel.id)
+            .correlate_except(CommunityMemberModel)
+            .scalar_subquery()
+        )
+        cached = CommunityModel.__table__.c.member_count
+        query = select(CommunityModel.id, CommunityModel.name, cached, live_count).where(
+            cached != live_count
+        )
+        if community_id is not None:
+            query = query.where(CommunityModel.id == community_id)
+        rows = (await self.session.execute(query)).all()
+        return [
+            {"community_id": row[0], "name": row[1], "cached": row[2], "members": row[3]}
+            for row in rows
+        ]
+
+    async def reconcile_member_counts(self, community_id: UUID | None = None) -> int:
+        """Rewrite the cache from the memberships. Explicit, never on a read.
+
+        A GET must not write: a listing that repaired the cache as a side effect
+        would turn every page view into a write and hide the drift instead of
+        reporting it.
+        """
+        drifted = await self.member_count_drift(community_id)
+        for entry in drifted:
+            await self.session.execute(
+                update(CommunityModel)
+                .where(CommunityModel.id == entry["community_id"])
+                .values(member_count=entry["members"])
+            )
+        if drifted:
+            await self.session.commit()
+        return len(drifted)
 
     async def list_posts(self, community_id: UUID) -> list[CommunityPostModel]:
         result = await self.session.execute(

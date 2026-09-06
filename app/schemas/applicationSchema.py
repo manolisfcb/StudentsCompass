@@ -1,26 +1,18 @@
 from pydantic import BaseModel, Field, UUID4
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
-from enum import Enum
+from app.models.applicationModel import ApplicationMatchStrength, ApplicationStatus
 from app.schemas.interviewSchema import InterviewAvailabilityRead
 
 if TYPE_CHECKING:
     from app.services.applications.applicationService import ApprovedResumeOption
 
 
-class ApplicationStatus(str, Enum):
-    APPLIED = "applied"
-    IN_REVIEW = "in_review"
-    INTERVIEW = "interview"
-    OFFER = "offer"
-    REJECTED = "rejected"
-    WITHDRAWN = "withdrawn"
-
-
-class ApplicationMatchStrength(str, Enum):
-    STRONG_MATCH = "strong_match"
-    MATCH = "match"
-    WEAK_MATCH = "weak_match"
+# Re-exported, not redeclared. Two identical enums meant a value could be valid
+# in the schema and unknown to the column (or the reverse) with nothing failing
+# until a request hit the database; there is now one definition, the one the
+# table is built from. Both names stay importable from here.
+__all__ = ["ApplicationStatus", "ApplicationMatchStrength"]
 
 
 class ApplicationBase(BaseModel):

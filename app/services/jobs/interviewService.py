@@ -16,6 +16,7 @@ from app.models.interviewAvailabilityModel import (
 )
 from app.models.userModel import User
 from app.schemas.interviewSchema import InterviewAvailabilityPublishRequest
+from app.services.applications.applicationService import ApplicationService, TransitionActor
 from app.services.notifications.emailNotificationService import EmailNotificationService
 
 
@@ -23,6 +24,9 @@ class InterviewService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.email_service = EmailNotificationService(session)
+        # Status is not this service's to assign: it goes through the one
+        # operation that also writes the event and the counters.
+        self.application_service = ApplicationService(session)
 
     async def publish_company_availabilities(
         self,
@@ -31,6 +35,9 @@ class InterviewService:
         recruiter: CompanyRecruiter,
         payload: InterviewAvailabilityPublishRequest,
     ) -> ApplicationModel:
+        # Same lock as any other transition: two recruiters publishing at once
+        # must not both decide the application was still IN_REVIEW.
+        await self.application_service.lock_application(application_id)
         application = await self._get_company_application(
             application_id=application_id,
             company_id=recruiter.company_id,
@@ -64,9 +71,17 @@ class InterviewService:
             self.session.add(interview_slot)
             created_slots.append(interview_slot)
 
-        application.status = ApplicationStatus.INTERVIEW
         application.assigned_recruiter_id = recruiter.id
         application.notes = payload.notes or "Interview availabilities shared by recruiter."
+        # Sharing availability moves the candidate to INTERVIEW. Assigning the
+        # attribute here left no event and no counter — the dashboard and the
+        # history could not see a transition the application had clearly made.
+        await self.application_service.transition_status(
+            application,
+            to_status=ApplicationStatus.INTERVIEW,
+            actor=TransitionActor(recruiter_id=recruiter.id),
+            occurred_at=now,
+        )
         await self.session.flush()
 
         candidate = await self._get_user(application.user_id)
@@ -112,18 +127,40 @@ class InterviewService:
         slot_id: UUID,
         user: User,
     ) -> ApplicationModel:
+        # Everything below reads the current booking and then writes it, so the
+        # candidature is locked first. Two clicks that arrived together used to
+        # both read "available", both book, both cancel the other's choice and
+        # both send a confirmation — for two different times.
+        await self.application_service.lock_application(application_id)
         application = await self._get_user_application(application_id=application_id, user_id=user.id)
         if application is None:
             raise HTTPException(status_code=404, detail="Application not found")
 
         slot = await self.session.scalar(
-            select(InterviewAvailabilityModel).where(
+            select(InterviewAvailabilityModel)
+            .where(
                 InterviewAvailabilityModel.id == slot_id,
                 InterviewAvailabilityModel.application_id == application.id,
             )
+            .execution_options(populate_existing=True)
         )
         if slot is None:
             raise HTTPException(status_code=404, detail="Interview slot not found")
+
+        booked_slot = await self._get_booked_slot(application_id=application.id)
+        if booked_slot is not None:
+            if booked_slot.id == slot.id:
+                # The same choice, sent again (a retry, a double tap). It already
+                # happened: return the state instead of a 400, and do not send a
+                # second confirmation for one interview.
+                return await self._get_user_application(
+                    application_id=application.id, user_id=user.id
+                )
+            raise HTTPException(
+                status_code=409,
+                detail="An interview time is already confirmed for this application.",
+            )
+
         if slot.status != InterviewAvailabilityStatus.AVAILABLE:
             raise HTTPException(status_code=400, detail="Interview slot is no longer available")
 
@@ -142,6 +179,17 @@ class InterviewService:
         for pending_slot in open_slots.scalars().all():
             pending_slot.status = InterviewAvailabilityStatus.CANCELLED
             pending_slot.updated_at = now
+
+        # Normally a no-op: availability is only shared for an application that
+        # is already at INTERVIEW. Going through the canonical transition means
+        # that if it somehow is not, the status, the event and the counters move
+        # together — and that a confirmation can never invent a silent change.
+        await self.application_service.transition_status(
+            application,
+            to_status=ApplicationStatus.INTERVIEW,
+            actor=TransitionActor(user_id=user.id),
+            occurred_at=now,
+        )
 
         recruiter = await self._get_recruiter(slot.recruiter_id)
         recruiter_name = self._display_name(
@@ -197,6 +245,17 @@ class InterviewService:
 
         await self.session.commit()
         return await self._get_user_application(application_id=application.id, user_id=user.id)
+
+    async def _get_booked_slot(self, *, application_id: UUID) -> InterviewAvailabilityModel | None:
+        """The confirmed time for this application, if there is one."""
+        return await self.session.scalar(
+            select(InterviewAvailabilityModel)
+            .where(
+                InterviewAvailabilityModel.application_id == application_id,
+                InterviewAvailabilityModel.status == InterviewAvailabilityStatus.BOOKED,
+            )
+            .execution_options(populate_existing=True)
+        )
 
     async def _cancel_existing_open_slots(self, *, application_id: UUID) -> None:
         result = await self.session.execute(

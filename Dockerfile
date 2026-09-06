@@ -2,14 +2,17 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# FORWARDED_ALLOW_IPS lets uvicorn trust the platform proxy/load balancer and
-# resolve the real client IP from X-Forwarded-For. Narrow this to the proxy CIDR
-# if the container is reachable directly (otherwise X-Forwarded-For is spoofable).
+# TRUSTED_PROXY_IPS declares which immediate peers may speak for the client
+# through X-Forwarded-For; the app resolves every per-IP limit through it (see
+# docs/ingress_and_client_ip.md). "private" trusts loopback/RFC1918 peers, which
+# is what a managed load balancer looks like from inside the container, while a
+# direct hit from the internet arrives from a public peer and cannot forge its
+# own IP. Narrow it to the balancer's CIDR once the real ingress is known.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=8080 \
-    FORWARDED_ALLOW_IPS=*
+    TRUSTED_PROXY_IPS=private
 
 COPY requirements.txt ./
 RUN pip install --upgrade pip \
@@ -26,4 +29,7 @@ USER app
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec uvicorn app.app:app --host 0.0.0.0 --port \"${PORT}\" --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS}\""]
+# No --proxy-headers: uvicorn would rewrite the socket peer from X-Forwarded-For
+# before the app sees it, which would leave two places deciding who is trusted.
+# TRUSTED_PROXY_IPS is the single source of truth.
+CMD ["sh", "-c", "exec uvicorn app.app:app --host 0.0.0.0 --port \"${PORT}\""]

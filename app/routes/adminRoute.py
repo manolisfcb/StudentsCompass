@@ -7,6 +7,7 @@ non-superusers and 401 for unauthenticated requests.
 
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from urllib.parse import urlparse
@@ -14,11 +15,19 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request, Header, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import (
+    CODE_ADMIN_RESOURCE_INVALID,
+    CODE_ADMIN_RESOURCE_UPLOAD,
+    client_failure,
+    server_failure,
+)
 from app.db import get_session
 from app.models.userModel import User
 from app.services.admin.adminService import AdminService, current_admin_user
 from app.services.resources.resourceService import ResourceService
 from app.schemas.resourceSchema import ResourceCreate
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -317,7 +326,23 @@ async def create_resource(
     try:
         resource = await svc.create_resource(payload)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        # The outline is validated after rows are already flushed, so the
+        # session has pending work that must not survive the failed request.
+        raise await client_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_ADMIN_RESOURCE_INVALID,
+            fallback_message="The resource could not be saved as submitted.",
+            session=svc.session,
+        )
+    except Exception as exc:
+        raise await server_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_ADMIN_RESOURCE_INVALID,
+            message="The resource could not be created.",
+            session=svc.session,
+        )
     return {
         "id": str(resource.id),
         "title": resource.title,
@@ -337,7 +362,21 @@ async def update_resource(
     try:
         resource = await svc.update_resource(resource_id, payload)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise await client_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_ADMIN_RESOURCE_INVALID,
+            fallback_message="The resource could not be saved as submitted.",
+            session=svc.session,
+        )
+    except Exception as exc:
+        raise await server_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_ADMIN_RESOURCE_INVALID,
+            message="The resource could not be updated.",
+            session=svc.session,
+        )
     if resource is None:
         raise HTTPException(status_code=404, detail="Resource not found")
     return {
@@ -365,10 +404,16 @@ async def upload_resource_file(
             file_name=file.filename or "resource_file",
             content_type=file.content_type or "application/octet-stream",
         )
-    except ValueError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+    except Exception as exc:
+        # ValueError landed here too: it was answered as 500 with the reason
+        # quoted, which is the same leak with a different exception type.
+        raise await server_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_ADMIN_RESOURCE_UPLOAD,
+            message="The file could not be uploaded.",
+            session=svc.session,
+        )
 
 
 @router.patch("/resources/{resource_id}/toggle-published")

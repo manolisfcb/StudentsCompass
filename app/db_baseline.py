@@ -205,14 +205,18 @@ def create_schema(connection) -> None:
         sa.Column('source', sa.String(length=64), nullable=False),
         sa.Column('reference_type', sa.String(length=64), nullable=True),
         sa.Column('reference_id', sa.UUID(), nullable=True),
+        sa.Column('status', sa.String(length=16), server_default='committed', nullable=False),
+        sa.Column('expires_at', sa.DateTime(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
         )
         op.create_index(op.f('ix_ai_usage_events_created_at'), 'ai_usage_events', ['created_at'], unique=False)
         op.create_index(op.f('ix_ai_usage_events_feature'), 'ai_usage_events', ['feature'], unique=False)
+        op.create_index('ix_ai_usage_events_reserved_expiry', 'ai_usage_events', ['user_id', 'feature', 'expires_at'], unique=False, postgresql_where=sa.text("status = 'reserved'"))
         op.create_index('ix_ai_usage_events_user_feature_created', 'ai_usage_events', ['user_id', 'feature', 'created_at'], unique=False)
         op.create_index(op.f('ix_ai_usage_events_user_id'), 'ai_usage_events', ['user_id'], unique=False)
+        op.create_index('uq_ai_usage_events_reference', 'ai_usage_events', ['reference_type', 'reference_id'], unique=True, postgresql_where=sa.text("reference_id IS NOT NULL AND status = 'committed'"))
         op.create_table('application_daily_aggregates',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('company_id', sa.UUID(), nullable=False),
@@ -540,6 +544,9 @@ def create_schema(connection) -> None:
         sa.Column('keywords', sa.Text(), nullable=True),
         sa.Column('summary', sa.Text(), nullable=True),
         sa.Column('error_message', sa.Text(), nullable=True),
+        sa.Column('attempts', sa.Integer(), server_default='0', nullable=False),
+        sa.Column('lease_expires_at', sa.DateTime(), nullable=True),
+        sa.Column('provider_attempted_at', sa.DateTime(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.Column('completed_at', sa.DateTime(), nullable=True),
@@ -547,6 +554,8 @@ def create_schema(connection) -> None:
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('ix_job_analysis_active_lease', 'job_analysis', ['lease_expires_at'], unique=False, postgresql_where=sa.text("status IN ('PENDING', 'PROCESSING')"))
+        op.create_index('uq_job_analysis_active_per_resume', 'job_analysis', ['user_id', 'resume_id'], unique=True, postgresql_where=sa.text("status IN ('PENDING', 'PROCESSING')"))
         op.create_table('job_skills',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('job_posting_id', sa.UUID(), nullable=True),
@@ -790,6 +799,7 @@ def create_schema(connection) -> None:
         )
         op.create_index('ix_interview_availabilities_application_status', 'interview_availabilities', ['application_id', 'status'], unique=False)
         op.create_index('ix_interview_availabilities_company_start', 'interview_availabilities', ['company_id', 'starts_at'], unique=False)
+        op.create_index('uq_interview_availabilities_booked_per_application', 'interview_availabilities', ['application_id'], unique=True, postgresql_where=sa.text("status = 'booked'"))
         op.create_table('resource_enrollments',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('user_id', sa.UUID(), nullable=False),

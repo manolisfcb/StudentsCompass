@@ -2,7 +2,7 @@ from datetime import datetime
 import enum
 import uuid
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, String, Text
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -20,6 +20,18 @@ class InterviewAvailabilityModel(Base):
     __table_args__ = (
         Index("ix_interview_availabilities_application_status", "application_id", "status"),
         Index("ix_interview_availabilities_company_start", "company_id", "starts_at"),
+        # At most one confirmed time per application. The slots belong to an
+        # application, not to a company calendar, so this says nothing about a
+        # recruiter's wider agenda — only that a candidate cannot end up with two
+        # confirmed interviews for the same job. The predicate uses the stored
+        # value ('booked'), because this Enum persists values, not names.
+        Index(
+            "uq_interview_availabilities_booked_per_application",
+            "application_id",
+            unique=True,
+            postgresql_where=text("status = 'booked'"),
+            sqlite_where=text("status = 'booked'"),
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

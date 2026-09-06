@@ -51,14 +51,14 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-007 | Contabilizar cada intento Gemini y exigir límites compartidos | CRITICAL | PHASE-1 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-009, TASK-020, TASK-030 |
 | TASK-008 | Autorizar archivos de recursos por entidad visible | CRITICAL | PHASE-1 | COMPLETED | TASK-001, TASK-006 | TASK-013, TASK-022, TASK-027 |
 | TASK-009 | Crear baseline y converger schemas históricos sin pérdida | CRITICAL | PHASE-0 | COMPLETED | TASK-001, TASK-002 | TASK-003, TASK-004, TASK-007, TASK-020, TASK-030 |
-| TASK-010 | Cubrir autenticación de compañías y validar proxy confiable | CRITICAL | PHASE-1 | TODO | TASK-001, TASK-007 | TASK-005, TASK-014, TASK-017, TASK-019, TASK-024 |
-| TASK-011 | Normalizar errores públicos y recuperación transaccional | CRITICAL | PHASE-1 | TODO | TASK-001, TASK-006, TASK-008 | TASK-023 |
-| TASK-012 | Conciliar ledger IA y completar ciclo de reservas | HIGH | PHASE-2 | TODO | TASK-001, TASK-007, TASK-009 | TASK-006, TASK-015, TASK-021 |
-| TASK-013 | Hacer durable e idempotente el procesamiento CV | HIGH | PHASE-2 | TODO | TASK-001, TASK-009, TASK-012 | TASK-008, TASK-022, TASK-027 |
-| TASK-014 | Centralizar transiciones y proyección de candidaturas | HIGH | PHASE-2 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-017, TASK-019, TASK-024 |
-| TASK-015 | Serializar selección de entrevista por candidatura | HIGH | PHASE-2 | TODO | TASK-001, TASK-009, TASK-014 | TASK-006, TASK-012, TASK-021 |
+| TASK-010 | Cubrir autenticación de compañías y validar proxy confiable | CRITICAL | PHASE-1 | COMPLETED | TASK-001, TASK-007 | TASK-005, TASK-014, TASK-017, TASK-019, TASK-024 |
+| TASK-011 | Normalizar errores públicos y recuperación transaccional | CRITICAL | PHASE-1 | COMPLETED | TASK-001, TASK-006, TASK-008 | TASK-023 |
+| TASK-012 | Conciliar ledger IA y completar ciclo de reservas | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-007, TASK-009 | TASK-006, TASK-015, TASK-021 |
+| TASK-013 | Hacer durable e idempotente el procesamiento CV | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-012 | TASK-008, TASK-022, TASK-027 |
+| TASK-014 | Centralizar transiciones y proyección de candidaturas | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-017, TASK-019, TASK-024 |
+| TASK-015 | Serializar selección de entrevista por candidatura | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-014 | TASK-006, TASK-012, TASK-021 |
 | TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | TODO | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
-| TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
+| TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | IN PROGRESS | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
 | TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
@@ -73,6 +73,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-026, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-026, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
+| TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -1561,7 +1562,7 @@ Risk: HIGH
 
 ## TASK-010 — Cubrir autenticación de compañías y validar proxy confiable
 
-Status: TODO
+Status: COMPLETED
 Priority: CRITICAL
 Phase: PHASE-1
 Category: Security / Bug Fix
@@ -1631,12 +1632,12 @@ Grupo C; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Cubrir autenticación de compañías y validar proxy confiable.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Cubrir autenticación de compañías y validar proxy confiable.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -1647,6 +1648,44 @@ Ejecutar tests de los componentes indicados mediante `.venv/bin/python -m pytest
 ### Rollback / Risk Notes
 
 Volver a la implementación anterior solo si conserva las correcciones de seguridad ya integradas y entiende el schema expandido. Conservar datos/backfills; preferir forward fix. Para cambios DB verificar copia/restore y no usar downgrade destructivo. Si no hay cambio DB, revertir solo archivos de la tarea y repetir validación de contratos.
+
+### Completion Notes
+
+**Entregado.** Login, registro y recuperación de compañías quedan bajo límite por IP, y "cuál es la IP del cliente" pasa a tener una sola definición gobernada por `TRUSTED_PROXY_IPS`. Documentación de ingreso en [`docs/ingress_and_client_ip.md`](../ingress_and_client_ip.md).
+
+**Cambios**
+
+- `app/config.py`: `env_str_any()` (gemelo de `env_int_any`, para renombrar una variable sin romper despliegues); `TRUSTED_PROXY_IPS` (default `private`, lee todavía `FORWARDED_ALLOW_IPS`); `RECOVERY_RATE_LIMIT_MAX` / `RECOVERY_RATE_LIMIT_WINDOW_SECONDS` (5/3600).
+- `app/middleware/rate_limit.py`: `TrustedProxyPolicy` + `resolve_client_ip()`. El *peer* del socket es lo único observable, así que decide si la cadena `X-Forwarded-For` puede leerse; cuando puede, se recorre de derecha a izquierda (cada proxy añade lo que vio, luego la entrada más a la derecha que no sea proxy confiable es el cliente; lo de más a la izquierda lo escribió el llamante y no es evidencia). `private` se define con una lista explícita de rangos (loopback, RFC1918, CGNAT `100.64/10`, link-local, ULA) en vez de `ipaddress.is_private`, que también incluye rangos de documentación. El parseo nunca levanta excepción: un token ilegible se ignora, nunca amplía la confianza.
+- `app/middleware/rate_limit.py` (reglas): `auth_login` cubre ahora `/auth/jwt/login` **y** `/api/v1/auth/company/login`; `auth_register_burst` y `auth_register_daily` cubren `/api/v1/auth/register` **y** `/api/v1/auth/company/register`; regla nueva `auth_recovery` para `forgot-password`, `reset-password` y `request-verify-token` de ambas identidades. Bucket compartido entre identidades a propósito: lo que se raciona es "intentos de credenciales desde esta IP" y "cuentas creadas desde esta IP", y una cuenta de compañía es una cuenta. Sin cambios en los límites de estudiante ya existentes.
+- `app/services/ai/aiRequestRateLimitService.py`: `get_client_ip()` leía `X-Forwarded-For` **sin condición alguna**, así que ese límite por IP se reseteaba por request con solo mandar la cabecera. Ahora usa `resolve_client_ip()`. Es el mismo defecto de F-09 (IP del cliente falsificable) en el segundo consumidor; se corrige aquí en vez de dejar media corrección, y es el único archivo tocado fuera de la lista de Scope.
+- `Dockerfile`: `FORWARDED_ALLOW_IPS=*` → `TRUSTED_PROXY_IPS=private`, y el `CMD` deja de pasar `--proxy-headers --forwarded-allow-ips`. uvicorn reescribía `request.client.host` desde la cabecera para *cualquier* peer antes de que la app viera quién conectó de verdad: eso ponía la decisión de confianza en dos sitios y el externo estaba en "confía en todos". Verificado que nada dependía del manejo de proxy de uvicorn: las URLs públicas salen de `APP_BASE_URL`/`PUBLIC_APP_ORIGIN` (`app/app.py:_get_public_base_url`) y el chequeo de mismo origen de admin lee `X-Forwarded-Proto`/`X-Forwarded-Host` por su cuenta (`app/routes/adminRoute.py:50`).
+- `tests/test_auth_rate_limits.py` (nuevo, 21 tests) y `docs/ingress_and_client_ip.md` (nuevo); fila de `FORWARDED_ALLOW_IPS` actualizada en `docs/ai_cost_controls.md`.
+
+**Evidencia anterior/posterior** (mismo probe, `TRUSTED_PROXY_IPS=private`, app sobre transporte ASGI, contador reiniciado por escenario)
+
+| Escenario | Antes | Después |
+| --- | --- | --- |
+| `POST /api/v1/auth/company/login` ×10 | `400`×10 — **0 rechazos** | `400`×8 + `429`×2 |
+| `POST /api/v1/auth/company/register` ×7 | `201`×7 — **7 cuentas** | `201`×5 + `429`×2 |
+| `POST /api/v1/auth/company/forgot-password` ×7 | `202`×7 | `202`×5 + `429`×2 |
+| `POST /api/v1/auth/company/login` ×10 desde peer público rotando `X-Forwarded-For` | `400`×10 | `400`×8 + `429`×2 |
+
+Bypass por cabecera, medido sobre una regla que **ya existía** (registro de estudiante, 8 intentos desde el peer público `203.0.113.9` rotando `X-Forwarded-For`): con `TRUSTED_PROXY_IPS=*` (el default anterior del Dockerfile) → `201`×8, **8 cuentas, 0 rechazos**; con el default nuevo `private` → `201`×5 + `429`×3. El bypass era real, no hipotético, siempre que el contenedor sea alcanzable de forma directa.
+
+**Validación ejecutada**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_auth_rate_limits.py -q` → **21 passed en 3.49 s**. Cubre: peer no confiable no puede declarar su IP; proxy confiable devuelve el cliente que vio; prefijo puesto por el llamante ignorado; CIDR explícito no implica rangos privados; `*` conserva la semántica anterior; `none` no confía en nadie; tokens ilegibles no amplían confianza; sin peer → `unknown`; `FORWARDED_ALLOW_IPS` legado sigue leyéndose; límite efectivo en login/registro/recuperación de compañía; bucket compartido entre identidades; login legítimo de compañía sigue devolviendo 200/204 con cookie; y el control inverso — con peer de loopback (proxy confiable) las IPs distintas **sí** obtienen buckets distintos, que es lo que evita que todos los usuarios detrás del balanceador compartan un solo cubo.
+- Suite completa: `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q` → **329 passed, 31 skipped en 45.36 s** (los 31 skips son la lane de integración sin sus URLs + 1 preexistente de pgvector).
+- Lane PostgreSQL/Redis desechable (`pgvector/pgvector:pg16` en 127.0.0.1:55432, `redis:7-alpine` en 127.0.0.1:56379): `TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration -q` → **31 passed en 29.89 s**. Sin regresión en el counter store compartido que respalda estas ventanas.
+- Versiones: Python 3.10.19, pytest 9.0.2, plataforma darwin. Sin llamadas pagadas ni migraciones; esta tarea no toca la DB.
+
+**Límites de la validación**
+
+- **El ingreso real no está verificado y esa parte queda abierta.** `private` es un default seguro, no una configuración cerrada: no se comprobó desde qué dirección alcanza el balanceador de producción al contenedor, ni si el contenedor es alcanzable directamente. Antes de cerrar la configuración hay que hacer los tres pasos de [`docs/ingress_and_client_ip.md`](../ingress_and_client_ip.md#before-closing-the-configuration) y fijar `TRUSTED_PROXY_IPS` al CIDR real. Requiere acceso a la plataforma de despliegue, no disponible desde esta sesión.
+- Riesgo asociado y por qué el default es conservador: si el balanceador alcanzara el contenedor desde una IP **pública** no listada, la cabecera se ignoraría y todos los usuarios caerían en un solo bucket (falso 429 masivo). Los rangos privados/CGNAT cubren las plataformas gestionadas habituales; aun así, el primer despliegue debe mirar métricas de 429 antes de darlo por bueno.
+- Sin smoke de navegador: el cambio es de red/limitación, sin superficie de frontend. El contrato de login legítimo se cubre con el test de cookie.
+- La cadena `X-Forwarded-For` de un proxy que **no** anexa lo que ve (mal configurado) no es recuperable por ninguna política; queda documentado.
 
 ### Estimated Impact
 
@@ -1659,7 +1698,7 @@ Risk: MEDIUM
 
 ## TASK-011 — Normalizar errores públicos y recuperación transaccional
 
-Status: TODO
+Status: COMPLETED
 Priority: CRITICAL
 Phase: PHASE-1
 Category: Security / Bug Fix
@@ -1729,12 +1768,12 @@ Grupo F; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Normalizar errores públicos y recuperación transaccional.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Normalizar errores públicos y recuperación transaccional.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -1745,6 +1784,51 @@ Ejecutar tests de los componentes indicados mediante `.venv/bin/python -m pytest
 ### Rollback / Risk Notes
 
 Volver a la implementación anterior solo si conserva las correcciones de seguridad ya integradas y entiende el schema expandido. Conservar datos/backfills; preferir forward fix. Para cambios DB verificar copia/restore y no usar downgrade destructivo. Si no hay cambio DB, revertir solo archivos de la tarea y repetir validación de contratos.
+
+### Completion Notes
+
+**Entregado.** Las cuatro rutas del Scope dejan de responder con `str(e)`: el cuerpo público lleva código estable, mensaje fijo y referencia corta; la causa real va al log redactada bajo esa misma referencia; y un fallo a mitad de transacción devuelve la sesión limpia.
+
+**Cambios**
+
+- `app/core/errors.py` (nuevo, el "helper error mapping" del Scope): `server_failure()` y `client_failure()` — se usan como `raise await server_failure(exc, ...)` — más `redact()`, `is_safe_client_message()`, `log_cause()` y los códigos estables (`CODE_*`).
+  - **Contrato del cuerpo:** `detail` sigue siendo *string* (todo el frontend lo lee así: `admin.js`, `career_lab.js`, `company-candidates.js`…), con la referencia añadida al final: `"The file could not be uploaded. (ref: 02b0b293135e)"`. El código estable y la referencia van además en las cabeceras `X-Error-Code` / `X-Error-Id`, que es lo nuevo que un cliente puede consumir sin parsear texto.
+  - **Redacción del log:** el traceback se formatea y se redacta aquí en vez de pasarlo por `exc_info`, porque la credencial suele vivir en el mensaje de la propia excepción y el formateador estándar lo imprimiría intacto. Se enmascaran DSN con credenciales, pares `clave=valor` credenciales (incluido `db_password:`), `Authorization:` hasta fin de línea, `Bearer …` y claves tipo `AKIA…`.
+  - **4xx conservados con criterio:** `client_failure()` preserva el mensaje escrito por el autor (`"Video lessons require a valid video URL."`) porque ese es el contrato existente, pero solo tras comprobarlo: el tipo de excepción no dice de dónde salió el texto, y `ValueError` también lo levantan las librerías. Un mensaje con `://`, `[SQL:`, ruta de fichero, nombre de librería, `…Error:` o más de 200 caracteres se sustituye por uno genérico y se registra.
+  - **Recuperación transaccional:** ambas funciones hacen `rollback` de la sesión si se les pasa. Tras una sentencia fallida la sesión solo puede levantar `PendingRollbackError`, y la petición **no** ha terminado con ella (dependencias y teardown siguen corriendo).
+- `app/routes/questionnaireRoute.py:41`, `app/routes/resourceRoute.py:47,49`, `app/routes/resumeRoute.py:93`, `app/routes/adminRoute.py:320,340,369,371`: todos los `str(e)`/`str(exc)` sustituidos por el mapeo. En `adminRoute` se añadió además `except Exception` en create/update de recursos: antes solo se capturaba `ValueError`, así que cualquier otro fallo salía por el handler por defecto sin rollback.
+- **Dos cambios de status deliberados** (el caso defectuoso descrito, no refactor lateral): `GET /api/v1/resources/file` devolvía **400** con `"Resource storage is not configured."` — culpaba al cliente y publicaba estado de configuración; ahora **503** genérico. `_require_resume_storage_location_id()` devolvía **500** con `"Server misconfiguration: missing resume storage configuration"`; ahora **503** genérico con referencia. Ningún cliente del repo depende de esos textos (`admin.js` y `career_lab.js` tienen su propio mensaje de reserva).
+- `tests/test_error_redaction.py` (nuevo, 25 tests) y `tests/integration/test_error_recovery_pg.py` (nuevo, 3 tests en la lane PostgreSQL).
+
+**Evidencia anterior/posterior** (misma excepción simulada en las cinco rutas; marcador sensible = DSN con contraseña + `[SQL: SELECT users.hashed_password …]` + `password=…`)
+
+| Endpoint | Antes | Después |
+| --- | --- | --- |
+| `GET /api/v1/questionnaire/profile` | 500, `detail` = la excepción completa (**DSN, contraseña y SQL en el cuerpo**) | 500, `"We could not load your questionnaire profile right now. (ref: 45e3f67e035c)"` |
+| `GET /api/v1/resources/file` | 500, `"Failed to fetch resource file: (psycopg2.OperationalError) … password=…"` | 500, `"The resource file could not be fetched. (ref: 1b4aa9f28444)"` |
+| `POST /api/v1/profile/cv/upload` | 500, `"Failed to upload file: … postgresql://app:<contraseña>@10.0.0.4:5432/prod …"` | 500, `"The CV could not be uploaded. Please try again. (ref: afc4f8d96e68)"` |
+| `POST /api/v1/admin/resources` (ValueError de librería) | 400 con la excepción completa | 400 genérico con referencia (4xx conservado) |
+| `POST /api/v1/admin/resources/upload-file` | 500 con la excepción completa | 500, `"The file could not be uploaded. (ref: …)"` |
+
+En los cinco casos: `leaks_secret=False`, `leaks_sql=False`, y `X-Error-Id` presente en cabecera y cuerpo. El log correspondiente sí conserva el traceback, con `postgresql://app:***@…` y `password=***`.
+
+**Validación ejecutada**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_error_redaction.py -q` → **25 passed en 2.46 s**. Cubre: redacción de las formas credenciales habituales; mensajes de validación legítimos que sí se muestran; texto de maquinaria que nunca llega al llamante; las cinco rutas sin filtración con referencia presente en cuerpo y log; 4xx preservado con el mensaje del autor intacto; y la ruta de éxito de subida de CV sin cambios.
+- Lane PostgreSQL: `TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration -q` → **34 passed en 21.00 s** (31 previos + 3 nuevos). Los nuevos prueban lo que SQLite no reproduce: PostgreSQL aborta el bloque tras la violación de constraint y rechaza todo hasta el `rollback`; después del handler la misma sesión vuelve a ejecutar `SELECT 1`.
+- Suite completa: `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q` → **354 passed, 31 skipped en 82.27 s**.
+- Versiones: Python 3.10.19, pytest 9.0.2, plataforma darwin. Sin llamadas pagadas ni migraciones.
+
+**Límites de la validación**
+
+- `is_safe_client_message()` es una heurística sobre texto, no una garantía. Es segura por diseño en la dirección que importa (ante la duda sustituye), pero un mensaje de validación futuro escrito con una ruta o un nombre de librería dentro se volverá genérico sin previo aviso. Lo correcto a medio plazo es que la validación levante un tipo propio en vez de `ValueError`; queda fuera del Scope de esta tarea (tocaría el codec de lecciones).
+- La redacción del log cubre formas credenciales conocidas. Un secreto sin forma reconocible (un valor suelto sin clave) seguiría en el traceback del log; el cuerpo público nunca lo lleva, porque **no** incluye texto de excepción en ningún caso.
+- Sin smoke de navegador: el `detail` sigue siendo string y los clientes ya tienen mensaje de reserva propio; no hay cambio de forma en la respuesta más allá de las dos cabeceras nuevas.
+- No se auditaron los servicios que las rutas llaman: si un servicio construye un `HTTPException` con texto interno por su cuenta, esta tarea no lo intercepta.
+
+**Hallazgo registrado, no corregido (fuera de Scope)** → **TASK-032**
+
+`app/routes/dashboardRoute.py:58,82,100` y `app/routes/jobRoute.py:131` siguen devolviendo `str(e)` en el `detail` de un 500, exactamente el mismo defecto en rutas que el Scope de esta tarea no lista. El helper ya existe; falta aplicarlo. Registrado como TASK-032 en vez de ampliar esta tarea en silencio.
 
 ### Estimated Impact
 
@@ -1757,7 +1841,7 @@ Risk: MEDIUM
 
 ## TASK-012 — Conciliar ledger IA y completar ciclo de reservas
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-2
 Category: Business Logic / Database / Bug Fix
@@ -1852,10 +1936,66 @@ Maintainability: HIGH
 Cost: HIGH
 Risk: HIGH
 
+### Completion Notes
+
+**Entregado.** El ledger es la única autoridad de consumo: cada reserva es una fila con ciclo explícito, un cargo es idempotente por referencia, y la historia previa al ledger se concilió **por identidad** para poder retirar el `max(legacy)`.
+
+**Cambios**
+
+- `app/models/aiUsageModel.py`: `AIUsageStatus` (`reserved` / `committed` / `released` / `expired` / `superseded`) más columnas `status` (server_default `committed`, así las filas históricas siguen contando igual) y `expires_at` (lease de la reserva). Dos índices parciales, declarados en el modelo para que autogenerate no proponga borrarlos: `uq_ai_usage_events_reference` (único sobre `reference_type, reference_id` **solo** donde `reference_id IS NOT NULL AND status='committed'`) e `ix_ai_usage_events_reserved_expiry`.
+- `app/services/ai/aiUsageService.py`:
+  - `reserve()` escribe además una fila `reserved` con lease de 15 min (`RESERVATION_LEASE_SECONDS`). Contador atómico y ledger dejan de contradecirse: el contador cierra la carrera entre réplicas, la fila hace durable y auditable la reclamación.
+  - `get_used_today()` lee **solo** el ledger: `committed` + `reserved` con lease vivo. Una reserva caducada deja de contar por predicado, sin trabajo de reparación en el camino de lectura.
+  - `_reclaim_expired_reservations()` corre en transacción propia (`async_sessionmaker(self.session.bind)`), nunca enredada con la del llamante: el UPDATE es el árbitro, y solo quien realmente marcó la fila baja el contador compartido — por eso dos reservas concurrentes no pueden devolver el mismo slot abandonado dos veces. El decremento solo toca una clave existente (un DECRBY sobre clave ausente la crearía sin TTL y el siguiente `reserve_incr` sembraría desde 1 en vez de desde el uso real).
+  - `commit_usage()` liquida la fila reservada en vez de añadir otra; ante una referencia ya cargada devuelve la existente y **libera** la reserva duplicada. Llamarlo dos veces sobre la misma reserva devuelve lo ya cobrado.
+  - `commit_usage`/`record_usage` escriben con sentencias Core dentro de un SAVEPOINT, no con flush ORM: un flush fallido envenena toda la sesión y el llamante perdería el resultado que iba a confirmar; dentro del savepoint solo se deshace el savepoint. Verificado contra PostgreSQL.
+  - `release(reason=...)` marca la fila y distingue `released_no_spend` de `released_after_provider_attempt`. Se apoya en la sesión viva si hay transacción abierta; si la petición que reservó ya terminó (el análisis de CV corre en background con sesión propia) abre una transacción corta sobre el mismo engine; si nada de eso es posible, el lease es el respaldo.
+  - `legacy_parity_gaps()`: la evidencia de conciliación, re-ejecutable. `_get_legacy_used_today()` sigue existiendo pero fuera del camino de cuota, como lado "antes" de la comparación.
+- `app/services/resumes/resumeCourseAuditService.py`: subida, alta de evaluación y extracción pasan **dentro** del `try` que devuelve la reserva. `_EvaluationAborted` transporta el dato que no se puede adivinar después — si el evaluador llegó a llamar al proveedor — y `_settle_failed_attempt()` cierra las dos mitades (slot y evaluación). El cargo y el resultado siguen confirmándose en la misma transacción (`commit_usage` solo hace flush; `complete_evaluation` confirma ambos).
+- `alembic/versions/d1c7e3a95b48_...py` (nueva, sobre `c3e8b1a7d240`): expansión → marcado de duplicados → índices → backfill por lotes reanudable → verificación de paridad. Nada histórico se borra: un cargo duplicado pasa a `superseded` y deja de contar, pero permanece como evidencia.
+- `app/db_baseline.py`: baseline actualizado con las dos columnas y los dos índices (si no, `test_bootstrapped_schema_matches_metadata` se niega a estampar).
+- `tests/integration/test_migrations.py::test_upgrade_head_commits_on_an_existing_database`: nombraba la tabla que creaba la revisión más reciente, así que fallaba con **cualquier** migración nueva en vez de con el fallo que vigila. Reescrito contra el head genérico (stamp rebobinado, replay, `stamped == head` + cero diferencias de schema).
+- Nuevos: `tests/test_ai_reservation_cycle.py` (11), `tests/test_resume_course_audit_recovery.py` (5), `tests/integration/test_ai_ledger_pg.py` (6). `tests/test_ai_usage.py`: el test `..._until_ledger_takes_over` describía el estado previo; sustituido por el contrato nuevo más uno de paridad.
+- `docs/ai_cost_controls.md`: sección "The reservation cycle" con la tabla de estados y las tres consecuencias.
+
+**Bug Fix declarado — dos cambios de comportamiento deliberados**
+
+1. **Un `job_analysis` sin cargo ya no consume cuota.** `max(ledger, legacy_count)` contaba *toda* fila de `job_analysis`, incluidas aquellas cuyo slot se había devuelto explícitamente (acierto de caché, CV ilegible). Ahora solo un cargo en el ledger es un cargo. Ninguno de esos casos llama al proveedor, así que no habilita gasto; el techo global de intentos sigue siendo el límite de coste.
+2. **Un fallo del proveedor devuelve el slot y lo deja dicho.** El comportamiento (devolver el slot) se conserva; lo nuevo es que la fila registra que hubo intento real, en vez de que sea indistinguible de "no se llamó a nadie".
+
+El backfill preserva la cuota histórica exactamente: cada fila legacy recibe un cargo, así que el total por usuario/feature/día después es el que `max(legacy)` daba antes.
+
+**Evidencia anterior/posterior**
+
+| Escenario | Antes | Después |
+| --- | --- | --- |
+| Fallo del evaluador tras reservar (5 intentos seguidos) | slot consumido en cada intento: el usuario agota su día con 3 fallos | `used_today == 0`, `remaining_today == 3`; 5 filas `released` con `released_after_provider_attempt` |
+| Fallo de subida / CV ilegible | reserva retenida hasta medianoche (la liberación vivía después del `try`) | slot devuelto, evaluación en `FAILED`, fila `released_no_spend` |
+| Mismo `job_analysis` confirmado dos veces | dos filas en el ledger: doble cargo | una fila; la segunda reserva se libera como `released_duplicate_reference` |
+| Dos sesiones PostgreSQL confirmando el mismo resultado a la vez | ambas insertan | `_committed_count == 1`, `used_today == 1`, sesión perdedora intacta |
+| Proceso muerto entre reservar y liquidar | slot retenido el resto del día | deja de contar al vencer el lease; el siguiente `reserve()` lo recupera y acredita el contador una sola vez |
+| 3 análisis + 2 auditorías previas al ledger | `used_today` = 3 / 2 vía `max(legacy)` | tras el backfill, 3 / 2 vía ledger, `legacy_parity_gaps() == []`, y re-ejecutar el backfill no cambia nada |
+
+**Validación ejecutada**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q` → **371 passed, 40 skipped en 45.40 s** (los 40 skips son las lanes PG/Redis sin variables y el test pgvector).
+- Lane PostgreSQL/Redis (`pgvector/pgvector:pg16` + `redis:7-alpine` desechables en 55432/56379): `TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration -q` → **40 passed en 21.56 s** (34 previos + 6 nuevos). Incluye la cadena completa de migraciones sobre la revisión nueva y el bootstrap por baseline.
+- Sin llamadas pagadas: el evaluador es un doble en todos los tests nuevos y la lane bloquea sockets salientes. Sin migraciones contra producción.
+- Python 3.10.19, pytest 9.0.2, darwin.
+
+**Límites de la validación**
+
+- El lease es de 15 minutos y está fijo en código (`RESERVATION_LEASE_SECONDS`), no en configuración. Si un análisis llegara a tardar más, su reserva dejaría de contar antes de liquidarse y el usuario podría reservar un slot extra. Los análisis actuales tardan segundos; hacerlo configurable pertenece a la tarea que toque `config.py`.
+- La corrección de deriva del contador Redis solo ocurre cuando el mismo usuario vuelve a reservar. Un usuario que no reintenta ese día conserva la deriva hasta que la clave con fecha expira; la fila DB, en cambio, se corrige por predicado de inmediato.
+- El backfill atribuye una fila de ledger a cada fila legacy porque eso es exactamente lo que la lectura anterior contaba. No intenta reconstruir *qué* llamada al proveedor costó dinero: ese dato nunca se guardó.
+- La paridad se **registra**, no se impone, en la migración: corre contra historia real y un operador necesita ver la divergencia, no que el upgrade muera. `legacy_parity_gaps()` permite reejecutarla después del despliegue.
+- Sin smoke de navegador: la respuesta de la auditoría conserva forma y claves (`attempts_today`, `daily_limit`, `attempts_remaining`); lo que cambia son los números en los casos de fallo, y eso está cubierto por tests de servicio.
+- `cvAnalysisService` sigue llamando a `reservation.release()` sin sesión (su fichero pertenece a TASK-013): funciona por la ruta de sesión propia, y TASK-013 puede darle una liquidación explícita al hacer durable el job.
+
 
 ## TASK-013 — Hacer durable e idempotente el procesamiento CV
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-2
 Category: Business Logic / Database / Bug Fix
@@ -1950,10 +2090,53 @@ Maintainability: HIGH
 Cost: HIGH
 Risk: HIGH
 
+### Completion Notes
+
+**Entregado.** `job_analysis` es ahora una cola durable: claim atómico, lease, recuperación tras reinicio y un solo trabajo vivo por CV. La respuesta `job_id`/`status` y el polling no cambian.
+
+**Cambios**
+
+- `app/models/jobAnalysisModel.py`: `attempts`, `lease_expires_at` y `provider_attempted_at`, más dos índices parciales sobre `status IN ('PENDING','PROCESSING')` (las etiquetas que PostgreSQL guarda de verdad, porque SQLAlchemy persiste los *nombres* del Enum): `uq_job_analysis_active_per_resume` (único por `user_id, resume_id` entre trabajos vivos) e `ix_job_analysis_active_lease`.
+- `app/services/ai/cvAnalysisService.py`:
+  - `create_pending_analysis()` inserta con sentencia Core dentro de un SAVEPOINT y, si pierde la carrera, devuelve el trabajo ganador. Es la corrección directa de "leer si hay uno corriendo" + INSERT como dos sentencias.
+  - `claim_job()`: un UPDATE condicional (`PENDING`, o `PROCESSING` con lease vencido) es todo el traspaso. Quien obtiene `rowcount == 1` es el dueño.
+  - `recover_stale_jobs()` clasifica por `provider_attempted_at`: sin llamada al proveedor y `attempts < 3` → vuelve a `PENDING`; sin llamada y agotado → `FAILED` explícito; **con llamada ya hecha → `FAILED` explícito, nunca reintento**.
+  - `process_job()` empieza reclamando; si no lo consigue, devuelve la reserva y sale. `_process_resume()` sella `provider_attempted_at` y confirma **antes** de llamar a Gemini, y reserva cuota ahí mismo si llegó sin reserva (el caso del trabajo recuperado). Estados terminales limpian el lease.
+- `app/services/ai/cvAnalysisRunner.py` (nuevo): barrido con sesión propia por trabajo, `wake()` para latencia, `stop()` limpio; registrado en el lifespan de `app/app.py`. La cola sigue siendo la tabla: meter Redis al lado sería un segundo sitio que puede discrepar sobre el mismo trabajo.
+- `app/routes/jobRoute.py`: sigue despachando por `BackgroundTasks` (latencia) y además despierta al runner (durabilidad); es seguro porque el claim es atómico. Si la petición se unió a un trabajo ya en marcha, devuelve su slot y responde "already in progress".
+- `alembic/versions/e8b4d2f7a316_...py` (nueva, sobre `d1c7e3a95b48`) y baseline actualizado. Aditiva: los cuatro estados conservan significado. Clasifica lo histórico sin reiniciarlo — las filas atascadas en `PROCESSING` sin lease (imposibles de distinguir de un worker vivo, salvo que ningún worker anterior a esta revisión puede seguir vivo) reciben estado terminal explícito, y los duplicados activos del mismo CV se cierran dejando el más reciente.
+- `docs/cv_analysis_jobs.md` (nuevo): cola, claim, recuperación y la regla que manda sobre "recupera".
+- Tests nuevos: `tests/test_cv_analysis_queue.py` (10) y `tests/integration/test_cv_analysis_queue_pg.py` (4).
+
+**Evidencia anterior/posterior**
+
+| Escenario | Antes | Después |
+| --- | --- | --- |
+| Dos POST simultáneos (PostgreSQL, dos conexiones) | dos filas `job_analysis`, dos análisis, dos gastos | una fila; ambos reciben el mismo `job_id` |
+| Dos workers reclaman el mismo trabajo | ambos procesaban | `[True, False]`; `attempts == 1` (perder la carrera no consume intento) |
+| Reinicio antes de llamar al proveedor | `PROCESSING` para siempre; el CV queda bloqueado | vuelve a `PENDING` al vencer el lease y el runner lo termina sin que nadie repita el POST |
+| Reinicio después de llamar al proveedor | igual, bloqueado | `FAILED` con motivo explícito; no se repite el gasto |
+| Trabajo que muere siempre igual | reintentos sin límite si algo lo reencolaba | `FAILED` tras 3 intentos |
+| Replay del mismo trabajo | segunda llamada al LLM y posible doble cargo | ni llamada ni cargo: no es reclamable y el ledger es idempotente por `job_id` |
+
+**Validación ejecutada**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q` → **381 passed, 44 skipped en 47.27 s**.
+- Lane PostgreSQL/Redis: `TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration -q` → **44 passed en 22.21 s** (40 + 4 nuevos), incluida la cadena de migraciones sobre la revisión nueva.
+- Sin llamadas pagadas: `ask_llm_model` y la descarga del CV son dobles en todos los tests; la lane bloquea sockets salientes.
+
+**Límites de la validación**
+
+- **Sin smoke de navegador.** `app/static/js/jobs.js` aparece en la evidencia pero no en el Scope de edición de esta tarea, así que no se tocó: la respuesta conserva forma (`job_id`, `status`, `keywords`, `error_message`). El cliente sigue rindiéndose a los 60 s; ahora el trabajo termina igualmente y el siguiente `analyze` devuelve el análisis cacheado, pero **el mensaje que ve el usuario sigue diciendo "Analysis timed out"**. Corregir ese texto pertenece a la tarea que toque el frontend de Jobs (TASK-026).
+- El runner es por proceso y su intervalo (5 s), el lease (300 s) y el máximo de intentos (3) están fijos en código, no en configuración.
+- No se probó un `SIGKILL` real a mitad de análisis: la interrupción se simula venciendo el lease, que es el estado que el proceso muerto deja. Un `kill -9` durante la llamada a Gemini quedaría cubierto por la misma rama (`provider_attempted_at` sellado y confirmado antes de llamar).
+- La recuperación de un trabajo adoptado reserva cuota de nuevo: si el usuario agotó su día entre el fallo y la recuperación, el trabajo termina en `FAILED` por cuota en vez de completarse. Es deliberado — el derecho se comprueba en el momento del gasto — pero es un cambio observable respecto a "la reserva original ya estaba hecha".
+- El índice único trata `resume_id NULL` como distinto (comportamiento estándar), así que no restringe trabajos sin CV asociado. El código actual siempre lo informa.
+
 
 ## TASK-014 — Centralizar transiciones y proyección de candidaturas
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-2
 Category: Business Logic / Database / Bug Fix
@@ -2048,10 +2231,57 @@ Maintainability: HIGH
 Cost: LOW
 Risk: HIGH
 
+### Completion Notes
+
+**Entregado.** El status de una candidatura cambia por una sola operación, que escribe estado, evento y contadores en la misma transacción. Los agregados se aplican con upsert e incremento en SQL, y los enums existen una vez.
+
+**Cambios**
+
+- `app/services/applications/applicationService.py`:
+  - `TransitionActor` (estudiante o recruiter) y `transition_status()`: la única vía por la que cambia el status. Devuelve `False` si ya está en ese estado, así que un comando repetido no genera un segundo evento de un cambio que no ocurrió. `record_application_created()` hace lo propio con el alta.
+  - `lock_application()`: bloqueo de fila antes de leer el status actual. Es un `select` del id a secas a propósito: añadir `FOR UPDATE` a la consulta que hidrata relaciones haría que PostgreSQL la rechazara por el outer join.
+  - `_apply_daily_aggregate_delta()` pasa a `INSERT ... ON CONFLICT DO UPDATE` con suma en SQL (dialecto PostgreSQL o SQLite). El leer-modificar-escribir perdía incrementos y, peor, dos escritores podían chocar creando la fila del día y convertir una actualización de analítica en una petición fallida.
+  - `rebuild_daily_aggregates(company_id, since)`: reconstruye la proyección desde el log de eventos. Explícita y con `since` obligatorio por el punto de corte (abajo).
+  - Los tres puntos que escribían status (`create_application`, `update_application`, `update_company_application`) pasan por la operación única, bajo bloqueo.
+- `app/services/jobs/interviewService.py`: publicar disponibilidad ya no asigna `application.status = INTERVIEW`; llama a `transition_status()` bajo el mismo bloqueo. Es el defecto concreto de F-11: esa transición no dejaba evento ni contador.
+- `app/schemas/applicationSchema.py`: `ApplicationStatus` y `ApplicationMatchStrength` se reexportan desde el modelo en vez de redeclararse. Eran dos enums idénticos, y un valor podía ser válido en el esquema y desconocido para la columna sin que nada fallara hasta llegar a la base.
+- `app/services/companies/companyRecruiterService.py`: el ranking de rol se define una vez (`COMPANY_RECRUITER_ROLE_RANK`, `recruiter_role_rank()`, `recruiter_role_rank_case()`) y `applicationService` lo usa. Estaba escrito dos veces, con el mismo orden y distinto valor para "cualquier otro" (3 en SQL, 99 en Python) — mismo orden, que es justo por lo que la duplicación sobrevivió. **Criterio sin cambios.**
+- `docs/application_transitions.md` (nuevo): contrato, las tres fuentes y su papel, y el punto de corte.
+- Tests nuevos: `tests/test_application_transitions.py` (10) y `tests/integration/test_application_transitions_pg.py` (3).
+
+**Punto de corte y diferencias legacy**
+
+Los eventos son historial autoritativo **desde el despliegue de este cambio**. Antes, las transiciones hechas al publicar disponibilidad no escribían nada, así que el log **subcuenta** entradas a INTERVIEW en ese periodo y los contadores de esos días son *más* correctos que un replay del log. Por eso `rebuild_daily_aggregates()` exige `since` y nunca se ejecuta sola: reconstruir hacia atrás sustituiría números correctos por una subcuenta. No se reconstruyó nada retroactivamente.
+
+**Evidencia anterior/posterior**
+
+| Escenario | Antes | Después |
+| --- | --- | --- |
+| Publicar disponibilidad de entrevista | status = INTERVIEW, **cero eventos**, contador `entered_interview_count` sin tocar | un evento con `from_status=IN_REVIEW` y actor recruiter, `entered_interview_count = 1` |
+| Publicar dos veces | segunda pasada volvía a asignar el mismo status | segunda es no-op: un solo evento, un solo conteo |
+| 20 incrementos concurrentes (PostgreSQL, 20 sesiones) | incrementos perdidos por leer-modificar-escribir; posible violación de la constraint al crear la fila del día | `status_change_events_count == 20`, `entered_in_review_count == 20`, **una** fila del día |
+| El mismo comando dos veces a la vez (PostgreSQL) | ambos leían "applied" y ambos escribían evento | un evento, un conteo (lo decide el bloqueo de fila) |
+| Enum del esquema vs columna | dos clases distintas con los mismos valores | `SchemaStatus is ColumnStatus` |
+| Proyección corrupta de un día | sin forma de repararla salvo a mano | `rebuild_daily_aggregates(since=hoy)` la redibuja desde los eventos |
+
+**Validación ejecutada**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q` → **391 passed, 47 skipped en 59.91 s**.
+- Lane PostgreSQL/Redis: `TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration -q` → **47 passed en 26.89 s** (44 + 3 nuevos).
+- Sin migración: el cambio es de comportamiento, no de schema. Sin envío real de email (el servicio de notificaciones sigue encolando mocks). Sin llamadas pagadas.
+
+**Límites de la validación**
+
+- **Sin smoke de navegador.** No se tocó frontend: los payloads conservan forma y los valores de los enums son idénticos (verificado en test). Los clientes leen `status` como string.
+- El bloqueo de fila no existe en SQLite, así que en la lane rápida los tests de concurrencia pasarían por construcción; la afirmación real vive en la lane PostgreSQL, que es donde se ejecutó.
+- `rebuild_daily_aggregates()` no tiene endpoint ni comando: se invoca desde una sesión de mantenimiento. Exponerlo pertenece a la tarea de dashboard (TASK-025).
+- La cuenta `applications_deleted_count` no se ejercita aquí: ninguna ruta emite hoy un evento `DELETED`. El rebuild lo contempla, pero no hay dato con el que probarlo.
+- El bloqueo se toma en las tres rutas de transición y en la publicación de entrevista. Cualquier código futuro que escriba `application.status` directamente vuelve a abrir el agujero; no hay constraint que lo impida, solo la operación única y esta documentación.
+
 
 ## TASK-015 — Serializar selección de entrevista por candidatura
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-2
 Category: Business Logic / Database / Bug Fix
@@ -2145,6 +2375,46 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: HIGH
+
+### Completion Notes
+
+**Entregado.** Confirmar una entrevista está serializado por candidatura, es idempotente al reintentar el mismo slot, y la base impone como máximo una reserva efectiva por candidatura.
+
+**Cambios**
+
+- `app/models/interviewAvailabilityModel.py`: índice único parcial `uq_interview_availabilities_booked_per_application` sobre `application_id` donde `status = 'booked'` (valor, no nombre: este Enum persiste valores). **No es una agenda global**: los slots pertenecen a una candidatura, así que esto no dice nada sobre el calendario del recruiter.
+- `app/services/jobs/interviewService.py`:
+  - `select_user_availability()` bloquea la candidatura antes de leer el estado, reutilizando `ApplicationService.lock_application()` de TASK-014.
+  - Reintentar **el mismo** slot devuelve el estado existente (200) en vez de 400 "no longer available", y no encola una segunda confirmación.
+  - Elegir **otro** slot cuando ya hay uno confirmado responde **409** con mensaje explícito, en vez de sobrescribir en silencio.
+  - Tras reservar, pasa por `transition_status(INTERVIEW)`: normalmente no-op, pero garantiza que una confirmación nunca implique un cambio de estado invisible.
+  - `_get_booked_slot()` como única lectura de "la hora confirmada".
+- `alembic/versions/f4c9a17be205_...py` (nueva, sobre `e8b4d2f7a316`) y baseline actualizado. Primero **inventaria** los duplicados y los registra, luego conserva la confirmación más antigua por candidatura (la que ambas partes conocieron primero) y pasa el resto a `cancelled`. **No elimina disponibilidades.** El downgrade suelta el índice pero no resucita las canceladas: eso recrearía la ambigüedad que la revisión resolvió.
+- Tests nuevos: `tests/test_interview_selection.py` (6) y `tests/integration/test_interview_selection_pg.py` (3).
+
+**Evidencia anterior/posterior**
+
+| Escenario | Antes | Después |
+| --- | --- | --- |
+| Dos sesiones eligiendo slots distintos a la vez (PostgreSQL) | ambas reservaban, cada una cancelaba la elección de la otra, **dos** emails "interview confirmed" | una reserva; la otra recibe 409; **un** email de confirmación |
+| Reintentar el mismo slot | 400 "Interview slot is no longer available" sobre la elección propia | 200 con el estado actual, sin segundo email |
+| Elegir otro slot después de confirmar | reservaba el segundo y cancelaba el primero | 409 explícito; el primero sigue reservado |
+| Escritura directa de un segundo `booked` | permitida | `IntegrityError` del índice parcial |
+| Base con dos `booked` en la misma candidatura | indetectable | la migración lo reporta, conserva el más antiguo y cancela el otro; ambas filas siguen en la tabla |
+
+**Validación ejecutada**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q` → **397 passed, 50 skipped en 55.27 s**.
+- Lane PostgreSQL/Redis: `TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration -q` → **50 passed en 30.48 s** (47 + 3 nuevos), incluida la cadena de migraciones sobre la revisión nueva.
+- Emails: siguen siendo el servicio de notificaciones *mock* (se escriben en `email_notification_logs`); el conteo de confirmaciones es precisamente lo que verifica el test de concurrencia. **No se envió correo real.**
+
+**Límites de la validación**
+
+- **Sin smoke de navegador.** `app/static/js/jobs.js` no está en el Scope de esta tarea y no se tocó; su manejador de `interview-selection` muestra el `detail` de cualquier respuesta no-ok, así que el 409 nuevo se renderiza con su texto, y el reintento ahora devuelve 200 y pinta "Interview confirmed". Se verificó leyendo `selectInterviewAvailability()`, no ejecutando el navegador.
+- **Cambio de contrato deliberado:** el mismo slot pasa de 400 a 200 y un slot distinto de 400 a 409. Ningún cliente del repo distingue códigos en esa llamada.
+- No se ofrece "cambiar de hora": una vez confirmada, elegir otra es 409. Reprogramar es una decisión de producto, no un defecto de concurrencia; si se quiere, es tarea aparte.
+- Publicar nuevas disponibilidades cancela las `available` pero no toca una ya `booked`, así que tras confirmar, unos slots nuevos no serían elegibles (409). Es el comportamiento anterior más el índice; cambiarlo sería ampliar el alcance.
+- El bloqueo de fila no existe en SQLite: la lane rápida prueba las reglas y el índice, la concurrencia real solo se demuestra en PostgreSQL.
 
 
 ## TASK-016 — Unificar aprobación de CV y proyección de progreso
@@ -2247,7 +2517,7 @@ Risk: HIGH
 
 ## TASK-017 — Derivar contador de comunidad desde membresías
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-2
 Category: Business Logic / Bug Fix
@@ -3799,6 +4069,7 @@ Can start when each task's concrete dependencies are COMPLETED (no barrera globa
 
 - TASK-016 — Unificar aprobación de CV y proyección de progreso; depends on TASK-001, TASK-009, TASK-011, TASK-012, TASK-014.
 - TASK-028 — Medir flujos críticos y hacer visibles fallos parciales; depends on TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023.
+- TASK-032 — Extender el mapeo de errores públicos a las rutas restantes; depends on TASK-011.
 
 ### Parallel Group H
 
@@ -3971,3 +4242,89 @@ graph TD
     T029 --> T031
     T030 --> T031
 ```
+
+
+## TASK-032 — Extender el mapeo de errores públicos a las rutas restantes
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-3
+Category: Security / Bug Fix
+
+### Objective
+
+Aplicar el mapeo de errores de `app/core/errors.py` a las rutas que quedaron fuera del Scope de TASK-011 y siguen devolviendo `str(e)` al llamante.
+
+### Problem
+
+Hallazgo de TASK-011: `app/routes/dashboardRoute.py:58,82,100` responde `500` con `detail=f"Error fetching dashboard data: {str(e)}"` y `app/routes/jobRoute.py:131` con `detail=f"Job search failed: {str(e)}"`. Es el mismo defecto que F-09/F-10 describen para las cuatro rutas ya corregidas: una excepción de storage, driver o proveedor lleva DSN, SQL y parámetros al cuerpo público. `dashboardRoute.py:57,81` además registra la causa sin redacción.
+
+### Evidence / Location
+
+- `app/routes/dashboardRoute.py:57,58,81,82,100; app/routes/jobRoute.py:131` (Confidence: HIGH).
+- Alcance de edición conocido: app/routes/dashboardRoute.py, app/routes/jobRoute.py: manejo de errores; tests de errores redactados.
+
+### Desired State
+
+Ninguna ruta compone el cuerpo público a partir del texto de una excepción. Cuerpo con código estable, mensaje fijo y referencia; causa al log redactada; `rollback` de la sesión donde el fallo la deja inválida.
+
+**Bug Fix declarado:** se corrige únicamente el comportamiento defectuoso descrito; los flujos válidos mantienen contrato.
+
+### Proposed Solution
+
+Usar `server_failure()` / `client_failure()` de `app/core/errors.py` con códigos nuevos para dashboard y búsqueda de empleo. No inventar helper nuevo ni cambiar el contrato de los 2xx.
+
+### Scope
+
+IN SCOPE:
+
+- app/routes/dashboardRoute.py, app/routes/jobRoute.py: manejo de errores; tests de errores redactados.
+
+OUT OF SCOPE:
+
+- Cambiar la forma de las respuestas correctas, la agregación del dashboard o el scraper de empleo.
+- Reescribir el helper de errores o su heurística de mensajes.
+
+### Files / Components Likely Affected
+
+- app/routes/dashboardRoute.py, app/routes/jobRoute.py.
+
+### Dependencies
+
+Depends on: TASK-011
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: TASK-030
+
+### Implementation Notes
+
+Reutilizar el patrón ya integrado en `app/routes/resourceRoute.py` y `app/routes/adminRoute.py`. `dashboardRoute` recibe `session`: pasarla al helper para el `rollback`.
+
+### Acceptance Criteria
+
+- [ ] Ninguna de las dos rutas compone `detail` con texto de excepción.
+- [ ] Excepción simulada con marcador sensible no aparece en cuerpo ni en log público.
+- [ ] 2xx y 4xx existentes conservan contrato.
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Mismo patrón de prueba que `tests/test_error_redaction.py`: excepción simulada con marcador sensible por ruta, comprobar cuerpo, cabeceras `X-Error-Code`/`X-Error-Id` y log redactado.
+
+### Rollback / Risk Notes
+
+Cambio acotado a manejo de errores; revertir solo esos archivos y repetir la validación de contratos.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: MEDIUM
+Cost: LOW
+Risk: LOW

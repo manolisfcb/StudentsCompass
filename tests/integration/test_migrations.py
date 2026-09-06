@@ -499,9 +499,11 @@ async def test_upgrade_head_commits_on_an_existing_database(pg_engine, postgres_
     head = script.get_current_head()
     previous = script.get_revision(head).down_revision
 
-    # Rewind one revision, undoing what it created, and replay it.
+    # Rewind the stamp one revision and replay the head on a database that
+    # already has its changes. Deliberately phrased against whatever the head
+    # happens to be — naming the table the newest revision creates made this
+    # test fail on the *next* migration rather than on the bug it guards.
     async with pg_engine.begin() as conn:
-        await conn.execute(text("DROP TABLE IF EXISTS storage_deletion_intents"))
         await conn.execute(
             text("UPDATE alembic_version SET version_num = :previous"), {"previous": previous}
         )
@@ -510,7 +512,11 @@ async def test_upgrade_head_commits_on_an_existing_database(pg_engine, postgres_
 
     async with pg_engine.connect() as conn:
         stamped = (await conn.execute(text("SELECT version_num FROM alembic_version"))).scalar_one()
-        tables = set(await conn.run_sync(lambda c: inspect(c).get_table_names()))
+        differences = await conn.run_sync(
+            lambda c: compare_metadata(MigrationContext.configure(c), metadata)
+        )
 
+    # If the upgrade had rolled back, the version would still read `previous`.
     assert stamped == head, "the upgrade must be committed, not rolled back"
-    assert "storage_deletion_intents" in tables
+    # And replaying a revision over its own result must not disturb the schema.
+    assert differences == []

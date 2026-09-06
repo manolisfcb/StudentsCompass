@@ -5,6 +5,8 @@ from time import monotonic
 
 from fastapi import HTTPException, Request
 
+from app.middleware.rate_limit import resolve_client_ip
+
 AI_ANALYSIS_RATE_LIMIT_PER_MINUTE = 5
 AI_ANALYSIS_RATE_LIMIT_WINDOW_SECONDS = 60
 AI_ANALYSIS_RATE_LIMIT_MESSAGE = "Too many analysis requests right now. Please wait a minute and try again."
@@ -38,10 +40,10 @@ class AIRequestRateLimitService:
 
     @staticmethod
     def get_client_ip(request: Request) -> str:
-        forwarded_for = request.headers.get("x-forwarded-for")
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip()
-        return request.client.host if request.client else "unknown"
+        # Same resolution as the request limiter: X-Forwarded-For counts only
+        # when the immediate peer is a declared proxy. Reading the raw header
+        # unconditionally let a direct caller reset this limit per request.
+        return resolve_client_ip(request)
 
     def check_ip(self, ip: str) -> None:
         now = monotonic()

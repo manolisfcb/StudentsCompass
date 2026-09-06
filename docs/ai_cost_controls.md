@@ -10,7 +10,8 @@ cost, per user and globally, even under hundreds of concurrent users or abuse.
    a shared atomic counter *before* any LLM spend, so concurrent requests cannot
    race past the limit. The durable ledger (`AIUsageEventModel`) is the source of
    truth; the counter is seeded from it so a counter reset never hands back
-   already-spent quota.
+   already-spent quota. See [the reservation cycle](#the-reservation-cycle) for
+   what happens to a slot after it is claimed.
 2. **Global attempt ceiling + kill switch.**
    `aiBudgetGuard.ensure_llm_attempt_allowed()` enforces a hard ceiling on total
    *provider attempts*/day across all users plus a per-minute attempt-rate cap.
@@ -36,6 +37,45 @@ features fall back to "Manual mode" until `REDIS_URL` works, unless
 `AI_ALLOW_UNSHARED_COUNTER=1` explicitly accepts a single-process ceiling. IP
 rate limits keep working on the fallback — they are best-effort and fail open.
 
+## The reservation cycle
+
+A reserved slot is a row in `ai_usage_events`, not just a number in a counter,
+and it ends in exactly one state:
+
+| `status` | Means | Counts against the daily limit |
+|---|---|---|
+| `reserved` | claimed before the provider call, lease running | yes, while `expires_at` is in the future |
+| `committed` | a result was produced and charged | yes |
+| `released` | handed back — no result | no |
+| `expired` | nobody settled it and the lease ran out | no |
+| `superseded` | duplicate charge for a reference already charged, kept as evidence | no |
+
+Three consequences worth knowing:
+
+* **A charge is idempotent per result.** The partial unique index
+  `uq_ai_usage_events_reference` allows one *committed* row per
+  `(reference_type, reference_id)`, so a replayed background task or a retried
+  request records the same analysis once. The loser of that race releases its
+  own reservation instead of stranding it.
+* **A dead process cannot cost a user their day.** `RESERVATION_LEASE_SECONDS`
+  (15 min) bounds how long an unsettled claim counts. An expired reservation
+  stops counting by predicate — no repair job — and the next `reserve()` by the
+  same user reclaims it and credits the shared counter back, exactly once.
+* **Provider spend and user entitlement are different things.** A failed attempt
+  releases the user's slot (`released_after_provider_attempt` records that an
+  attempt did happen); the money side is the global attempt ceiling in layer 2,
+  which counts every attempt including retries.
+
+The ledger is the only authority for "how much has this user used today".
+Historical rows from before it existed — `job_analysis` and
+`resume_course_evaluations` — were reconciled into it **by identity** by the
+`d1c7e3a95b48` migration, one ledger row per legacy attempt, preserving the
+original timestamps. The previous read took `max(ledger_count, legacy_count)`,
+which could not tell a missing ledger row from a genuinely cheaper day, and
+charged for `job_analysis` rows whose slot had been explicitly released (a cache
+hit, an unreadable CV). `AIUsageService.legacy_parity_gaps()` re-runs the
+comparison at any time; an empty result is the invariant.
+
 ## Three units, kept apart
 
 `AI_BASE_DAILY_LIMIT` counts **user units** (what a person may spend per day).
@@ -60,12 +100,14 @@ attempt level.
 | `MAX_UPLOAD_BYTES` | `5000000` | Max resume upload size (413 above) |
 | `REGISTER_RATE_LIMIT_MAX` / `_WINDOW_SECONDS` | `5` / `3600` | Register burst limit per IP |
 | `REGISTER_IP_DAILY_ACCOUNT_CAP` | `5` | Accounts/IP/day |
-| `FORWARDED_ALLOW_IPS` | `*` | Proxy IPs uvicorn trusts for the real client IP |
+| `RECOVERY_RATE_LIMIT_MAX` / `_WINDOW_SECONDS` | `5` / `3600` | forgot/reset password + verify-token per IP (both identities) |
+| `TRUSTED_PROXY_IPS` | `private` | Peers allowed to declare the client IP via `X-Forwarded-For` (was `FORWARDED_ALLOW_IPS`, still read) |
 
-> Production must run uvicorn with `--proxy-headers --forwarded-allow-ips`
-> (already in the Dockerfile) so rate limits key on the real client IP and not a
-> spoofable header. Narrow `FORWARDED_ALLOW_IPS` to the proxy CIDR if the
-> container is reachable directly.
+> Rate limits are only as good as the client IP they key on. `TRUSTED_PROXY_IPS`
+> decides which immediate peer may speak for the client; the default trusts
+> private/loopback peers (a managed load balancer) and ignores the header on a
+> direct hit from the internet. Narrow it to the balancer CIDR once the real
+> ingress is known — see [ingress_and_client_ip.md](ingress_and_client_ip.md).
 
 ## Granting extra quota (until billing exists)
 
