@@ -3,8 +3,10 @@
 Two interchangeable backends sit behind a single async interface:
 
 * ``RedisCounterStore`` — counters are shared across every process/replica, so
-  daily quotas, the global LLM budget and IP rate limits hold even when the app
-  is scaled horizontally. Selected automatically when ``REDIS_URL`` is set.
+  daily quotas, the global LLM attempt ceiling and IP rate limits hold even when
+  the app is scaled horizontally. Selected automatically when ``REDIS_URL`` is
+  set. ``is_shared`` tells cost guards whether the ceiling they are about to
+  enforce is actually global.
 * ``InMemoryCounterStore`` — per-process fallback for local dev and tests. No
   external dependency; counters reset on restart.
 
@@ -157,6 +159,21 @@ return {1, 0}
 """
 
 
+# Release must be a single round trip: the previous DECRBY-then-SET pair could
+# drop a concurrent reservation, because an INCR landing between the two steps
+# was overwritten by the SET.
+_DECR_FLOOR_LUA = """
+local key = KEYS[1]
+local amount = tonumber(ARGV[1])
+local value = redis.call('DECRBY', key, amount)
+if value < 0 then
+  redis.call('SET', key, 0, 'KEEPTTL')
+  return 0
+end
+return value
+"""
+
+
 _RESERVE_INCR_LUA = """
 local key = KEYS[1]
 local base = tonumber(ARGV[1])
@@ -180,6 +197,7 @@ class RedisCounterStore(CounterStore):
         self._redis = redis_asyncio.from_url(url, encoding="utf-8", decode_responses=True)
         self._sliding_window = self._redis.register_script(_SLIDING_WINDOW_LUA)
         self._reserve_incr = self._redis.register_script(_RESERVE_INCR_LUA)
+        self._decr_floor = self._redis.register_script(_DECR_FLOOR_LUA)
 
     async def reserve_incr(self, key: str, *, base: int, ttl_seconds: int) -> int:
         try:
@@ -202,11 +220,8 @@ class RedisCounterStore(CounterStore):
 
     async def decr(self, key: str, *, amount: int = 1) -> int:
         try:
-            value = int(await self._redis.decrby(key, amount))
-            if value < 0:
-                await self._redis.set(key, 0, keepttl=True)
-                return 0
-            return value
+            value = await self._decr_floor(keys=[key], args=[amount])
+            return int(value)
         except Exception as exc:  # noqa: BLE001
             raise CounterStoreError(str(exc)) from exc
 

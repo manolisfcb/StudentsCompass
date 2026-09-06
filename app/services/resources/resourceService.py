@@ -27,6 +27,18 @@ from app.services.storage.storageService import (
     get_storage_service,
 )
 
+RESOURCE_KEY_PREFIX = "resources/"
+
+
+class ResourceFileNotFound(LookupError):
+    """The key does not belong to any resource the catalogue lets a user open.
+
+    Deliberately the same answer for "no such file", "file exists but belongs to
+    a locked or unpublished resource" and "file exists in the bucket but no
+    resource references it": telling those apart would turn the endpoint back
+    into an oracle for the bucket's contents.
+    """
+
 
 class ResourceService:
     MANDATORY_RESOURCE_TITLES: tuple[str, ...] = (
@@ -250,12 +262,104 @@ class ResourceService:
         completed_ids = await self.get_completed_lesson_ids_for_resource(resource_id=resource.id, user_id=user_id)
         return self.to_progress_payload(resource, completed_ids)
 
-    async def download_resource_file(self, key: str) -> tuple[bytes, str, str]:
+    # Unreserved URL characters survive percent-encoding unchanged, so a run of
+    # them is the same in the key and in any URL that embeds it.
+    _URL_SAFE_CHARS = frozenset(
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~"
+    )
+
+    @classmethod
+    def _prefilter_fragment(cls, filename: str) -> str:
+        """Longest leading run of the file name that a stored URL cannot have
+        re-encoded. Current keys are ``<uuid4 hex><ext>`` and older ones a
+        timestamped name, so in practice this is the whole name and is highly
+        selective; when it comes out empty the caller scans instead."""
+        fragment: list[str] = []
+        for char in filename:
+            if char not in cls._URL_SAFE_CHARS:
+                break
+            fragment.append(char)
+        return "".join(fragment)
+
+    @staticmethod
+    def _normalize_file_key(key: str) -> str | None:
         safe_key = (key or "").strip().lstrip("/")
+        if not safe_key or not safe_key.startswith(RESOURCE_KEY_PREFIX):
+            return None
+        # A key is a stored object name, never a path to walk.
+        if ".." in safe_key.split("/"):
+            return None
+        return safe_key
+
+    async def resolve_authorized_file_key(self, key: str) -> str | None:
+        """Return the key only if a visible resource actually references it.
+
+        Belonging to the ``resources/`` prefix grants nothing: the catalogue
+        decides what a user may open, so the file has to be reachable from a
+        published, unlocked resource — the same conditions
+        :meth:`get_published_resource` applies to the resource itself.
+        """
+        safe_key = self._normalize_file_key(key)
         if not safe_key:
-            raise ValueError("File key is required.")
-        if not safe_key.startswith("resources/"):
-            raise ValueError("Invalid resource file key.")
+            return None
+
+        # Narrow the scan in SQL by the leading part of the file name, which the
+        # upload path makes unique per object, then confirm the full key by
+        # decoding the content. The LIKE is only a prefilter and never
+        # authorizes on its own: a stored URL may carry a provider prefix the
+        # key does not have, and may percent-encode the rest of the name.
+        # autoescape keeps "_" in generated names literal.
+        filename = safe_key.rsplit("/", 1)[-1]
+        fragment = self._prefilter_fragment(filename)
+
+        lesson_query = (
+            select(ResourceLessonModel.content_type, ResourceLessonModel.content)
+            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
+            .join(ResourceModel, ResourceModel.id == ResourceModuleModel.resource_id)
+            .where(
+                ResourceModel.is_published.is_(True),
+                ResourceModel.is_locked.is_(False),
+            )
+        )
+        if fragment:
+            lesson_query = lesson_query.where(
+                ResourceLessonModel.content.contains(fragment, autoescape=True)
+            )
+        lesson_rows = await self.session.execute(lesson_query)
+        for content_type, content in lesson_rows.all():
+            referenced = self.lesson_content_codec.referenced_storage_keys(
+                content_type=content_type,
+                raw_content=content,
+                prefix=RESOURCE_KEY_PREFIX,
+            )
+            if safe_key in referenced:
+                return safe_key
+
+        # A resource can also point straight at a stored file.
+        resource_query = select(ResourceModel.external_url).where(
+            ResourceModel.is_published.is_(True),
+            ResourceModel.is_locked.is_(False),
+            ResourceModel.external_url.is_not(None),
+        )
+        if fragment:
+            resource_query = resource_query.where(
+                ResourceModel.external_url.contains(fragment, autoescape=True)
+            )
+        resource_rows = await self.session.execute(resource_query)
+        for (external_url,) in resource_rows.all():
+            if self.lesson_content_codec.extract_storage_key(
+                external_url, prefix=RESOURCE_KEY_PREFIX
+            ) == safe_key:
+                return safe_key
+
+        return None
+
+    async def download_resource_file(self, key: str) -> tuple[bytes, str, str]:
+        # Authorize before touching the provider: a rejected key must not cost
+        # a download.
+        safe_key = await self.resolve_authorized_file_key(key)
+        if not safe_key:
+            raise ResourceFileNotFound("Resource file not found.")
         if not self.storage_service:
             raise ValueError("Resource storage is not configured.")
 

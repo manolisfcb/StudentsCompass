@@ -9,6 +9,7 @@ from google import genai
 
 from app.core.resume_analyzer.llm_errors import is_non_retryable_llm_error
 from app.core.resume_analyzer.resume_feature import ResumeFeatureRequest
+from app.services.ai.aiBudgetGuard import AIBudgetExhausted, ensure_llm_attempt_allowed
 
 load_dotenv()
 
@@ -98,6 +99,7 @@ async def ask_llm_model(
 
     Raises:
         asyncio.TimeoutError: If LLM call exceeds timeout
+        AIBudgetExhausted: If a global attempt ceiling / kill switch blocks it
         RuntimeError: If response cannot be validated as ResumeFeatureRequest
         Exception: Any other API/client error
     """
@@ -112,6 +114,12 @@ async def ask_llm_model(
     async with LLM_SEMAPHORE:
         for attempt in range(retries + 1):
             try:
+                # Counted here, once per attempt: a retry is another paid
+                # request to the provider, so it must consume its own unit.
+                # This is the single place the ceiling is applied for this
+                # evaluator — callers must not gate it a second time.
+                await ensure_llm_attempt_allowed()
+
                 response = await asyncio.wait_for(
                     client.aio.models.generate_content(
                         model=model,
@@ -137,6 +145,12 @@ async def ask_llm_model(
                 if attempt >= retries:
                     raise asyncio.TimeoutError(f"LLM call exceeded {timeout}s timeout") from e
                 await asyncio.sleep(0.5 * (attempt + 1))
+
+            except AIBudgetExhausted:
+                # A ceiling is not a provider failure: retrying it would only
+                # burn the rate window. Surface it so the caller can release
+                # the user's reserved slot and answer with "Manual mode".
+                raise
 
             except Exception as e:
                 last_err = e

@@ -17,6 +17,7 @@ from app.core.resume_analyzer.prompts.resume_audit_prompt import (
     build_resume_audit_user_prompt,
 )
 from app.core.resume_analyzer.resume_audit_schema import ResumeAuditResult
+from app.services.ai.aiBudgetGuard import AIBudgetExhausted, ensure_llm_attempt_allowed
 
 load_dotenv()
 
@@ -99,6 +100,12 @@ class GeminiResumeAuditEvaluator(ResumeAuditEvaluator):
             last_error: Optional[Exception] = None
             for attempt in range(self.retries + 1):
                 try:
+                    # Counted here, once per attempt: a retry is another paid
+                    # request to the provider, so it must consume its own unit.
+                    # This is the single place the ceiling is applied for this
+                    # evaluator — callers must not gate it a second time.
+                    await ensure_llm_attempt_allowed()
+
                     system_prompt = build_resume_audit_system_prompt()
                     response = await asyncio.wait_for(
                         self.client.aio.models.generate_content(
@@ -121,6 +128,12 @@ class GeminiResumeAuditEvaluator(ResumeAuditEvaluator):
                     parsed.pass_status = parsed.overall_score >= 8
                     parsed.prompt_injection_signals_detected = sanitization.detected_signals
                     return parsed
+                except AIBudgetExhausted:
+                    # A ceiling is not a provider failure: retrying it would
+                    # only burn the rate window. Surface it unwrapped so the
+                    # caller can answer with "Manual mode".
+                    raise
+
                 except Exception as exc:  # noqa: BLE001
                     last_error = exc
                     # Quota/billing/auth errors will never succeed on retry.

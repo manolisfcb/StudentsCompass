@@ -12,7 +12,7 @@ from app.schemas.resourceSchema import (
     ResourceProgressRead,
     ResourceRead,
 )
-from app.services.resources.resourceService import ResourceService
+from app.services.resources.resourceService import ResourceFileNotFound, ResourceService
 from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
@@ -39,6 +39,10 @@ async def get_resource_file(
     service = ResourceService(session)
     try:
         file_bytes, media_type, filename = await service.download_resource_file(key)
+    except ResourceFileNotFound:
+        # Same answer whether the key is unknown, unreferenced, or belongs to a
+        # resource this catalogue does not publish or keeps locked.
+        raise HTTPException(status_code=404, detail="Resource file not found")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

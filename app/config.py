@@ -26,6 +26,15 @@ def env_str(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
 
 
+def env_int_any(names: tuple[str, ...], default: int, *, minimum: int = 0) -> int:
+    """First of ``names`` that is set wins. Lets a setting be renamed without
+    breaking a deployment that still exports the old variable."""
+    for name in names:
+        if os.getenv(name) is not None:
+            return env_int(name, default, minimum=minimum)
+    return default
+
+
 ENV = env_str("ENV", "development").lower()
 IS_PRODUCTION = ENV in {"production", "prod"}
 
@@ -33,16 +42,39 @@ IS_PRODUCTION = ENV in {"production", "prod"}
 # Empty REDIS_URL keeps a per-process in-memory fallback (fine for dev/tests).
 REDIS_URL = env_str("REDIS_URL")
 
-# --- AI quota / budget -----------------------------------------------------
+# --- AI quota / attempts ---------------------------------------------------
+# Three different units, deliberately not conflated:
+#   * user units    - what a person may spend per day (AI_BASE_DAILY_LIMIT,
+#                     enforced per user by AIUsageService);
+#   * provider
+#     attempts      - every single request sent to Gemini, retries included
+#                     (AI_GLOBAL_DAILY_ATTEMPTS / AI_LLM_ATTEMPTS_PER_MIN);
+#   * money         - actual provider spend. Nothing here measures money: an
+#                     attempt count is a proxy, so these ceilings are named
+#                     after what they really count.
+# One user unit can cost several provider attempts, which is exactly why the
+# global ceilings are counted at the attempt level.
+
 # Base free daily AI requests per user, per feature. Paid plans add units via
 # AIQuotaGrantModel on top of this base.
 AI_BASE_DAILY_LIMIT = env_int("AI_BASE_DAILY_LIMIT", 3, minimum=0)
-# Hard ceiling on total LLM calls/day across ALL users (cost circuit breaker).
-AI_GLOBAL_DAILY_BUDGET = env_int("AI_GLOBAL_DAILY_BUDGET", 2000, minimum=1)
-# Cross-replica cap on LLM call rate (smooths provider spend / concurrency).
-AI_LLM_CALLS_PER_MIN = env_int("AI_LLM_CALLS_PER_MIN", 60, minimum=1)
+# Hard ceiling on total provider attempts/day across ALL users (cost circuit
+# breaker). AI_GLOBAL_DAILY_BUDGET is the previous name, still honoured.
+AI_GLOBAL_DAILY_ATTEMPTS = env_int_any(
+    ("AI_GLOBAL_DAILY_ATTEMPTS", "AI_GLOBAL_DAILY_BUDGET"), 2000, minimum=1
+)
+# Cross-replica cap on provider attempt rate (smooths spend / concurrency).
+# AI_LLM_CALLS_PER_MIN is the previous name, still honoured.
+AI_LLM_ATTEMPTS_PER_MIN = env_int_any(
+    ("AI_LLM_ATTEMPTS_PER_MIN", "AI_LLM_CALLS_PER_MIN"), 60, minimum=1
+)
 # Instant manual kill switch: when true, no LLM call is attempted at all.
 AI_KILL_SWITCH = env_flag("AI_KILL_SWITCH", "0")
+# Escape hatch for a genuinely single-process production deployment. Off by
+# default: without a shared counter store the global ceilings are per process,
+# so they multiply by replicas and reset on restart. Turning this on says "I
+# know this runs as exactly one process and I accept a per-process ceiling".
+AI_ALLOW_UNSHARED_COUNTER = env_flag("AI_ALLOW_UNSHARED_COUNTER", "0")
 # Future-proof gate: when true, AI endpoints require a verified email. Kept off
 # until a real email provider is wired so existing users are not locked out.
 REQUIRE_VERIFIED_FOR_AI = env_flag("REQUIRE_VERIFIED_FOR_AI", "0")

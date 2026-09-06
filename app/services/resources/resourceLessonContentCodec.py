@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 
 @dataclass(frozen=True)
@@ -220,6 +221,50 @@ class ResourceLessonContentCodec:
             storage_content=storage_content,
             legacy_content=legacy_content,
         )
+
+    # --- storage reference resolution --------------------------------------
+    # A lesson references a stored file either by its key ("resources/x.pdf")
+    # or by the absolute URL the storage provider returned for that key. Both
+    # forms have to resolve to the same key, otherwise an authorization check
+    # keyed on the storage key cannot recognise the lesson that owns the file.
+
+    @staticmethod
+    def extract_storage_key(value: str | None, *, prefix: str) -> str | None:
+        """Return the storage key a lesson value points at, or ``None``.
+
+        Accepts the bare key and any absolute URL that contains it. The query
+        string and fragment are dropped and percent-encoding is undone, because
+        the same key is written as ``a%20b.pdf`` inside a URL and as ``a b.pdf``
+        in the key itself.
+        """
+        candidate = (value or "").strip()
+        if not candidate:
+            return None
+
+        path = urlsplit(candidate).path if "://" in candidate else candidate.split("?", 1)[0]
+        path = unquote(path).lstrip("/")
+
+        index = path.rfind(prefix)
+        if index < 0:
+            return None
+        key = path[index:]
+        return key or None
+
+    def referenced_storage_keys(
+        self,
+        *,
+        content_type: str | None,
+        raw_content: str | None,
+        prefix: str,
+    ) -> set[str]:
+        """Every storage key this lesson's content refers to."""
+        decoded = self.decode(content_type=content_type, raw_content=raw_content)
+        keys: set[str] = set()
+        for value in decoded.payload.values():
+            key = self.extract_storage_key(value, prefix=prefix)
+            if key:
+                keys.add(key)
+        return keys
 
     def to_api_fields(self, *, content_type: str | None, raw_content: str | None) -> dict[str, Any]:
         decoded = self.decode(content_type=content_type, raw_content=raw_content)

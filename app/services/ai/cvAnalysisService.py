@@ -13,7 +13,6 @@ from app.core.resume_analyzer.llm_model import ask_llm_model
 from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.resumeModel import ResumeModel
-from app.services.ai.aiBudgetGuard import ensure_llm_budget
 from app.services.ai.aiUsageService import AIFeature, AIUsageService, QuotaReservation
 from app.services.analytics.embeddingService import ResumeEmbeddingService
 from app.services.resumes.resumeService import ResumeService
@@ -251,9 +250,11 @@ class CVAnalysisService:
             LOGGER.warning("CV text too short for job %s", job.id)
             return
 
-        # Global cost ceiling / kill switch — fail closed to "Manual mode".
-        await ensure_llm_budget()
-
+        # The global attempt ceiling / kill switch is applied inside
+        # ask_llm_model, immediately before each provider attempt, so a retry
+        # is counted too. Gating here as well would double-count. An
+        # AIBudgetExhausted from there is handled by the caller's error path,
+        # which releases the reserved slot and maps to "Manual mode".
         LOGGER.info("Analyzing CV with LLM for job %s", job.id)
         resume_feature = await ask_llm_model(resume_text)
         if reservation is not None:

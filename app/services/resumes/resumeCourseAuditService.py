@@ -21,7 +21,7 @@ from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
     ResumeCourseEvaluationStatus,
 )
-from app.services.ai.aiBudgetGuard import AIBudgetExhausted, ensure_llm_budget
+from app.services.ai.aiBudgetGuard import AIBudgetExhausted
 from app.services.ai.aiUsageService import AIFeature, AIUsageService, QuotaReservation
 from app.services.resumes.resumeService import ResumeService
 
@@ -139,8 +139,9 @@ class ResumeCourseAuditService:
             )
 
         try:
-            # Global cost ceiling / kill switch — fail closed to "Manual mode".
-            await ensure_llm_budget()
+            # The global attempt ceiling / kill switch is applied inside the
+            # evaluator, immediately before each provider attempt, so a retry
+            # is counted too. Gating here as well would double-count.
             result = await self.evaluator.evaluate(extracted_text)
         except AIBudgetExhausted as exc:
             await reservation.release()

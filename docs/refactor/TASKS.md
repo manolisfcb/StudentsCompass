@@ -48,8 +48,8 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-004 | Renderizar nombres de CV y enlaces sin HTML ejecutable | CRITICAL | PHASE-1 | COMPLETED | TASK-001 | TASK-003, TASK-007, TASK-009, TASK-020, TASK-030 |
 | TASK-005 | Dar identidad única a objetos y hacer recuperable su ciclo de vida | CRITICAL | PHASE-1 | COMPLETED | TASK-001, TASK-009 | TASK-010, TASK-014, TASK-017, TASK-019, TASK-024 |
 | TASK-006 | Acotar multipart, media y expansión de documentos | CRITICAL | PHASE-1 | COMPLETED | TASK-001, TASK-003, TASK-005 | TASK-012, TASK-015, TASK-021 |
-| TASK-007 | Contabilizar cada intento Gemini y exigir límites compartidos | CRITICAL | PHASE-1 | TODO | TASK-001 | TASK-003, TASK-004, TASK-009, TASK-020, TASK-030 |
-| TASK-008 | Autorizar archivos de recursos por entidad visible | CRITICAL | PHASE-1 | TODO | TASK-001, TASK-006 | TASK-013, TASK-022, TASK-027 |
+| TASK-007 | Contabilizar cada intento Gemini y exigir límites compartidos | CRITICAL | PHASE-1 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-009, TASK-020, TASK-030 |
+| TASK-008 | Autorizar archivos de recursos por entidad visible | CRITICAL | PHASE-1 | COMPLETED | TASK-001, TASK-006 | TASK-013, TASK-022, TASK-027 |
 | TASK-009 | Crear baseline y converger schemas históricos sin pérdida | CRITICAL | PHASE-0 | COMPLETED | TASK-001, TASK-002 | TASK-003, TASK-004, TASK-007, TASK-020, TASK-030 |
 | TASK-010 | Cubrir autenticación de compañías y validar proxy confiable | CRITICAL | PHASE-1 | TODO | TASK-001, TASK-007 | TASK-005, TASK-014, TASK-017, TASK-019, TASK-024 |
 | TASK-011 | Normalizar errores públicos y recuperación transaccional | CRITICAL | PHASE-1 | TODO | TASK-001, TASK-006, TASK-008 | TASK-023 |
@@ -1008,7 +1008,7 @@ Risk: MEDIUM
 
 ## TASK-007 — Contabilizar cada intento Gemini y exigir límites compartidos
 
-Status: TODO
+Status: COMPLETED
 Priority: CRITICAL
 Phase: PHASE-1
 Category: Cost / Security / Bug Fix
@@ -1095,6 +1095,90 @@ Ejecutar tests de los componentes indicados mediante `.venv/bin/python -m pytest
 
 Volver a la implementación anterior solo si conserva las correcciones de seguridad ya integradas y entiende el schema expandido. Conservar datos/backfills; preferir forward fix. Para cambios DB verificar copia/restore y no usar downgrade destructivo. Si no hay cambio DB, revertir solo archivos de la tarea y repetir validación de contratos.
 
+### Completion Notes
+
+**El guard estaba en el lugar equivocado.** `ensure_llm_budget()` se llamaba una
+vez por petición de usuario, y justo debajo `ask_llm_model` /
+`GeminiResumeAuditEvaluator.evaluate` mandaban hasta **tres** peticiones a
+Gemini por esa única reserva. Ahora la comprobación vive dentro del bucle de
+reintentos, inmediatamente antes de cada `generate_content`, y se ha quitado de
+`cvAnalysisService` y `resumeCourseAuditService` — una sola ubicación por
+evaluador, sin doble contabilización. `AIBudgetExhausted` se re-lanza sin
+envolver desde ambos bucles: un techo no es un fallo del proveedor, reintentarlo
+solo quemaría la ventana de rate, y el llamador necesita reconocerlo para
+liberar la reserva del usuario y responder "Manual mode" / 503.
+
+**Tres unidades, separadas de verdad.** `AI_BASE_DAILY_LIMIT` cuenta unidades de
+usuario; `AI_GLOBAL_DAILY_ATTEMPTS` y `AI_LLM_ATTEMPTS_PER_MIN` cuentan intentos
+al proveedor; ninguna cuenta dinero, y el código ya no llama *budget* a un
+número de requests. Los nombres antiguos (`AI_GLOBAL_DAILY_BUDGET`,
+`AI_LLM_CALLS_PER_MIN`) se siguen leyendo como variables de entorno vía
+`env_int_any`, así que un despliegue existente no cambia de comportamiento. La
+clave Redis del contador **no** se renombró a propósito: renombrarla pondría a
+cero el techo vivo en el despliegue que lleve este cambio.
+
+**Store compartido exigido para gastar.** Sin `REDIS_URL`, o si la construcción
+del cliente Redis falla, `get_counter_store()` cae a memoria; eso está bien para
+los límites por IP (best-effort, fail-open) pero un techo por proceso se
+multiplica por réplicas y se reinicia con el proceso, así que no es un techo. Con
+`ENV=production` y un store no compartido el guard **rechaza** en vez de gastar
+(`CounterStore.is_shared` es el dato que lo decide). Escape hatch explícito y
+apagado por defecto: `AI_ALLOW_UNSHARED_COUNTER=1` para un despliegue que
+realmente sea un único proceso — sin él, un deploy monoproceso legítimo se
+quedaría sin IA sin recurso alguno.
+
+**Liberación atómica.** `RedisCounterStore.decr` hacía `DECRBY` y, si el
+resultado bajaba de cero, `SET 0`. Un `INCR` que aterrizara entre ambos comandos
+quedaba borrado por el `SET`: una reserva perdida y, por tanto, gasto de más.
+Ahora es un único script Lua (`_DECR_FLOOR_LUA`). El caso está demostrado, no
+supuesto: `test_legacy_release_sequence_drops_a_concurrent_reservation` reproduce
+el intercalado exacto contra el Redis real y comprueba que la reserva desaparece;
+`test_atomic_release_keeps_a_concurrent_reservation` corre la misma secuencia por
+el store y la conserva.
+
+**Validación ejecutada.**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_ai_budget_guard.py`
+  → **14 passed**. Cubre lo que pide Validation: tres intentos consumen tres
+  unidades globales (`calls == 3`, contador `== 3`); error no reintentable
+  consume exactamente una; techo alcanzado a mitad de reintentos corta los
+  intentos restantes y sale sin envolver; kill switch bloquea **sin** contar
+  nada; store no compartido en producción rechaza; fallo de init de Redis en
+  producción cae a memoria y **no** habilita gasto; opt-in monoproceso funciona;
+  store caído falla cerrado; dos réplicas con objetos de store distintos comparten
+  un único techo; 25 intentos concurrentes cuentan 25.
+- Carril PostgreSQL + Redis → **31 passed** (incluye los 4 casos nuevos de
+  release atómico y el techo global compartido entre dos conexiones Redis
+  distintas, que es lo más cerca de "dos procesos" que da el carril).
+- Suite completa SQLite → **308 passed, 31 skipped** (los skips son los carriles
+  opt-in: PostgreSQL/Redis y navegador).
+
+Comandos exactos del carril:
+
+```
+docker run -d --name sc-test-pg -e POSTGRES_PASSWORD=testpw -e POSTGRES_USER=testuser \
+    -e POSTGRES_DB=studentscompass_test -p 55432:5432 pgvector/pgvector:pg16
+docker run -d --name sc-test-redis -p 56379:6379 redis:7-alpine
+TEST_DATABASE_URL_PG=postgresql+asyncpg://testuser:testpw@127.0.0.1:55432/studentscompass_test \
+TEST_REDIS_URL=redis://127.0.0.1:56379/0 \
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration
+```
+
+**Límites de la validación.** "Dos procesos" se ejercita con dos objetos
+`RedisCounterStore` sobre conexiones distintas dentro de un proceso, no con dos
+intérpretes ni dos contenedores de la app: lo que se prueba es que el estado vive
+en Redis y no en el proceso, no el arranque real de dos réplicas. No se hizo
+ninguna llamada real a Gemini — el proveedor es un doble en todos los casos — así
+que no está medido el coste monetario real por intento, solo el conteo de
+intentos. El rechazo por store no compartido se prueba con `IS_PRODUCTION`
+parcheado, no con un despliegue real en producción. `KEEPTTL` exige Redis ≥ 6.0;
+verificado contra `redis:7-alpine`, no contra versiones anteriores.
+
+**Smoke de navegador:** N/A. La tarea no toca ningún archivo de frontend; lo
+único observable desde la UI es el mensaje "Manual mode" que ya existía.
+
+**Lint/typecheck:** N/A — no hay lint ni typecheck configurados en el proyecto.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -1106,7 +1190,7 @@ Risk: MEDIUM
 
 ## TASK-008 — Autorizar archivos de recursos por entidad visible
 
-Status: TODO
+Status: COMPLETED
 Priority: CRITICAL
 Phase: PHASE-1
 Category: Security / Bug Fix
@@ -1192,6 +1276,82 @@ Ejecutar tests de los componentes indicados mediante `.venv/bin/python -m pytest
 ### Rollback / Risk Notes
 
 Volver a la implementación anterior solo si conserva las correcciones de seguridad ya integradas y entiende el schema expandido. Conservar datos/backfills; preferir forward fix. Para cambios DB verificar copia/restore y no usar downgrade destructivo. Si no hay cambio DB, revertir solo archivos de la tarea y repetir validación de contratos.
+
+### Completion Notes
+
+**Pertenecer al prefijo no era autorización.** `download_resource_file` aceptaba
+cualquier clave bajo `resources/` para cualquier usuario activo; el catálogo
+—`is_published`, `is_locked`— solo se aplicaba al recurso, nunca al archivo. Ahora
+`resolve_authorized_file_key` resuelve la clave hasta una lección de un recurso
+publicado y desbloqueado (o hasta el `external_url` de un recurso visible) **antes**
+de tocar el proveedor, con las mismas condiciones que `get_published_resource`.
+Sin asociación, no hay descarga.
+
+**Resolución de referencia en el codec.** Una lección guarda el archivo como
+clave desnuda (`resources/x.pdf`) o como la URL absoluta que devolvió el
+proveedor (`https://bucket.s3.region.amazonaws.com/resources/x.pdf`); ambas
+formas tienen que resolver a la misma clave o la autorización no reconocería a la
+lección dueña del archivo. `extract_storage_key` recorta query/fragmento,
+deshace el percent-encoding y corta desde el prefijo;
+`referenced_storage_keys` lo aplica a todos los valores del payload decodificado.
+Es lo único que se añadió al codec, como marcaba el Scope.
+
+**El prefiltro SQL no autoriza.** Escanear y decodificar cada lección por
+descarga sería un coste innecesario, así que la consulta se acota con un LIKE
+sobre el nombre de archivo — pero solo sobre el tramo inicial formado por
+caracteres *unreserved*, porque el resto puede venir percent-encodeado en la URL
+guardada y entonces el LIKE no casaría (fallo real, detectado por el test de
+nombre con espacio antes de darlo por bueno). Si ese tramo sale vacío se escanea
+sin filtro: corrección antes que velocidad. La autorización siempre la decide la
+igualdad exacta contra las claves decodificadas, nunca el LIKE. `autoescape=True`
+mantiene literal el `_` de los nombres generados.
+
+**Cambio de comportamiento declarado (Bug Fix).** Una clave que no resuelve
+devuelve **404**, no 400: mismo cuerpo para "no existe", "existe pero el recurso
+está bloqueado o sin publicar" y "existe en el bucket pero nadie la referencia".
+Distinguirlas devolvería el endpoint al estado de oráculo del contenido del
+bucket. Los enlaces autorizados se conservan: la ruta y el parámetro `key` no
+cambian, y ninguna plantilla ni JS del proyecto construye esa URL (el frontend
+usa la `file_url` del proveedor que guarda el admin), así que no hay enlace de UI
+que romper. `..` como segmento se rechaza en la normalización — una clave es el
+nombre de un objeto, no una ruta que recorrer.
+
+**Validación ejecutada.**
+
+- `.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_resource_storage.py`
+  → **13 passed**. Cubre lo que pide Validation: archivo de recurso publicado y
+  desbloqueado accesible (por URL, por clave desnuda, con percent-encoding, y vía
+  `external_url` del recurso); bloqueado, no publicado, clave sin asociación,
+  prefijo suelto, traversal y prefijo ajeno devuelven 404; en todos los rechazos
+  `download_calls == 0`, es decir **ninguna descarga al proveedor**; a nivel de
+  ruta, 200 para el archivo autorizado y 404 para el bloqueado en la misma
+  petición-par, con una sola llamada al proveedor; sin sesión, 401.
+- Carril PostgreSQL → **31 passed** con
+  `tests/integration/test_resource_file_authorization_pg.py` nuevo: la resolución
+  se comprueba contra Postgres porque el escapado del LIKE es comportamiento del
+  dialecto y las claves llevan `_`, que es comodín; incluye el caso de una clave
+  que solo difiere donde la buena tiene `_` y que no debe colarse por el
+  prefiltro.
+- Suite completa SQLite → **308 passed, 31 skipped** (los skips son los carriles
+  opt-in: PostgreSQL/Redis y navegador).
+
+Comandos exactos del carril: los mismos registrados en TASK-007.
+
+**Límites de la validación.** No se hizo ninguna llamada real a S3: el proveedor
+es un doble en todos los casos, así que lo verificado es que no se le pide la
+descarga, no el comportamiento del bucket. Tampoco se probó contra datos de
+producción reales: las lecciones sembradas usan las dos formas de referencia
+conocidas (clave desnuda y URL del proveedor); una lección cuya URL almacenada no
+contuviera el segmento `resources/` no resolvería, y no hay forma de descartarlo
+sin inventariar la base real. El coste de la consulta se acota por prefiltro pero
+no se midió con volumen realista de lecciones.
+
+**Smoke de navegador:** N/A justificado, no por omisión. La tarea no toca ningún
+archivo de frontend y `grep` sobre `app/templates`, `app/static` y `app/views` no
+encuentra ninguna construcción de `/resources/file`: ningún flujo de UI llega a
+este endpoint, así que un smoke no observaría nada de este cambio.
+
+**Lint/typecheck:** N/A — no hay lint ni typecheck configurados en el proyecto.
 
 ### Estimated Impact
 
