@@ -4,8 +4,11 @@ from app.schemas.resumeSchema import CreateResumeSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
-from datetime import datetime
 from app.services.analytics.embeddingService import ResumeEmbeddingService, generate_embedding
+from app.services.storage.storageCleanupService import (
+    StorageCleanupService,
+    record_deletion_intent,
+)
 from app.services.storage.storageService import StorageService, get_storage_service
 
 LOGGER = logging.getLogger(__name__)
@@ -59,17 +62,53 @@ class ResumeService:
         file_name: str,
         mime_type: str,
     ) -> tuple[ResumeModel, dict]:
-        file_info = await self.upload_resume_file(file_bytes, file_name, mime_type)
-        resume = await self.create_resume(
-            CreateResumeSchema(
-                view_url=file_info["view_url"],
-                original_filename=file_name,
-                storage_file_id=file_info["file_key"],
-                folder_id=storage_location_id,
-                user_id=user_id,
-            )
+        file_info = await self.upload_resume_file(
+            file_bytes, file_name, mime_type, owner_id=user_id
         )
+        try:
+            resume = await self.create_resume(
+                CreateResumeSchema(
+                    view_url=file_info["view_url"],
+                    original_filename=file_name,
+                    storage_file_id=file_info["file_key"],
+                    folder_id=storage_location_id,
+                    user_id=user_id,
+                )
+            )
+        except Exception:
+            # The object is already in the bucket but nothing references it, so
+            # it would be paid for forever with no way left to find it. Undo the
+            # upload; if the provider will not cooperate, leave a durable intent
+            # so the sweeper finishes the job.
+            await self._compensate_orphan_upload(
+                storage_location_id=storage_location_id,
+                object_key=file_info["file_key"],
+            )
+            raise
         return resume, file_info
+
+    async def _compensate_orphan_upload(self, *, storage_location_id: str, object_key: str) -> None:
+        await self.session.rollback()
+        try:
+            await self.storage_service.delete_file(object_key)
+            return
+        except Exception as error:
+            LOGGER.warning(
+                "Could not remove orphaned upload %s, queueing it: %s", object_key, error
+            )
+
+        try:
+            await record_deletion_intent(
+                self.session,
+                storage_location_id=storage_location_id,
+                object_key=object_key,
+            )
+            await self.session.commit()
+        except Exception:
+            # Nothing left to try; the object is logged so it can be reclaimed
+            # by hand. Never mask the original upload failure with this one.
+            await self.session.rollback()
+            LOGGER.exception("Orphaned upload could not be queued for deletion: %s", object_key)
     
     async def create_resume_embedding(self, resume_id: UUID, model_name: str, dims: int, embedding: list[float]) -> None:
         embedding_service = ResumeEmbeddingService(self.session)
@@ -140,23 +179,35 @@ class ResumeService:
         file_bytes: bytes,
         file_name: str,
         mime_type: str = "application/pdf",
+        owner_id: UUID | None = None,
     ) -> dict:
-        """Upload resume file to the configured storage provider."""
-        # Generate unique filename with timestamp
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        unique_filename = f"{timestamp}_{file_name}"
-        
-        upload_result = await self.storage_service.upload_file(file_bytes, unique_filename, mime_type)
-        
+        """Upload resume file to the configured storage provider.
+
+        The key is chosen by the storage layer and is unique per object. It used
+        to be ``<timestamp to the second>_<filename>``, which two users could
+        produce at once, and the second upload then overwrote the first.
+        """
+        upload_result = await self.storage_service.upload_file(
+            file_bytes, file_name, mime_type, owner_id=owner_id
+        )
+
         return {
             "file_key": upload_result["file_key"],
             "view_url": upload_result["file_url"],
             "original_filename": file_name
         }
 
-    async def upload_resume_file(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
+    async def upload_resume_file(
+        self,
+        file_bytes: bytes,
+        file_name: str,
+        mime_type: str = "application/pdf",
+        owner_id: UUID | None = None,
+    ) -> dict:
         """Upload resume file using the configured storage provider."""
-        return await self._upload_resume_file_to_storage(file_bytes, file_name, mime_type)
+        return await self._upload_resume_file_to_storage(
+            file_bytes, file_name, mime_type, owner_id=owner_id
+        )
 
     async def upload_pdf_to_s3(self, file_bytes: bytes, file_name: str, mime_type: str = "application/pdf") -> dict:
         """Backward-compatible alias for existing callers."""
@@ -174,17 +225,65 @@ class ResumeService:
         """Backward-compatible alias for existing callers."""
         return await self.download_resume_file(file_key)
 
+    async def is_object_still_referenced(self, *, storage_file_id: str, excluding_resume_id: UUID) -> bool:
+        """Does any other resume row point at this same object?
+
+        Old keys were derived from the filename and could be shared by more than
+        one row. Deleting the object for one of them would break the others, so
+        the object is only removed once nothing references it.
+        """
+        if not storage_file_id:
+            return False
+        other = await self.session.execute(
+            select(ResumeModel.id)
+            .where(
+                ResumeModel.storage_file_id == storage_file_id,
+                ResumeModel.id != excluding_resume_id,
+            )
+            .limit(1)
+        )
+        return other.scalar_one_or_none() is not None
+
     async def delete_resume(self, resume_id: UUID, user_id: UUID) -> bool:
+        """Delete the row, then the object — never the other way round.
+
+        Removing the file first meant a rollback left a row whose file was
+        already gone, and a provider error left the object orphaned with nothing
+        recording that it should not exist. Here the database decides and the
+        decision is durable before the provider is touched at all.
+        """
         resume = await self.session.get(ResumeModel, resume_id)
         if not resume or resume.user_id != user_id:
             return False
 
-        # Try deleting from storage, but don't fail DB deletion if file missing
-        try:
-            await self.storage_service.delete_file(resume.storage_file_id)
-        except Exception as e:
-            LOGGER.warning("Storage delete failed for %s: %s", resume.storage_file_id, e)
+        storage_location_id = resume.folder_id
+        object_key = resume.storage_file_id
+        shared = await self.is_object_still_referenced(
+            storage_file_id=object_key, excluding_resume_id=resume_id
+        )
 
         await self.session.delete(resume)
+        if not shared:
+            # Same transaction as the delete: commit and the object is on record
+            # as unwanted, roll back and nothing happened at all.
+            await record_deletion_intent(
+                self.session,
+                storage_location_id=storage_location_id,
+                object_key=object_key,
+            )
+        else:
+            LOGGER.info(
+                "Keeping stored object %s: still referenced by another resume", object_key
+            )
         await self.session.commit()
+
+        if not shared:
+            # Best effort, and it is allowed to fail: the intent is committed,
+            # so a later sweep converges. Deleting an absent key succeeds, which
+            # is what makes the retry idempotent.
+            cleanup = StorageCleanupService(self.session, storage_service=self.storage_service)
+            await cleanup.execute_intent(
+                storage_location_id=storage_location_id, object_key=object_key
+            )
+
         return True

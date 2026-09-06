@@ -48,6 +48,9 @@
   {% if use_app_shell %}
   <script defer src="{{ asset_url('js/base.js') }}"></script>
   {% endif %}
+  {# Safe DOM helpers must be defined before any page script uses them.
+     `defer` scripts execute in document order, so this always runs first. #}
+  <script defer src="{{ asset_url('js/safeDom.js') }}"></script>
   {% if page_js is defined and page_js %}
   <script defer src="{{ asset_url('js/' ~ page_js ~ '.js') }}"></script>
   {% endif %}

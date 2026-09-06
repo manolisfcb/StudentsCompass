@@ -60,6 +60,16 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
             return div.innerHTML;
         }
 
+        // escapeHtml does NOT validate a protocol: `javascript:alert(1)`
+        // survives escaping untouched and stays a live href. Job and company
+        // URLs come from scraped postings, so every one of them goes through
+        // this first; anything that is not http/https yields '' and the caller
+        // renders plain text instead of a link.
+        function safeLinkHref(value) {
+            const safe = SafeDom.safeHttpUrl(value);
+            return safe ? escapeHtml(safe) : '';
+        }
+
         function formatDate(dateStr) {
             if (!dateStr) return 'Date unavailable';
             try {
@@ -438,9 +448,10 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
                 `;
             }
 
-            if (job.url) {
+            const applyHref = safeLinkHref(job.url);
+            if (applyHref) {
                 return `
-                    <a class="primary-link" href="${escapeHtml(job.url)}" target="_blank" rel="noopener noreferrer">
+                    <a class="primary-link" href="${applyHref}" target="_blank" rel="noopener noreferrer">
                         Apply
                     </a>
                 `;
@@ -511,8 +522,9 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
             const companyDescription = job.company_description
                 ? `<section class="job-detail-section"><h3>About the company</h3><p>${escapeHtml(job.company_description)}</p></section>`
                 : '';
-            const companyWebsite = job.company_website
-                ? `<a class="secondary-link" href="${escapeHtml(job.company_website)}" target="_blank" rel="noopener noreferrer">Company site</a>`
+            const companyWebsiteHref = safeLinkHref(job.company_website);
+            const companyWebsite = companyWebsiteHref
+                ? `<a class="secondary-link" href="${companyWebsiteHref}" target="_blank" rel="noopener noreferrer">Company site</a>`
                 : '';
             const applyAction = renderCardApplyAction(job, activeJobKey || getJobKey(job, 0));
             const closeButton = `
@@ -901,8 +913,9 @@ const jobsPageData = JSON.parse(document.getElementById('jobs-page-data')?.textC
                     ${applications.map((application) => {
                         const companyName = escapeHtml(application.company_name || 'Company');
                         const companyLocation = application.company_location ? `<span>${escapeHtml(application.company_location)}</span>` : '';
-                        const applicationUrl = application.application_url
-                            ? `<a class="secondary-link" href="${escapeHtml(application.application_url)}" target="_blank" rel="noopener noreferrer">Application link</a>`
+                        const applicationHref = safeLinkHref(application.application_url);
+                        const applicationUrl = applicationHref
+                            ? `<a class="secondary-link" href="${applicationHref}" target="_blank" rel="noopener noreferrer">Application link</a>`
                             : '';
                         const notes = application.notes
                             ? `<p class="application-notes">${escapeHtml(application.notes)}</p>`

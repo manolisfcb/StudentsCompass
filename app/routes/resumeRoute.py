@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import MAX_UPLOAD_BYTES
+from app.core.uploads import ensure_allowed_upload, read_upload_within_limit
 from app.services.resumes.resumeService import (
     RESUME_AUDIT_CONTENT_TYPES,
     RESUME_UPLOAD_CONTENT_TYPES,
@@ -31,21 +32,13 @@ router = APIRouter()
 async def _read_upload_within_limit(cv: UploadFile, request: Request) -> bytes:
     """Read an upload while enforcing a hard size cap.
 
-    Rejects early via Content-Length (so an oversized body is not buffered into
-    memory) and re-checks the actual bytes. Prevents memory exhaustion and
-    storage abuse from very large files.
+    The raw body was already bounded by ``RequestBodySizeLimitMiddleware``
+    before the multipart parser ran — that is what stops a chunked flood, which
+    sends no ``Content-Length`` to pre-check. This second pass is about the
+    *file* rather than the request: it reads incrementally and stops one chunk
+    past the budget, so the route never materialises more than that.
     """
-    too_large = HTTPException(
-        status_code=413,
-        detail=f"File is too large. Maximum allowed size is {MAX_UPLOAD_BYTES // 1_000_000} MB.",
-    )
-    content_length = request.headers.get("content-length")
-    if content_length and content_length.isdigit() and int(content_length) > MAX_UPLOAD_BYTES:
-        raise too_large
-    data = await cv.read()
-    if len(data) > MAX_UPLOAD_BYTES:
-        raise too_large
-    return data
+    return await read_upload_within_limit(cv, MAX_UPLOAD_BYTES)
 
 
 def _require_resume_storage_location_id() -> str:
@@ -72,6 +65,13 @@ async def upload_resume(
 
     # Size cap is the first gate: reject oversized uploads before any other work.
     file_bytes = await _read_upload_within_limit(cv, request)
+    # The declared type is the client's word for it; the leading bytes are not.
+    ensure_allowed_upload(
+        data=file_bytes,
+        content_type=cv.content_type,
+        allowed_content_types=RESUME_UPLOAD_CONTENT_TYPES,
+        what="CV",
+    )
     storage_location_id = _require_resume_storage_location_id()
 
     try:
@@ -106,6 +106,12 @@ async def upload_resume_for_course_audit(
 
     # Size cap is the first gate: reject oversized uploads before any other work.
     file_bytes = await _read_upload_within_limit(cv, request)
+    ensure_allowed_upload(
+        data=file_bytes,
+        content_type=cv.content_type,
+        allowed_content_types=RESUME_AUDIT_CONTENT_TYPES,
+        what="CV",
+    )
     storage_location_id = _require_resume_storage_location_id()
 
     audit_service = ResumeCourseAuditService(session)

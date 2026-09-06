@@ -2,15 +2,19 @@
 Pytest fixtures and configuration for tests
 """
 import asyncio
+import contextlib
 import os
 import uuid
 from typing import AsyncGenerator, Generator
 
-# Force the production engine to NullPool for the test process. pytest-asyncio
-# runs each test on its own event loop, which does not mix with a reused
-# connection pool; NullPool keeps the suite deterministic. Production still uses
-# a real pool. Must be set before app.db (imported via app.app) builds the engine.
-os.environ.setdefault("DB_DISABLE_POOL", "1")
+# Isolation must run before any app module: app.db and app.app call
+# load_dotenv() at import time and app.db builds its engine from DATABASE_URL at
+# import time. apply_isolation() disables dotenv, installs fake credentials
+# (including DB_DISABLE_POOL=1, because pytest-asyncio gives each test its own
+# event loop and a reused pool is not loop-safe) and blocks outbound sockets.
+from tests.isolation import ExternalConnectionBlocked, apply_isolation
+
+apply_isolation()
 
 import pytest
 import pytest_asyncio
@@ -74,40 +78,12 @@ async def setup_db() -> AsyncGenerator[None, None]:
     Uses a single shared in-memory SQLite connection (StaticPool) so the schema
     is visible to all sessions used during the test.
     """
-    # Import all models before creating tables
-    from app.models.userModel import User
-    from app.models.companyModel import Company
-    from app.models.companyRecruiterModel import CompanyRecruiter
-    from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel, ApplicationStatusEventModel
-    from app.models.applicationModel import ApplicationModel
-    from app.models.emailNotificationLogModel import EmailNotificationLogModel
-    from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
-    from app.models.jobPostingModel import JobPosting
-    from app.models.resumeModel import ResumeModel
-    from app.models.resourceModel import ResourceLessonModel, ResourceLessonProgressModel, ResourceModel, ResourceModuleModel
-    from app.models.questionnaireModel import UserQuestionnaire
-    from app.models.postModel import PostModel
-    from app.models.jobAnalysisModel import JobAnalysisModel
-    from app.models.aiUsageModel import AIQuotaGrantModel, AIUsageEventModel
-    from app.models.resumeEmbeddingsModel import ResumeEmbedding
-    from app.models.skillModel import (
-        CourseModel,
-        CourseSkillModel,
-        JobSkillModel,
-        OptimizationRunModel,
-        ResumeSkillModel,
-        SkillAliasModel,
-        SkillModel,
-    )
-    from app.models.userStatsModel import UserStatsModel
-    from app.models.communityModel import CommunityModel, CommunityMemberModel
-    from app.models.communityPostModel import (
-        CommunityPostCommentModel,
-        CommunityPostLikeModel,
-        CommunityPostModel,
-    )
-    from app.models.friendshipModel import FriendRequestModel, FriendshipModel
-    from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel
+    # The manifest is the single import list; importing it registers every
+    # mapped table on Base.metadata, so the test schema and the migration
+    # target cannot drift apart.
+    from app.models.registry import import_all_models
+
+    import_all_models()
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -255,3 +231,40 @@ def mock_genai(monkeypatch):
     
     import google.generativeai as genai
     monkeypatch.setattr(genai, "GenerativeModel", lambda *args, **kwargs: MockGenAI())
+
+
+# --- Measurement / concurrency harness -------------------------------------
+# Reused by later refactor tasks to express query budgets and interleaved
+# transactions. Kept here (not per-test) so every lane measures the same way.
+
+@pytest.fixture
+def query_counter():
+    """Count statements on the SQLite test engine inside a ``with`` block.
+
+    Usage::
+
+        with query_counter() as counted:
+            await client.get("/dashboard", headers=auth_headers)
+        assert counted.selects <= 5
+    """
+    from tests.harness import count_queries
+
+    def _counter():
+        return count_queries(test_engine)
+
+    return _counter
+
+
+@pytest_asyncio.fixture
+async def two_db_sessions(setup_db):
+    """Two sessions over the shared SQLite connection.
+
+    SQLite's StaticPool serialises them onto one connection, so this only
+    exercises interleaved *statement* order, not real locking. Row locks,
+    ``FOR UPDATE`` and unique-violation races belong in the PostgreSQL lane
+    (``tests/integration``), which SQLite does not substitute for.
+    """
+    from tests.harness import two_sessions
+
+    async with two_sessions(TestSessionLocal) as sessions:
+        yield sessions

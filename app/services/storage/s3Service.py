@@ -6,6 +6,8 @@ from io import BytesIO
 import asyncio
 from typing import Optional
 
+from app.services.storage.objectKeys import build_object_key
+
 LOGGER = logging.getLogger(__name__)
 
 class S3Service:
@@ -33,25 +35,33 @@ class S3Service:
         file_name: str,
         content_type: str = "application/pdf",
         folder: str = "resumes",
+        owner_id=None,
     ) -> dict:
         """
         Upload a file to S3 bucket
-        
+
         Args:
             file_bytes: File content as bytes
-            file_name: Name of the file to store in S3
+            file_name: Display name of the upload. It is *not* the key — see
+                below — and is used only for its extension.
             content_type: MIME type of the file
             folder: S3 folder/prefix where file will be stored
-            
+            owner_id: Optional owner the object is filed under, so it can be
+                attributed and inventoried without parsing a name.
+
         Returns:
             dict with file_key and file_url
+
+        The key is generated, never derived from the caller's filename. Deriving
+        it meant two uploads of the same name landed on the same key and
+        ``put_object`` overwrote one with the other; a generated key cannot
+        collide, so an upload can never destroy an object someone else still
+        references.
         """
         try:
             loop = asyncio.get_event_loop()
-            
-            safe_folder = (folder or "resumes").strip("/") or "resumes"
-            safe_name = os.path.basename(file_name or "file")
-            file_key = f"{safe_folder}/{safe_name}"
+
+            file_key = build_object_key(folder=folder, file_name=file_name, owner_id=owner_id)
             
             # Upload to S3 (run in executor to avoid blocking)
             def do_upload():

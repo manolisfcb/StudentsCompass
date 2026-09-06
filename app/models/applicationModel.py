@@ -51,6 +51,13 @@ class ApplicationModel(Base):
         Index("ix_applications_company_status_created_at", "company_id", "status", "created_at"),
         Index("ix_applications_job_posting_created_at", "job_posting_id", "created_at"),
         Index(
+            "ix_applications_company_assigned_recruiter_created_at",
+            "company_id",
+            "assigned_recruiter_id",
+            "created_at",
+        ),
+        Index("ix_applications_resume_id", "resume_id"),
+        Index(
             "ux_applications_user_job_posting_not_null",
             "user_id",
             "job_posting_id",

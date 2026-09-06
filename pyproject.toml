@@ -34,4 +34,24 @@ dev = [
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.0.0",
+    # Bounded browser tests for the DOM/link sinks. The browser itself is a
+    # separate download: `python -m playwright install chromium`. Tests marked
+    # `browser` skip cleanly when either is missing.
+    "playwright>=1.62.0",
 ]
+
+# --- Dev tooling -----------------------------------------------------------
+# Coverage is opt-in (see pytest.ini). Scope is pinned here so the numbers mean
+# the same thing in CI and locally.
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = [
+    "*/__pycache__/*",
+    "app/static/*",
+    "app/templates/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true

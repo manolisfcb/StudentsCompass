@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -10,6 +10,14 @@ from app.db import Base
 
 class FriendRequestModel(Base):
     __tablename__ = "friend_requests"
+    # Declared here because the index exists in every deployed database:
+    # an autogenerate run against metadata that omits it proposes dropping
+    # it, which is how a previous revision silently removed a batch of them.
+    __table_args__ = (
+        Index("ix_friend_requests_sender_id", "sender_id"),
+        Index("ix_friend_requests_receiver_id", "receiver_id"),
+        Index("ix_friend_requests_status", "status"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -36,4 +44,6 @@ class FriendshipModel(Base):
 
     __table_args__ = (
         UniqueConstraint("user_id", "friend_id", name="uq_friendships_user_friend"),
+        Index("ix_friendships_user_id", "user_id"),
+        Index("ix_friendships_friend_id", "friend_id"),
     )

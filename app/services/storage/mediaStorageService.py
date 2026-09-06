@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import mimetypes
 import os
 from pathlib import Path
-import shutil
 import tempfile
 from typing import Protocol
 
@@ -27,7 +26,22 @@ class MediaUploadResult:
 
 
 class MediaStorageService(Protocol):
-    async def upload_media(self, file: UploadFile, file_name: str, folder: str = "images/") -> MediaUploadResult:
+    async def upload_media(
+        self,
+        file: UploadFile,
+        file_name: str,
+        folder: str = "images/",
+        *,
+        file_bytes: bytes | None = None,
+        content_type: str | None = None,
+    ) -> MediaUploadResult:
+        """Store the upload.
+
+        ``file_bytes`` is the already-bounded and already-validated payload. A
+        caller that has read the part must pass it: re-reading ``file`` here
+        would either return nothing (the stream is spent) or copy an unbounded
+        body a second time, which is what this parameter exists to avoid.
+        """
         ...
 
 
@@ -35,16 +49,29 @@ class ImageKitMediaStorageService:
     def __init__(self, private_key: str | None = None):
         self.imagekit = ImageKit(private_key=private_key or os.environ.get("IMAGEKIT_PRIVATE_KEY"))
 
-    async def upload_media(self, file: UploadFile, file_name: str, folder: str = "images/") -> MediaUploadResult:
-        return await asyncio.to_thread(self._upload_media_sync, file, file_name, folder)
+    async def upload_media(
+        self,
+        file: UploadFile,
+        file_name: str,
+        folder: str = "images/",
+        *,
+        file_bytes: bytes | None = None,
+        content_type: str | None = None,
+    ) -> MediaUploadResult:
+        payload = file_bytes if file_bytes is not None else await file.read()
+        return await asyncio.to_thread(self._upload_media_sync, payload, file, file_name, folder)
 
-    def _upload_media_sync(self, file: UploadFile, file_name: str, folder: str) -> MediaUploadResult:
+    def _upload_media_sync(
+        self, payload: bytes, file: UploadFile, file_name: str, folder: str
+    ) -> MediaUploadResult:
         temp_file_path: str | None = None
         try:
             suffix = os.path.splitext(file.filename or "")[1]
+            # Write the bounded payload rather than streaming the whole part:
+            # ``copyfileobj`` would happily copy a body of any size to disk.
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                 temp_file_path = temp_file.name
-                shutil.copyfileobj(file.file, temp_file)
+                temp_file.write(payload)
 
             upload_response = self.imagekit.files.upload(
                 file=Path(temp_file_path),
@@ -70,19 +97,35 @@ class S3MediaStorageService:
         media_bucket = get_media_storage_location_id()
         self.storage_service = storage_service or get_storage_service(bucket_name=media_bucket)
 
-    async def upload_media(self, file: UploadFile, file_name: str, folder: str = "images/") -> MediaUploadResult:
+    async def upload_media(
+        self,
+        file: UploadFile,
+        file_name: str,
+        folder: str = "images/",
+        *,
+        file_bytes: bytes | None = None,
+        content_type: str | None = None,
+    ) -> MediaUploadResult:
         raw_name = file_name or file.filename or "media_upload"
         safe_name = raw_name.rsplit("/", 1)[-1].rsplit("\\", 1)[-1] or "media_upload"
-        content_type = file.content_type or mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
+        resolved_type = (
+            content_type
+            or file.content_type
+            or mimetypes.guess_type(safe_name)[0]
+            or "application/octet-stream"
+        )
+        # ``await file.read()`` with no bound was the whole body in memory. When
+        # the caller has already read it under a budget, use that.
+        payload = file_bytes if file_bytes is not None else await file.read()
         upload_result = await self.storage_service.upload_file(
-            file_bytes=await file.read(),
+            file_bytes=payload,
             file_name=safe_name,
-            content_type=content_type,
+            content_type=resolved_type,
             folder=folder.strip("/") or "images",
         )
         return MediaUploadResult(
             url=upload_result["file_url"],
-            file_type=_file_type_from_content_type(content_type),
+            file_type=_file_type_from_content_type(resolved_type),
             name=safe_name,
         )
 

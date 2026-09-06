@@ -430,23 +430,50 @@ let currentProfileData = null;
                 }
                 emptyState.style.display = 'none';
                 tableWrapper.style.display = 'block';
-                tbody.innerHTML = data.map(item => `
-                    <tr style="border-bottom: 1px solid var(--light-gray);">
-                        <td style="padding: 0.6rem 0; font-weight: 600; color: var(--text-color);">
-                            <a href="${item.view_url}" target="_blank" style="color: var(--primary-color); text-decoration: none;">${item.original_filename}</a>
-                        </td>
-                        <td style="padding: 0.6rem 0; color: var(--gray);">${formatDate(item.created_at)}</td>
-                        <td style="padding: 0.6rem 0;">
-                            <button data-resume-id="${item.id}" class="delete-cv-btn" style="background: none; border: none; color: #EF4444; font-weight: 600; cursor: pointer;">Delete</button>
-                        </td>
-                    </tr>
-                `).join('');
+                // Built as DOM nodes, not as an innerHTML template: the
+                // filename comes from the upload and the URL from storage, so
+                // neither may ever be parsed as markup. SafeDom.link also
+                // rejects any href that is not http/https.
+                SafeDom.replaceChildren(tbody, data.map(buildResumeRow));
                 attachDeleteHandlers();
             } catch (err) {
                 emptyState.textContent = 'Error loading CV list';
                 emptyState.style.color = '#EF4444';
                 emptyState.style.display = 'block';
             }
+        }
+
+        function buildResumeRow(item) {
+            const nameCell = SafeDom.el('td', {
+                style: 'padding: 0.6rem 0; font-weight: 600; color: var(--text-color);',
+                children: [
+                    SafeDom.link(item.view_url, item.original_filename || 'Untitled', {
+                        newTab: true,
+                        style: 'color: var(--primary-color); text-decoration: none;'
+                    })
+                ]
+            });
+
+            const dateCell = SafeDom.el('td', {
+                style: 'padding: 0.6rem 0; color: var(--gray);',
+                text: formatDate(item.created_at)
+            });
+
+            const deleteButton = SafeDom.el('button', {
+                className: 'delete-cv-btn',
+                text: 'Delete',
+                style: 'background: none; border: none; color: #EF4444; font-weight: 600; cursor: pointer;',
+                attrs: { 'data-resume-id': item.id, type: 'button' }
+            });
+
+            return SafeDom.el('tr', {
+                style: 'border-bottom: 1px solid var(--light-gray);',
+                children: [
+                    nameCell,
+                    dateCell,
+                    SafeDom.el('td', { style: 'padding: 0.6rem 0;', children: [deleteButton] })
+                ]
+            });
         }
 
         function formatDate(dateStr) {

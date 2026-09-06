@@ -849,7 +849,10 @@
         ? `<p class=\"lesson-video-note\">${escapeHtml(structured.notes)}</p>`
         : '';
       if (isSafeHttpUrl(linkUrl)) {
-        lessonContent.innerHTML = `${noteHtml}<p>This lesson opens an external resource.</p><p><a class=\"open-resource\" href=\"${linkUrl}\" target=\"_blank\" rel=\"noopener noreferrer\">Open resource</a></p>`;
+        // Scheme-checked above; escaped here too so a quote in the URL cannot
+        // break out of the attribute and inject one of its own.
+        const safeHref = escapeHtml(linkUrl);
+        lessonContent.innerHTML = `${noteHtml}<p>This lesson opens an external resource.</p><p><a class=\"open-resource\" href=\"${safeHref}\" target=\"_blank\" rel=\"noopener noreferrer\">Open resource</a></p>`;
       } else {
         lessonContent.textContent = structured.legacyContent || 'External link unavailable.';
       }

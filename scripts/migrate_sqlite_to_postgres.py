@@ -19,12 +19,24 @@ from app.models.userModel import User
 from app.models.postModel import PostModel
 from app.models.questionnaireModel import UserQuestionnaire
 
-# Source (SQLite) and Target (PostgreSQL) URLs
+# Source (SQLite) and Target (PostgreSQL) URLs.
+# No default target: a hardcoded URL both leaks a credential and risks writing
+# to the wrong database. The operator names the destination explicitly.
 SQLITE_URL = os.environ.get("SQLITE_URL", "sqlite:///./test.db")
-POSTGRES_URL = os.environ.get(
-    "POSTGRES_URL",
-    "postgresql+psycopg://neondb_owner:npg_ADpQzRkP2T6O@ep-broad-mud-ah6lygvy-pooler.c-3.us-east-1.aws.neon.tech/neondb",
-)
+
+
+def _resolve_postgres_url() -> str:
+    url = os.environ.get("POSTGRES_URL", "").strip()
+    if not url:
+        raise SystemExit(
+            "POSTGRES_URL is not set. Export the target database URL before "
+            "running this migration, e.g.\n"
+            "  POSTGRES_URL='postgresql+psycopg://USER:PASSWORD@HOST/DB' \\\n"
+            "    python scripts/migrate_sqlite_to_postgres.py\n"
+            "This script writes to that database; it has no default on purpose."
+        )
+    return url
+
 
 # Ordered by FK dependencies
 MODELS = [User, PostModel, UserQuestionnaire]
@@ -57,7 +69,7 @@ def _coerce_values(model: Type, row_obj: Any) -> Dict[str, Any]:
 def main() -> None:
     # Create engines
     src_engine = create_engine(SQLITE_URL, future=True)
-    tgt_engine = create_engine(POSTGRES_URL, future=True)
+    tgt_engine = create_engine(_resolve_postgres_url(), future=True)
 
     # Ensure target schema exists
     Base.metadata.create_all(tgt_engine)

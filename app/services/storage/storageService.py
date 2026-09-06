@@ -11,7 +11,15 @@ class StorageService(Protocol):
         file_name: str,
         content_type: str = "application/octet-stream",
         folder: str = "resumes",
+        owner_id=None,
     ) -> dict:
+        """Store the bytes and return ``file_key``, ``file_url``.
+
+        ``file_name`` is the *display* name, not the key: an implementation must
+        generate a key that no other upload can produce, because a shared key
+        means one upload silently overwriting another user's object. Pass
+        ``owner_id`` when the owner is known so objects can be attributed.
+        """
         ...
 
     async def download_file(self, file_key: str) -> bytes:

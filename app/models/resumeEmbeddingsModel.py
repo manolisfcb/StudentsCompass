@@ -42,4 +42,15 @@ class ResumeEmbedding(Base):
     __table_args__ = (
         # Índice para no guardar duplicados del mismo resume + modelo (opcional)
         Index("ix_resume_embeddings_resume_model", "resume_id", "model_name", unique=True),
+        # The HNSW index is what makes nearest-neighbour search usable; it was
+        # only declared in a migration, so autogenerate saw an index with no
+        # counterpart in metadata and proposed dropping it. The pgvector options
+        # are ignored by other dialects, which fall back to a plain index.
+        Index(
+            "ix_resume_embeddings_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": "16", "ef_construction": "64"},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )

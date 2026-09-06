@@ -31,10 +31,29 @@ class PostService:
         return [post for post in posts]
     
     
-    async def delete_post(self, post_id: UUID) -> None:
-        post = await self.session.get(PostModel, post_id)
-        if post:
-            await self.session.delete(post)
-            await self.session.commit()
-        else:
-            raise Exception("Post not found")
+    async def delete_post(self, post_id: UUID, *, user_id: UUID) -> bool:
+        """Delete a post the caller owns. Returns False if there is none.
+
+        Ownership is part of the lookup, not a check after it: filtering by
+        ``user_id`` means another user's post is indistinguishable from a
+        missing one, so the endpoint cannot be used to probe which post IDs
+        exist.
+
+        Legacy posts with a NULL ``user_id`` (created before authorship was
+        recorded) belong to nobody, so this comparison never matches them and
+        they are not deletable through this path. Removing them is a separate,
+        deliberate operation — it is not granted implicitly to whoever asks.
+        """
+        result = await self.session.execute(
+            select(PostModel).where(
+                PostModel.id == post_id,
+                PostModel.user_id == user_id,
+            )
+        )
+        post = result.scalar_one_or_none()
+        if post is None:
+            return False
+
+        await self.session.delete(post)
+        await self.session.commit()
+        return True

@@ -1,43 +1,69 @@
+import os
 from logging.config import fileConfig
+from urllib.parse import urlsplit
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from alembic.script import ScriptDirectory
 
-# importa tu Base
-from app.db import Base  # 👈 AJUSTA este path
-from app.models.userModel import User  # 👈 AJUSTA este path
-from app.models.postModel import PostModel  # 👈 AJUSTA este path
-from app.models.questionnaireModel import UserQuestionnaire
-from app.models.resumeModel import ResumeModel
-from app.models.resumeEmbeddingsModel import ResumeEmbedding
-from app.models.applicationModel import ApplicationModel
-from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel, ApplicationStatusEventModel
-from app.models.emailNotificationLogModel import EmailNotificationLogModel
-from app.models.companyModel import Company
-from app.models.companyRecruiterModel import CompanyRecruiter
-from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
-from app.models.jobPostingModel import JobPosting
-from app.models.jobAnalysisModel import JobAnalysisModel
-from app.models.aiUsageModel import AIQuotaGrantModel, AIUsageEventModel
-from app.models.userStatsModel import UserStatsModel
-from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
-from app.models.skillModel import (
-    CourseModel,
-    CourseSkillModel,
-    JobSkillModel,
-    OptimizationRunModel,
-    ResumeSkillModel,
-    SkillAliasModel,
-    SkillModel,
-)
-from app.models.communityModel import CommunityModel, CommunityMemberModel
-from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeModel, CommunityPostCommentModel
-from app.models.friendshipModel import FriendRequestModel, FriendshipModel
-from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel
+from app.db_baseline import bootstrap, database_is_empty
+
+# The model manifest is the single import list; importing it registers every
+# mapped table on ``Base.metadata``. Listing modules here again is what let
+# roadmaps and resume_course_evaluations fall out of autogenerate's view.
+from app.models.registry import Base  # noqa: F401
 
 
+# --- Migration target -------------------------------------------------------
+# The URL lives in the environment, never in alembic.ini, for two reasons:
+# no credential is committed, and the migrator resolves the *same* variable the
+# application uses (app/db.py reads DATABASE_URL), so a migration cannot be
+# applied to a different database than the one the app talks to.
+
+_ASYNC_TO_SYNC_DRIVER = {
+    # Alembic runs synchronously; the app uses the async driver against the
+    # same server. Only the driver differs, so it is translated rather than
+    # requiring a second URL that could drift.
+    "postgresql+asyncpg": "postgresql+psycopg",
+    "postgresql+psycopg_async": "postgresql+psycopg",
+    "sqlite+aiosqlite": "sqlite",
+}
+
+
+def _to_sync_url(url: str) -> str:
+    scheme, separator, rest = url.partition("://")
+    if not separator:
+        return url
+    return f"{_ASYNC_TO_SYNC_DRIVER.get(scheme, scheme)}://{rest}"
+
+
+def _redacted(url: str) -> str:
+    """Host/database only. Never log or raise with the credential itself."""
+    parts = urlsplit(url)
+    host = parts.hostname or "?"
+    port = f":{parts.port}" if parts.port else ""
+    return f"{parts.scheme}://{host}{port}{parts.path}"
+
+
+def resolve_migration_url() -> str:
+    """Resolve the migration target, failing loudly when it is not configured.
+
+    ALEMBIC_DATABASE_URL wins so an operator can aim the migrator at the
+    direct (non-pooled) endpoint when the app runs through a pooler; otherwise
+    the app's own DATABASE_URL is used, which keeps both in sync by default.
+    """
+    for variable in ("ALEMBIC_DATABASE_URL", "DATABASE_URL"):
+        url = os.environ.get(variable, "").strip()
+        if url:
+            return _to_sync_url(url)
+
+    raise RuntimeError(
+        "No migration target configured. Set DATABASE_URL (the same variable "
+        "the application uses), or ALEMBIC_DATABASE_URL to override it for the "
+        "migrator only. alembic.ini deliberately carries no credential."
+    )
 
 
 # this is the Alembic Config object, which provides
@@ -73,7 +99,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = resolve_migration_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -92,13 +118,35 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    url = resolve_migration_url()
+    section = config.get_section(config.config_ini_section, {})
+    section["sqlalchemy.url"] = url
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
+    # Redacted on purpose: confirms the destination without printing the
+    # credential into CI logs or a developer's terminal.
+    print(f"alembic: migrating {_redacted(url)}")
+
     with connectable.connect() as connection:
+        # An empty database cannot replay the historical chain (see
+        # app/db_baseline.py): it is built from the checked-in baseline,
+        # verified against the metadata and stamped. Anything that already has
+        # tables is an existing installation and takes the normal
+        # forward-only path from wherever it is stamped.
+        if database_is_empty(connection):
+            bootstrap(connection, ScriptDirectory.from_config(config), target_metadata)
+            connection.commit()
+            return
+
+        # Inspecting opened an implicit transaction. Alembic expects to start
+        # its own, and leaving this one open swallows the commit: the chain
+        # runs and then silently rolls back.
+        connection.rollback()
+
         context.configure(
             connection=connection, target_metadata=target_metadata
         )

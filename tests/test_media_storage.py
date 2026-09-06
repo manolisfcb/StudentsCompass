@@ -21,12 +21,14 @@ class FakeStorageService:
         file_name: str,
         content_type: str = "application/octet-stream",
         folder: str = "resumes",
+        owner_id=None,
     ) -> dict:
         self.uploaded = {
             "file_bytes": file_bytes,
             "file_name": file_name,
             "content_type": content_type,
             "folder": folder,
+            "owner_id": owner_id,
         }
         return {
             "file_key": f"{folder}/{file_name}",
@@ -82,4 +84,5 @@ async def test_s3_media_storage_uploads_via_configured_storage():
         "file_name": "photo.png",
         "content_type": "image/png",
         "folder": "posts",
+        "owner_id": None,
     }

@@ -1,5 +1,8 @@
 # Tests
 
+> Guía de ejecución completa (lane rápida, lane PostgreSQL/Redis, aislamiento,
+> harness de medición y concurrencia): [`docs/TESTING.md`](../docs/TESTING.md).
+
 ## Estructura de Tests
 
 ```

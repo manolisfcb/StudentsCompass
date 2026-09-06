@@ -16,12 +16,14 @@ class FakeResourceStorageService:
         file_name: str,
         content_type: str = "application/octet-stream",
         folder: str = "resumes",
+        owner_id=None,
     ) -> dict:
         self.uploaded = {
             "file_bytes": file_bytes,
             "file_name": file_name,
             "content_type": content_type,
             "folder": folder,
+            "owner_id": owner_id,
         }
         return {
             "file_key": f"{folder}/{file_name}",

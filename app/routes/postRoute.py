@@ -4,6 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import MAX_POST_UPLOAD_BYTES, POST_MEDIA_CONTENT_TYPES
+from app.core.uploads import ensure_allowed_upload, read_upload_within_limit
 from app.db import get_session
 from app.models.userModel import User
 from app.schemas.postSchema import PostCreate, PostRead
@@ -55,11 +57,26 @@ async def upload_file(
     user: User = Depends(current_active_user),
 ):
 
+    # Nothing was bounded here before: the parser had already spooled the body to
+    # disk and the bytes went straight to a paid provider. The raw body is capped
+    # by RequestBodySizeLimitMiddleware; this reads the part incrementally and
+    # checks the payload really is the media type it claims to be, so neither
+    # disk nor the provider is spent on something this endpoint does not serve.
+    file_bytes = await read_upload_within_limit(file, MAX_POST_UPLOAD_BYTES)
+    content_type = ensure_allowed_upload(
+        data=file_bytes,
+        content_type=file.content_type,
+        allowed_content_types=POST_MEDIA_CONTENT_TYPES,
+        what="media",
+    )
+
     try:
         post_data = await get_media_storage_service().upload_media(
             file=file,
             file_name=file.filename,
-            folder="posts/"
+            folder="posts/",
+            file_bytes=file_bytes,
+            content_type=content_type,
         )
     except Exception:
         LOGGER.exception("Post media upload failed for user %s", user.id)
@@ -82,5 +99,9 @@ async def delete_post(
     user: User = Depends(current_active_user),
 ):
     post_service = PostService(session)
-    await post_service.delete_post(post_id)
+    deleted = await post_service.delete_post(post_id, user_id=user.id)
+    if not deleted:
+        # Same response for "not yours" and "does not exist": the endpoint must
+        # not confirm that another user's post ID is real.
+        raise HTTPException(status_code=404, detail="Post not found")
     return {"detail": "Post deleted successfully"}

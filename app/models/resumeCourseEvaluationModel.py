@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, Float, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -19,6 +19,12 @@ class ResumeCourseEvaluationStatus(str, enum.Enum):
 
 class ResumeCourseEvaluationModel(Base):
     __tablename__ = "resume_course_evaluations"
+    # Declared here because the index exists in every deployed database:
+    # an autogenerate run against metadata that omits it proposes dropping
+    # it, which is how a previous revision silently removed a batch of them.
+    __table_args__ = (
+        Index("ix_resume_course_evaluations_created_at", "created_at"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

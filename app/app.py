@@ -38,6 +38,15 @@ from app.routes.adminRoute import router as admin_router
 from app.routes.capstoneAnalyticsRoute import router as capstone_analytics_router
 from app.core.resume_analyzer.resume_text_extractor import shutdown_resume_text_extractors
 from app.services.roadmaps.roadmapSeedService import seed_roadmaps_on_startup_if_dev
+from app.config import (
+    MAX_POST_UPLOAD_BYTES,
+    MAX_REQUEST_BODY_BYTES,
+    MAX_UPLOAD_BYTES,
+)
+from app.middleware.body_size import (
+    MULTIPART_OVERHEAD_BYTES,
+    RequestBodySizeLimitMiddleware,
+)
 from app.middleware.rate_limit import RequestRateLimiter
 from fastapi import Response
 from fastapi.responses import FileResponse
@@ -149,6 +158,19 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Added last so it wraps everything else: the body has to be bounded before the
+# multipart parser spools it, not after a route handler gets a chance to look.
+# The per-route budgets carry multipart slack on top of the file budget, so the
+# route's own check is the one that decides the exact boundary.
+app.add_middleware(
+    RequestBodySizeLimitMiddleware,
+    default_max_bytes=MAX_REQUEST_BODY_BYTES,
+    budgets={
+        "/api/v1/profile/cv/": MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES,
+        "/api/v1/upload_post": MAX_POST_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES,
+    },
 )
 
 
