@@ -5,7 +5,6 @@ import mimetypes
 from typing import Iterable
 
 from sqlalchemy import select
-from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid import UUID
@@ -16,10 +15,7 @@ from app.models.resourceModel import (
     ResourceModel,
     ResourceModuleModel,
 )
-from app.models.resumeCourseEvaluationModel import (
-    ResumeCourseEvaluationModel,
-    ResumeCourseEvaluationStatus,
-)
+from app.services.learning.courseProgress import CourseProgressProjector
 from app.services.resources.resourceLessonContentCodec import ResourceLessonContentCodec
 from app.services.storage.storageService import (
     StorageService,
@@ -50,6 +46,7 @@ class ResourceService:
     def __init__(self, session: AsyncSession, storage_service: StorageService | None = None):
         self.session = session
         self.lesson_content_codec = ResourceLessonContentCodec()
+        self.progress_projector = CourseProgressProjector(session)
         self.resources_bucket = get_resource_storage_location_id()
         try:
             if storage_service:
@@ -158,47 +155,16 @@ class ResourceService:
         return resource
 
     async def get_completed_lesson_ids_for_resource(self, resource_id: UUID, user_id: UUID) -> set[UUID]:
-        result = await self.session.execute(
-            select(ResourceLessonProgressModel.lesson_id)
-            .join(ResourceLessonModel, ResourceLessonModel.id == ResourceLessonProgressModel.lesson_id)
-            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
-            .where(
-                ResourceLessonProgressModel.user_id == user_id,
-                ResourceModuleModel.resource_id == resource_id,
-                ResourceLessonModel.content_type != "resume_upload",
-            )
+        """What this user has finished in this course.
+
+        Delegated to the shared projector so that the course page and the
+        dashboard answer from the same facts. It used to be computed here and
+        again, differently, in the dashboard's SQL.
+        """
+        completed = await self.progress_projector.completed_lesson_ids(
+            user_id=user_id, resource_ids=[resource_id]
         )
-        completed_ids = {row[0] for row in result.all()}
-
-        resume_upload_lessons = await self.session.execute(
-            select(ResourceLessonModel.id)
-            .join(ResourceModuleModel, ResourceModuleModel.id == ResourceLessonModel.module_id)
-            .where(
-                ResourceModuleModel.resource_id == resource_id,
-                ResourceLessonModel.content_type == "resume_upload",
-            )
-        )
-        resume_upload_lesson_ids = [row[0] for row in resume_upload_lessons.all()]
-        if not resume_upload_lesson_ids:
-            return completed_ids
-
-        try:
-            passed_eval = await self.session.execute(
-                select(ResumeCourseEvaluationModel.id).where(
-                    ResumeCourseEvaluationModel.user_id == user_id,
-                    ResumeCourseEvaluationModel.status == ResumeCourseEvaluationStatus.COMPLETED,
-                    ResumeCourseEvaluationModel.pass_status.is_(True),
-                ).limit(1)
-            )
-        except ProgrammingError as exc:
-            # Backward compatibility while DB migration is being rolled out.
-            if "resume_course_evaluations" in str(exc):
-                return completed_ids
-            raise
-        if passed_eval.scalar_one_or_none():
-            completed_ids.update(resume_upload_lesson_ids)
-
-        return completed_ids
+        return completed.get(resource_id, set())
 
     async def set_lesson_progress(
         self,

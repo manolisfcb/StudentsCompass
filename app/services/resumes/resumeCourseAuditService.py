@@ -32,6 +32,7 @@ from app.services.ai.aiUsageService import (
     QuotaReservation,
 )
 from app.services.resumes.resumeService import ResumeService
+from app.services.learning.resumeApproval import is_passing_score
 
 LOGGER = logging.getLogger(__name__)
 
@@ -119,7 +120,10 @@ class ResumeCourseAuditService:
         evaluation.status = ResumeCourseEvaluationStatus.COMPLETED
         evaluation.overall_score = result.overall_score
         evaluation.llm_confidence = result.llm_confidence
-        evaluation.pass_status = result.pass_status
+        # Derived from the score by the one approval policy, not copied from the
+        # result: a stored flag must never be able to claim a pass the score it
+        # sits next to does not support.
+        evaluation.pass_status = is_passing_score(result.overall_score)
         evaluation.report_text = format_resume_audit_report(result)
         evaluation.structured_payload = serialize_resume_audit_result(result)
         evaluation.completed_at = datetime.utcnow()

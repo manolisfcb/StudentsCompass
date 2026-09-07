@@ -33,6 +33,10 @@ from app.services.companies.companyRecruiterService import (
     ASSIGNABLE_COMPANY_RECRUITER_ROLES,
     recruiter_role_rank,
 )
+from app.services.learning.resumeApproval import (
+    RESUME_APPROVAL_MIN_SCORE,
+    approved_evaluation_clauses,
+)
 from app.services.notifications.emailNotificationService import EmailNotificationService
 
 
@@ -56,7 +60,9 @@ class ApprovedResumeOption:
 
 
 class ApplicationService:
-    MIN_APPROVED_RESUME_SCORE = 8.0
+    # Kept as a class attribute because callers and messages read it; the value
+    # itself lives in the approval policy so there is one threshold, not two.
+    MIN_APPROVED_RESUME_SCORE = RESUME_APPROVAL_MIN_SCORE
     APPROVED_RESUME_REQUIRED_MESSAGE = (
         "You need a Students Compass-approved resume with score 8+ before applying to this job."
     )
@@ -237,9 +243,7 @@ class ApplicationService:
             .where(
                 ResumeModel.user_id == user_id,
                 ResumeCourseEvaluationModel.user_id == user_id,
-                ResumeCourseEvaluationModel.status == ResumeCourseEvaluationStatus.COMPLETED,
-                ResumeCourseEvaluationModel.pass_status.is_(True),
-                ResumeCourseEvaluationModel.overall_score >= self.MIN_APPROVED_RESUME_SCORE,
+                *approved_evaluation_clauses(),
             )
             .order_by(
                 ResumeModel.created_at.desc(),

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.services.learning.resumeApproval import RESUME_APPROVAL_MIN_SCORE
 
 
 class ResumeAuditCategoryScores(BaseModel):
@@ -28,7 +29,8 @@ class ResumeAuditResult(BaseModel):
 
 
 def format_resume_audit_report(result: ResumeAuditResult) -> str:
-    status_line = "PASS (>=8)" if result.pass_status else "FAIL (<8)"
+    bar = f"{RESUME_APPROVAL_MIN_SCORE:g}"
+    status_line = f"PASS (>={bar})" if result.pass_status else f"FAIL (<{bar})"
     categories = result.scores
 
     lines = [

@@ -13,6 +13,7 @@ from app.models.resourceModel import ResourceModel, ResourceModuleModel, Resourc
 
 SEED_RESOURCES = [
     {
+        "core_code": "resume_templates",
         "title": "Resume Templates",
         "description": "ATS-friendly resume templates and writing playbooks for student and junior roles.",
         "icon": "📄",
@@ -64,6 +65,7 @@ SEED_RESOURCES = [
         ],
     },
     {
+        "core_code": "linkedin_optimization",
         "title": "LinkedIn Optimization",
         "description": "Optimize profile sections to improve discoverability and outreach responses.",
         "icon": "💼",
@@ -158,6 +160,7 @@ SEED_RESOURCES = [
         ],
     },
     {
+        "core_code": "interview_preparation",
         "title": "Interview Preparation",
         "description": "Master the most common interview questions with proven frameworks and former-CEO answer strategies.",
         "icon": "🎯",
@@ -628,6 +631,9 @@ async def seed_resources() -> None:
                 continue
 
             resource = ResourceModel(
+                # Core courses are seeded with their stable code so a later
+                # rename cannot detach them from the dashboard.
+                core_code=resource_data.get("core_code"),
                 title=resource_data["title"],
                 description=resource_data["description"],
                 icon=resource_data.get("icon"),

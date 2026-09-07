@@ -119,8 +119,10 @@ def create_schema(connection) -> None:
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.Column('is_published', sa.Boolean(), nullable=False),
         sa.Column('is_locked', sa.Boolean(), nullable=False),
+        sa.Column('core_code', sa.String(length=64), nullable=True),
         sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('ix_resources_core_code', 'resources', ['core_code'], unique=True)
         op.create_index('ix_resources_is_locked', 'resources', ['is_locked'], unique=False)
         op.create_table('roadmaps',
         sa.Column('id', sa.UUID(), nullable=False),

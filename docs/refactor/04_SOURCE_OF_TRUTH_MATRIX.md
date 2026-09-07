@@ -11,7 +11,7 @@ AUTHORITATIVE DATA es el hecho o decisión persistida que gobierna el concepto. 
 | Respuesta de cuestionario | JSON v2, answers/version/results | answers con definición inmutable por versión | results snapshot del cálculo histórico | versionar lectura; no recalcular historia |
 | Documento CV | resumes.storage_file_id/folder_id/view_url y objeto S3 | objeto identificado por clave única + registro resumes | URL de acceso generada | expandir identidad/cleanup sin mover legacy ciegamente |
 | Resumen IA de CV | resumes.ai_summary, job_analysis.summary | resultado de análisis seleccionado y ligado a CV/versión | resumes.ai_summary como proyección | backfill relación verificable; conservar texto histórico |
-| Elegibilidad de CV | score, pass_status, payload JSON, umbral en varios módulos | evaluación COMPLETED versionada + policy score >=8 | pass_status y copy UI; reporte snapshot | verificar discordancias antes de switch |
+| Elegibilidad de CV | evaluación COMPLETED + `app/services/learning/resumeApproval.py` (TASK-016) | evaluación COMPLETED versionada + policy score >=8 | pass_status derivado del score al guardar; copy UI descriptivo | RESUELTO: umbral escrito una vez; `pass_status` no puede contradecir al score |
 | Cuota usuario | ai_usage_events, conteos job_analysis/evaluations, CounterStore | ledger por referencia idempotente + grants | contador compartido y resumen diario | backfill por referencia, no max indefinido |
 | Gasto IA global | CounterStore diario, reintentos evaluadores | registro/control de intentos del proveedor | contadores globales con retención definida | guard por intento y reconciliación de reservas |
 | Job CV activo | job_analysis y BackgroundTasks | job_analysis con claim/lease/estado | ejecución del runner y polling UI | índice de activo y recuperación |
@@ -19,9 +19,9 @@ AUTHORITATIVE DATA es el hecho o decisión persistida que gobierna el concepto. 
 | Match candidatura | hash en ApplicationService | mantener regla mock declarada | match_strength persistido | no sustituir por Capstone sin tarea de producto |
 | Entrevista elegida | estados slots, DTO selected_interview_slot | una fila BOOKED por candidatura | DTO seleccionado/lista disponible | bloqueo + unicidad tras resolver duplicados |
 | Miembros comunidad | community_members, communities.member_count | community_members | member_count derivado o cache reconciliable | comparar y switch; conservar respuesta |
-| Progreso de recursos | resource_lesson_progress, aprobaciones CV, user_stats, fallback fijo | hechos de lección + evaluación según policy común | porcentajes y user_stats | proyección única, parity y lecturas sin writes |
-| Recursos core | títulos en ResourceService/DashboardService | código estable de recurso | título y copy traducible | asignar códigos sin adivinar duplicados |
-| Progreso roadmap | user_task_progress, user_stage_progress | tareas completadas; proyecto separado | user_stage_progress y porcentajes | verificar parity; no mezclar con cursos |
+| Progreso de recursos | `resource_lesson_progress` + evaluación aprobada, vía `CourseProgressProjector` (TASK-016) | hechos de lección + evaluación según policy común | porcentajes; `user_stats` legacy solo-lectura | RESUELTO: una proyección para curso y dashboard; GET no escribe |
+| Recursos core | `resources.core_code` (TASK-016), título solo como fallback documentado | código estable de recurso | título y copy traducible | RESUELTO: backfill por inventario, índice único; títulos ambiguos quedan sin asignar |
+| Progreso roadmap | user_task_progress, user_stage_progress | tareas completadas; proyecto separado | user_stage_progress y porcentajes | VERIFICADO (TASK-016): `user_stage_progress` se escribe solo al actualizar una tarea, nunca en GET, y sigue separado de los cursos |
 | Skills CV | resume_skills por método y estado | evidencia/provenance y revisión manual | selección best_by_skill_id | conservar diferentes métodos, CHECK e idempotencia |
 | Requisitos de rol | job_skills de ofertas y job_skills con posting NULL | separar lógicamente requisitos observados y fallback de rol | agregaciones de demanda | unicidad adecuada a cada caso; no fusionar evidencias |
 | Catálogo de cursos | courses, resources opcional | courses oferta/constraints; resources contenido local | nombres/URL proyectados si linked | revisar sincronización; mantener ambos |
@@ -33,10 +33,10 @@ AUTHORITATIVE DATA es el hecho o decisión persistida que gobierna el concepto. 
 
 | Business Rule | Locations | Current Implementations | Risk | Canonical Destination |
 | --- | --- | --- | --- | --- |
-| CV aprobado | resume_audit_llm.py:121; applicationService.py:43,147; resourceService.py:174; resume_audit_schema.py:31; resource_detail.js:525 | >=8; score+pass; pass; etiqueta UI | elegibilidad/progreso distintos | ResumeApprovalPolicy backend; UI recibe decisión y umbral descriptivo |
+| CV aprobado | `app/services/learning/resumeApproval.py` (TASK-016); `resource_detail.js:525` copy | una policy backend; la UI muestra la decisión y el umbral como texto | RESUELTO | ResumeApprovalPolicy backend; UI recibe decisión y umbral descriptivo |
 | Estado de candidatura | applicationService.py:168,213; interviewService.py:67; models/applicationModel.py:23; schemas/applicationSchema.py:11 | eventos en unas rutas; asignación directa en otra; enum duplicado | historial y agregados divergen | transición canónica y enum compartido |
-| Progreso | dashboardService.py:307,387,512; resourceService.py:149 | porcentajes fijos, COUNT rows, aprobación virtual | pantallas contradictorias | ResourceProgressService/proyector |
-| Recurso core | ResourceService.MANDATORY_RESOURCE_TITLES; DashboardService.CORE_RESOURCE_TITLES | lookup por texto editable | renombrar exige cambios en varios archivos | código de recurso estable y mapping único |
+| Progreso | `app/services/learning/courseProgress.py` (TASK-016) | una proyección desde los hechos; `user_stats` legacy solo-lectura | RESUELTO | CourseProgressProjector |
+| Recurso core | `CORE_COURSES` en `app/services/learning/courseProgress.py` (TASK-016) | `resources.core_code`; título solo como fallback | RESUELTO para el dashboard; `ResourceService.MANDATORY_RESOURCE_TITLES` sigue ordenando el listado por título | código de recurso estable y mapping único |
 | CV actual/propio/cache | resumeService.py:112,122; cvAnalysisService.py:86,95,299; capstoneAnalyticsService.py:274 | consultas similares repartidas | cambio de semántica latest/version exige múltiples cambios | consultas CV específicas reutilizadas; no repo genérico |
 | Ranking recruiter | applicationService.py:332; companyRecruiterService.py:26 | sort Python vs CASE SQL | asignación/orden pueden variar | policy de rango de rol + query de selección limitada |
 | Config auth | userService.py:24; companies/companyService.py:21; config.py | ENV/secret loader duplicados | defaults divergentes y mantenimiento | configuración validada compartida |

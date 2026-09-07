@@ -57,7 +57,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-013 | Hacer durable e idempotente el procesamiento CV | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-012 | TASK-008, TASK-022, TASK-027 |
 | TASK-014 | Centralizar transiciones y proyección de candidaturas | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-017, TASK-019, TASK-024 |
 | TASK-015 | Serializar selección de entrevista por candidatura | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-014 | TASK-006, TASK-012, TASK-021 |
-| TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | TODO | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
+| TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | COMPLETED | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
 | TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
 | TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
@@ -2419,7 +2419,7 @@ Risk: HIGH
 
 ## TASK-016 — Unificar aprobación de CV y proyección de progreso
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-3
 Category: Business Logic / Database / Bug Fix
@@ -2489,12 +2489,12 @@ Grupo G; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Unificar aprobación de CV y proyección de progreso.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Unificar aprobación de CV y proyección de progreso.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -2505,6 +2505,108 @@ Ejecutar tests de los componentes indicados mediante `.venv/bin/python -m pytest
 ### Rollback / Risk Notes
 
 Volver a la implementación anterior solo si conserva las correcciones de seguridad ya integradas y entiende el schema expandido. Conservar datos/backfills; preferir forward fix. Para cambios DB verificar copia/restore y no usar downgrade destructivo. Si no hay cambio DB, revertir solo archivos de la tarea y repetir validación de contratos.
+
+### Completion Notes
+
+Dos módulos nuevos concentran lo que estaba repartido:
+
+- `app/services/learning/resumeApproval.py` — la única regla de aprobación.
+  `RESUME_APPROVAL_MIN_SCORE` sigue siendo **8.0**; no se tocó el umbral, solo
+  dejó de reescribirse. Lo consumen `resume_audit_llm.py` (normalización de
+  `pass_status`), `resume_audit_schema.py` (el texto del reporte interpola el
+  umbral), `applicationService.list_approved_resumes` (vía
+  `approved_evaluation_clauses()`, con `MIN_APPROVED_RESUME_SCORE` conservado
+  como atributo derivado), `resumeCourseAuditService.complete_evaluation` y el
+  proyector.
+- `app/services/learning/courseProgress.py` — `CourseProgressProjector`, una
+  sola proyección desde los hechos (`resource_lesson_progress` + evaluación
+  aprobada). La usan la página de curso (`ResourceService`) y el dashboard.
+  Solo lee: ningún método escribe.
+
+Bug Fixes declarados, todos dentro de F-15:
+
+1. **Recursos aprobaba con `pass_status` solo.** Una fila histórica con
+   `pass_status=True` y score 7.5 completaba la lección `resume_upload` aunque
+   ese mismo CV no podía adjuntarse a una candidatura. Ahora las tres rutas
+   exigen COMPLETED + `pass_status` + score >= 8.
+2. **El dashboard no veía la aprobación.** Contaba filas de progreso en SQL
+   crudo, así que la lección completada por auditoría aparecía hecha en el curso
+   y ausente en el dashboard. Las dos pantallas comparten la proyección.
+3. **`pass_status` guardado podía contradecir al score.** `complete_evaluation`
+   copiaba el flag del resultado; ahora lo deriva del score con la policy.
+4. **Una fila de progreso obsoleta mantenía completa una lección de upload.**
+   La auditoría decide ese tipo de lección; la fila explícita ya no la sostiene
+   tras borrar el CV aprobado.
+5. **GET escribía caches.** `/api/v1/dashboard/stats` insertaba la fila
+   `user_stats` del usuario en la primera lectura y la sincronizaba después. Ya
+   no. La caracterización `test_dashboard_stats_currently_writes_a_user_stats_row_on_read`
+   de TASK-001 anticipaba exactamente esto y decía que se voltearía aquí: pasó a
+   `test_dashboard_stats_does_not_write_on_read`.
+
+Identidad estable de cursos core: `resources.core_code` (nullable, índice único
+`ix_resources_core_code`), migración `a7d3f81c9e64`. El backfill reclama una fila
+por curso **solo si el match por título es inequívoco** (exactamente un recurso
+publicado con ese título); títulos ambiguos, ausentes o despublicados quedan sin
+asignar y se registran en el log para que un operador decida. No se renombra,
+fusiona ni borra nada. Como fallback documentado, un despliegue cuyas filas son
+anteriores al backfill se resuelve por título mientras el match sea único;
+`core_course_code_inventory()` reporta qué resolvió por código, por título o por
+nada. `scripts/seed_resources.py` siembra los códigos. `app/db_baseline.py`
+incorpora la columna y el índice, de modo que bootstrap y metadata siguen
+coincidiendo.
+
+`user_stats` queda como cache legacy documentado: se lee solo cuando ningún
+curso core tiene contenido (despliegue sin seed) y nunca se escribe. No se
+eliminó ninguna columna ni tabla. Mantener ese fallback es deliberado: quitarlo
+bajaría a 0% un despliegue sin cursos sembrados, que es un cambio de porcentajes
+distinto del cambio estructural de esta tarea.
+
+Cache de stage del roadmap: **verificado, no fusionado**. `user_stage_progress`
+se escribe solo al actualizar una tarea; `test_reading_a_roadmap_does_not_write_its_stage_cache`
+fija que `get_roadmap_detail` no escribe nada.
+
+Parity: `test_parity_with_the_legacy_computation_when_no_audit_is_involved`
+reimplementa el cálculo reemplazado (COUNT de filas por título) y exige igualdad
+exacta con la proyección cuando no hay lección `resume_upload` — es decir, el
+switch no mueve ningún número salvo donde la auditoría es el motivo.
+`test_the_legacy_computation_is_the_one_that_was_wrong` documenta esa única
+diferencia: legacy 50% vs proyectado 100% con auditoría aprobada.
+
+Validación ejecutada:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q \
+  tests/test_course_progress_projection.py
+# 25 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q
+# 429 passed, 61 skipped in 48.98s
+
+TEST_DATABASE_URL_PG=postgresql+asyncpg://testuser:***@127.0.0.1:55432/studentscompass_test \
+TEST_REDIS_URL=redis://127.0.0.1:56379/0 \
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q tests/integration
+# 61 passed in 38.30s
+```
+
+Casos exigidos por Validation, todos cubiertos: mismos porcentajes en dashboard y
+curso; evaluación aprobada sin fila de progreso coherente; 7.99 vs 8.0;
+evaluaciones múltiples; CV borrado (las evaluaciones caen por ON DELETE CASCADE y
+la lección se descompleta); lecturas sin writes; parity report antes del switch.
+En PostgreSQL, `tests/integration/test_core_course_code_migration_pg.py` cubre lo
+que SQLite no puede: el índice único rechaza un segundo código igual mientras las
+filas sin código quedan libres, el backfill es re-ejecutable, respeta una
+asignación hecha a mano y deja intacto el caso ambiguo.
+
+Presupuesto de consultas: proyectar los tres cursos core cuesta un número
+constante de SELECTs (<= 6), independiente de cuántos cursos haya; antes eran dos
+consultas SQL crudas más una carga completa de outlines para la navegación.
+
+Límites: no se ejecutó smoke de navegador porque la tarea no cambió templates ni
+JS — el DTO conserva sus claves (`resume`, `linkedin`, `interview_prep`,
+`portfolio`, `overall`) y eso lo fija `tests/test_contract_baseline.py`. El
+backfill no se ejecutó contra ningún dato real; en producción hay que revisar el
+log de la migración para los códigos que queden sin asignar. No hay lint/typecheck
+configurado en el repositorio: N/A.
 
 ### Estimated Impact
 

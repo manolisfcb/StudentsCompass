@@ -18,6 +18,7 @@ from app.core.resume_analyzer.prompts.resume_audit_prompt import (
 )
 from app.core.resume_analyzer.resume_audit_schema import ResumeAuditResult
 from app.services.ai.aiBudgetGuard import AIBudgetExhausted, ensure_llm_attempt_allowed
+from app.services.learning.resumeApproval import is_passing_score
 
 load_dotenv()
 
@@ -125,7 +126,7 @@ class GeminiResumeAuditEvaluator(ResumeAuditEvaluator):
                         raise RuntimeError("Empty response from LLM.")
 
                     parsed = ResumeAuditResult.model_validate_json(text)
-                    parsed.pass_status = parsed.overall_score >= 8
+                    parsed.pass_status = is_passing_score(parsed.overall_score)
                     parsed.prompt_injection_signals_detected = sanitization.detected_signals
                     return parsed
                 except AIBudgetExhausted:

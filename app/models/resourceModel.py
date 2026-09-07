@@ -17,6 +17,10 @@ class ResourceModel(Base):
     # it, which is how a previous revision silently removed a batch of them.
     __table_args__ = (
         Index("ix_resources_is_locked", "is_locked"),
+        # Unique as an index rather than a constraint so it matches what the
+        # migration creates, and so the rows without a code stay unconstrained:
+        # both PostgreSQL and SQLite treat NULLs in a unique index as distinct.
+        Index("ix_resources_core_code", "core_code", unique=True),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -32,6 +36,11 @@ class ResourceModel(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_published = Column(Boolean, nullable=False, default=True)
     is_locked = Column(Boolean, nullable=False, default=False)
+    # Stable identity for the courses the product treats as mandatory. Titles
+    # are editable, so keying progress on them made an admin's rename silently
+    # zero a user's dashboard. Nullable: ordinary resources carry no code, and
+    # the unique index only constrains the rows that do (NULLs stay distinct).
+    core_code = Column(String(64), nullable=True)
 
     modules = relationship(
         "ResourceModuleModel",

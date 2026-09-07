@@ -156,25 +156,20 @@ async def test_dashboard_progress_contract(client, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_dashboard_stats_currently_writes_a_user_stats_row_on_read(
-    client, auth_headers, query_counter
-):
-    """Characterization, not an endorsement: this GET writes today.
+async def test_dashboard_stats_does_not_write_on_read(client, auth_headers, query_counter):
+    """The endpoint is a projection: reading it writes nothing.
 
-    The first read lazily INSERTs the caller's ``user_stats`` row, so the
-    endpoint is not a pure projection. That is finding F-15 and belongs to
-    TASK-016 (unificar aprobación de CV y proyección de progreso), which states
-    "GET no escribe caches". Pinned here so the change is visible and
-    deliberate when TASK-016 lands: at that point this test flips to
-    ``counted.writes == 0``.
+    It used to lazily INSERT the caller's ``user_stats`` row on the first read,
+    which is finding F-15 — the characterization pinned here said this test would
+    flip to zero writes when TASK-016 landed, and it has. ``user_stats`` is now a
+    documented legacy cache that a GET may read and never writes.
     """
     with query_counter() as first_read:
         response = await client.get("/api/v1/dashboard/stats", headers=auth_headers)
     assert response.status_code == 200
-    assert first_read.writes == 1
-    assert first_read.matching("insert into user_stats")
+    assert first_read.writes == 0, first_read.statements
+    assert not first_read.matching("insert into user_stats")
 
-    # The write is a one-off materialisation, not a write per request.
     with query_counter() as second_read:
         response = await client.get("/api/v1/dashboard/stats", headers=auth_headers)
     assert response.status_code == 200

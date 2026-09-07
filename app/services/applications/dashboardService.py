@@ -1,17 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import bindparam, case, func, or_, select, text
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import selectinload
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.companyModel import Company
 from app.models.jobPostingModel import JobPosting
-from app.models.resourceModel import (
-    ResourceLessonProgressModel,
-    ResourceModel,
-    ResourceModuleModel,
-)
+from app.models.resourceModel import ResourceModel, ResourceModuleModel
 from app.models.userModel import User
 from app.models.userStatsModel import UserStatsModel
 from app.models.resumeModel import ResumeModel
+from app.services.learning.courseProgress import CORE_COURSES, CourseProgressProjector
 from typing import Dict, List
 from uuid import UUID
 from datetime import datetime
@@ -21,11 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardService:
-    CORE_RESOURCE_TITLES = {
-        "resume": "Resume Templates",
-        "linkedin": "LinkedIn Optimization",
-        "interview_prep": "Interview Preparation",
-    }
+    #: The payload keys clients already read. The rows behind them are found by
+    #: ``resources.core_code`` through ``CourseProgressProjector``, not by title:
+    #: a title is editable, and renaming a course used to zero its progress.
+    CORE_RESOURCE_KEYS: tuple[str, ...] = tuple(course.key for course in CORE_COURSES)
     
     @staticmethod
     async def get_company_dashboard(company_id: UUID, session: AsyncSession) -> Dict:
@@ -152,10 +148,7 @@ class DashboardService:
                 application_stats["offers"],
             )
             
-            # Get or create user stats (authoritative progress values)
-            user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
-            user_stats = await DashboardService._sync_user_stats_with_resource_progress(user_id, session, user_stats)
-            progress_data = DashboardService._build_student_progress_data(user_stats)
+            progress_data = await DashboardService._project_student_progress(user_id, session)
 
             logger.info(f"Progress data: {progress_data}")
             
@@ -245,10 +238,7 @@ class DashboardService:
         # Calculate stats on-the-fly
         application_stats = DashboardService._build_student_application_stats(applications)
         
-        # Use saved stats as authoritative progress values
-        user_stats = await DashboardService._get_or_create_user_stats(user_id, session)
-        user_stats = await DashboardService._sync_user_stats_with_resource_progress(user_id, session, user_stats)
-        progress_data = DashboardService._build_student_progress_data(user_stats)
+        progress_data = await DashboardService._project_student_progress(user_id, session)
         
         return {
             "stats": {
@@ -272,20 +262,6 @@ class DashboardService:
             "offers": sum(1 for app in applications if app.status == ApplicationStatus.OFFER),
             "applied": sum(1 for app in applications if app.status == ApplicationStatus.APPLIED),
         }
-
-    @staticmethod
-    def _build_student_progress_data(user_stats: UserStatsModel) -> Dict[str, int | float]:
-        progress_data = {
-            "resume": user_stats.resume_progress,
-            "linkedin": user_stats.linkedin_progress,
-            "interview_prep": user_stats.interview_progress,
-            "portfolio": 0,
-        }
-        progress_data["overall"] = round(
-            (progress_data["resume"] + progress_data["linkedin"] + progress_data["interview_prep"]) / 3,
-            1,
-        )
-        return progress_data
 
     @staticmethod
     def _serialize_recent_applications(applications, *, include_notes: bool = False) -> list[Dict]:
@@ -357,147 +333,133 @@ class DashboardService:
             raise
 
     @staticmethod
-    async def _get_or_create_user_stats(user_id: UUID, session: AsyncSession) -> UserStatsModel:
-        """Fetch user stats or create defaults using activity-based progress."""
+    async def _project_student_progress(user_id: UUID, session: AsyncSession) -> Dict[str, int | float]:
+        """The progress a student is shown, projected from facts.
+
+        ``resource_lesson_progress`` rows and approved resume audits are the
+        facts; this is a projection of them and the course page projects the
+        same ones, so both screens agree by construction. ``user_stats`` is a
+        legacy cache: it is read only when no core course has any content — a
+        deployment whose courses were never seeded — and it is never written
+        here, because a GET that writes turns every page view into a write.
+        """
+        projector = CourseProgressProjector(session)
+        course_progress = await projector.core_course_progress(user_id)
+
+        if course_progress:
+            progress_data = {
+                "resume": course_progress.get("resume", 0),
+                "linkedin": course_progress.get("linkedin", 0),
+                "interview_prep": course_progress.get("interview_prep", 0),
+                "portfolio": 0,
+            }
+        else:
+            progress_data = await DashboardService._legacy_progress_fallback(user_id, session)
+
+        progress_data["overall"] = round(
+            (progress_data["resume"] + progress_data["linkedin"] + progress_data["interview_prep"]) / 3,
+            1,
+        )
+        return progress_data
+
+    @staticmethod
+    async def _legacy_progress_fallback(user_id: UUID, session: AsyncSession) -> Dict[str, int]:
+        """The pre-course numbers, read but never written.
+
+        Kept because removing it would drop a deployment without seeded courses
+        from its stored percentages to a confident 0%, which is a different
+        change from the one this task makes. The stored row wins when it exists;
+        otherwise the old activity heuristic is computed in memory and
+        discarded. ``user_stats`` rows are no longer created on a read.
+        """
         result = await session.execute(select(UserStatsModel).where(UserStatsModel.user_id == user_id))
         stats = result.scalar_one_or_none()
-
         if stats:
-            return stats
+            return {
+                "resume": stats.resume_progress,
+                "linkedin": stats.linkedin_progress,
+                "interview_prep": stats.interview_progress,
+                "portfolio": 0,
+            }
 
-        progress = await DashboardService._calculate_progress(user_id, session)
-        stats = UserStatsModel(
-            user_id=user_id,
-            resume_progress=progress["resume"],
-            linkedin_progress=progress["linkedin"],
-            interview_progress=progress["interview_prep"],
-        )
-        session.add(stats)
-        await session.commit()
-        await session.refresh(stats)
-        return stats
-
-    @staticmethod
-    def _percent(completed: int, total: int) -> int:
-        if total <= 0:
-            return 0
-        return round((completed / total) * 100)
-
-    @staticmethod
-    async def _get_core_resource_progress(user_id: UUID, session: AsyncSession) -> Dict[str, int]:
-        title_to_key = {title: key for key, title in DashboardService.CORE_RESOURCE_TITLES.items()}
-        target_titles = list(title_to_key.keys())
-
-        titles_bind = bindparam("titles", expanding=True)
-        totals_sql = text(
-            """
-            SELECT r.title, COUNT(l.id) AS total_lessons
-            FROM resources r
-            JOIN resource_modules m ON m.resource_id = r.id
-            JOIN resource_lessons l ON l.module_id = m.id
-            WHERE r.title IN :titles
-              AND r.is_published = TRUE
-            GROUP BY r.title
-            """
-        ).bindparams(titles_bind)
-
-        completed_sql = text(
-            """
-            SELECT r.title, COUNT(p.id) AS completed_lessons
-            FROM resources r
-            JOIN resource_modules m ON m.resource_id = r.id
-            JOIN resource_lessons l ON l.module_id = m.id
-            JOIN resource_lesson_progress p ON p.lesson_id = l.id
-            WHERE p.user_id = :user_id
-              AND r.title IN :titles
-              AND r.is_published = TRUE
-            GROUP BY r.title
-            """
-        ).bindparams(titles_bind)
-
-        try:
-            total_rows = await session.execute(totals_sql, {"titles": target_titles})
-            totals_by_title = {title: count for title, count in total_rows.all()}
-        except Exception:
-            return {}
-
-        has_course_content = any(totals_by_title.get(title, 0) > 0 for title in target_titles)
-        if not has_course_content:
-            return {}
-
-        try:
-            completed_rows = await session.execute(
-                completed_sql,
-                {"user_id": user_id, "titles": target_titles},
-            )
-            completed_by_title = {title: count for title, count in completed_rows.all()}
-        except Exception:
-            return {}
-
+        heuristic = await DashboardService._calculate_progress(user_id, session)
         return {
-            key: DashboardService._percent(
-                completed_by_title.get(title, 0),
-                totals_by_title.get(title, 0),
-            )
-            for title, key in title_to_key.items()
+            "resume": heuristic["resume"],
+            "linkedin": heuristic["linkedin"],
+            "interview_prep": heuristic["interview_prep"],
+            "portfolio": heuristic["portfolio"],
         }
 
     @staticmethod
+    async def _get_core_resource_progress(user_id: UUID, session: AsyncSession) -> Dict[str, int]:
+        """Percentage per core course, from the shared projector.
+
+        Was raw SQL that counted progress rows keyed on the course title. It
+        disagreed with the course page in two ways: a ``resume_upload`` lesson
+        completed by an approved audit was invisible to it, and an admin
+        renaming a course silently zeroed the number.
+        """
+        try:
+            return await CourseProgressProjector(session).core_course_progress(user_id)
+        except Exception:
+            # Same shape of resilience the raw SQL had: a dashboard must still
+            # render when the resources tables are mid-rollout.
+            logger.exception("Core course progress unavailable for user %s", user_id)
+            return {}
+
+    @staticmethod
     async def _get_core_resource_navigation(user_id: UUID, session: AsyncSession) -> Dict[str, str]:
-        navigation = {key: "/resources" for key in DashboardService.CORE_RESOURCE_TITLES}
-        target_titles = list(DashboardService.CORE_RESOURCE_TITLES.values())
+        """Deep link to the next unfinished lesson of each core course.
+
+        Resolved by ``core_code`` and completed through the shared projector, so
+        the link lands on the same lesson the course page shows as next — a
+        lesson finished by an approved audit is not offered again here.
+        """
+        navigation = {key: "/resources" for key in DashboardService.CORE_RESOURCE_KEYS}
+        projector = CourseProgressProjector(session)
 
         try:
+            resolved = await projector.resolve_core_courses()
+            if not resolved:
+                return navigation
+
             resources_result = await session.execute(
                 select(ResourceModel)
                 .where(
-                    ResourceModel.title.in_(target_titles),
+                    ResourceModel.id.in_(list(resolved.values())),
                     ResourceModel.is_published.is_(True),
                     ResourceModel.is_locked.is_(False),
                 )
                 .options(selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons))
             )
-            resources = list(resources_result.scalars().all())
-        except Exception:
-            return navigation
-        if not resources:
-            return navigation
-
-        resource_by_title: Dict[str, ResourceModel] = {resource.title: resource for resource in resources}
-        ordered_lessons_by_title: Dict[str, list] = {}
-        all_lesson_ids = []
-
-        for resource in resources:
-            ordered_lessons = []
-            for module in sorted(resource.modules, key=lambda current: current.position):
-                ordered_lessons.extend(sorted(module.lessons, key=lambda current: current.position))
-            lesson_ids = [lesson.id for lesson in ordered_lessons]
-            ordered_lessons_by_title[resource.title] = lesson_ids
-            all_lesson_ids.extend(lesson_ids)
-
-        completed_ids = set()
-        if all_lesson_ids:
-            try:
-                completed_rows = await session.execute(
-                    select(ResourceLessonProgressModel.lesson_id).where(
-                        ResourceLessonProgressModel.user_id == user_id,
-                        ResourceLessonProgressModel.lesson_id.in_(all_lesson_ids),
-                    )
-                )
-                completed_ids = {row[0] for row in completed_rows.all()}
-            except Exception:
+            resources = {resource.id: resource for resource in resources_result.scalars().all()}
+            if not resources:
                 return navigation
 
-        for key, title in DashboardService.CORE_RESOURCE_TITLES.items():
-            resource = resource_by_title.get(title)
+            completed = await projector.completed_lesson_ids(
+                user_id=user_id, resource_ids=list(resources.keys())
+            )
+        except Exception:
+            logger.exception("Core course navigation unavailable for user %s", user_id)
+            return navigation
+
+        for key, resource_id in resolved.items():
+            resource = resources.get(resource_id)
             if not resource:
                 continue
-            ordered_lesson_ids = ordered_lessons_by_title.get(title, [])
-            target_lesson_id = None
-            for lesson_id in ordered_lesson_ids:
-                if lesson_id not in completed_ids:
-                    target_lesson_id = lesson_id
-                    break
+
+            ordered_lesson_ids = []
+            for module in sorted(resource.modules, key=lambda current: current.position):
+                ordered_lesson_ids.extend(
+                    lesson.id for lesson in sorted(module.lessons, key=lambda current: current.position)
+                )
+
+            completed_ids = completed.get(resource_id, set())
+            target_lesson_id = next(
+                (lesson_id for lesson_id in ordered_lesson_ids if lesson_id not in completed_ids),
+                None,
+            )
+            # Everything done: land on the last lesson rather than nowhere.
             if target_lesson_id is None and ordered_lesson_ids:
                 target_lesson_id = ordered_lesson_ids[-1]
 
@@ -508,35 +470,6 @@ class DashboardService:
 
         return navigation
 
-    @staticmethod
-    async def _sync_user_stats_with_resource_progress(
-        user_id: UUID,
-        session: AsyncSession,
-        stats: UserStatsModel,
-    ) -> UserStatsModel:
-        resource_progress = await DashboardService._get_core_resource_progress(user_id, session)
-        if not resource_progress:
-            return stats
-
-        resume_progress = resource_progress.get("resume", 0)
-        linkedin_progress = resource_progress.get("linkedin", 0)
-        interview_progress = resource_progress.get("interview_prep", 0)
-
-        changed = (
-            stats.resume_progress != resume_progress
-            or stats.linkedin_progress != linkedin_progress
-            or stats.interview_progress != interview_progress
-        )
-        if not changed:
-            return stats
-
-        stats.resume_progress = resume_progress
-        stats.linkedin_progress = linkedin_progress
-        stats.interview_progress = interview_progress
-        await session.commit()
-        await session.refresh(stats)
-        return stats
-    
     @staticmethod
     async def get_application_by_status(user_id: UUID, status: ApplicationStatus, session: AsyncSession) -> List[ApplicationModel]:
         """
