@@ -107,7 +107,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | TODO | TASK-034 | TASK-036 |
-| TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-034, TASK-035 |
+| TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-034, TASK-035 |
 | TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | TODO | TASK-033, TASK-035 | TASK-036 |
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | TODO | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | TODO | TASK-037, TASK-038 | TASK-036 |
@@ -4800,7 +4800,7 @@ Risk: LOW
 
 ## TASK-036 — Decidir y registrar el patrón de ingreso a Cloud Run
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M0
 Category: Infrastructure / Security / ADR
@@ -4868,12 +4868,12 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] El ADR nombra la opción elegida y por qué, con coste e implicaciones de seguridad.
-- [ ] Queda escrito qué controles de seguridad viven en la aplicación en ambos escenarios.
-- [ ] La decisión está aprobada antes de que TASK-055 aprovisione nada.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] El ADR nombra la opción elegida y por qué, con coste e implicaciones de seguridad.
+- [x] Queda escrito qué controles de seguridad viven en la aplicación en ambos escenarios.
+- [x] La decisión está aprobada antes de que TASK-055 aprovisione nada.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4882,6 +4882,61 @@ Revisión del ADR por quien opera la infraestructura. No hay validación automat
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+Entrega [ADR-001-cloud-run-ingress.md](ADR-001-cloud-run-ingress.md). Sin cambios
+de código.
+
+**Decisión: opción A** — la API queda invocable sin autenticación IAM, detrás del
+proxy Nginx del servicio frontend. Aprobada por el propietario del proyecto el
+2026-09-07, que es quien opera la infraestructura; la Validation de esta ficha
+pedía justamente esa revisión.
+
+El razonamiento, resumido: IAM no sustituye ninguno de los controles que de
+verdad protegen los recursos privados —sesión, CSRF, rate limits y ownership
+viven en FastAPI en las dos opciones—, el coste de la opción B es fijo (~$18–25
+al mes de forwarding rule y backend services, con independencia del uso) frente a
+~$0, y migrar a B más adelante no toca el código de la aplicación, solo la
+topología. Decidir A no cierra esa puerta.
+
+**Lo que se acepta explícitamente.** El riesgo «API directa elude Nginx» de §14
+queda vivo y aceptado, no mitigado. El ADR lo escribe en esos términos y saca las
+consecuencias concretas: ninguna decisión de autorización puede depender de que
+el proxy haya pasado por delante; los dos endpoints que
+[09_ROUTE_MATRIX.md](09_ROUTE_MATRIX.md) clasifica como `internal` necesitan
+autenticación propia y no la suposición de que nadie los encontrará; el endpoint
+de Cloud Tasks de TASK-054 exige OIDC verificado en la aplicación porque su URL
+será alcanzable desde internet; y `/docs`, `/redoc` y `/openapi.json` quedan
+alcanzables por el `run.app`, así que exponerlos o no es una decisión de TASK-056
+y no algo que la topología impida.
+
+**Consecuencia que casi se queda implícita: `TRUSTED_PROXY_IPS`.** Todos los
+límites por IP se resuelven por `resolve_client_ip()`, que depende de ese ajuste;
+hoy vale `private` y lo fija el `Dockerfile`. Con dos servicios la cadena
+`X-Forwarded-For` que ve la API es más larga y el peer inmediato cambia, y además
+una llamada directa al `run.app` llega por un camino distinto que una que pasa
+por el frontend. Demasiado amplio, un cliente directo se inventa su
+`X-Forwarded-For` y estrena bucket de rate limit por petición —anulando el
+control que esta misma ADR pone como guardián principal—; demasiado estrecho,
+todos los clientes cuentan como la IP del frontend y el límite por IP se vuelve
+global. El ADR deja como obligación de TASK-056 comprobarlo empíricamente contra
+el despliegue real, en los dos caminos, antes de servir tráfico. Es la única
+parte de la decisión que no se puede cerrar sobre el papel.
+
+El ADR registra también las condiciones que reabrirían la decisión hacia la
+opción B: un requisito de cumplimiento, un incidente de abuso que los rate limits
+no contengan, necesidad de WAF/Cloud Armor, o un tercer servicio que deba hablar
+con la API sin pasar por el frontend.
+
+Validación: no hay validación automatizada; es una decisión documentada, como
+dice la sección Validation. La suite no se toca —ningún archivo de `app/` cambia—
+y la última ejecución sigue siendo la de TASK-034: 429 passed, 61 skipped.
+
+Límites: el ADR no aprovisiona nada ni estima tráfico. Las cifras de coste de la
+opción B son el orden de magnitud del precio de lista de un HTTPS Load Balancer
+con serverless NEGs, suficientes para comparar, no un presupuesto. TASK-055 y
+TASK-056 implementan esta decisión y no la re-deciden.
 
 ### Estimated Impact
 
