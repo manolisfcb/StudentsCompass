@@ -3,7 +3,59 @@
 Dos lanes. La rápida es hermética y corre en todas partes; la de integración
 necesita servicios desechables locales y verifica lo que SQLite no puede.
 
-Origen: TASK-001 del [tablero de refactor](refactor/TASKS.md).
+Origen: TASK-001 del [tablero de refactor](refactor/TASKS.md). La toolchain que
+se describe abajo la fija TASK-033.
+
+## Toolchain fijada
+
+| Runtime | Versión | Declarada en | Consumida por |
+| --- | --- | --- | --- |
+| Python | 3.12 | `.python-version`, `requires-python` de `pyproject.toml` | `Dockerfile` (`python:3.12-slim`), `actions/setup-python` en las tres lanes de CI, `uv venv` |
+| Node | 24 | `.nvmrc` | Aún ninguno: la imagen del frontend y el `engines` de `frontend/package.json` la leerán cuando TASK-038 cree el scaffold |
+
+`requires-python` está acotado por arriba (`>=3.12,<3.13`) a propósito: 3.12 es
+la única versión en la que la suite se mide. Ampliarlo exige medir primero.
+
+Crear el entorno local en la versión declarada:
+
+```bash
+uv venv --python 3.12
+uv pip install -r requirements.txt \
+  "pytest>=9.0.2" "pytest-asyncio>=1.3.0" "pytest-cov>=7.0.0" "httpx>=0.28.1"
+```
+
+`.python-version` hace que `uv venv` sin argumentos elija 3.12. Un intérprete
+distinto al declarado invalida cualquier medición de paridad contra la baseline:
+la suite verde en otra versión no dice nada sobre la imagen que se despliega.
+
+### Baseline de la migración
+
+Medida el 2026-09-07 sobre `325e92b` con CPython 3.12.12, las tres lanes de
+`.github/workflows/tests.yml`:
+
+| Lane | Comando | Resultado |
+| --- | --- | --- |
+| Rápida | `.venv/bin/python -m pytest -p no:cacheprovider` | 429 passed, 61 skipped |
+| PostgreSQL + Redis | idem con `TEST_DATABASE_URL_PG` y `TEST_REDIS_URL`, sobre `tests/integration` | 61 passed |
+| Navegador | `.venv/bin/python -m pytest -p no:cacheprovider -m browser` | 14 passed, 476 deselected |
+
+Cero fallos en las tres. Los 61 omitidos de la lane rápida son exactamente los
+que su lane propia cubre: 60 de `tests/integration` sin
+`TEST_DATABASE_URL_PG`/`TEST_REDIS_URL`, más `test_embedding_service.py:139`,
+que necesita pgvector. Los 14 del navegador están dentro de los 429 porque
+Playwright y Chromium están instalados; sin ellos se omiten solos.
+
+El plan 08 §2 registraba `403 passed, 50 skipped, 1 failed` el 2026-09-06 sobre
+`f9ca382` en Python 3.10. El fallo era
+`test_a_repeated_join_is_refused_and_changes_nothing`, lo cerró TASK-017, y aquí
+pasa. El resto de la diferencia son los tests que TASK-016 y TASK-017 añadieron
+después de esa medición, y cuadra exacto:
+
+- Pasados: `403 + 1` (el que fallaba) `+ 25` de `test_course_progress_projection.py` = `429`.
+- Omitidos: `50 + 11` (5 de `test_community_member_count_pg.py` y 6 de `test_core_course_code_migration_pg.py`) = `61`.
+
+Ninguna diferencia queda sin explicar, así que el cambio de 3.10 a 3.12 no
+mueve ningún resultado.
 
 ## Lane rápida (por defecto)
 

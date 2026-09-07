@@ -3,7 +3,7 @@ name = "studentscompass"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "aiosqlite>=0.22.1",
     "alembic>=1.18.1",

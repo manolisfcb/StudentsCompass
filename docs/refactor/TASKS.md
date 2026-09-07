@@ -104,7 +104,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
-| TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | TODO | NONE | TASK-034, TASK-036 |
+| TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-036 |
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | TODO | TASK-034 | TASK-036 |
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-034, TASK-035 |
@@ -4314,7 +4314,7 @@ Risk: LOW
 
 ## TASK-033 — Fijar toolchains y congelar la baseline de la migración
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M0
 Category: Infrastructure / Testing
@@ -4330,7 +4330,8 @@ Plan 08 §2 registra `403 passed, 50 skipped, 1 failed` el 2026-09-06, con el fa
 ### Evidence / Location
 
 - `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:44-48` (Confidence: HIGH).
-- Ausencia de `.python-version`, `.nvmrc` y campo `engines`; `pyproject.toml` no fija intérprete de runtime.
+- `.python-version` existía declarando `3.10`, en contradicción directa con `Dockerfile:1` (`python:3.12-slim`) y con las tres lanes de `.github/workflows/tests.yml` (`python-version: "3.12"`). Corregido a `3.12` en esta tarea.
+- Ausencia de `.nvmrc` y de campo `engines`; `pyproject.toml` declaraba `requires-python = ">=3.10"`, es decir, no fijaba el intérprete de runtime.
 - TASK-017 Completion Notes: el fallo citado por el plan quedó resuelto (savepoint en `join_community`).
 
 ### Why this is a problem
@@ -4383,12 +4384,12 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las versiones de Python y Node están declaradas en archivos versionados que CI y Docker pueden leer.
-- [ ] La suite rápida y la lane PostgreSQL/Redis pasan en la versión declarada, con conteos registrados.
-- [ ] El fallo citado en el plan §2 está resuelto o caracterizado explícitamente.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las versiones de Python y Node están declaradas en archivos versionados que CI y Docker pueden leer.
+- [x] La suite rápida y la lane PostgreSQL/Redis pasan en la versión declarada, con conteos registrados.
+- [x] El fallo citado en el plan §2 está resuelto o caracterizado explícitamente.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4397,6 +4398,102 @@ Ejecutar la suite completa y la lane de integración en la versión declarada, r
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+Ningún archivo de `app/` cambia. La tarea declara versiones, reconstruye el
+entorno local sobre la declarada y mide.
+
+**Python 3.12.** No es una elección nueva: `Dockerfile` ya usaba
+`python:3.12-slim` y las tres lanes de `.github/workflows/tests.yml` ya pedían
+`python-version: "3.12"`.
+
+Corrección a la Evidence de esta ficha, que decía que `.python-version` no
+existía: **sí existía, y declaraba `3.10`.** El problema era peor que «falta una
+declaración» — había una, y contradecía a la imagen y a CI. Como `uv` la lee,
+cada `uv venv` reconstruía el entorno local en 3.10; la baseline se medía en un
+intérprete que el repositorio mismo declaraba y que producción no usa. La ficha
+quedó corregida arriba. Ahora `.python-version` dice `3.12`, igual que
+`requires-python` de `pyproject.toml`, acotado por arriba (`>=3.12,<3.13`) porque
+3.12 es la única versión medida; ampliar ese rango exige medir primero, no
+suponer.
+
+**Node 24.** En `.nvmrc`. Es la LTS activa y coincide con el `node` local
+(v24.20.0). Todavía no la consume nada: no hay `frontend/`. TASK-038 debe leer
+`.nvmrc` al crear el scaffold y reflejarla en `engines` de
+`frontend/package.json`, en vez de elegir una versión distinta ahí.
+
+**`.venv` reconstruido.** El Problem de esta ficha señala que la baseline se
+medía con el intérprete local en 3.10 mientras la imagen desplegada es 3.12. Se
+recreó `.venv` con `uv venv` — sin argumento de versión: lo resuelve
+`.python-version`, que es la prueba de que la declaración funciona — y se
+reinstaló desde `requirements.txt`. El entorno es reproducible y está en
+`.gitignore`; no se versionó nada de él.
+
+**`uv.lock`.** `requires-python` cambió, así que el lock quedaba inconsistente
+con `pyproject.toml`. Se regeneró con `uv lock` y se verificó paquete por paquete
+que **ninguna versión aplicable a 3.12 cambió**: el diff solo elimina la rama de
+resolución ≤3.11 (`async-timeout`, `backports-asyncio-runner`, `exceptiongroup`,
+`tomli`, y los `numpy` 2.2.6 / `pandas` 2.3.3 / `scipy` 1.15.3 /
+`scikit-learn` 1.7.2 / `networkx` 3.4.2 que solo existían para esos intérpretes).
+`numpy` 2.4.1, `pandas` 3.0.3, `scipy` 1.17.0, `scikit-learn` 1.8.0 y
+`networkx` 3.6.1 siguen idénticos. El relock además añadió `playwright` y `pyee`,
+que estaban en el grupo `dev` de `pyproject.toml` desde TASK-001 pero nunca se
+habían lockeado: el lock ya venía desincronizado y esto lo corrige. No es un
+bump de dependencias — eso sigue siendo TASK-029.
+
+**`requirements.txt` no se tocó.** Es lo que instalan Docker y CI; regenerarlo sí
+sería un cambio de dependencias. Que siga trayendo un par de backports inertes en
+3.12 es inocuo y no justifica mover el archivo que define la imagen.
+
+Validación ejecutada, CPython 3.12.12, las tres lanes de CI:
+
+```
+.venv/bin/python -m pytest -p no:cacheprovider
+# 429 passed, 61 skipped in 48.97s
+
+TEST_DATABASE_URL_PG=postgresql+asyncpg://testuser:***@127.0.0.1:55432/studentscompass_test \
+TEST_REDIS_URL=redis://127.0.0.1:56379/0 \
+.venv/bin/python -m pytest -p no:cacheprovider tests/integration
+# 61 passed in 41.86s
+
+.venv/bin/python -m pytest -p no:cacheprovider -m browser
+# 14 passed, 476 deselected in 2.51s
+```
+
+Cero fallos. La lane rápida se ejecutó dos veces —antes y después de reconstruir
+`.venv`— con el mismo resultado, que es lo que hace repetible la baseline.
+
+**El fallo del plan §2 está resuelto, no caracterizado.**
+`test_a_repeated_join_is_refused_and_changes_nothing` pasa; lo cerró TASK-017 con
+un savepoint en `join_community`.
+
+**Los 61 omitidos, nombrados.** 60 son `tests/integration` sin
+`TEST_DATABASE_URL_PG`/`TEST_REDIS_URL` —la lane de integración los ejecuta y
+pasan— y el restante es `tests/test_embedding_service.py:139`, que necesita
+pgvector. Ninguno se omite por la versión de Python.
+
+**Contraste con el plan §2, que cuadra exacto.** El plan registraba
+`403 passed, 50 skipped, 1 failed` el 2026-09-06 sobre `f9ca382` en Python 3.10;
+total 454. Ahora 490. Los 36 de diferencia son tests añadidos después por
+TASK-016 y TASK-017: pasados `403 + 1` (el que fallaba) `+ 25` de
+`test_course_progress_projection.py` = `429`; omitidos `50 + 11` (5 de
+`test_community_member_count_pg.py`, 6 de `test_core_course_code_migration_pg.py`)
+= `61`. Ninguna diferencia queda sin explicar, así que el salto de 3.10 a 3.12 no
+mueve ningún resultado. Esa es la conclusión que la Fase M1 necesita: lo que se
+mueva a `backend/` se compara contra estos números.
+
+Baseline y toolchain quedan documentados en
+[docs/TESTING.md](../TESTING.md#toolchain-fijada).
+
+**Lint / typecheck: N/A.** Sigue sin haber linter ni type checker configurado, y
+esta tarea no introduce uno. Ya está documentado en `docs/TESTING.md`.
+
+Límites: la baseline es funcional, no de rendimiento ni visual —eso es TASK-035—
+y se midió en macOS arm64, no en la imagen `python:3.12-slim` de producción. La
+paridad de imagen se comprueba cuando exista compose local (TASK-038). `.nvmrc`
+no tiene todavía ningún consumidor que lo verifique en CI; hasta TASK-038/TASK-039
+la versión de Node es una declaración sin test.
 
 ### Estimated Impact
 
