@@ -2,7 +2,7 @@
 
 Fecha: 2026-09-05. Revisión local: `6a2ea29`. Auditoría estática y pruebas aisladas; no se conectó a producción ni se modificó código productivo. Las líneas son referencias al snapshot y pueden desplazarse.
 
-El sistema es un monolito funcional FastAPI/Jinja con separación parcial por dominios. La evolución recomendada es conservar ese stack y corregir primero controles de acceso, almacenamiento, secretos y gasto de IA. Hay infraestructura reutilizable: autenticación FastAPI Users, SQLAlchemy async, contratos Pydantic, adapters de almacenamiento, guard de presupuesto, batching en mensajes y repositorio de roadmaps.
+El sistema es un monolito funcional FastAPI/Jinja con separación parcial por dominios. Esta auditoría recomendó conservar ese stack; esa parte quedó reemplazada el 2026-09-07 (ver *Plan vigente* más abajo). Lo que no cambió es la prioridad: corregir primero controles de acceso, almacenamiento, secretos y gasto de IA, porque migrar sobre esos defectos los traslada intactos al código nuevo. Hay infraestructura reutilizable: autenticación FastAPI Users, SQLAlchemy async, contratos Pydantic, adapters de almacenamiento, guard de presupuesto, batching en mensajes y repositorio de roadmaps.
 
 ## Riesgos y prioridades principales
 
@@ -30,9 +30,17 @@ Esfuerzo global **alto**, concentrado en esquema histórico y transacciones. Cor
 
 Simplificaciones con mayor retorno: una policy de aprobación, un proyector de progreso, una transición de candidatura, un guard por intento IA y scopes explícitos para storage. Extraer responsabilidades de Capstone después de fijar contratos. No convertir todos los servicios en interfaces/repositorios.
 
+## Plan vigente: separación backend/frontend con React
+
+Actualizado el 2026-09-07. La recomendación original de conservar el monolito FastAPI/Jinja **quedó reemplazada** por [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md): monorepo `backend/` + `frontend/`, FastAPI como API JSON bajo `/api/v1`, SPA React + TypeScript servida por Nginx y dos servicios de Cloud Run. Las tareas TASK-033 a TASK-059 de [TASKS.md](TASKS.md) ejecutan ese plan.
+
+Lo que esta auditoría concluyó sobre el **dominio** sigue vigente y es insumo de esa migración: los hallazgos de autorización, almacenamiento, secretos, gasto de IA, integridad y fuentes de verdad se corrigen dentro de la vertical que toca cada dominio, no se portan al código nuevo. Migrar sobre un backend con IDOR o con carreras de estado solo traslada el defecto a una pantalla nueva.
+
+Lo que cambió es la capa de presentación: sí se reescribe el frontend, y las tareas que asumían Jinja permanente se reconciliaron en TASKS.md (§ *Reconciliación con el plan 08*).
+
 ## Qué no tocar todavía
 
-No reescribir el frontend, cambiar framework/ORM, fusionar cursos con recursos, borrar posts legacy/enrollments, eliminar columnas históricas, sustituir heurísticas por ML real, activar cobros/email real ni cambiar umbral 8. No hacer upgrades en producción hasta probar baseline/restauración. No quitar índices por su apariencia ni recalcular resultados académicos históricos sin versión.
+Cambiar framework/ORM del backend, fusionar cursos con recursos, borrar posts legacy/enrollments, eliminar columnas históricas, sustituir heurísticas por ML real, activar cobros/email real ni cambiar umbral 8. No hacer upgrades en producción hasta probar baseline/restauración. No quitar índices por su apariencia ni recalcular resultados académicos históricos sin versión.
 
 ## Documentos
 
@@ -42,5 +50,6 @@ No reescribir el frontend, cambiar framework/ORM, fusionar cursos con recursos, 
 - [Fuentes de verdad](04_SOURCE_OF_TRUTH_MATRIX.md)
 - [Auditoría de DB](05_DATABASE_AUDIT.md)
 - [Seguridad y costes](06_SECURITY_AND_COST.md)
-- [Plan por fases](07_REFACTOR_PLAN.md)
+- [Plan por fases del monolito](07_REFACTOR_PLAN.md) — reemplazado para la capa de presentación
+- [Plan vigente: API REST, React y Cloud Run](08_REST_REACT_CLOUD_RUN_PLAN.md)
 - [TASKS: fuente de verdad de ejecución](TASKS.md)

@@ -2,6 +2,14 @@
 
 Fecha: 2026-09-05. Revisión local: `6a2ea29`. Auditoría estática y pruebas aisladas; no se conectó a producción ni se modificó código productivo. Las líneas son referencias al snapshot y pueden desplazarse.
 
+> **Nota (2026-09-07): la decisión de conservar Jinja de este plan fue reemplazada.**
+> [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) es el plan vigente para la
+> arquitectura y la capa de presentación: monorepo `backend/` + `frontend/`, API JSON bajo `/api/v1`,
+> SPA React y despliegue en Cloud Run. Las fases PHASE-0 a PHASE-6 de este documento siguen describiendo
+> el trabajo de backend, que continúa siendo necesario; las fases PHASE-M0 a PHASE-M5 de
+> [TASKS.md](TASKS.md) describen la migración. PHASE-5 de este plan quedó parcialmente afectada:
+> TASK-026 está SUPERSEDED, TASK-023 sigue vigente.
+
 ## Cómo ejecutar
 
 [TASKS.md](TASKS.md) es la única fuente de verdad de estados/dependencias. Esta narrativa no sustituye la ficha de cada tarea. No hay implementación productiva en esta entrega. La seguridad se corrige en PRs pequeñas tan pronto como su preparación esté lista; las fases no son barreras globales. Se conserva el comportamiento válido y cada corrección funcional está rotulada Bug Fix.

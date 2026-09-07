@@ -6,6 +6,9 @@
 - IN PROGRESS
 - BLOCKED
 - COMPLETED
+- SUPERSEDED
+
+SUPERSEDED se añadió al adoptar el plan 08: una tarea cuyo trabajo pasó a otra ficha no se borra ni se renumera, porque su ID es estable y su historia sigue siendo evidencia. Se marca SUPERSEDED, se nombra la tarea que la reemplaza y no se vuelve a reclamar. No es un estado terminal de éxito: no cuenta como COMPLETED.
 
 ## Protocolo obligatorio para agentes
 
@@ -22,7 +25,34 @@
 10. Only then change status to COMPLETED.
 ```
 
-La primera modificación del agente debe reclamar su tarea: TODO → IN PROGRESS en este archivo. Leer [hallazgos](02_AUDIT_FINDINGS.md) y evidencia indicada antes de editar. READY es derivado: Status == TODO y todas las Dependencies == COMPLETED; no es un status permitido. **READY al generar el plan: TASK-001 y TASK-002.** Todas las tareas de este documento comienzan TODO; la auditoría no las ha implementado.
+La primera modificación del agente debe reclamar su tarea: TODO → IN PROGRESS en este archivo. Leer [hallazgos](02_AUDIT_FINDINGS.md) y evidencia indicada antes de editar. READY es derivado: Status == TODO y todas las Dependencies == COMPLETED; no es un status permitido. **READY al generar el plan: TASK-001 y TASK-002.** **READY al adoptar el plan 08 (2026-09-07): TASK-018, TASK-019, TASK-020, TASK-024, TASK-025, TASK-030, TASK-032, TASK-033, TASK-034 y TASK-036.** Las tres últimas abren la migración y no tocan código de producción, así que pueden arrancar en paralelo con las de backend. Una tarea SUPERSEDED nunca es READY.
+
+## Plan vigente
+
+Este tablero ejecuta **[08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md)**: separación en `backend/` y `frontend/`, FastAPI como API JSON bajo `/api/v1`, SPA React + TypeScript servida por Nginx y despliegue en dos servicios de Cloud Run. Ese plan reemplaza explícitamente la decisión de conservar Jinja de [07_REFACTOR_PLAN.md](07_REFACTOR_PLAN.md).
+
+Qué sobrevive del plan anterior y qué no:
+
+- **La auditoría sigue siendo válida como insumo.** [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md), [05_DATABASE_AUDIT.md](05_DATABASE_AUDIT.md) y [04_SOURCE_OF_TRUTH_MATRIX.md](04_SOURCE_OF_TRUTH_MATRIX.md) describen el dominio, no la capa de presentación. Los hallazgos se corrigen dentro de la vertical que toca ese dominio; no se portan al código nuevo como si fueran diseño.
+- **TASK-001 a TASK-032 siguen vigentes salvo donde se indique.** Son correcciones de backend —seguridad, integridad, concurrencia, N+1— que hacen falta con Jinja y con React por igual. Migrar sobre un backend con IDOR o con carreras de estado solo traslada el defecto a una pantalla nueva.
+- **Lo que sí cambia** es todo lo que asumía que la presentación seguiría siendo Jinja + JS por pantalla. Ver *Reconciliación con el plan 08* más abajo.
+- **PHASE-0 a PHASE-6** son las fases del plan anterior. **PHASE-M0 a PHASE-M5** son las de la migración y corresponden a las Fases 0–5 de §9 del plan 08. Se numeran aparte para que no se confundan.
+
+Las fases M no bloquean globalmente a las anteriores: una tarea de backend pendiente puede ejecutarse en paralelo mientras no toque un archivo reservado. Solo Dependencies bloquea funcionalmente.
+
+## Reconciliación con el plan 08
+
+| Tarea previa | Efecto de adoptar el plan 08 |
+| --- | --- |
+| TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-025, TASK-027, TASK-030 | **Sin cambios.** Son correcciones de backend, independientes de la capa de presentación. |
+| TASK-024 | **Vigente, con su consumidor reasignado.** El cursor estable y la paginación siguen siendo suyos y TASK-041 los generaliza; el inbox lo migra TASK-051 en React, no reescribiendo el JS legacy. |
+| TASK-026 | **SUPERSEDED.** Su Proposed Solution dice literalmente «sin cambiar a React», que es lo contrario del plan vigente. Su intención —separar API, estado y render de Jobs y Career Lab— la cumplen TASK-049 y TASK-052 sobre React. El backend de Capstone lo sigue dividiendo TASK-023, que continúa vigente. |
+| TASK-028 | **Vigente y ampliada.** TASK-045 añade health, readiness y logging estructurado que Cloud Run consume; TASK-057 construye alertas sobre las métricas que TASK-028 emite. No son dos telemetrías. |
+| TASK-029 | **Vigente y ampliada.** El alcance pasa a cubrir dependencias de backend y de frontend, y el lock de cada uno. |
+| TASK-031 | **Vigente y ampliada.** Verifica compatibilidad integrada sobre el monolito; TASK-058 hace lo propio sobre la topología de dos servicios. TASK-058 depende de ella. |
+| TASK-032 | **Absorbida por TASK-040.** Extender el mapeo de errores a las rutas restantes se hace ya con la forma final del error model (`code` estable, `request_id`), en vez de normalizar dos veces. TASK-032 sigue siendo su dependencia formal. |
+
+Ninguna tarea COMPLETED se reabre. TASK-016 y TASK-017, cerradas bajo el plan anterior, dejan resultados que el plan 08 necesita: una policy de aprobación y una proyección de progreso únicas (§7 exige que React no recalcule reglas), y una baseline verde — el fallo que §2 del plan 08 pone como condición de salida de su Fase 0 se corrigió en TASK-017.
 
 IDs estables: nunca renumerar/reutilizar; nueva tarea usa el siguiente ID libre. Sin cleanup lateral: descubrimiento fuera de Scope → finding/tarea nueva, no ampliar silenciosamente. Bug Fix significa que cambia el comportamiento defectuoso explícitamente descrito; el resto se preserva.
 
@@ -67,13 +97,40 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
 | TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
 | TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-018 |
-| TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | TODO | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
+| TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | TODO | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-026, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
-| TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-026, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
+| TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
+| TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | TODO | NONE | TASK-034, TASK-036 |
+| TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-036 |
+| TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | TODO | TASK-034 | TASK-036 |
+| TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-034, TASK-035 |
+| TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | TODO | TASK-033, TASK-035 | TASK-036 |
+| TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | TODO | TASK-037 | TASK-036 |
+| TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | TODO | TASK-037, TASK-038 | TASK-036 |
+| TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
+| TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | TODO | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
+| TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | TODO | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
+| TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | TODO | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
+| TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
+| TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | TODO | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
+| TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | TODO | TASK-035, TASK-042, TASK-044 | NONE |
+| TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | TODO | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
+| TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | TODO | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
+| TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | TODO | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
+| TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | TODO | TASK-046 | TASK-047, TASK-048, TASK-049 |
+| TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | TODO | TASK-024, TASK-046 | TASK-049, TASK-052 |
+| TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | TODO | TASK-022, TASK-023, TASK-046 | TASK-051 |
+| TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | TODO | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
+| TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | TODO | TASK-013, TASK-037 | TASK-055 |
+| TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | TODO | TASK-002, TASK-036, TASK-039 | TASK-054 |
+| TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | TODO | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
+| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | TODO | TASK-028, TASK-056 | NONE |
+| TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | TODO | TASK-031, TASK-053, TASK-057 | NONE |
+| TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -3375,6 +3432,8 @@ Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance
 
+**Nota de reconciliación (plan 08):** el cursor estable y la paginación siguen siendo de esta tarea, y TASK-041 los generaliza al resto de la API. El consumidor del inbox lo migra TASK-051 en React; no reescribir el JS legacy del inbox aquí.
+
 ### Objective
 
 Paginar mensajes con cursor estable y migrar inbox. Corregir la causa raíz delimitada en Scope y entregar la validación especificada sin cambios laterales.
@@ -3566,7 +3625,14 @@ Risk: MEDIUM
 
 ## TASK-026 — Separar API, estado y render de Jobs y Career Lab
 
-Status: TODO
+Status: SUPERSEDED
+
+**Reemplazada por TASK-049 y TASK-052 al adoptar el plan 08.** Su Proposed Solution
+ordena reorganizar el JS de Jobs y Career Lab «sin cambiar a React», que es lo
+contrario del plan vigente: ese JS se retira en TASK-059. La intención —separar
+acceso a API, estado y render— la cumplen las verticales sobre React. La división
+del backend de Capstone **no** está superseded: sigue siendo TASK-023, vigente y
+dependencia de TASK-052. No reclamar esta tarea.
 Priority: HIGH
 Phase: PHASE-5
 Category: Architecture
@@ -3768,6 +3834,8 @@ Priority: MEDIUM
 Phase: PHASE-4
 Category: Maintainability
 
+**Nota de reconciliación (plan 08):** esta tarea emite las métricas de negocio. TASK-045 añade `/healthz`, `/readyz` y el logging estructurado que Cloud Run consume, y TASK-057 construye las alertas sobre lo que aquí se emite. No crear una segunda fuente de telemetría.
+
 ### Objective
 
 Medir flujos críticos y hacer visibles fallos parciales. Corregir la causa raíz delimitada en Scope y entregar la validación especificada sin cambios laterales.
@@ -3865,6 +3933,8 @@ Status: TODO
 Priority: LOW
 Phase: PHASE-6
 Category: Maintainability
+
+**Nota de reconciliación (plan 08):** el alcance pasa a cubrir dependencias y lock de backend **y** de frontend, en el layout de monorepo de TASK-037 y TASK-038.
 
 ### Objective
 
@@ -4062,6 +4132,8 @@ Priority: HIGH
 Phase: PHASE-6
 Category: Testing
 
+**Nota de reconciliación (plan 08):** esta tarea verifica el sistema actual. TASK-058 hace el mismo ejercicio sobre la topología de dos servicios de Cloud Run y depende de ella. TASK-026 se retiró de sus Dependencies por quedar SUPERSEDED.
+
 ### Objective
 
 Verificar compatibilidad integrada y ensayar rollout/restore. Corregir la causa raíz delimitada en Scope y entregar la validación especificada sin cambios laterales.
@@ -4110,7 +4182,7 @@ OUT OF SCOPE:
 
 ### Dependencies
 
-Depends on: TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-026, TASK-027, TASK-028, TASK-029, TASK-030
+Depends on: TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030
 
 ### Blocks
 
@@ -4152,6 +4224,2669 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: HIGH
+
+## TASK-032 — Extender el mapeo de errores públicos a las rutas restantes
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-3
+Category: Security / Bug Fix
+
+**Nota de reconciliación (plan 08):** TASK-040 absorbe este trabajo y lo hace ya con la forma final del error model (`code` estable, `request_id`), para no normalizar las mismas rutas dos veces. Coordinar con TASK-040 antes de empezar por separado.
+
+### Objective
+
+Aplicar el mapeo de errores de `app/core/errors.py` a las rutas que quedaron fuera del Scope de TASK-011 y siguen devolviendo `str(e)` al llamante.
+
+### Problem
+
+Hallazgo de TASK-011: `app/routes/dashboardRoute.py:58,82,100` responde `500` con `detail=f"Error fetching dashboard data: {str(e)}"` y `app/routes/jobRoute.py:131` con `detail=f"Job search failed: {str(e)}"`. Es el mismo defecto que F-09/F-10 describen para las cuatro rutas ya corregidas: una excepción de storage, driver o proveedor lleva DSN, SQL y parámetros al cuerpo público. `dashboardRoute.py:57,81` además registra la causa sin redacción.
+
+### Evidence / Location
+
+- `app/routes/dashboardRoute.py:57,58,81,82,100; app/routes/jobRoute.py:131` (Confidence: HIGH).
+- Alcance de edición conocido: app/routes/dashboardRoute.py, app/routes/jobRoute.py: manejo de errores; tests de errores redactados.
+
+### Desired State
+
+Ninguna ruta compone el cuerpo público a partir del texto de una excepción. Cuerpo con código estable, mensaje fijo y referencia; causa al log redactada; `rollback` de la sesión donde el fallo la deja inválida.
+
+**Bug Fix declarado:** se corrige únicamente el comportamiento defectuoso descrito; los flujos válidos mantienen contrato.
+
+### Proposed Solution
+
+Usar `server_failure()` / `client_failure()` de `app/core/errors.py` con códigos nuevos para dashboard y búsqueda de empleo. No inventar helper nuevo ni cambiar el contrato de los 2xx.
+
+### Scope
+
+IN SCOPE:
+
+- app/routes/dashboardRoute.py, app/routes/jobRoute.py: manejo de errores; tests de errores redactados.
+
+OUT OF SCOPE:
+
+- Cambiar la forma de las respuestas correctas, la agregación del dashboard o el scraper de empleo.
+- Reescribir el helper de errores o su heurística de mensajes.
+
+### Files / Components Likely Affected
+
+- app/routes/dashboardRoute.py, app/routes/jobRoute.py.
+
+### Dependencies
+
+Depends on: TASK-011
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: TASK-030
+
+### Implementation Notes
+
+Reutilizar el patrón ya integrado en `app/routes/resourceRoute.py` y `app/routes/adminRoute.py`. `dashboardRoute` recibe `session`: pasarla al helper para el `rollback`.
+
+### Acceptance Criteria
+
+- [ ] Ninguna de las dos rutas compone `detail` con texto de excepción.
+- [ ] Excepción simulada con marcador sensible no aparece en cuerpo ni en log público.
+- [ ] 2xx y 4xx existentes conservan contrato.
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Mismo patrón de prueba que `tests/test_error_redaction.py`: excepción simulada con marcador sensible por ruta, comprobar cuerpo, cabeceras `X-Error-Code`/`X-Error-Id` y log redactado.
+
+### Rollback / Risk Notes
+
+Cambio acotado a manejo de errores; revertir solo esos archivos y repetir la validación de contratos.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: MEDIUM
+Cost: LOW
+Risk: LOW
+
+## TASK-033 — Fijar toolchains y congelar la baseline de la migración
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M0
+Category: Infrastructure / Testing
+
+### Objective
+
+Dejar fijadas las versiones de Python y Node que usarán las imágenes de producción, y una baseline de tests verde y repetible en esas versiones.
+
+### Problem
+
+Plan 08 §2 registra `403 passed, 50 skipped, 1 failed` el 2026-09-06, con el fallo en `test_a_repeated_join_is_refused_and_changes_nothing`. Ese fallo ya se corrigió en TASK-017, pero la baseline sigue midiéndose con el intérprete local (`.venv`, Python 3.10) y no hay versión de Node declarada en ningún archivo del repositorio.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:44-48` (Confidence: HIGH).
+- Ausencia de `.python-version`, `.nvmrc` y campo `engines`; `pyproject.toml` no fija intérprete de runtime.
+- TASK-017 Completion Notes: el fallo citado por el plan quedó resuelto (savepoint en `join_community`).
+
+### Why this is a problem
+
+Sin toolchain fijada, la suite verde local no dice nada sobre la imagen que se despliega, y la Fase M1 movería código sin poder demostrar que se comporta igual.
+
+### Desired State
+
+Versiones declaradas en archivos que CI y Docker leen, y una ejecución de la suite completa en esas versiones registrada como punto de comparación para todo lo que sigue.
+
+### Proposed Solution
+
+Declarar Python y Node en archivos versionados (`.python-version`, `.nvmrc`, `requires-python`) y confirmar que la suite rápida y la lane PostgreSQL/Redis pasan en el intérprete elegido. Registrar conteos exactos como baseline. No actualizar dependencias ni cambiar código de producción en esta tarea: fijar versiones y medir, nada más. Si la versión elegida rompe algo, documentar el fallo y abrir tarea propia en vez de parchear de lado.
+
+### Scope
+
+IN SCOPE:
+
+- `.python-version`, `.nvmrc`, `pyproject.toml` (`requires-python`), documentación de toolchain.
+- Ejecución y registro de la baseline; ningún cambio de comportamiento.
+
+OUT OF SCOPE:
+
+- Actualizar versiones de dependencias o del lock: es TASK-029.
+- Mover archivos al layout de monorepo: es TASK-037.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `.python-version`, `.nvmrc`, `pyproject.toml`, `README.md`.
+- Ningún archivo de `app/` cambia de comportamiento en esta tarea.
+
+### Dependencies
+
+Depends on: NONE
+
+### Blocks
+
+Blocks: TASK-037, TASK-039
+
+### Parallelization
+
+Can run in parallel with: TASK-034, TASK-036
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las versiones de Python y Node están declaradas en archivos versionados que CI y Docker pueden leer.
+- [ ] La suite rápida y la lane PostgreSQL/Redis pasan en la versión declarada, con conteos registrados.
+- [ ] El fallo citado en el plan §2 está resuelto o caracterizado explícitamente.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Ejecutar la suite completa y la lane de integración en la versión declarada, registrando comandos y conteos exactos. Comparar con los números de este documento. Cualquier test omitido se nombra.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+## TASK-034 — Inventariar rutas y construir la matriz legacy → REST
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M0
+Category: Documentation / API Contract
+
+### Objective
+
+Producir un inventario machine-readable de los handlers actuales y la matriz completa de correspondencia con el contrato REST objetivo.
+
+### Problem
+
+Plan 08 §2 cuenta 150 handlers entre `app/routes` y `app/views`, de los cuales 23 son vistas. §5.2 propone la normalización pero solo tabula 19 correspondencias: el resto no está mapeado, y sin ese mapa no se puede saber cuándo una vertical terminó.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:33-37` (recuento de handlers).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:141-172` (tabla parcial de normalización).
+- `app/routes/`, `app/views/views.py` (Confidence: HIGH).
+
+### Why this is a problem
+
+Una migración por verticales necesita saber, por pantalla, qué endpoints la sostienen, quién los consume y qué contrato los reemplaza. Sin inventario, «cero tráfico legacy» no es verificable.
+
+### Desired State
+
+Un artefacto versionado, generado desde el código y no escrito a mano, que liste cada handler con método, ruta, actor requerido, consumidor y destino REST, más la matriz de retiro.
+
+### Proposed Solution
+
+Generar el inventario desde la app FastAPI (rutas registradas, dependencias de auth, response_model) en un script reproducible que escriba JSON o CSV versionado. Cruzarlo con los consumidores reales grepeando templates y JS. Extender §5.2 hasta cubrir los 150 handlers, marcando cada uno como «migra», «se mantiene como interno» o «se retira». No renombrar nada todavía: esta tarea produce el mapa.
+
+### Scope
+
+IN SCOPE:
+
+- Script de inventario en `scripts/`; artefacto versionado bajo `docs/refactor/`.
+- Extensión de la tabla de §5.2 del plan 08 hasta cobertura completa.
+
+OUT OF SCOPE:
+
+- Implementar endpoints nuevos o renombrar los existentes: eso ocurre en cada vertical.
+- Modificar el comportamiento de cualquier handler.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `scripts/` (script nuevo), `docs/refactor/` (artefacto e informe).
+- Lectura de `app/routes/`, `app/views/`, `app/templates/`, `app/static/js/`.
+
+### Dependencies
+
+Depends on: NONE
+
+### Blocks
+
+Blocks: TASK-035, TASK-040
+
+### Parallelization
+
+Can run in parallel with: TASK-033, TASK-036
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] El inventario se genera desde el código, no a mano, y es reejecutable.
+- [ ] Cada handler tiene actor requerido, consumidor conocido y destino declarado.
+- [ ] Ningún handler queda sin clasificar; los sin consumidor identificable se listan como tales.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Reejecutar el script y comprobar que el artefacto no cambia. Verificar por muestreo que el actor y el consumidor declarados coinciden con el código. Contrastar el total con el recuento del plan §2 y explicar cualquier diferencia.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+## TASK-035 — Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M0
+Category: Testing / Documentation
+
+### Objective
+
+Archivar la evidencia contra la que se medirá la paridad de cada vertical: schema, payloads reales y capturas de las pantallas actuales.
+
+### Problem
+
+Plan 08 §9 exige «paridad funcional y visual» por vertical y §13 pide comparación visual de cada pantalla migrada, pero no existe ninguna captura ni fixture archivada. Sin baseline, «se ve igual» es una opinión.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:318-320, 351-353, 445-451` (Confidence: HIGH).
+- 27 templates Jinja y 23 archivos JS sin fixtures de referencia (`app/templates/`, `app/static/js/`).
+
+### Why this is a problem
+
+La paridad se declara comparando contra algo. Si la baseline se captura después de empezar a migrar, mide el estado intermedio y deja de servir.
+
+### Desired State
+
+Un directorio versionado con el OpenAPI actual, fixtures JSON por endpoint relevante y capturas desktop/mobile de las pantallas, todo reproducible con un comando.
+
+### Proposed Solution
+
+Exportar el OpenAPI actual como artefacto. Capturar payloads reales por endpoint desde la suite aislada, con datos sintéticos y sin secretos ni PII. Tomar capturas desktop y mobile de las pantallas con el backend aislado, usando la lane de navegador existente. Todo bajo un comando reejecutable; las imágenes se versionan o se publican como artefacto de CI según tamaño, decidido y documentado.
+
+### Scope
+
+IN SCOPE:
+
+- Exportación de OpenAPI; fixtures JSON; capturas por pantalla; comando reproducible.
+- Documentar qué pantalla corresponde a qué vertical de §8.
+
+OUT OF SCOPE:
+
+- Cambiar payloads o pantallas para que la captura salga mejor.
+- Capturar datos reales de producción o cualquier PII.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `scripts/`, `docs/refactor/baseline/` (o artefacto de CI equivalente), `tests/` de navegador.
+- Sin cambios en `app/`.
+
+### Dependencies
+
+Depends on: TASK-034
+
+### Blocks
+
+Blocks: TASK-037, TASK-046
+
+### Parallelization
+
+Can run in parallel with: TASK-036
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] OpenAPI actual archivado como artefacto reproducible.
+- [ ] Fixtures por endpoint relevante, con datos sintéticos y sin secretos ni PII.
+- [ ] Capturas desktop y mobile de cada pantalla, asociadas a su vertical.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Reejecutar la captura y comprobar que produce el mismo conjunto. Verificar que ninguna fixture contiene credenciales, tokens ni datos personales. Comprobar que cada pantalla del inventario de TASK-034 tiene su captura o una razón registrada para no tenerla.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+## TASK-036 — Decidir y registrar el patrón de ingreso a Cloud Run
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M0
+Category: Infrastructure / Security / ADR
+
+### Objective
+
+Cerrar por ADR si la API queda invocable sin autenticación IAM detrás del proxy Nginx, o si se sustituye por un Load Balancer con serverless NEGs.
+
+### Problem
+
+Plan 08 §3 deja la decisión explícitamente abierta y advierte que el proxy Nginx simple no basta si se exige IAM: haría falta un HTTPS LB con serverless NEGs y routing `/api/*`, o un proxy capaz de emitir identity tokens. §14 lista «API directa elude Nginx» como riesgo vivo.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:70-77` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:466` (riesgo de ingreso directo).
+
+### Why this is a problem
+
+La decisión cambia el coste, la topología de despliegue y qué barreras de seguridad son reales. Tomarla implícitamente al escribir el primer Terraform o el primer workflow la vuelve difícil de revisar.
+
+### Desired State
+
+Un ADR versionado con la opción elegida, su coste, sus implicaciones de seguridad y qué controles quedan como únicos guardianes de los recursos privados.
+
+### Proposed Solution
+
+Escribir el ADR comparando ambas opciones sobre criterios explícitos: coste mensual, complejidad operativa, superficie expuesta y qué ocurre si alguien llama la URL de la API directamente. Dejar constancia de que auth de aplicación, CSRF y rate limits viven en FastAPI en cualquiera de los dos casos, porque IAM no los sustituye. La decisión es un gate: TASK-055 y TASK-056 la implementan, no la re-deciden.
+
+### Scope
+
+IN SCOPE:
+
+- ADR versionado bajo `docs/refactor/`; criterios, coste estimado e implicaciones de seguridad.
+- Registro de qué controles siguen siendo responsabilidad de la aplicación.
+
+OUT OF SCOPE:
+
+- Implementar la infraestructura elegida: eso es TASK-055 y TASK-056.
+- Aprovisionar recursos en Google Cloud o gastar presupuesto.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `docs/refactor/` (ADR nuevo).
+- Sin cambios de código.
+
+### Dependencies
+
+Depends on: NONE
+
+### Blocks
+
+Blocks: TASK-055
+
+### Parallelization
+
+Can run in parallel with: TASK-033, TASK-034, TASK-035
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] El ADR nombra la opción elegida y por qué, con coste e implicaciones de seguridad.
+- [ ] Queda escrito qué controles de seguridad viven en la aplicación en ambos escenarios.
+- [ ] La decisión está aprobada antes de que TASK-055 aprovisione nada.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Revisión del ADR por quien opera la infraestructura. No hay validación automatizada: es una decisión documentada. Si la aprobación no está disponible, registrar BLOCKED con la evidencia pendiente.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: MEDIUM
+Cost: HIGH
+Risk: MEDIUM
+
+## TASK-037 — Mover el backend a backend/ sin cambiar comportamiento
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M1
+Category: Refactor / Structure
+
+### Objective
+
+Reubicar el código Python bajo `backend/` con `git mv`, en un PR puramente mecánico que no altera comportamiento.
+
+### Problem
+
+El repositorio tiene el backend en la raíz (`app/`, `alembic/`, `tests/`, `main.py`), incompatible con el layout de monorepo de §4, que separa `backend/` y `frontend/` con Dockerfile y CI propios.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:78-118` (layout objetivo, Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:114-118`: el movimiento debe hacerse con `git mv` y sin refactorizar imports o comportamiento en el mismo PR.
+- Raíz actual: `app/`, `alembic/`, `alembic.ini`, `tests/`, `main.py`, `pyproject.toml`, `requirements.txt`, `pytest.ini`, `Dockerfile`.
+
+### Why this is a problem
+
+Mezclar el movimiento con cambios de arquitectura interna hace ilegible el diff y vuelve imposible atribuir una regresión al movimiento o al refactor.
+
+### Desired State
+
+El mismo código, en `backend/`, pasando exactamente la misma suite con los mismos conteos, sin un solo cambio de lógica.
+
+### Proposed Solution
+
+Un PR con `git mv` y solo los ajustes de ruta imprescindibles: `alembic.ini` (`script_location`), `pytest.ini`, `Dockerfile`, workflows y cualquier ruta relativa que la suite use. No tocar imports internos, no reorganizar `app/`, no renombrar módulos. Preservar el historial: verificar que `git log --follow` sigue funcionando sobre archivos movidos. Las claves de storage y los IDs no cambian (§12).
+
+### Scope
+
+IN SCOPE:
+
+- `git mv` de `app/`, `alembic/`, `tests/`, `main.py`, `scripts/`, configuración Python y `Dockerfile`.
+- Ajuste de rutas en configuración y CI, estrictamente el mínimo para que la suite corra.
+
+OUT OF SCOPE:
+
+- Reorganizar `app/` en `api/v1`, `repositories`, etc.: eso ocurre por vertical.
+- Cambiar imports, renombrar módulos o tocar comportamiento en este PR.
+- Cambiar IDs o claves de storage al mover carpetas.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- Todo el árbol Python movido bajo `backend/`; `alembic.ini`, `pytest.ini`, `Dockerfile`, workflows.
+- Sin cambios de lógica en ningún módulo.
+
+### Dependencies
+
+Depends on: TASK-033, TASK-035
+
+### Blocks
+
+Blocks: TASK-038, TASK-039, TASK-040, TASK-041, TASK-042, TASK-045, TASK-054
+
+### Parallelization
+
+Can run in parallel with: TASK-036
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] El backend vive bajo `backend/` y la suite pasa con los mismos conteos que la baseline de TASK-033.
+- [ ] El diff no contiene cambios de lógica: solo movimientos y ajustes de ruta.
+- [ ] `git log --follow` sigue el historial de los archivos movidos.
+- [ ] Ninguna clave de storage ni ID cambió como efecto del movimiento.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Ejecutar suite rápida y lane PostgreSQL/Redis antes y después del movimiento y comparar conteos exactos. Revisar el diff completo confirmando que no hay cambios de comportamiento. Construir la imagen Docker desde la nueva ubicación y arrancar la app.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-038 — Crear el scaffold React y el compose local con proxy same-origin
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M1
+Category: Frontend / Infrastructure
+
+### Objective
+
+Levantar `frontend/` (React + TypeScript + Vite + Nginx) y un `docker-compose.yml` que reproduzca localmente la topología de producción.
+
+### Problem
+
+No existe frontend React: el producto se sirve desde 27 templates Jinja y 23 archivos JS. Tampoco hay compose local equivalente a producción (§2), así que nadie puede probar el patrón de un solo origen antes de desplegarlo.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:38-40, 88-104, 245-293` (Confidence: HIGH).
+- Repositorio sin `frontend/`, `package.json`, `vite.config.ts` ni `docker-compose.yml`.
+
+### Why this is a problem
+
+Si el frontend nace sin proxy same-origin, cookies, CSRF y navegación se diseñan contra CORS cross-site y hay que rehacerlos al desplegar.
+
+### Desired State
+
+Un `npm run dev` y un `docker compose up` que sirvan la SPA y proxeen `/api`, `/healthz` y `/readyz` al backend, con el navegador viendo un solo origen.
+
+### Proposed Solution
+
+Scaffold con el stack de §7 (React 19, TypeScript estricto, Vite, React Router, TanStack Query, React Hook Form + Zod, Vitest + Testing Library) y la estructura de carpetas de §7. `nginx.conf` proxea `/api`, `/healthz` y `/readyz`; `API_ORIGIN` se inyecta en Nginx, nunca en el bundle (§11). Compose con `migrate`, `api`, `worker` local y `web`. Elegir **una** estrategia de estilos y dejarla escrita: no convivir indefinidamente con 23 hojas CSS por pantalla. Una sola página de humo; las pantallas reales llegan por vertical.
+
+### Scope
+
+IN SCOPE:
+
+- `frontend/` completo (scaffold, Dockerfile, nginx.conf, package.json, vite.config.ts), `docker-compose.yml`.
+- Decisión escrita de estrategia de estilos e i18n.
+
+OUT OF SCOPE:
+
+- Migrar cualquier pantalla real: eso es TASK-046 en adelante.
+- Incluir secretos en la imagen del frontend o en el bundle.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/**`, `docker-compose.yml`, documentación de arranque local.
+- Sin cambios en el backend salvo lo que el compose necesite para arrancar.
+
+### Dependencies
+
+Depends on: TASK-037
+
+### Blocks
+
+Blocks: TASK-039, TASK-044
+
+### Parallelization
+
+Can run in parallel with: TASK-036
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] `docker compose up` levanta migrate, api, worker y web, y el navegador ve un solo origen.
+- [ ] El frontend hace lint, typecheck, test y build en limpio.
+- [ ] El bundle no contiene secretos; `API_ORIGIN` se resuelve en Nginx.
+- [ ] La estrategia de estilos e i18n está elegida y escrita, no pendiente.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Smoke local a través de Nginx: cargar la SPA y comprobar en el navegador que una llamada a `/api` sale al mismo origen, revisando requests y DOM, no solo el contenido de los archivos. Ejecutar lint, `tsc --noEmit`, Vitest y build. Verificar que la imagen del frontend no contiene secretos.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-039 — Separar CI en lanes de backend y frontend
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M1
+Category: Infrastructure / Testing
+
+### Objective
+
+Dejar `ci.yml` cubriendo backend y frontend por separado, con las lanes que describe §10.
+
+### Problem
+
+La CI actual cubre Python, PostgreSQL/Redis y navegador, pero no existe pipeline de frontend ni de despliegue (§2). Un monorepo con dos aplicaciones necesita que cada una falle por su cuenta.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:41-42, 383-395` (Confidence: HIGH).
+- Workflows actuales bajo `.github/workflows/`.
+
+### Why this is a problem
+
+Sin lane de frontend, un error de tipos o un bundle roto llega a producción sin que nada lo detecte; y sin export de OpenAPI en CI no hay cómo comparar contratos.
+
+### Desired State
+
+CI que ejecuta backend (lock verificado, lint, tests rápidos, integración PostgreSQL/pgvector + Redis, export de OpenAPI) y frontend (install limpio, lint, typecheck, tests, build) en jobs separados.
+
+### Proposed Solution
+
+Reescribir `ci.yml` con jobs independientes y caché por lane. Backend: instalación desde lock con verificación de que el lock está al día, Ruff, pytest rápido, lane de integración y export de OpenAPI como artefacto. Frontend: `npm ci`, lint, `tsc --noEmit`, Vitest, validación de i18n y build. Añadir escaneo de secretos y dependencias. No imprimir variables sensibles en los logs.
+
+### Scope
+
+IN SCOPE:
+
+- `.github/workflows/ci.yml` y configuración de lint/format que la CI necesite.
+- Artefacto de OpenAPI publicado por CI.
+
+OUT OF SCOPE:
+
+- `deploy.yml` y cualquier credencial de nube: eso es TASK-055 y TASK-056.
+- E2E con Playwright: llega con las verticales.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `.github/workflows/ci.yml`, configuración de herramientas de lint/typecheck.
+- Sin cambios de comportamiento en la aplicación.
+
+### Dependencies
+
+Depends on: TASK-037, TASK-038
+
+### Blocks
+
+Blocks: TASK-043, TASK-055
+
+### Parallelization
+
+Can run in parallel with: TASK-036
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Backend y frontend fallan de forma independiente y con mensajes accionables.
+- [ ] El lock del backend se verifica; una dependencia añadida sin actualizar el lock rompe CI.
+- [ ] CI publica el OpenAPI del SHA como artefacto.
+- [ ] Ningún job imprime variables sensibles.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Provocar deliberadamente un fallo en cada lane (test roto, error de tipos, lock desactualizado) y comprobar que CI falla en la lane correcta y no en la otra. Revisar los logs de un run completo buscando fugas de variables sensibles.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+## TASK-040 — Implantar el error model único y el request id en toda la API
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M2
+Category: API Contract / Security
+
+### Objective
+
+Que toda respuesta de error de `/api/v1` tenga la forma `{"error":{"code","message","details","request_id"}}`, con códigos estables y sin texto de excepción.
+
+### Problem
+
+§5.1 fija un error único y prohíbe devolver `str(exception)`. TASK-011 normalizó los errores de un subconjunto de rutas y TASK-032 quedó pendiente de extenderlo al resto; ninguna de las dos introduce `code` estable ni `request_id`, que es lo que el cliente React necesita para decidir sin parsear prosa.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:128-131, 236-240` (Confidence: HIGH).
+- TASK-011 (COMPLETED) y TASK-032 (pendiente) en este documento.
+- F-10 en [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md): errores de infraestructura retornados al cliente.
+
+### Why this is a problem
+
+Sin código estable, el frontend distingue errores por el texto del mensaje, que es traducible y cambia; sin `request_id`, un fallo reportado por un usuario no se puede correlacionar con el log que lo explica.
+
+### Desired State
+
+Un handler de errores central, un catálogo de códigos estables versionado, y un `request_id` propagado desde el middleware hasta el log y la respuesta.
+
+### Proposed Solution
+
+Absorber TASK-032 dentro de esta tarea: extender el mapeo a las rutas restantes ya con la forma final, en vez de normalizar dos veces. Middleware que genera o propaga `request_id` y lo pone en el log estructurado y en la respuesta. Catálogo de códigos como enum versionado, no strings sueltos. Los detalles de validación van en `details`; nunca se filtra `str(exception)` ni rastro de infraestructura. Mantener el shape actual como adapter donde un consumidor legacy todavía lo lea.
+
+### Scope
+
+IN SCOPE:
+
+- Handler de errores central, middleware de request id, catálogo de códigos, mapeo de las rutas restantes.
+- Tests de contrato de error por familia de status.
+
+OUT OF SCOPE:
+
+- Cambiar qué operaciones fallan o con qué status: solo cambia la forma de la respuesta.
+- Traducir mensajes: la UI decide el idioma a partir del código.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `backend/app/core/` (errores, middleware), routers de `backend/app/`, tests de contrato.
+- Consumidores legacy que lean el shape anterior, mediante adapter.
+
+### Dependencies
+
+Depends on: TASK-032, TASK-037
+
+### Blocks
+
+Blocks: TASK-043, TASK-044
+
+### Parallelization
+
+Can run in parallel with: TASK-041, TASK-042, TASK-045
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Toda respuesta de error de `/api/v1` tiene la forma única, con código estable y `request_id`.
+- [ ] Ninguna respuesta contiene `str(exception)` ni detalle de infraestructura.
+- [ ] El `request_id` de la respuesta aparece en el log estructurado de esa misma petición.
+- [ ] TASK-032 queda cubierta: no quedan rutas con el mapeo anterior sin adapter declarado.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Test de contrato por cada familia de status (400/401/403/404/409/422/429/5xx) comprobando forma, código y ausencia de texto de excepción. Inyectar un fallo de infraestructura y verificar que el cliente recibe un mensaje seguro mientras el log conserva el detalle con el mismo `request_id`.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-041 — Estandarizar paginación, límites de colección e idempotencia
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M2
+Category: API Contract / Performance
+
+### Objective
+
+Dar a toda colección un límite máximo de servidor y una forma de paginación declarada, y exigir `Idempotency-Key` donde una repetición cuesta dinero o crea duplicados.
+
+### Problem
+
+§5.1 exige `{items, page, page_size, total}` para colecciones paginadas, cursor en mensajes y feed, límite máximo en toda colección, e `Idempotency-Key` en candidaturas, uploads que disparan IA y creación de jobs. Hoy los listados cargan historial completo (F-22) y no existe cabecera de idempotencia.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:132-138` (Confidence: HIGH).
+- F-22 en [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md); TASK-024 y TASK-025 en este documento.
+
+### Why this is a problem
+
+Una colección sin límite de servidor es una denegación de servicio latente, y un reintento de red sobre un upload que dispara IA gasta cuota dos veces por la misma intención del usuario.
+
+### Desired State
+
+Helpers compartidos de paginación por página y por cursor, un límite máximo que el cliente no puede exceder, y un registro de idempotencia que devuelva el mismo resultado ante la misma clave.
+
+### Proposed Solution
+
+Construir sobre el cursor estable de TASK-024 en vez de inventar otro. Helpers compartidos para ambas formas de paginación, con `page_size` acotado en servidor. Registro de idempotencia persistido y con retención definida: misma clave y mismo actor devuelven el resultado original; misma clave con cuerpo distinto es `409`. Aplicarlo primero a candidaturas, uploads con IA y creación de jobs, que es donde el plan lo exige. No convertir toda la API en idempotente por defecto.
+
+### Scope
+
+IN SCOPE:
+
+- Helpers de paginación, límites de servidor, registro de idempotencia y su migración si persiste en DB.
+- Aplicación a candidaturas, uploads que disparan IA y creación de jobs.
+
+OUT OF SCOPE:
+
+- Cambiar el orden o la semántica de los listados existentes más allá de acotarlos.
+- Hacer idempotentes operaciones donde repetir es semánticamente correcto.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `backend/app/core/` o `schemas/` (helpers), routers de colecciones, migración del registro de idempotencia.
+- Tests de paginación, límites y replay.
+
+### Dependencies
+
+Depends on: TASK-024, TASK-037
+
+### Blocks
+
+Blocks: TASK-043, TASK-049
+
+### Parallelization
+
+Can run in parallel with: TASK-040, TASK-042, TASK-045
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Ninguna colección puede devolver más filas que el límite de servidor, pida el cliente lo que pida.
+- [ ] Las colecciones paginadas responden con la forma declarada en §5.1.
+- [ ] La misma `Idempotency-Key` con el mismo cuerpo devuelve el resultado original sin volver a gastar IA.
+- [ ] La misma clave con cuerpo distinto responde `409`.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Pedir `page_size` por encima del máximo y comprobar que el servidor acota. Replay de una creación con la misma clave verificando que no hay segundo cargo ni fila duplicada, en la lane PostgreSQL con peticiones concurrentes. Medir consultas por página con catálogo representativo.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: HIGH
+Maintainability: HIGH
+Cost: MEDIUM
+Risk: MEDIUM
+
+## TASK-042 — Exponer sesión, login y logout por actor con CSRF double-submit
+
+Status: TODO
+Priority: CRITICAL
+Phase: PHASE-M2
+Category: Security / API Contract
+
+### Objective
+
+Añadir `GET /api/v1/auth/session`, endpoints de login/logout consistentes por actor y protección CSRF double-submit en todos los métodos mutantes.
+
+### Problem
+
+§6.2 exige un endpoint que devuelva el actor efectivo y su tipo, CSRF double-submit y rotación de sesión explícita. Hoy hay dos identidades con cookies separadas y ningún endpoint que le diga a un cliente quién es; la SPA no puede decidir su navegación sin adivinar.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:202-215` (Confidence: HIGH).
+- TASK-010 (COMPLETED): autenticación de compañías cubierta y proxy confiable validado.
+- Dos identidades autenticables con cookies separadas (`docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:39`).
+
+### Why this is a problem
+
+Sin endpoint de sesión, el guard de React inventa el estado de autenticación; sin CSRF, un formulario de otro origen puede ejecutar mutaciones con la cookie del usuario.
+
+### Desired State
+
+Un contrato de sesión explícito por actor, cookies httpOnly `SameSite=Lax` y `Secure` en producción, y un token CSRF que el cliente reenvía en `X-CSRF-Token` y el backend valida junto con `Origin`.
+
+### Proposed Solution
+
+Conservar cookies separadas para estudiante y recruiter: mezclar modelos de identidad durante la migración es un riesgo que el plan pide no correr. `GET /auth/session` devuelve actor y tipo, o `401` limpio. CSRF double-submit más validación de `Origin`. Rotación de sesión explícita; el cliente reintenta un `401` una sola vez. La autorización se decide en backend: los guards de React solo controlan navegación y nunca son la barrera.
+
+### Scope
+
+IN SCOPE:
+
+- Endpoints de sesión/login/logout por actor, emisión y validación de token CSRF, rotación de sesión.
+- Tests de CSRF, de actor cruzado y de expiración.
+
+OUT OF SCOPE:
+
+- Unificar las dos identidades en un solo modelo de usuario.
+- Cambiar el proveedor de autenticación o el esquema de contraseñas.
+- Tratar CORS como barrera de seguridad.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `backend/app/` rutas y dependencias de auth, middleware CSRF, configuración de cookies.
+- Tests de seguridad propios.
+
+### Dependencies
+
+Depends on: TASK-010, TASK-037
+
+### Blocks
+
+Blocks: TASK-044, TASK-046
+
+### Parallelization
+
+Can run in parallel with: TASK-040, TASK-041, TASK-045
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] `GET /auth/session` devuelve el actor efectivo y su tipo, o `401` sin filtrar existencia de cuentas.
+- [ ] Todo método mutante exige token CSRF válido; sin él responde `403`.
+- [ ] Las cookies son httpOnly, `SameSite=Lax` y `Secure` en producción.
+- [ ] Un actor no puede operar sobre recursos del otro tipo de identidad.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Casos negativos y positivos: mutación sin token, con token de otra sesión, con `Origin` ajeno y tras rotación. Verificar en la lane de navegador, a través del proxy, que la cookie viaja same-origin y que el cliente reintenta un `401` exactamente una vez. Comprobar que el `403` no distingue entre «no autenticado» y «no autorizado» más de lo que el contrato declara.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-043 — Fijar OpenAPI como contrato y generar tipos TypeScript en CI
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M2
+Category: API Contract / Infrastructure
+
+### Objective
+
+Hacer del schema OpenAPI la fuente de verdad del contrato, con tipos TypeScript generados y un diff incompatible que rompe CI.
+
+### Problem
+
+§5.1 declara OpenAPI como fuente de verdad y exige que CI exporte el schema, genere o verifique los tipos y falle ante un diff incompatible salvo cambio versionado. Hoy no existe ni la generación ni la comparación.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:139-140, 386-391` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:462` (riesgo: contrato cambia sin detectar).
+
+### Why this is a problem
+
+Si el frontend escribe sus propios tipos a mano, un cambio de backend rompe la SPA en producción en vez de en CI, y el contrato deja de ser verificable.
+
+### Desired State
+
+Tipos generados desde el OpenAPI del mismo SHA, consumidos por el cliente HTTP, y un check de compatibilidad que distingue un cambio aditivo de uno que rompe.
+
+### Proposed Solution
+
+Estabilizar `operationId` y nombres de schema antes de generar, o los tipos cambiarán de nombre en cada build. Generar tipos en `frontend/src/api/generated/` como artefacto reproducible, no editado a mano. Comparar el OpenAPI del PR contra el de la rama base y fallar ante cambios incompatibles; un cambio deliberado se acompaña de versión o de deprecación explícita según §5.3.
+
+### Scope
+
+IN SCOPE:
+
+- Export estable de OpenAPI, generación de tipos, check de compatibilidad en CI.
+- Estabilización de `operationId` y nombres de schema.
+
+OUT OF SCOPE:
+
+- Renombrar endpoints: eso ocurre en cada vertical siguiendo la matriz de TASK-034.
+- Publicar el OpenAPI públicamente en producción sin decidirlo (§6.4).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `.github/workflows/ci.yml`, `backend/app/` (metadatos de OpenAPI), `frontend/src/api/generated/`.
+- Script de generación y comparación.
+
+### Dependencies
+
+Depends on: TASK-039, TASK-040, TASK-041
+
+### Blocks
+
+Blocks: TASK-044
+
+### Parallelization
+
+Can run in parallel with: TASK-042, TASK-045
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Los tipos del frontend se generan desde el OpenAPI del mismo SHA y no se editan a mano.
+- [ ] Un cambio incompatible de contrato rompe CI; uno aditivo, no.
+- [ ] Los `operationId` son estables entre builds sin cambios de código.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Introducir a propósito un cambio incompatible (campo requerido eliminado, enum reducido) y comprobar que CI falla; introducir uno aditivo y comprobar que pasa. Regenerar los tipos dos veces sin cambios y verificar que el resultado es idéntico.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-044 — Construir la capa HTTP, los shells y los guards del frontend
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M2
+Category: Frontend
+
+### Objective
+
+Dejar lista la base sobre la que se monta cada vertical: cliente HTTP único, tokens de diseño, shells por actor, router, guards y boundaries.
+
+### Problem
+
+§7 fija que ningún componente llama `fetch` directamente, que la lógica de red vive en hooks de feature y que los datos remotos no se duplican en stores globales. Sin esa base, la primera vertical improvisa y las siete siguientes copian la improvisación.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:245-293` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:341-344` (entregables de Fase 2).
+
+### Why this is a problem
+
+La capa HTTP concentra credenciales, CSRF, reintento acotado, `ApiError` y `request_id`. Repartirla entre componentes es exactamente el problema que F-19 describe en el JS actual.
+
+### Desired State
+
+`client.ts` como único punto de red, `queryKeys.ts` como convención de cache, shells `Public/Student/Company/Admin`, guards de navegación y boundaries de carga y error.
+
+### Proposed Solution
+
+Cliente con credenciales, `X-CSRF-Token`, un solo reintento ante `401`, `ApiError` tipado con el código estable de TASK-040 y propagación de `request_id`. TanStack Query como única cache de estado servidor. Componentes primitivos y patrones (`EmptyState`, `AsyncBoundary`, `DataTable`) antes de las pantallas. Los guards controlan navegación, nunca permisos: la autorización la decide el backend. Todo HTML de usuario se renderiza como texto salvo sanitización explícita, que es la lección de F-03.
+
+### Scope
+
+IN SCOPE:
+
+- `frontend/src/api/`, `components/primitives`, `components/patterns`, `components/layout`, `app/` (router, providers, guards).
+- Tests de la capa HTTP y de los componentes base.
+
+OUT OF SCOPE:
+
+- Pantallas de producto: cada una llega con su vertical.
+- Recalcular reglas de negocio, elegibilidad o permisos en el cliente.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/**`.
+- Sin cambios en el backend.
+
+### Dependencies
+
+Depends on: TASK-038, TASK-042, TASK-043
+
+### Blocks
+
+Blocks: TASK-046
+
+### Parallelization
+
+Can run in parallel with: TASK-045
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] No existe `fetch` fuera del cliente autorizado; una regla de lint lo impide.
+- [ ] El cliente envía CSRF automáticamente y reintenta un `401` exactamente una vez.
+- [ ] `ApiError` expone el código estable y el `request_id` de la respuesta.
+- [ ] Los guards controlan navegación y no sustituyen ninguna decisión de autorización del backend.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Tests de la capa HTTP con Mock Service Worker o fixtures validadas contra los tipos generados: reintento, CSRF, forma de error y propagación de `request_id`. Smoke en navegador de un shell con guard, comprobando requests y DOM. Verificar que la regla de lint contra `fetch` suelto falla cuando se introduce uno.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-045 — Publicar health, readiness y logging estructurado de la API
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M2
+Category: Observability / Infrastructure
+
+### Objective
+
+Exponer `/healthz` y `/readyz` con la semántica de §6.4 y emitir logs JSON con `request_id`, actor anonimizado, ruta, status, latencia y job id.
+
+### Problem
+
+§6.4 separa liveness de readiness y exige logs estructurados y métricas concretas. Cloud Run necesita esa distinción para decidir si enruta tráfico a una revisión, y hoy no existe.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:235-244` (Confidence: HIGH).
+- TASK-028 en este documento (medir flujos críticos y hacer visibles fallos parciales).
+- F-24 en [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md): observabilidad limitada.
+
+### Why this is a problem
+
+Un `/healthz` que toca la base de datos convierte una caída de DB en un reinicio en bucle; un `/readyz` que no la toca deja entrar tráfico a una réplica que no puede responder.
+
+### Desired State
+
+Liveness que solo prueba que el proceso vive, readiness que prueba DB y dependencias indispensables con timeout corto, y logs correlacionables por `request_id`.
+
+### Proposed Solution
+
+Complementar TASK-028 en vez de duplicarla: esta tarea aporta los endpoints y el formato de log que Cloud Run consume, y TASK-028 aporta las métricas de negocio. Sin PII en los logs: el actor se identifica de forma anonimizada. `request_id` compartido con el error model de TASK-040. Las migraciones no corren al arrancar la réplica: eso es responsabilidad del Job de TASK-056.
+
+### Scope
+
+IN SCOPE:
+
+- Endpoints `/healthz` y `/readyz`, middleware y formato de logging estructurado.
+- Tests de readiness con dependencia caída.
+
+OUT OF SCOPE:
+
+- Dashboards y alertas: TASK-057.
+- Métricas de negocio y de gasto IA: TASK-028.
+- Registrar PII o secretos en los logs.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `backend/app/core/` (observabilidad), `backend/app/main.py` o equivalente, tests propios.
+
+### Dependencies
+
+Depends on: TASK-028, TASK-037
+
+### Blocks
+
+Blocks: TASK-056
+
+### Parallelization
+
+Can run in parallel with: TASK-040, TASK-041, TASK-042, TASK-043, TASK-044
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] `/healthz` responde sin tocar DB ni proveedores externos.
+- [ ] `/readyz` falla con timeout corto cuando la DB no está disponible, y lo dice sin filtrar detalle de infraestructura.
+- [ ] Los logs son JSON con `request_id`, actor anonimizado, ruta, status, latencia y job id cuando aplica.
+- [ ] Ningún log contiene PII ni secretos.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Bajar la DB en la lane de integración y comprobar que `/readyz` falla mientras `/healthz` sigue respondiendo. Verificar que el `request_id` de una respuesta de error aparece en su log. Revisar una muestra de logs buscando PII y secretos.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+## TASK-046 — Vertical 1 — Shell público y autenticación en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar home, about, login, registro, sesión y logout a React, sobre el contrato de sesión de TASK-042.
+
+### Problem
+
+§8 pone esta vertical primero porque es la de menor riesgo y la que fija el patrón para las siete siguientes: si el ingreso, la cookie y el CSRF no funcionan a través del proxy, nada de lo demás puede migrarse.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:296-297` (orden de verticales, Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:334-336` (exit gate de Fase 2: registro/login/session/logout y una mutación CSRF a través del proxy).
+- Pantallas actuales en `app/templates/` y `app/views/views.py`; SEO existente (sitemap, structured data).
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+Montar las páginas públicas y el flujo de autenticación de ambos actores sobre los shells de TASK-044. Conservar el SEO de las páginas públicas: sitemap y datos estructurados existen hoy y una SPA los pierde si nadie se ocupa; decidir y documentar cómo se preservan. Mantener el adapter legacy mientras el template Jinja siga sirviendo la misma pantalla a usuarios que no pasan por React.
+
+### Scope
+
+IN SCOPE:
+
+- Pantallas públicas y de auth en `frontend/src/features/auth/` y layout público.
+- Endpoints REST de la vertical según la matriz de TASK-034; adapters legacy de compatibilidad.
+- Preservación de SEO de las páginas públicas.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/auth/**`, `frontend/src/app/**`, `backend/app/` rutas de auth y públicas.
+- Tests E2E de registro, login, sesión, logout y acceso anónimo.
+
+### Dependencies
+
+Depends on: TASK-035, TASK-042, TASK-044
+
+### Blocks
+
+Blocks: TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052, TASK-053
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-047 — Vertical 2 — Perfil, cuestionario y CV en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar perfil, cuestionario y gestión de CV, incluidos uploads multipart y la auditoría de CV.
+
+### Problem
+
+§8 sitúa esta vertical segunda porque «cubre uploads, permisos y base del resto». Concentra los hallazgos de seguridad ya corregidos (F-03 HTML no escapado, F-04 identidad de objetos, F-05 límites de upload) y el contrato de CV que §5.2 renombra a `/resumes` y `/resume-course-audits`.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:298` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:148-153` (correspondencias de perfil y CV).
+- TASK-004, TASK-005, TASK-006 (COMPLETED): escapado, identidad de objetos y límites de upload.
+- TASK-030 (pendiente): validación de respuestas y versión histórica del cuestionario.
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+Renombrar según §5.2: `GET/PATCH /users/me`, `GET/POST/DELETE /resumes`, `POST/GET /resume-course-audits`. El upload multipart conserva los límites de TASK-006 y la identidad de objeto de TASK-005; el nombre de archivo se renderiza como texto, que es la corrección de F-03 y no se puede perder al reescribir la pantalla. La auditoría de CV usa `Idempotency-Key` (TASK-041) porque dispara gasto de IA. El umbral de aprobación lo decide el backend con la policy de TASK-016: React muestra la decisión y el umbral como texto descriptivo.
+
+### Scope
+
+IN SCOPE:
+
+- Pantallas de perfil, cuestionario y CV; endpoints REST renombrados con adapter legacy.
+- Uploads multipart con límites, idempotencia y autorización por entidad.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/profile-resumes/**`, `backend/app/` rutas de perfil, resumes y auditoría.
+- Tests de upload, ownership, límites y renderizado seguro de nombres de archivo.
+
+### Dependencies
+
+Depends on: TASK-006, TASK-030, TASK-041, TASK-046
+
+### Blocks
+
+Blocks: TASK-053
+
+### Parallelization
+
+Can run in parallel with: TASK-048, TASK-050
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: MEDIUM
+Risk: HIGH
+
+## TASK-048 — Vertical 3 — Dashboard, recursos y roadmaps en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar el dashboard del estudiante, el hub de recursos y los roadmaps, sobre la proyección de progreso unificada.
+
+### Problem
+
+§8 pone esta vertical tercera porque «resuelve progreso compartido». TASK-016 ya dejó una sola policy de aprobación y un solo proyector de progreso, así que las pantallas nuevas pueden consumir la misma respuesta en vez de recalcular porcentajes en el cliente.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:299` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:144-145` (`GET /dashboard/student`), `:161-162` (`PUT/DELETE /roadmaps/{slug}/saves/me`).
+- TASK-016 (COMPLETED): `CourseProgressProjector` y `resources.core_code`.
+- TASK-018 y TASK-025 (pendientes): agrupación de consultas y cálculo del dashboard en DB.
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+Renombrar `GET /students_dashboard` a `GET /dashboard/student` y convertir save de roadmap en la relación idempotente `PUT/DELETE /roadmaps/{slug}/saves/me`. El progreso lo proyecta el backend: React no vuelve a calcular porcentajes ni a decidir si una lección está completa. Ninguna pantalla de esta vertical puede escribir caches al leer, que es la propiedad que TASK-016 acaba de establecer y que un GET nuevo podría reintroducir sin querer.
+
+### Scope
+
+IN SCOPE:
+
+- Dashboard de estudiante, hub de recursos y roadmaps; endpoints REST renombrados con adapter legacy.
+- Consumo de la proyección de progreso; ningún cálculo de progreso en el cliente.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/dashboard/**`, `features/resources-roadmaps/**`, `backend/app/` rutas correspondientes.
+- Tests de paridad de porcentajes contra la proyección y de ausencia de escrituras en GET.
+
+### Dependencies
+
+Depends on: TASK-018, TASK-025, TASK-046
+
+### Blocks
+
+Blocks: TASK-053
+
+### Parallelization
+
+Can run in parallel with: TASK-047, TASK-050
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: HIGH
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-049 — Vertical 4 — Jobs, análisis de CV y candidaturas en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar el tablero de empleos, el análisis de CV y las candidaturas, con polling de jobs durables sobre Cloud Tasks.
+
+### Problem
+
+§8 dice que esta vertical «introduce Cloud Tasks y polling durable». Es la primera que depende de que el runner haya salido del lifespan: mientras el job viva dentro de la réplica web, una instancia a cero deja el análisis sin ejecutar.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:300` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:154-157` (`POST /cv-analyses`, `GET /cv-analyses/{id}`, `POST /job-searches`), `:166-167` (`PUT /applications/{id}/selected-interview`).
+- TASK-013, TASK-014 (COMPLETED): job de CV durable e idempotente, transiciones centralizadas.
+- TASK-020 (pendiente): scraper de LinkedIn fuera del event loop.
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+`POST /cv-analyses` responde `202` con el recurso job; `GET /cv-analyses/{id}` expone estado y resultados. El polling vive en TanStack Query y respeta backoff: no se convierte la SPA en un generador de tráfico. Las candidaturas usan `Idempotency-Key`. La selección de entrevista se expresa como relación idempotente `PUT /applications/{id}/selected-interview`, apoyada en la unicidad que TASK-015 ya garantiza en DB. El estado de candidatura lo decide la transición única de TASK-014; React no lo recalcula.
+
+### Scope
+
+IN SCOPE:
+
+- Tablero de empleos, análisis de CV y candidaturas; endpoints REST con `202` y polling.
+- Idempotencia en creación de candidaturas y de jobs; selección de entrevista idempotente.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/jobs-applications/**`, `backend/app/` rutas de jobs, análisis y candidaturas.
+- Tests E2E de candidatura y de análisis con replay; tests de polling acotado.
+
+### Dependencies
+
+Depends on: TASK-020, TASK-041, TASK-046, TASK-054
+
+### Blocks
+
+Blocks: TASK-053
+
+### Parallelization
+
+Can run in parallel with: TASK-050, TASK-051
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: HIGH
+Maintainability: HIGH
+Cost: HIGH
+Risk: HIGH
+
+## TASK-050 — Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar todas las pantallas del actor recruiter, conservando su identidad separada y sus permisos por rol.
+
+### Problem
+
+§8 agrupa la vertical de compañía como un bloque porque comparte identidad, permisos y navegación. §6.2 pide conservar cookies separadas para estudiante y recruiter durante la migración, así que esta vertical prueba que dos actores conviven en la misma SPA sin mezclarse.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:301` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:146` (`GET /companies/me/dashboard`), `:205-207` (cookies separadas).
+- TASK-010 (COMPLETED): autenticación de compañías cubierta.
+- TASK-015 (COMPLETED): una sola reserva de entrevista efectiva por candidatura.
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+Renombrar `GET /company_dashboard` a `GET /companies/me/dashboard`. Los rangos de rol de recruiter los decide el backend: la UI no reimplementa quién puede asignar a quién. La reserva de entrevista se apoya en la unicidad de TASK-015; dos recruiters confirmando a la vez siguen produciendo una sola reserva efectiva y la UI muestra el conflicto en vez de inventar un segundo estado.
+
+### Scope
+
+IN SCOPE:
+
+- Pantallas de compañía en `frontend/src/features/company/`; endpoints REST renombrados con adapter legacy.
+- Guards de shell de compañía; permisos decididos en backend.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/company/**`, `backend/app/` rutas de compañía, postings, applicants y recruiters.
+- Tests E2E de recruiter y de acceso prohibido cruzado entre actores.
+
+### Dependencies
+
+Depends on: TASK-046
+
+### Blocks
+
+Blocks: TASK-053
+
+### Parallelization
+
+Can run in parallel with: TASK-047, TASK-048, TASK-049
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: LOW
+Risk: HIGH
+
+## TASK-051 — Vertical 6 — Community, friendships y messages en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar comunidades, amistades y mensajería, con paginación por cursor y estado optimista donde aporte.
+
+### Problem
+
+§8 pide paginación y estado optimista aquí, y advierte explícitamente: tiempo real solo si hay requerimiento, no introducir WebSockets por defecto. §5.2 convierte join/leave de comunidad en la relación idempotente `PUT/DELETE /communities/{id}/members/me`.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:302-303` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:158-160, 163-164` (relaciones idempotentes y `PATCH /friend-requests/{id}`).
+- TASK-017 (COMPLETED): contador de comunidad derivado de membresías.
+- TASK-024 (pendiente): paginación de mensajes con cursor estable.
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+`PUT /communities/{id}/members/me` y su `DELETE` sustituyen a join/leave: la relación es idempotente y un doble clic deja de ser un `409` sorpresa. Aceptar una solicitud de amistad pasa a `PATCH /friend-requests/{id}` con `{status: accepted}`. Los mensajes usan el cursor estable de TASK-024, no offset. El contador de miembros viene derivado del backend (TASK-017); la UI no lo incrementa por su cuenta al unirse. Estado optimista solo donde la operación es idempotente y la reversión es visible.
+
+### Scope
+
+IN SCOPE:
+
+- Comunidades, amistades y mensajería; endpoints REST idempotentes; paginación por cursor.
+- Estado optimista acotado a operaciones idempotentes.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/community-messages/**`, `backend/app/` rutas de comunidad, amistades y mensajes.
+- Tests de paginación por cursor, de idempotencia de join/leave y de estado optimista revertido.
+
+### Dependencies
+
+Depends on: TASK-024, TASK-046
+
+### Blocks
+
+Blocks: TASK-053
+
+### Parallelization
+
+Can run in parallel with: TASK-049, TASK-052
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: HIGH
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-052 — Vertical 7 — Career Lab / Capstone en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar Career Lab conservando versiones, provenance y snapshots de las ejecuciones analíticas.
+
+### Problem
+
+§8 exige conservar versiones, provenance y snapshots. §5.2 añade que las operaciones analíticas (`extract`, `sync`, `optimize`, `evaluate`) deben devolver un recurso `run` con identidad, estado y versión, no un efecto anónimo. Esta vertical sustituye el trabajo que TASK-026 iba a hacer sobre el JS legacy.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:304, 170-173` (Confidence: HIGH).
+- TASK-023 (pendiente): dividir Capstone conservando facade y contratos.
+- TASK-026 (SUPERSEDED por esta tarea): separaba API, estado y render del JS de Jobs y Career Lab sin cambiar a React.
+- F-19 en [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md): Capstone concentra demasiadas responsabilidades.
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+Cada operación analítica devuelve un `run` identificable con estado y versión de objetivo, de modo que un resultado histórico siga siendo explicable. No se recalculan snapshots antiguos ni se cambian pesos, heurísticas o thresholds: eso sigue fuera de alcance igual que lo estaba en TASK-023. El backend ya dividido por TASK-023 expone casos de uso; esta tarea consume esos contratos desde React y retira la necesidad de reorganizar el JS legacy.
+
+### Scope
+
+IN SCOPE:
+
+- Pantallas de Career Lab; endpoints de operaciones analíticas como recursos `run`.
+- Consumo de los casos de uso extraídos por TASK-023.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/career-lab/**`, `backend/app/` rutas de Capstone y analítica.
+- Tests de contrato de `run` (identidad, estado, versión) y de reproducibilidad de snapshots.
+
+### Dependencies
+
+Depends on: TASK-022, TASK-023, TASK-046
+
+### Blocks
+
+Blocks: TASK-053
+
+### Parallelization
+
+Can run in parallel with: TASK-051
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: HIGH
+Maintainability: HIGH
+Cost: MEDIUM
+Risk: HIGH
+
+## TASK-053 — Vertical 8 — Admin en React
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M3
+Category: Frontend / API Contract / Migration
+
+### Objective
+
+Migrar el panel de administración, último consumidor del contrato legacy.
+
+### Problem
+
+§8 pone admin al final porque «elimina toggles y uploads legacy». §5.2 convierte `PATCH /admin/users/{id}/toggle-active` en `PATCH /admin/users/{id}` con `{is_active: bool}`: un verbo que describe la intención en vez del efecto.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:305, 168-169` (Confidence: HIGH).
+- `app/routes/adminRoute.py` (lectura de contadores y toggles).
+
+### Why this is a problem
+
+Una vertical migrada a medias deja dos consumidores para el mismo dominio y obliga a mantener dos implementaciones de sus reglas. El plan §13 es explícito: un dominio no está migrado si solo «se ve» — debe conservar permisos, estados de error, navegación profunda, refresh, uploads, reintentos y accesibilidad.
+
+### Desired State
+
+Las pantallas de la vertical servidas por React contra el contrato REST nuevo, con paridad funcional y visual demostrada contra la baseline de TASK-035, y cero tráfico del frontend al contrato legacy.
+
+### Proposed Solution
+
+Sustituir los toggles por `PATCH` con el estado deseado, que es idempotente y auditable. Al ser el último consumidor, esta tarea cierra el inventario de TASK-034: cualquier endpoint legacy que siga con tráfico después de aquí es un hallazgo, no un pendiente. Los permisos de administración los decide el backend; el shell de admin solo controla navegación.
+
+### Scope
+
+IN SCOPE:
+
+- Panel de administración en React; endpoints REST de admin con adapter legacy.
+- Cierre del inventario de consumidores legacy.
+
+OUT OF SCOPE:
+
+- Migrar pantallas de otra vertical: cada una tiene su propia tarea y su propio gate de paridad.
+- Retirar el template, el JS o el endpoint legacy en esta tarea: el retiro es TASK-059, tras comprobar cero tráfico.
+- Reimplementar en React reglas que decide el backend (elegibilidad, permisos, umbrales, progreso).
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `frontend/src/features/admin/**`, `backend/app/routes/adminRoute.py` y equivalentes.
+- Tests E2E de admin y de acceso prohibido para no administradores.
+
+### Dependencies
+
+Depends on: TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052
+
+### Blocks
+
+Blocks: TASK-058
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Playwright sobre compose para los flujos de la vertical, incluidos casos de acceso prohibido. Comparación visual contra las capturas de TASK-035 en desktop y mobile. Tests de contrato de los endpoints nuevos (status, JSON, enums, nulls, ownership, errores e idempotencia). Medir llamadas al endpoint legacy durante al menos un ciclo antes de declarar la vertical cerrada. Registrar comandos, resultados y cualquier test omitido.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
+
+## TASK-054 — Sacar el runner de CV del lifespan con outbox y Cloud Tasks
+
+Status: TODO
+Priority: CRITICAL
+Phase: PHASE-M4
+Category: Infrastructure / Reliability
+
+### Objective
+
+Que un análisis de CV encolado sobreviva a un deploy, a la escala a cero y a un replay, sin gastar IA dos veces.
+
+### Problem
+
+§6.3 es explícito: el runner dentro del lifespan no debe ser el mecanismo principal en producción porque escala con cada réplica y una instancia a cero no ejecuta polling. Hoy el runner arranca dentro de cada proceso web (§2).
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:216-234` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:463-464` (riesgos: jobs perdidos al escalar a cero; dos runners gastan IA).
+- TASK-013 (COMPLETED): `job_analysis` durable con claim, lease e idempotencia.
+
+### Why this is a problem
+
+Con el runner en la réplica web, escalar a cero deja jobs sin ejecutar y escalar a N hace que varias réplicas compitan por el mismo job, con gasto de IA duplicado si el claim falla.
+
+### Desired State
+
+La API persiste el job y encola una Cloud Task después del commit; un endpoint interno con OIDC reclama el lease atómicamente y responde éxito ante un replay terminal.
+
+### Proposed Solution
+
+Tabla outbox para no perder el dispatch entre el commit de DB y Cloud Tasks: encolar dentro de la transacción es imposible y encolar antes del commit pierde jobs. `job_analysis` sigue siendo la fuente durable de estado, lease e idempotencia (TASK-013); esta tarea solo cambia quién dispara el trabajo. Cloud Tasks llama `/internal/tasks/cv-analyses/{id}` con OIDC y retry acotado. Un Cloud Scheduler reencola vencidos y no procesa IA. En local, un servicio `worker` de compose consume la misma outbox para no depender de Google Cloud. Si Cloud Tasks no se aprueba, la alternativa es un tercer Cloud Run worker con `min-instances=1`, presupuestado explícitamente; lo que no se hace es dejar un loop oculto en todas las réplicas web.
+
+### Scope
+
+IN SCOPE:
+
+- Tabla outbox y su migración, endpoint interno autenticado por OIDC, worker local de compose.
+- Retiro del arranque del runner en el lifespan de la réplica web.
+
+OUT OF SCOPE:
+
+- Cambiar el modelo de estados de `job_analysis` o su lease: eso lo fijó TASK-013.
+- Procesar IA desde el scheduler de reconciliación.
+- Mantener un loop de polling en las réplicas web como respaldo permanente.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `backend/app/` (outbox, endpoint interno, lifespan), migración nueva, `docker-compose.yml` (worker).
+- Tests de dispatch, replay y reconciliación.
+
+### Dependencies
+
+Depends on: TASK-013, TASK-037
+
+### Blocks
+
+Blocks: TASK-049, TASK-056
+
+### Parallelization
+
+Can run in parallel with: TASK-055
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] Un job encolado sobrevive al reinicio del proceso y a la escala a cero.
+- [ ] Un replay del mismo task no produce un segundo gasto de IA efectivo.
+- [ ] El endpoint interno rechaza llamadas sin OIDC válido.
+- [ ] Ninguna réplica web ejecuta un loop de polling de IA.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+En la lane PostgreSQL: encolar, matar el proceso antes de procesar y comprobar que el job se recupera. Disparar el mismo task dos veces en paralelo y verificar un solo consumo en el ledger de IA. Llamar el endpoint interno sin credenciales y comprobar el rechazo. No ejecutar llamadas pagadas: proveedor fake.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: HIGH
+Maintainability: HIGH
+Cost: HIGH
+Risk: HIGH
+
+## TASK-055 — Aprovisionar Artifact Registry, WIF y Secret Manager
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M4
+Category: Infrastructure / Security
+
+### Objective
+
+Dejar CI capaz de publicar imágenes y desplegar sin claves JSON persistentes, y los secretos fuera del repositorio y de las imágenes.
+
+### Problem
+
+§4 de Fase 4 pide Artifact Registry con dos imágenes, Workload Identity Federation para GitHub sin JSON keys, Secret Manager para DB, Redis, JWT, storage, Gemini y proveedores, y service accounts distintas con mínimo privilegio. Nada de eso existe.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:357-365` (Confidence: HIGH).
+- TASK-002 (COMPLETED): secretos versionados retirados y rotación documentada.
+- TASK-036: el ADR de ingreso condiciona la topología que se aprovisiona aquí.
+
+### Why this is a problem
+
+Una clave JSON de service account en los secretos de GitHub es una credencial de larga vida que no caduca ni se puede acotar por repositorio; WIF la sustituye por una identidad federada y efímera.
+
+### Desired State
+
+Dos repositorios de imágenes, identidad federada para el workflow, secretos en Secret Manager y una service account distinta por servicio con el mínimo privilegio necesario.
+
+### Proposed Solution
+
+Implementar la opción que TASK-036 decidió; esta tarea no re-decide el patrón de ingreso. Service accounts separadas para API, frontend, job de migraciones y Cloud Tasks, cada una con los permisos que necesita y ninguno más. Los secretos se inyectan como referencias de Secret Manager, nunca como variables literales en la definición del servicio ni horneados en la imagen. La imagen del frontend no contiene secretos: solo configuración pública (§11).
+
+### Scope
+
+IN SCOPE:
+
+- Artifact Registry, WIF, Secret Manager, service accounts y sus permisos; documentación del aprovisionamiento.
+- Referencias de secretos en la configuración de despliegue.
+
+OUT OF SCOPE:
+
+- Desplegar los servicios: eso es TASK-056.
+- Rotar secretos de producción sin la autorización correspondiente.
+- Imprimir valores de secretos en logs de CI.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- Infraestructura como código o runbook versionado bajo `docs/refactor/`; `.github/workflows/`.
+- Sin cambios de comportamiento en la aplicación.
+
+### Dependencies
+
+Depends on: TASK-002, TASK-036, TASK-039
+
+### Blocks
+
+Blocks: TASK-056
+
+### Parallelization
+
+Can run in parallel with: TASK-054
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] CI se autentica por WIF; no existe ninguna clave JSON de service account almacenada.
+- [ ] Cada servicio tiene su propia service account con permisos mínimos justificados.
+- [ ] Los secretos se resuelven desde Secret Manager y no aparecen en la imagen ni en los logs.
+- [ ] La imagen del frontend no contiene secretos.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Ejecutar el workflow y comprobar que publica sin credenciales estáticas. Inspeccionar las imágenes construidas buscando secretos. Revisar los permisos efectivos de cada service account y justificar cada uno. Si el acceso a la consola de Google Cloud no está disponible, registrar BLOCKED con la evidencia pendiente en vez de declarar la tarea completa.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: HIGH
+Cost: MEDIUM
+Risk: HIGH
+
+## TASK-056 — Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M4
+Category: Infrastructure
+
+### Objective
+
+Poner en pie `studentscompass-api`, `studentscompass-front` y el Job `studentscompass-migrate`, desplegados por SHA desde CI con el orden y los gates de §10.
+
+### Problem
+
+§10 define una secuencia concreta —migrate, API sin tráfico, smoke, promoción, frontend— y §11 la configuración inicial de cada recurso. Hoy no hay pipeline de despliegue (§2) y las migraciones no corren como Job.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:397-410` (secuencia de deploy, Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:411-427` (configuración de Cloud Run).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:243-244`: migraciones solo mediante Job, nunca al arrancar cada réplica.
+- TASK-009 (COMPLETED): baseline y convergencia de schemas.
+
+### Why this is a problem
+
+Desplegar la API antes de migrar, o migrar al arrancar cada réplica, produce carreras de schema entre revisiones y hace imposible el rollback por revisión.
+
+### Desired State
+
+Un `deploy.yml` disparado solo tras CI verde del mismo SHA, que migra, despliega la API sin tráfico, ejecuta smoke, promueve y solo entonces despliega el frontend.
+
+### Proposed Solution
+
+Nunca desplegar por `:latest`: Cloud Run recibe tag SHA o digest. El Job de migraciones usa exactamente la imagen de API del mismo SHA, de modo que el código y el schema no se separan. Presupuesto global de conexiones: `pool_size × max_instances` por debajo del límite real de PostgreSQL o PgBouncer (§11), o el primer pico agota el pool. Ante fallo de smoke no se promueve, y el rollback de código exige que las migraciones sean backward-compatible, que es lo que el patrón expand/contract de §12 garantiza.
+
+### Scope
+
+IN SCOPE:
+
+- `.github/workflows/deploy.yml`, definición de los servicios y del Job, configuración inicial de §11.
+- Smoke de readiness contra la revisión sin tráfico antes de promover.
+
+OUT OF SCOPE:
+
+- Dominio, TLS, alertas y budgets: eso es TASK-057.
+- Desplegar a producción antes de que staging esté verde.
+- Usar `:latest` como referencia efectiva de despliegue.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `.github/workflows/deploy.yml`, definiciones de servicio y job, `backend/Dockerfile`, `frontend/Dockerfile`.
+
+### Dependencies
+
+Depends on: TASK-009, TASK-045, TASK-054, TASK-055
+
+### Blocks
+
+Blocks: TASK-057
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] El despliegue va por SHA o digest; `:latest` no es la referencia efectiva.
+- [ ] Las migraciones corren como Job bloqueante antes de que la API reciba tráfico, y nunca al arrancar una réplica.
+- [ ] Una revisión que falla el smoke no se promueve.
+- [ ] El presupuesto de conexiones (`pool_size × max_instances`) está por debajo del límite real de la base.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Desplegar a staging desde CI y comprobar la secuencia completa. Forzar un fallo de smoke y verificar que no hay promoción. Probar rollback a la revisión previa. Medir conexiones bajo carga y contrastar con el límite real. No usar producción como banco de pruebas.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: HIGH
+Risk: HIGH
+
+## TASK-057 — Configurar dominio, TLS, alertas, budgets y rollback por revisión
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M4
+Category: Infrastructure / Observability
+
+### Objective
+
+Dejar el servicio observable y reversible: dominio y TLS en el frontend, alertas sobre las métricas de §6.4 y rollback por revisión probado.
+
+### Problem
+
+§4 de Fase 4 cierra con dominio, TLS, alertas, budgets y rollback por revisión. Sin alertas, un fallo parcial —jobs atascados, gasto de IA disparado, pool agotado— se descubre por el reporte de un usuario.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:366` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:239-241` (métricas: 5xx, p95, pool DB, 429, jobs por estado y edad, gasto IA, reintentos, errores de storage).
+- TASK-028 (pendiente): medir flujos críticos y hacer visibles fallos parciales.
+
+### Why this is a problem
+
+El frontend es el único servicio con dominio público (§3): si el dominio apunta a otro sitio, cookies y CSRF dejan de ser same-origin y la seguridad del diseño se cae.
+
+### Desired State
+
+Dominio y TLS sobre el frontend, dashboards y alertas con umbrales accionables, budget de gasto con aviso, y un rollback por revisión ensayado y documentado.
+
+### Proposed Solution
+
+Las alertas cubren lo que §6.4 nombra y usan las métricas que TASK-028 emite: no inventar una segunda fuente de telemetría. Cada alerta tiene un umbral justificado y un runbook, o es ruido. Budget de gasto de IA con aviso antes del techo, apoyado en el guard de TASK-007 y el ledger de TASK-012. El rollback se ensaya de verdad, no se documenta como intención.
+
+### Scope
+
+IN SCOPE:
+
+- Mapeo de dominio y TLS, dashboards, alertas con runbook, budgets, procedimiento de rollback ensayado.
+
+OUT OF SCOPE:
+
+- Cambiar los límites de gasto de IA o el techo de cuota: eso lo fijaron TASK-007 y TASK-012.
+- Alertas sin umbral justificado ni runbook.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- Configuración de observabilidad y alertas; runbooks bajo `docs/refactor/`.
+
+### Dependencies
+
+Depends on: TASK-028, TASK-056
+
+### Blocks
+
+Blocks: TASK-058
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] El dominio público apunta al frontend y el navegador ve un solo origen.
+- [ ] Existen alertas con umbral justificado y runbook para 5xx, p95, pool DB, 429, jobs vencidos y gasto IA.
+- [ ] El rollback por revisión fue ejecutado en staging, no solo documentado.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Provocar cada condición de alerta en staging y comprobar que dispara y que el runbook resuelve. Ejecutar un rollback real y medir el tiempo hasta servicio restablecido. Verificar TLS y same-origin desde el navegador.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: MEDIUM
+Risk: MEDIUM
+
+## TASK-058 — Ensayar el cutover y observar la ventana de estabilidad
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-M5
+Category: Infrastructure / Release
+
+### Objective
+
+Ensayar el cambio completo sobre una copia anonimizada o staging equivalente, ejecutarlo y observar el sistema antes de retirar nada.
+
+### Problem
+
+§5 de Fase 5 pide ensayo con copia anonimizada, congelación de cambios incompatibles, despliegue en orden migrate → API → frontend, canary si la configuración lo permite, y observación de autenticación, 4xx/5xx, latencia, jobs, cuotas IA y storage.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:370-381` (Confidence: HIGH).
+- TASK-031 (pendiente): verificar compatibilidad integrada y ensayar rollout/restore.
+
+### Why this is a problem
+
+Un cutover que se ejecuta por primera vez en producción convierte cualquier supuesto equivocado en incidente. El ensayo es la única forma de descubrirlos con red debajo.
+
+### Desired State
+
+Un ensayo completo documentado, el cutover ejecutado en orden, y una ventana de observación con métricas sanas antes de autorizar el retiro de TASK-059.
+
+### Proposed Solution
+
+Extender TASK-031 en vez de duplicarla: aquella verifica compatibilidad integrada y ensaya rollout/restore sobre el monolito; esta lo hace sobre la topología de dos servicios. La copia es anonimizada; no se ensaya con PII real. Congelar cambios incompatibles durante la ventana. El canary es opcional según lo que la configuración permita, y su ausencia se documenta en vez de asumirse.
+
+### Scope
+
+IN SCOPE:
+
+- Ensayo de cutover, ejecución en orden, ventana de observación y su informe.
+- Congelación de cambios incompatibles durante la ventana.
+
+OUT OF SCOPE:
+
+- Retirar templates, JS legacy o endpoints deprecados: eso es TASK-059, después de esta observación.
+- Ensayar con datos personales reales.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- Runbooks e informe de cutover bajo `docs/refactor/`.
+- Sin cambios de código salvo correcciones que el ensayo revele.
+
+### Dependencies
+
+Depends on: TASK-031, TASK-053, TASK-057
+
+### Blocks
+
+Blocks: TASK-059
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] El ensayo se ejecutó sobre copia anonimizada o staging equivalente y está documentado.
+- [ ] El cutover siguió el orden migrate → API → frontend.
+- [ ] La ventana de observación cerró con autenticación, 4xx/5xx, latencia, jobs, cuotas IA y storage sanos.
+- [ ] El rollback siguió siendo posible durante toda la ventana.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Informe de la ventana con métricas antes y después. Verificar que el rollback fue posible en cada punto. Registrar cualquier incidente y su resolución. No declarar la ventana cerrada sin datos.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: MEDIUM
+Maintainability: MEDIUM
+Cost: MEDIUM
+Risk: HIGH
+
+## TASK-059 — Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-M5
+Category: Cleanup / Structure
+
+### Objective
+
+Eliminar `app/views`, templates, JS y CSS legacy, la dependencia de Jinja, el montaje de StaticFiles y los endpoints deprecados, solo tras comprobar cero tráfico.
+
+### Problem
+
+§15 exige que FastAPI no importe Jinja, no monte `/static` y no sirva pantallas, y que el retiro ocurra después de comprobar cero tráfico. Mientras conviven las dos implementaciones, cada regla tiene dos hogares.
+
+### Evidence / Location
+
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:377-379, 484-486` (Confidence: HIGH).
+- `docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md:174-185` (procedimiento de compatibilidad y retiro).
+- 27 templates y 23 archivos JS en el snapshot inicial.
+
+### Why this is a problem
+
+Un retiro por apariencia de desuso borra código todavía servido a alguien. La medición de tráfico es la única evidencia que autoriza el borrado.
+
+### Desired State
+
+El repositorio sin la capa de presentación legacy, con la evidencia de cero tráfico archivada por endpoint retirado.
+
+### Proposed Solution
+
+Seguir el procedimiento de §5.3 endpoint por endpoint: deprecar en OpenAPI con cabeceras `Deprecation`/`Sunset`, medir durante al menos un ciclo de release, y solo entonces retirar. Los templates y el JS se borran por pantalla, no en bloque, y cada borrado cita la vertical que la sustituyó. Ningún DROP de tablas ni de columnas entra aquí: esto retira presentación y endpoints, no datos. Lo que no tenga evidencia de cero tráfico se queda y se registra como pendiente.
+
+### Scope
+
+IN SCOPE:
+
+- Borrado de `app/views`, `app/templates`, `app/static` legacy, dependencia de Jinja y montaje de StaticFiles.
+- Retiro de endpoints deprecados con evidencia de cero tráfico por endpoint.
+
+OUT OF SCOPE:
+
+- Eliminar tablas, columnas o datos: esto retira presentación y endpoints, nada más.
+- Retirar cualquier cosa sin la medición de tráfico que la autoriza.
+- Retirar `user_stats`, `communities.member_count` u otras columnas legacy documentadas: requieren tarea destructiva propia.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos: la migración no autoriza cambios de producto.
+- Inventar historia de datos, recalcular resultados históricos o activar pagos/envío real de email.
+- Borrar tablas, columnas, objetos de storage o endpoints legacy sin comprobar cero tráfico y sin tarea de retiro específica.
+
+### Files / Components Likely Affected
+
+- `backend/app/views/`, `backend/app/templates/`, `backend/app/static/`, dependencias de Jinja, routers deprecados.
+
+### Dependencies
+
+Depends on: TASK-058
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+### Implementation Notes
+
+Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sección citada antes de editar. La paridad se demuestra contra la baseline capturada en TASK-035, no de memoria. Los hallazgos de [02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) que toquen este dominio se corrigen aquí; no se portan bugs conocidos al código nuevo como si fueran diseño. Un cambio de comportamiento va rotulado Bug Fix y separado del movimiento estructural.
+
+### Acceptance Criteria
+
+- [ ] FastAPI no importa Jinja, no monta `/static` y no sirve pantallas.
+- [ ] Cada endpoint retirado tiene su evidencia de cero tráfico archivada.
+- [ ] Ninguna tabla, columna ni objeto de storage se eliminó en esta tarea.
+- [ ] Lo que no pudo retirarse quedó registrado con su motivo.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Comprobar que la suite completa pasa tras cada borrado. Verificar por métricas que cada endpoint retirado tenía cero tráfico durante la ventana medida. Arrancar la aplicación y confirmar que no hay import de Jinja ni montaje de StaticFiles.
+
+### Rollback / Risk Notes
+
+Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: MEDIUM
+Maintainability: HIGH
+Cost: LOW
+Risk: MEDIUM
 
 ## Completion Notes protocol
 
@@ -4262,7 +6997,86 @@ Can start when each task's concrete dependencies are COMPLETED (no barrera globa
 
 - TASK-031 — Verificar compatibilidad integrada y ensayar rollout/restore; depends on TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-026, TASK-027, TASK-028, TASK-029, TASK-030.
 
+## PARALLEL EXECUTION GROUPS — plan 08 (fases M)
+
+Los grupos anteriores (A–J) siguen describiendo las tareas TASK-001 a TASK-032 y no se renumeran.
+Como allí, el grupo es una combinación conservadora: no hay barrera global, solo Dependencies y
+exclusión de archivos.
+
+### Parallel Group M0 — Baseline y decisiones
+
+Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
+
+- TASK-033 — Fijar toolchains y congelar la baseline de la migración; depends on NONE.
+- TASK-034 — Inventariar rutas y construir la matriz legacy → REST; depends on NONE.
+- TASK-035 — Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales; depends on TASK-034.
+- TASK-036 — Decidir y registrar el patrón de ingreso a Cloud Run; depends on NONE.
+
+Nada de esto toca código de producción: se puede arrancar en paralelo con cualquier tarea de backend pendiente del plan anterior.
+
+### Parallel Group M1 — Monorepo
+
+Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
+
+- TASK-037 — Mover el backend a backend/ sin cambiar comportamiento; depends on TASK-033, TASK-035.
+- TASK-038 — Crear el scaffold React y el compose local con proxy same-origin; depends on TASK-037.
+- TASK-039 — Separar CI en lanes de backend y frontend; depends on TASK-037, TASK-038.
+
+TASK-037 reserva prácticamente todo el árbol Python: mientras esté IN PROGRESS no debe haber otra tarea editando `app/`. Serializar contra las tareas de backend pendientes en vez de mergear a ciegas.
+
+### Parallel Group M2 — Plataforma REST y frontend
+
+Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
+
+- TASK-040 — Implantar el error model único y el request id en toda la API; depends on TASK-032, TASK-037.
+- TASK-041 — Estandarizar paginación, límites de colección e idempotencia; depends on TASK-024, TASK-037.
+- TASK-042 — Exponer sesión, login y logout por actor con CSRF double-submit; depends on TASK-010, TASK-037.
+- TASK-043 — Fijar OpenAPI como contrato y generar tipos TypeScript en CI; depends on TASK-039, TASK-040, TASK-041.
+- TASK-044 — Construir la capa HTTP, los shells y los guards del frontend; depends on TASK-038, TASK-042, TASK-043.
+- TASK-045 — Publicar health, readiness y logging estructurado de la API; depends on TASK-028, TASK-037.
+
+TASK-040, TASK-041, TASK-042 y TASK-045 tocan capas distintas del backend y pueden ir en paralelo. TASK-043 necesita que el contrato esté estable; TASK-044 consume sus tipos.
+
+### Parallel Group M3 — Verticales
+
+Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
+
+- TASK-046 — Vertical 1 — Shell público y autenticación en React; depends on TASK-035, TASK-042, TASK-044.
+- TASK-047 — Vertical 2 — Perfil, cuestionario y CV en React; depends on TASK-006, TASK-030, TASK-041, TASK-046.
+- TASK-048 — Vertical 3 — Dashboard, recursos y roadmaps en React; depends on TASK-018, TASK-025, TASK-046.
+- TASK-049 — Vertical 4 — Jobs, análisis de CV y candidaturas en React; depends on TASK-020, TASK-041, TASK-046, TASK-054.
+- TASK-050 — Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters; depends on TASK-046.
+- TASK-051 — Vertical 6 — Community, friendships y messages en React; depends on TASK-024, TASK-046.
+- TASK-052 — Vertical 7 — Career Lab / Capstone en React; depends on TASK-022, TASK-023, TASK-046.
+- TASK-053 — Vertical 8 — Admin en React; depends on TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052.
+
+TASK-046 va primero y sola: fija el patrón. Después, las verticales pueden solaparse siempre que no compartan archivos de backend; TASK-053 cierra porque es el último consumidor legacy.
+
+### Parallel Group M4 — Infraestructura Cloud Run
+
+Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
+
+- TASK-054 — Sacar el runner de CV del lifespan con outbox y Cloud Tasks; depends on TASK-013, TASK-037.
+- TASK-055 — Aprovisionar Artifact Registry, WIF y Secret Manager; depends on TASK-002, TASK-036, TASK-039.
+- TASK-056 — Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA; depends on TASK-009, TASK-045, TASK-054, TASK-055.
+- TASK-057 — Configurar dominio, TLS, alertas, budgets y rollback por revisión; depends on TASK-028, TASK-056.
+
+TASK-054 y TASK-055 son independientes entre sí y pueden adelantarse desde M2. TASK-056 y TASK-057 se serializan.
+
+### Parallel Group M5 — Cutover y retiro
+
+Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
+
+- TASK-058 — Ensayar el cutover y observar la ventana de estabilidad; depends on TASK-031, TASK-053, TASK-057.
+- TASK-059 — Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados; depends on TASK-058.
+
+Estrictamente secuencial. TASK-059 no empieza hasta que la ventana de observación de TASK-058 cerró con métricas sanas.
+
 ## DEPENDENCY GRAPH
+
+Generado desde la Summary Table; si difieren, la tabla manda. `PHASE-0` a `PHASE-6` son el plan
+anterior; `PHASE-M0` a `PHASE-M5`, la migración del plan 08. TASK-026 aparece como nodo por tener
+ID estable, pero está SUPERSEDED y nadie debe reclamarla.
 
 ```mermaid
 graph TD
@@ -4297,6 +7111,34 @@ graph TD
     T029["TASK-029"]
     T030["TASK-030"]
     T031["TASK-031"]
+    T032["TASK-032"]
+    T033["TASK-033"]
+    T034["TASK-034"]
+    T035["TASK-035"]
+    T036["TASK-036"]
+    T037["TASK-037"]
+    T038["TASK-038"]
+    T039["TASK-039"]
+    T040["TASK-040"]
+    T041["TASK-041"]
+    T042["TASK-042"]
+    T043["TASK-043"]
+    T044["TASK-044"]
+    T045["TASK-045"]
+    T046["TASK-046"]
+    T047["TASK-047"]
+    T048["TASK-048"]
+    T049["TASK-049"]
+    T050["TASK-050"]
+    T051["TASK-051"]
+    T052["TASK-052"]
+    T053["TASK-053"]
+    T054["TASK-054"]
+    T055["TASK-055"]
+    T056["TASK-056"]
+    T057["TASK-057"]
+    T058["TASK-058"]
+    T059["TASK-059"]
     T001 --> T003
     T001 --> T004
     T001 --> T005
@@ -4402,95 +7244,70 @@ graph TD
     T023 --> T031
     T024 --> T031
     T025 --> T031
-    T026 --> T031
     T027 --> T031
     T028 --> T031
     T029 --> T031
     T030 --> T031
+    T011 --> T032
+    T034 --> T035
+    T033 --> T037
+    T035 --> T037
+    T037 --> T038
+    T037 --> T039
+    T038 --> T039
+    T032 --> T040
+    T037 --> T040
+    T024 --> T041
+    T037 --> T041
+    T010 --> T042
+    T037 --> T042
+    T039 --> T043
+    T040 --> T043
+    T041 --> T043
+    T038 --> T044
+    T042 --> T044
+    T043 --> T044
+    T028 --> T045
+    T037 --> T045
+    T035 --> T046
+    T042 --> T046
+    T044 --> T046
+    T006 --> T047
+    T030 --> T047
+    T041 --> T047
+    T046 --> T047
+    T018 --> T048
+    T025 --> T048
+    T046 --> T048
+    T020 --> T049
+    T041 --> T049
+    T046 --> T049
+    T054 --> T049
+    T046 --> T050
+    T024 --> T051
+    T046 --> T051
+    T022 --> T052
+    T023 --> T052
+    T046 --> T052
+    T047 --> T053
+    T048 --> T053
+    T049 --> T053
+    T050 --> T053
+    T051 --> T053
+    T052 --> T053
+    T013 --> T054
+    T037 --> T054
+    T002 --> T055
+    T036 --> T055
+    T039 --> T055
+    T009 --> T056
+    T045 --> T056
+    T054 --> T056
+    T055 --> T056
+    T028 --> T057
+    T056 --> T057
+    T031 --> T058
+    T053 --> T058
+    T057 --> T058
+    T058 --> T059
 ```
-
-
-## TASK-032 — Extender el mapeo de errores públicos a las rutas restantes
-
-Status: TODO
-Priority: HIGH
-Phase: PHASE-3
-Category: Security / Bug Fix
-
-### Objective
-
-Aplicar el mapeo de errores de `app/core/errors.py` a las rutas que quedaron fuera del Scope de TASK-011 y siguen devolviendo `str(e)` al llamante.
-
-### Problem
-
-Hallazgo de TASK-011: `app/routes/dashboardRoute.py:58,82,100` responde `500` con `detail=f"Error fetching dashboard data: {str(e)}"` y `app/routes/jobRoute.py:131` con `detail=f"Job search failed: {str(e)}"`. Es el mismo defecto que F-09/F-10 describen para las cuatro rutas ya corregidas: una excepción de storage, driver o proveedor lleva DSN, SQL y parámetros al cuerpo público. `dashboardRoute.py:57,81` además registra la causa sin redacción.
-
-### Evidence / Location
-
-- `app/routes/dashboardRoute.py:57,58,81,82,100; app/routes/jobRoute.py:131` (Confidence: HIGH).
-- Alcance de edición conocido: app/routes/dashboardRoute.py, app/routes/jobRoute.py: manejo de errores; tests de errores redactados.
-
-### Desired State
-
-Ninguna ruta compone el cuerpo público a partir del texto de una excepción. Cuerpo con código estable, mensaje fijo y referencia; causa al log redactada; `rollback` de la sesión donde el fallo la deja inválida.
-
-**Bug Fix declarado:** se corrige únicamente el comportamiento defectuoso descrito; los flujos válidos mantienen contrato.
-
-### Proposed Solution
-
-Usar `server_failure()` / `client_failure()` de `app/core/errors.py` con códigos nuevos para dashboard y búsqueda de empleo. No inventar helper nuevo ni cambiar el contrato de los 2xx.
-
-### Scope
-
-IN SCOPE:
-
-- app/routes/dashboardRoute.py, app/routes/jobRoute.py: manejo de errores; tests de errores redactados.
-
-OUT OF SCOPE:
-
-- Cambiar la forma de las respuestas correctas, la agregación del dashboard o el scraper de empleo.
-- Reescribir el helper de errores o su heurística de mensajes.
-
-### Files / Components Likely Affected
-
-- app/routes/dashboardRoute.py, app/routes/jobRoute.py.
-
-### Dependencies
-
-Depends on: TASK-011
-
-### Blocks
-
-Blocks: NONE
-
-### Parallelization
-
-Can run in parallel with: TASK-030
-
-### Implementation Notes
-
-Reutilizar el patrón ya integrado en `app/routes/resourceRoute.py` y `app/routes/adminRoute.py`. `dashboardRoute` recibe `session`: pasarla al helper para el `rollback`.
-
-### Acceptance Criteria
-
-- [ ] Ninguna de las dos rutas compone `detail` con texto de excepción.
-- [ ] Excepción simulada con marcador sensible no aparece en cuerpo ni en log público.
-- [ ] 2xx y 4xx existentes conservan contrato.
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
-
-### Validation
-
-Mismo patrón de prueba que `tests/test_error_redaction.py`: excepción simulada con marcador sensible por ruta, comprobar cuerpo, cabeceras `X-Error-Code`/`X-Error-Id` y log redactado.
-
-### Rollback / Risk Notes
-
-Cambio acotado a manejo de errores; revertir solo esos archivos y repetir la validación de contratos.
-
-### Estimated Impact
-
-Security: HIGH
-Performance: LOW
-Maintainability: MEDIUM
-Cost: LOW
-Risk: LOW
