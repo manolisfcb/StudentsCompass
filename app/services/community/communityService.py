@@ -1,4 +1,4 @@
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
@@ -119,18 +119,20 @@ class CommunityService:
         community = await self.get_community_by_id(community_id)
         if not community:
             raise ValueError("Community not found")
-        membership = CommunityMemberModel(community_id=community_id, user_id=user_id)
-        self.session.add(membership)
         try:
-            # Flush before touching the cache: the unique constraint decides
-            # whether this join happens at all, and the counter must not be
-            # moved for a membership the database is about to refuse.
-            await self.session.flush()
+            # Flush inside a savepoint: the unique constraint decides whether
+            # this join happens at all, and the counter must not be moved for a
+            # membership the database is about to refuse. A refused insert then
+            # rolls back only itself, so a duplicate join leaves everything else
+            # in the transaction — and the caller's loaded objects — untouched.
+            async with self.session.begin_nested():
+                membership = CommunityMemberModel(community_id=community_id, user_id=user_id)
+                self.session.add(membership)
+                await self.session.flush()
         except IntegrityError as exc:
             # Two concurrent joins can both pass the is_member pre-check; the
             # unique constraint guards the data, so surface a clean conflict
-            # instead of a 500 (the whole transaction is rolled back).
-            await self.session.rollback()
+            # instead of a 500.
             raise AlreadyMemberError("Already a member") from exc
 
         await self._bump_member_count_cache(community_id, 1)
@@ -166,10 +168,14 @@ class CommunityService:
         why a drift here is a tidiness problem and no longer a wrong number.
         """
         column = CommunityModel.__table__.c.member_count
+        moved = column + amount
+        # Clamped with CASE, not with a two-argument ``max``: that spelling is
+        # SQLite-only — PostgreSQL reads ``max`` as the aggregate and rejects
+        # the statement, which made every leave fail on the real database.
         await self.session.execute(
             update(CommunityModel)
             .where(CommunityModel.id == community_id)
-            .values(member_count=func.max(column + amount, 0) if amount < 0 else column + amount)
+            .values(member_count=case((moved < 0, 0), else_=moved))
         )
 
     async def member_count_drift(self, community_id: UUID | None = None) -> list[dict]:

@@ -58,7 +58,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-014 | Centralizar transiciones y proyección de candidaturas | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-017, TASK-019, TASK-024 |
 | TASK-015 | Serializar selección de entrevista por candidatura | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-014 | TASK-006, TASK-012, TASK-021 |
 | TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | TODO | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
-| TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | IN PROGRESS | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
+| TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
 | TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
@@ -2517,7 +2517,7 @@ Risk: HIGH
 
 ## TASK-017 — Derivar contador de comunidad desde membresías
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-2
 Category: Business Logic / Bug Fix
@@ -2587,12 +2587,12 @@ Grupo C; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Derivar contador de comunidad desde membresías.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Derivar contador de comunidad desde membresías.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -2603,6 +2603,70 @@ Ejecutar tests de los componentes indicados mediante `.venv/bin/python -m pytest
 ### Rollback / Risk Notes
 
 Volver a la implementación anterior solo si conserva las correcciones de seguridad ya integradas y entiende el schema expandido. Conservar datos/backfills; preferir forward fix. Para cambios DB verificar copia/restore y no usar downgrade destructivo. Si no hay cambio DB, revertir solo archivos de la tarea y repetir validación de contratos.
+
+### Completion Notes
+
+`community_members` es la autoridad. `CommunityModel.member_count` es un
+`column_property` con subconsulta correlacionada: una sola query para cualquier
+número de comunidades, resuelta por la columna líder de `uq_community_member`.
+La columna física conserva su nombre en la base (`member_count`) pero el
+atributo pasó a llamarse `member_count_cache`, de modo que leer el número viejo
+tiene que ser deliberado. No se borró ninguna columna ni tabla.
+
+El caché sigue mantenido, ahora en SQL (`UPDATE ... SET member_count = CASE ...`),
+y se puede auditar y reparar explícitamente con `member_count_drift()` y
+`reconcile_member_counts()`. Ninguna lectura escribe: un GET que reparara el
+caché convertiría cada vista en una escritura y ocultaría la deriva.
+
+Dos defectos aparecieron al ejecutar la validación y se corrigieron dentro del
+Scope de esta tarea:
+
+1. **`max()` de dos argumentos no existe en PostgreSQL.** El clamp a 0 del
+   decremento se escribía `func.max(col - 1, 0)`, válido en SQLite y agregado en
+   PostgreSQL: `leave_community` fallaba con `UndefinedFunctionError` contra la
+   base real. Sustituido por `case((moved < 0, 0), else_=moved)`, portable en
+   ambos motores. Solo el lane PostgreSQL lo detecta; SQLite lo aceptaba.
+2. **Un join duplicado hacía rollback de toda la transacción.** El `IntegrityError`
+   del constraint único se manejaba con `session.rollback()`, que expiraba los
+   objetos ya cargados por el caller. Ahora el flush ocurre dentro de
+   `session.begin_nested()`: el insert rechazado revierte solo su savepoint y el
+   resto de la transacción queda intacto. El contrato no cambia — el caller sigue
+   recibiendo `AlreadyMemberError` y la ruta sigue devolviendo 409.
+
+Validación ejecutada:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q \
+  tests/test_communities.py tests/test_community_member_count.py
+# 13 passed
+
+TEST_DATABASE_URL_PG=postgresql+asyncpg://testuser:***@127.0.0.1:55432/studentscompass_test \
+TEST_REDIS_URL=redis://127.0.0.1:56379/0 \
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q \
+  tests/integration/test_community_member_count_pg.py
+# 5 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q
+# 404 passed, 55 skipped in 45.87s
+```
+
+`tests/integration/test_community_member_count_pg.py` cubre en PostgreSQL real,
+con conexiones separadas, lo que SQLite no puede reproducir: seis altas
+simultáneas, altas y bajas entrecruzadas, el mismo usuario uniéndose dos veces a
+la vez, y el borrado de un usuario que arrastra su membresía por ON DELETE
+CASCADE. En los cuatro casos lo que se sirve al lector es igual a `COUNT(*)`.
+El caso de cascada además fija que el caché queda obsoleto (2 vs 1), que
+`member_count_drift` lo reporta y que `reconcile_member_counts` lo repara y es
+idempotente.
+
+Métrica de N+1: listar 8 comunidades ejecuta **1** statement (`counter.total == 1`),
+medido en el lane PostgreSQL; antes el conteo venía de una columna por fila, así
+que el presupuesto es constante y no crece con el catálogo.
+
+Límites: no se midió latencia con un catálogo de tamaño productivo — el lane usa
+datos sintéticos. No se ejecutó backfill ni reconciliación contra ningún dato
+real; `reconcile_member_counts` queda disponible como operación explícita. El
+retiro de la columna `member_count` es destructivo y pertenece a otra tarea.
 
 ### Estimated Impact
 
