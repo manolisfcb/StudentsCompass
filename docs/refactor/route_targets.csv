@@ -1,0 +1,176 @@
+method,path,destination,target,vertical,note
+GET,/,retire,SPA /,V1-TASK-046,Home publica; la sirve el bundle React tras Nginx.
+GET,/about,retire,SPA /about,V1-TASK-046,
+GET,/admin,retire,SPA /admin,V8-TASK-053,
+GET,/admin/login,retire,SPA /admin/login,V8-TASK-053,
+GET,/api/v1/admin/applications,rest,GET /api/v1/admin/applications,V8-TASK-053,Coleccion: exige limite de servidor y paginacion (TASK-041).
+GET,/api/v1/admin/communities,rest,GET /api/v1/admin/communities,V8-TASK-053,Coleccion: exige limite de servidor y paginacion (TASK-041).
+DELETE,/api/v1/admin/communities/{community_id},rest,DELETE /api/v1/admin/communities/{id},V8-TASK-053,
+GET,/api/v1/admin/companies,rest,GET /api/v1/admin/companies,V8-TASK-053,Coleccion: exige limite de servidor y paginacion (TASK-041).
+DELETE,/api/v1/admin/companies/{company_id},rest,DELETE /api/v1/admin/companies/{id},V8-TASK-053,
+GET,/api/v1/admin/jobs,rest,GET /api/v1/admin/job-postings,V8-TASK-053,La entidad es job posting; jobs colisiona con los jobs de analisis de CV.
+DELETE,/api/v1/admin/jobs/{job_id},rest,DELETE /api/v1/admin/job-postings/{id},V8-TASK-053,
+PATCH,/api/v1/admin/jobs/{job_id}/toggle-active,rest,PATCH /api/v1/admin/job-postings/{id},V8-TASK-053,Mismo criterio que toggle-active de usuarios en 5.2: estado explicito {is_active} en vez de toggle.
+GET,/api/v1/admin/resources,rest,GET /api/v1/admin/resources,V8-TASK-053,Coleccion: exige limite de servidor y paginacion (TASK-041).
+POST,/api/v1/admin/resources,rest,POST /api/v1/admin/resources,V8-TASK-053,
+POST,/api/v1/admin/resources/upload-file,rest,POST /api/v1/admin/resource-files,V8-TASK-053,Crea un recurso de archivo con identidad propia; hoy es una accion anonima.
+DELETE,/api/v1/admin/resources/{resource_id},rest,DELETE /api/v1/admin/resources/{id},V8-TASK-053,
+GET,/api/v1/admin/resources/{resource_id},rest,GET /api/v1/admin/resources/{id},V8-TASK-053,
+PUT,/api/v1/admin/resources/{resource_id},rest,PUT /api/v1/admin/resources/{id},V8-TASK-053,
+PATCH,/api/v1/admin/resources/{resource_id}/toggle-locked,rest,PATCH /api/v1/admin/resources/{id},V8-TASK-053,Se funde con toggle-published en un PATCH con {is_locked}.
+PATCH,/api/v1/admin/resources/{resource_id}/toggle-published,rest,PATCH /api/v1/admin/resources/{id},V8-TASK-053,Se funde con toggle-locked en un PATCH con {is_published}.
+GET,/api/v1/admin/stats,rest,GET /api/v1/admin/stats,V8-TASK-053,Presenter de admin; unica ruta admin con consumidor literal en el JS actual.
+GET,/api/v1/admin/users,rest,GET /api/v1/admin/users,V8-TASK-053,Coleccion: exige limite de servidor y paginacion (TASK-041).
+DELETE,/api/v1/admin/users/{user_id},rest,DELETE /api/v1/admin/users/{id},V8-TASK-053,
+GET,/api/v1/admin/users/{user_id}/resource-progress,rest,GET /api/v1/admin/users/{id}/resource-progress,V8-TASK-053,Proyeccion de progreso; debe salir de la policy unica de TASK-016.
+PATCH,/api/v1/admin/users/{user_id}/toggle-active,rest,PATCH /api/v1/admin/users/{id},V8-TASK-053,Correspondencia explicita en 5.2 del plan 08.
+PATCH,/api/v1/admin/users/{user_id}/toggle-superuser,rest,PATCH /api/v1/admin/users/{id},V8-TASK-053,Se funde con toggle-active en el mismo PATCH con {is_superuser}.
+GET,/api/v1/applications,rest,GET /api/v1/applications,V4-TASK-049,Coleccion: exige limite de servidor y paginacion (TASK-041).
+POST,/api/v1/applications,rest,POST /api/v1/applications,V4-TASK-049,Exige Idempotency-Key (5.1 del plan 08 y TASK-041).
+GET,/api/v1/applications/eligible-resumes,rest,GET /api/v1/resumes?eligible_for=application,V4-TASK-049,No es subrecurso de applications sino la coleccion de CV filtrada; consumida por la pantalla de candidatura.
+DELETE,/api/v1/applications/{application_id},rest,DELETE /api/v1/applications/{id},V4-TASK-049,
+PATCH,/api/v1/applications/{application_id},rest,PATCH /api/v1/applications/{id},V4-TASK-049,Las transiciones las decide el backend (TASK-014); React solo proyecta.
+POST,/api/v1/applications/{application_id}/interview-selection,rest,PUT /api/v1/applications/{id}/selected-interview,V4-TASK-049,Correspondencia explicita en 5.2 del plan 08; seleccion idempotente serializada por TASK-015.
+POST,/api/v1/auth/company/forgot-password,rest,POST /api/v1/auth/company/forgot-password,V5-TASK-050,Generado por fastapi-users; no lo cuenta el recuento de 150 handlers del plan.
+POST,/api/v1/auth/company/login,rest,POST /api/v1/auth/company/session,V5-TASK-050,6.2 del plan 08 pide login/logout consistentes por actor; TASK-042.
+POST,/api/v1/auth/company/logout,rest,DELETE /api/v1/auth/company/session,V5-TASK-050,Par simetrico del anterior; TASK-042.
+POST,/api/v1/auth/company/register,rest,POST /api/v1/companies,V5-TASK-050,Registrar una compania crea el recurso compania; el actor recruiter sale de ahi.
+POST,/api/v1/auth/company/request-verify-token,rest,POST /api/v1/auth/company/verification-requests,V5-TASK-050,Generado por fastapi-users.
+POST,/api/v1/auth/company/reset-password,rest,POST /api/v1/auth/company/password-resets,V5-TASK-050,Generado por fastapi-users.
+POST,/api/v1/auth/company/verify,rest,POST /api/v1/auth/company/verifications,V5-TASK-050,Generado por fastapi-users.
+POST,/api/v1/auth/forgot-password,rest,POST /api/v1/auth/forgot-password,V1-TASK-046,Generado por fastapi-users.
+GET,/api/v1/auth/register,retire,SPA /register,V1-TASK-046,DEFECTO: es una vista Jinja montada bajo /api/v1 y comparte path con el POST de la API. Retirarla elimina la colision.
+POST,/api/v1/auth/register,rest,POST /api/v1/users,V1-TASK-046,Registrar crea el recurso usuario; generado por fastapi-users.
+POST,/api/v1/auth/request-verify-token,rest,POST /api/v1/auth/verification-requests,V1-TASK-046,Generado por fastapi-users.
+POST,/api/v1/auth/reset-password,rest,POST /api/v1/auth/password-resets,V1-TASK-046,Generado por fastapi-users.
+POST,/api/v1/auth/verify,rest,POST /api/v1/auth/verifications,V1-TASK-046,Generado por fastapi-users.
+GET,/api/v1/capstone/analytics/roles,rest,GET /api/v1/capstone/roles,V7-TASK-052,
+POST,/api/v1/capstone/analytics/seed,internal,POST /api/v1/internal/capstone/seed,V7-TASK-052,Operacion de datos semilla; no la consume ninguna pantalla. Debe quedar tras auth interna y fuera del contrato publico.
+GET,/api/v1/capstone/analytics/status,rest,GET /api/v1/capstone/status,V7-TASK-052,
+GET,/api/v1/capstone/catalog/quality,rest,GET /api/v1/capstone/catalog-quality,V7-TASK-052,
+GET,/api/v1/capstone/gap-analysis,rest,GET /api/v1/capstone/gap-analysis,V7-TASK-052,
+POST,/api/v1/capstone/job-postings/skills/sync-open,internal,POST /api/v1/internal/capstone/skill-syncs,V7-TASK-052,Barrido masivo sobre ofertas abiertas; 5.2 exige que devuelva un run con identidad y estado. Lo hace batch TASK-019.
+POST,/api/v1/capstone/job-postings/{job_posting_id}/skills/sync,rest,POST /api/v1/capstone/job-postings/{id}/skill-syncs,V7-TASK-052,Crea una ejecucion auditable; devuelve run con identidad y estado.
+POST,/api/v1/capstone/learning-route/evaluate-baselines,rest,POST /api/v1/capstone/learning-route/baseline-runs,V7-TASK-052,Crea una ejecucion auditable.
+POST,/api/v1/capstone/learning-route/optimize,rest,POST /api/v1/capstone/learning-route/runs,V7-TASK-052,Crea el run que ya lista GET runs; CP-SAT fuera del loop por TASK-022.
+GET,/api/v1/capstone/learning-route/runs,rest,GET /api/v1/capstone/learning-route/runs,V7-TASK-052,Coleccion: exige limite de servidor y paginacion (TASK-041).
+GET,/api/v1/capstone/resumes/{resume_id}/skills,rest,GET /api/v1/resumes/{id}/skills,V7-TASK-052,El CV es el mismo recurso que /resumes; capstone no es un espacio de nombres distinto.
+POST,/api/v1/capstone/resumes/{resume_id}/skills/extract,rest,POST /api/v1/resumes/{id}/skill-extractions,V7-TASK-052,Crea una ejecucion auditable; consume cuota de IA.
+POST,/api/v1/capstone/resumes/{resume_id}/skills/manual,rest,POST /api/v1/resumes/{id}/skills,V7-TASK-052,Alta manual de una skill: es la creacion normal de la subcoleccion.
+POST,/api/v1/capstone/resumes/{resume_id}/skills/sync,rest,POST /api/v1/resumes/{id}/skill-syncs,V7-TASK-052,Crea una ejecucion auditable.
+DELETE,/api/v1/capstone/resumes/{resume_id}/skills/{resume_skill_id},rest,DELETE /api/v1/resumes/{id}/skills/{skill_id},V7-TASK-052,
+PATCH,/api/v1/capstone/resumes/{resume_id}/skills/{resume_skill_id},rest,PATCH /api/v1/resumes/{id}/skills/{skill_id},V7-TASK-052,
+GET,/api/v1/communities,rest,GET /api/v1/communities,V6-TASK-051,Coleccion: exige limite de servidor y paginacion (TASK-041). El contador sale de membresias (TASK-017).
+POST,/api/v1/communities,rest,POST /api/v1/communities,V6-TASK-051,
+GET,/api/v1/communities/tags,rest,GET /api/v1/community-tags,V6-TASK-051,No es subrecurso de una comunidad concreta; hoy compite con /communities/{id}.
+GET,/api/v1/communities/{community_id},rest,GET /api/v1/communities/{id},V6-TASK-051,
+POST,/api/v1/communities/{community_id}/join,rest,PUT /api/v1/communities/{id}/members/me,V6-TASK-051,Correspondencia explicita en 5.2 del plan 08; relacion idempotente.
+DELETE,/api/v1/communities/{community_id}/leave,rest,DELETE /api/v1/communities/{id}/members/me,V6-TASK-051,Correspondencia explicita en 5.2 del plan 08.
+GET,/api/v1/communities/{community_id}/membership,rest,GET /api/v1/communities/{id}/members/me,V6-TASK-051,Mismo recurso que join/leave leido; hoy tiene nombre propio.
+GET,/api/v1/communities/{community_id}/posts,rest,GET /api/v1/communities/{id}/posts,V6-TASK-051,Se funde con la variante enriched: una sola coleccion con expansion declarada.
+POST,/api/v1/communities/{community_id}/posts,rest,POST /api/v1/communities/{id}/posts,V6-TASK-051,Borrado restringido al propietario por TASK-003.
+GET,/api/v1/communities/{community_id}/posts/enriched,rest,GET /api/v1/communities/{id}/posts?expand=author,V6-TASK-051,DUPLICADO: misma coleccion con otra forma de respuesta. Dos endpoints para un recurso es la fuente de verdad partida que el plan prohibe.
+GET,/api/v1/community-posts/{post_id}/comments,rest,GET /api/v1/community-posts/{id}/comments,V6-TASK-051,Se funde con la variante enriched.
+POST,/api/v1/community-posts/{post_id}/comments,rest,POST /api/v1/community-posts/{id}/comments,V6-TASK-051,
+GET,/api/v1/community-posts/{post_id}/comments/enriched,rest,GET /api/v1/community-posts/{id}/comments?expand=author,V6-TASK-051,DUPLICADO: misma coleccion con otra forma de respuesta.
+DELETE,/api/v1/community-posts/{post_id}/likes,rest,DELETE /api/v1/community-posts/{id}/likes/me,V6-TASK-051,Relacion del actor con el post; idempotente.
+POST,/api/v1/community-posts/{post_id}/likes,rest,PUT /api/v1/community-posts/{id}/likes/me,V6-TASK-051,Mismo criterio que join de comunidades en 5.2: relacion idempotente.
+GET,/api/v1/companies/me,rest,GET /api/v1/companies/me,V5-TASK-050,
+PATCH,/api/v1/companies/me,rest,PATCH /api/v1/companies/me,V5-TASK-050,
+GET,/api/v1/companies/me/applicants,rest,GET /api/v1/companies/me/applications,V5-TASK-050,La entidad es la candidatura; applicants nombra a la persona y no al recurso listado.
+PATCH,/api/v1/companies/me/applicants/{application_id},rest,PATCH /api/v1/companies/me/applications/{id},V5-TASK-050,Transiciones centralizadas en el backend (TASK-014).
+POST,/api/v1/companies/me/applicants/{application_id}/interview-availabilities,rest,PUT /api/v1/companies/me/applications/{id}/interview-availabilities,V5-TASK-050,Reemplaza el conjunto completo de disponibilidades; idempotente.
+GET,/api/v1/companies/me/applications/{application_id}/resume/download,rest,GET /api/v1/companies/me/applications/{id}/resume?disposition=attachment,V5-TASK-050,download y preview son el mismo recurso con distinto Content-Disposition.
+GET,/api/v1/companies/me/applications/{application_id}/resume/preview,rest,GET /api/v1/companies/me/applications/{id}/resume,V5-TASK-050,Autorizacion por entidad visible (TASK-008).
+GET,/api/v1/companies/me/job-postings,rest,GET /api/v1/companies/me/job-postings,V5-TASK-050,Coleccion: exige limite de servidor y paginacion (TASK-041).
+POST,/api/v1/companies/me/job-postings,rest,POST /api/v1/companies/me/job-postings,V5-TASK-050,Exige Idempotency-Key (5.1 del plan 08).
+DELETE,/api/v1/companies/me/job-postings/{job_posting_id},rest,DELETE /api/v1/companies/me/job-postings/{id},V5-TASK-050,
+PATCH,/api/v1/companies/me/job-postings/{job_posting_id},rest,PATCH /api/v1/companies/me/job-postings/{id},V5-TASK-050,
+GET,/api/v1/companies/me/recruiters,rest,GET /api/v1/companies/me/recruiters,V5-TASK-050,
+POST,/api/v1/companies/me/recruiters,rest,POST /api/v1/companies/me/recruiters,V5-TASK-050,
+GET,/api/v1/companies/me/recruiters/current,rest,GET /api/v1/companies/me/recruiters/me,V5-TASK-050,current y me nombran lo mismo; /me es la convencion ya usada en el resto de la API.
+DELETE,/api/v1/companies/me/recruiters/{recruiter_id},rest,DELETE /api/v1/companies/me/recruiters/{id},V5-TASK-050,
+PATCH,/api/v1/companies/me/recruiters/{recruiter_id},rest,PATCH /api/v1/companies/me/recruiters/{id},V5-TASK-050,
+GET,/api/v1/company_dashboard,rest,GET /api/v1/companies/me/dashboard,V5-TASK-050,Correspondencia explicita en 5.2 del plan 08.
+GET,/api/v1/conversations,rest,GET /api/v1/conversations,V6-TASK-051,SIN CONSUMIDOR hoy: ninguna plantilla ni JS la llama. La estrena la pantalla React de mensajes (TASK-051) sobre el cursor de TASK-024.
+POST,/api/v1/conversations/direct,rest,POST /api/v1/conversations,V6-TASK-051,SIN CONSUMIDOR hoy. direct es el tipo de conversacion y va en el cuerpo, no en el path.
+GET,/api/v1/conversations/{conversation_id}/messages,rest,GET /api/v1/conversations/{id}/messages,V6-TASK-051,SIN CONSUMIDOR hoy. Paginacion por cursor obligatoria (5.1 del plan 08 y TASK-024).
+POST,/api/v1/conversations/{conversation_id}/messages,rest,POST /api/v1/conversations/{id}/messages,V6-TASK-051,SIN CONSUMIDOR hoy.
+POST,/api/v1/conversations/{conversation_id}/read,rest,PUT /api/v1/conversations/{id}/read-receipts/me,V6-TASK-051,SIN CONSUMIDOR hoy. Marcar leido es una relacion idempotente del actor.
+GET,/api/v1/dashboard/stats,rest,GET /api/v1/dashboard/student,V3-TASK-048,SIN CONSUMIDOR en el frontend: dashboard.js llama students_dashboard. Solo lo cubren tests. Se funde con students_dashboard en el presenter unico de 5.2.
+DELETE,/api/v1/delete_post/{post_id},retire,DELETE /api/v1/community-posts/{id},V6-TASK-051,SIN CONSUMIDOR: API de posts legacy anterior a las comunidades. Verificar cero trafico antes de retirar (TASK-059).
+GET,/api/v1/friends,rest,GET /api/v1/friends,V6-TASK-051,Coleccion: exige limite de servidor y paginacion (TASK-041).
+POST,/api/v1/friends/requests,rest,POST /api/v1/friend-requests,V6-TASK-051,La solicitud es un recurso propio; 5.2 ya usa /friend-requests para el accept.
+GET,/api/v1/friends/requests/incoming,rest,GET /api/v1/friend-requests?direction=incoming,V6-TASK-051,Direccion como filtro y no como path: es la misma coleccion.
+GET,/api/v1/friends/requests/outgoing,rest,GET /api/v1/friend-requests?direction=outgoing,V6-TASK-051,Direccion como filtro y no como path: es la misma coleccion.
+POST,/api/v1/friends/requests/{request_id}/accept,rest,PATCH /api/v1/friend-requests/{id},V6-TASK-051,Correspondencia explicita en 5.2 del plan 08: {status: accepted}.
+POST,/api/v1/friends/requests/{request_id}/cancel,rest,PATCH /api/v1/friend-requests/{id},V6-TASK-051,Mismo PATCH con {status: cancelled}.
+POST,/api/v1/friends/requests/{request_id}/reject,rest,PATCH /api/v1/friend-requests/{id},V6-TASK-051,Mismo PATCH con {status: rejected}.
+GET,/api/v1/friends/status,rest,GET /api/v1/friends/{id}/status,V6-TASK-051,Hoy recibe el otro usuario por query; la relacion tiene identidad y va en el path.
+DELETE,/api/v1/friends/{friend_id},rest,DELETE /api/v1/friends/{id},V6-TASK-051,
+GET,/api/v1/jobs/board,rest,GET /api/v1/job-postings,V4-TASK-049,board es la pantalla y no el recurso. Coleccion con limite de servidor (TASK-041).
+GET,/api/v1/jobs/keywords,rest,GET /api/v1/cv-analyses,V4-TASK-049,Historial de analisis del actor; es la coleccion de 5.2 leida.
+POST,/api/v1/jobs/keywords/analyze,rest,POST /api/v1/cv-analyses,V4-TASK-049,Correspondencia explicita en 5.2 del plan 08; 202 e Idempotency-Key. Durable por TASK-054.
+GET,/api/v1/jobs/keywords/{job_id},rest,GET /api/v1/cv-analyses/{id},V4-TASK-049,Correspondencia explicita en 5.2 del plan 08.
+POST,/api/v1/jobs/search,rest,POST /api/v1/job-searches,V4-TASK-049,Correspondencia explicita en 5.2 del plan 08. Scraper fuera del event loop por TASK-020.
+GET,/api/v1/me/roadmaps,rest,GET /api/v1/roadmaps?saved_by=me,V3-TASK-048,Es la misma coleccion filtrada por la relacion de guardado; no un espacio /me aparte.
+GET,/api/v1/posts,retire,GET /api/v1/communities/{id}/posts,V6-TASK-051,SIN CONSUMIDOR: API de posts legacy anterior a las comunidades. Verificar cero trafico antes de retirar (TASK-059).
+POST,/api/v1/posts,retire,POST /api/v1/communities/{id}/posts,V6-TASK-051,SIN CONSUMIDOR: API de posts legacy. Verificar cero trafico antes de retirar (TASK-059).
+GET,/api/v1/posts/{post_id},retire,GET /api/v1/community-posts/{id},V6-TASK-051,SIN CONSUMIDOR: API de posts legacy. Verificar cero trafico antes de retirar (TASK-059).
+GET,/api/v1/profile,rest,GET /api/v1/users/me,V2-TASK-047,Correspondencia explicita en 5.2 del plan 08. Colisiona con el GET /users/me de fastapi-users: la vertical debe dejar uno solo.
+PATCH,/api/v1/profile,rest,PATCH /api/v1/users/me,V2-TASK-047,Correspondencia explicita en 5.2 del plan 08. Misma colision que el GET.
+GET,/api/v1/profile/cv,rest,GET /api/v1/resumes,V2-TASK-047,Correspondencia explicita en 5.2 del plan 08.
+GET,/api/v1/profile/cv/course-audit-attempts,rest,GET /api/v1/resume-course-audits,V2-TASK-047,Correspondencia explicita en 5.2 del plan 08; historial paginado.
+POST,/api/v1/profile/cv/course-audit-upload,rest,POST /api/v1/resume-course-audits,V2-TASK-047,Correspondencia explicita en 5.2 del plan 08; crea auditoria/job.
+POST,/api/v1/profile/cv/upload,rest,POST /api/v1/resumes,V2-TASK-047,Correspondencia explicita en 5.2 del plan 08; multipart y 201. Exige Idempotency-Key: dispara IA.
+DELETE,/api/v1/profile/cv/{resume_id},rest,DELETE /api/v1/resumes/{id},V2-TASK-047,Correspondencia explicita en 5.2 del plan 08; ownership obligatorio.
+GET,/api/v1/profile/cv/{resume_id}/similar,rest,GET /api/v1/resumes/{id}/similar-job-postings,V2-TASK-047,similar no dice similar a que; embeddings sin regenerar por TASK-021.
+POST,/api/v1/projects/{project_id}/submit,rest,POST /api/v1/projects/{id}/submissions,V3-TASK-048,Crea una entrega con identidad en vez de un efecto anonimo.
+GET,/api/v1/questionnaire,rest,GET /api/v1/questionnaire,V2-TASK-047,Debe declarar la version del cuestionario que sirve (TASK-030).
+POST,/api/v1/questionnaire,rest,POST /api/v1/questionnaire/responses,V2-TASK-047,Enviar respuestas crea el recurso respuesta; respeta la version historica (TASK-030).
+GET,/api/v1/questionnaire/profile,rest,GET /api/v1/questionnaire/profile,V2-TASK-047,Proyeccion derivada de las respuestas.
+GET,/api/v1/resources,rest,GET /api/v1/resources,V3-TASK-048,Coleccion: exige limite de servidor y paginacion (TASK-041).
+GET,/api/v1/resources/file,rest,GET /api/v1/resources/{id}/file,V3-TASK-048,Correspondencia explicita en 5.2 del plan 08: autorizacion por entidad y no por key (TASK-008).
+PATCH,/api/v1/resources/lessons/{lesson_id}/progress,rest,PUT /api/v1/lessons/{id}/progress/me,V3-TASK-048,Progreso del actor sobre la leccion: relacion idempotente. Consultas agrupadas por TASK-018.
+GET,/api/v1/resources/{resource_id},rest,GET /api/v1/resources/{id},V3-TASK-048,
+GET,/api/v1/resources/{resource_id}/outline,rest,GET /api/v1/resources/{id}/outline,V3-TASK-048,
+GET,/api/v1/resources/{resource_id}/progress,rest,GET /api/v1/resources/{id}/progress/me,V3-TASK-048,Es el progreso del actor y no del recurso; hacerlo explicito evita leerlo como global.
+GET,/api/v1/roadmaps,rest,GET /api/v1/roadmaps,V3-TASK-048,Coleccion: exige limite de servidor y paginacion (TASK-041).
+GET,/api/v1/roadmaps/{slug},rest,GET /api/v1/roadmaps/{slug},V3-TASK-048,
+DELETE,/api/v1/roadmaps/{slug}/save,rest,DELETE /api/v1/roadmaps/{slug}/saves/me,V3-TASK-048,Correspondencia explicita en 5.2 del plan 08.
+POST,/api/v1/roadmaps/{slug}/save,rest,PUT /api/v1/roadmaps/{slug}/saves/me,V3-TASK-048,Correspondencia explicita en 5.2 del plan 08; relacion idempotente.
+GET,/api/v1/students_dashboard,rest,GET /api/v1/dashboard/student,V3-TASK-048,Correspondencia explicita en 5.2 del plan 08. Absorbe dashboard/stats: un solo presenter calculado en DB (TASK-025).
+PATCH,/api/v1/tasks/{task_id}/progress,rest,PUT /api/v1/tasks/{id}/progress/me,V3-TASK-048,Progreso del actor sobre la tarea: relacion idempotente.
+POST,/api/v1/upload_post,retire,POST /api/v1/communities/{id}/posts,V6-TASK-051,SIN CONSUMIDOR: API de posts legacy. Verificar cero trafico antes de retirar (TASK-059).
+GET,/api/v1/users/me,rest,GET /api/v1/users/me,V1-TASK-046,Generado por fastapi-users. Colisiona con GET /api/v1/profile: TASK-047 debe dejar un unico contrato.
+PATCH,/api/v1/users/me,rest,PATCH /api/v1/users/me,V1-TASK-046,Generado por fastapi-users. Misma colision que el GET.
+DELETE,/api/v1/users/{id},rest,DELETE /api/v1/admin/users/{id},V8-TASK-053,Generado por fastapi-users y exige superuser: pertenece al contrato de admin y duplica DELETE /admin/users/{user_id}.
+GET,/api/v1/users/{id},rest,GET /api/v1/admin/users/{id},V8-TASK-053,Generado por fastapi-users y exige superuser: pertenece al contrato de admin.
+PATCH,/api/v1/users/{id},rest,PATCH /api/v1/admin/users/{id},V8-TASK-053,Generado por fastapi-users y exige superuser: converge con el PATCH de admin que absorbe los dos toggles.
+POST,/auth/jwt/login,rest,POST /api/v1/auth/session,V1-TASK-046,6.2 del plan 08; TASK-042. Ademas sale del prefijo /api/v1: hoy es la unica ruta de API fuera de el.
+POST,/auth/jwt/logout,rest,DELETE /api/v1/auth/session,V1-TASK-046,Par simetrico del anterior; TASK-042.
+GET,/career-lab,retire,SPA /career-lab,V7-TASK-052,
+GET,/community,retire,SPA /community,V6-TASK-051,
+GET,/community/{community_id},retire,SPA /community/:communityId,V6-TASK-051,
+GET,/company-candidates,retire,SPA /company/candidates,V5-TASK-050,
+GET,/company-dashboard,retire,SPA /company/dashboard,V5-TASK-050,
+GET,/company-team,retire,SPA /company/team,V5-TASK-050,
+GET,/dashboard,retire,SPA /dashboard,V3-TASK-048,
+GET,/docs,platform,GET /docs,,Generado por FastAPI. Detras del proxy queda accesible; decidir su exposicion publica es parte de TASK-036.
+GET,/docs/oauth2-redirect,platform,GET /docs/oauth2-redirect,,Generado por FastAPI.
+GET,/favicon.ico,retire,frontend Nginx,V1-TASK-046,Estatico: pasa al servicio frontend que sirve el bundle.
+GET,/home,retire,SPA /,V1-TASK-046,SIN CONSUMIDOR y duplica la home de /. Verificar cero trafico antes de retirar (TASK-059).
+GET,/jobs,retire,SPA /jobs,V4-TASK-049,
+GET,/login,retire,SPA /login,V1-TASK-046,
+GET,/openapi.json,platform,GET /openapi.json,,Generado por FastAPI. Es la fuente de verdad del contrato y lo exporta CI (TASK-043).
+GET,/questionnaire,retire,SPA /questionnaire,V2-TASK-047,
+GET,/redoc,platform,GET /redoc,,Generado por FastAPI.
+GET,/register,retire,SPA /register,V1-TASK-046,
+GET,/resources,retire,SPA /resources,V3-TASK-048,
+GET,/resources/{resource_id},retire,SPA /resources/:resourceId,V3-TASK-048,
+GET,/roadmap,retire,SPA /roadmaps,V3-TASK-048,Redirect legacy al listado.
+GET,/roadmaps,retire,SPA /roadmaps,V3-TASK-048,
+GET,/roadmaps/{slug},retire,SPA /roadmaps/:slug,V3-TASK-048,
+GET,/robots.txt,retire,frontend Nginx,V1-TASK-046,Estatico: pasa al servicio frontend.
+GET,/sitemap.xml,retire,frontend Nginx,V1-TASK-046,ACOPLAMIENTO: _build_sitemap_xml deriva lastmod del mtime de app/templates/*.html. TASK-059 borra esas plantillas y lastmod desapareceria en silencio. Mover el sitemap al frontend antes de retirar Jinja.
+GET,/user-profile,retire,SPA /profile,V2-TASK-047,

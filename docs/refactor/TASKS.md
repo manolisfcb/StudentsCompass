@@ -105,7 +105,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
 | TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
-| TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-036 |
+| TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | TODO | TASK-034 | TASK-036 |
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | TODO | NONE | TASK-033, TASK-034, TASK-035 |
 | TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | TODO | TASK-033, TASK-035 | TASK-036 |
@@ -4505,7 +4505,7 @@ Risk: LOW
 
 ## TASK-034 — Inventariar rutas y construir la matriz legacy → REST
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M0
 Category: Documentation / API Contract
@@ -4574,12 +4574,12 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] El inventario se genera desde el código, no a mano, y es reejecutable.
-- [ ] Cada handler tiene actor requerido, consumidor conocido y destino declarado.
-- [ ] Ningún handler queda sin clasificar; los sin consumidor identificable se listan como tales.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] El inventario se genera desde el código, no a mano, y es reejecutable.
+- [x] Cada handler tiene actor requerido, consumidor conocido y destino declarado.
+- [x] Ningún handler queda sin clasificar; los sin consumidor identificable se listan como tales.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4588,6 +4588,114 @@ Reejecutar el script y comprobar que el artefacto no cambia. Verificar por muest
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+Ningún archivo de `app/` cambia. Entrega `scripts/route_inventory.py`,
+`docs/refactor/route_inventory.{json,csv}`, `docs/refactor/route_targets.csv` y
+el informe [09_ROUTE_MATRIX.md](09_ROUTE_MATRIX.md).
+
+**Lo derivable y lo decidible, separados.** El inventario —método, ruta, actor,
+dependencias de auth, `response_model`, módulo, consumidor— se lee de la app en
+ejecución. El destino REST no es derivable del código: es diseño, y vive en
+`route_targets.csv`, escrito y revisado a mano. El script solo los cruza.
+Mezclarlos habría hecho imposible distinguir un hecho de una intención al revisar
+el diff.
+
+**El actor se resuelve por identidad de objeto, no por nombre.** El primer
+intento clasificó 150 de 175 handlers como `UNKNOWN`: las dependencias que crea
+`fastapi_users.current_user(...)` son closures llamados todos
+`current_user_dependency`. El script recorre el árbol `route.dependant` que
+FastAPI resuelve —dependencias heredadas del router y anidadas incluidas— y
+compara contra los objetos declarados en `userService`, `adminService` y
+`companyService`. Las siete rutas generadas dentro de fastapi-users
+(`/auth/jwt/logout`, `/api/v1/auth/company/logout` y las cinco de
+`/api/v1/users`) no tienen objeto alcanzable: se declaran una a una con el actor
+leído de `fastapi_users/router/users.py` del paquete instalado, donde `/me` usa
+`current_user(active=True)` y `/{id}` añade `superuser=True` —el mismo
+`is_superuser` que exige `current_admin_user`. Una dependencia `current_*` o
+`require_*` no reconocida hace fallar el script, en vez de contarse como pública.
+
+**El recuento cuadra con §2 del plan.** 127 handlers de `app/routes` + 23 vistas
+= **150 exactos**, que es lo que cuenta el plan. Los otros 25 que la app registra
+de verdad —18 de fastapi-users, 4 de FastAPI, 3 de `app/app.py`— el plan no los
+contaba y también hay que decidirlos: un endpoint generado por una librería se
+sirve igual que uno propio.
+
+**Cobertura completa, comprobada y no afirmada.** El script falla si un handler
+no tiene decisión o si una decisión apunta a un handler inexistente. 175
+handlers, 175 decisiones: 138 `rest`, 31 `retire`, 4 `platform`, 2 `internal`. De
+los 138 REST, **108 cambian de contrato**; §5.2 tabulaba 19 de esos 108.
+
+**Atribución de consumidores.** 71 exactas, 86 por prefijo, 18 sin consumidor. El
+primer matcher daba 18 falsos «sin consumidor» porque solo buscaba la ruta
+entera: `admin.js` construye sus 22 URLs desde `const API = '/api/v1/admin'` y
+ninguna aparece literal. Ahora se prueban fragmentos del más específico al más
+genérico, con suelo en `/api/v1/<recurso>`, y el artefacto guarda cuál coincidió
+(`consumer_match_fragment`) para que cada atribución sea comprobable a mano.
+
+Siete hallazgos que el plan no contemplaba, detallados en el informe:
+
+1. `GET /api/v1/auth/register` es una **vista Jinja bajo `/api/v1`** que comparte
+   ruta con el `POST` de la API. Cualquier regla de proxy o CSP que trate
+   `/api/v1/*` como JSON está equivocada para esa ruta.
+2. **Dos contratos para el perfil de la sesión**: `/api/v1/profile` y
+   `/api/v1/users/me`. §5.2 manda el primero justo donde ya está el segundo.
+   Igual en admin: `/api/v1/users/{id}` exige superuser y duplica
+   `/api/v1/admin/users/{user_id}`.
+3. **Colecciones duplicadas por su forma de respuesta** (`posts` vs
+   `posts/enriched`, `comments` vs `comments/enriched`).
+4. **Cinco handlers de posts legacy sin ningún consumidor**, que siguen
+   sirviéndose y escribiendo.
+5. `GET /api/v1/dashboard/stats` **no lo llama el frontend** —`dashboard.js:14`
+   pide `students_dashboard`—; solo lo ejercitan los tests.
+6. **El sitemap depende de las plantillas que TASK-059 borra**:
+   `_build_sitemap_xml` saca `lastmod` del mtime de `app/templates/*.html` y
+   devolvería `None` sin error y sin test que lo note.
+7. `POST /auth/jwt/login` y `/auth/jwt/logout` **quedan fuera de `/api/v1`**, que
+   es lo único que el proxy Nginx de §1 enruta junto a `/healthz` y `/readyz`.
+
+Validación ejecutada:
+
+```
+.venv/bin/python scripts/route_inventory.py
+# handlers: 175
+# por destino: internal=2, platform=4, rest=138, retire=31
+# por tipo:  api=148, asset=4, view=23
+# por actor: admin=25, public=25, recruiter=8, recruiter:job_manager=6,
+#            recruiter:optional=3, recruiter:owner=4, student=90, student:optional=14
+
+# reejecución: hash idéntico de route_inventory.json y route_inventory.csv
+
+.venv/bin/python -m pytest -p no:cacheprovider
+# 429 passed, 61 skipped
+```
+
+Muestreo contra el código de cuatro actores declarados, los cuatro correctos:
+`PATCH /api/v1/companies/me/applicants/{id}` → `current_company_job_manager_recruiter`
+(`companyRoute.py:376`); `GET /api/v1/resources/file` → `current_active_user`
+(`resourceRoute.py:44`); `DELETE /api/v1/admin/users/{id}` → `current_admin_user`
+(`adminRoute.py:206`); `POST /api/v1/auth/company/register` → sin dependencia de
+identidad, público (`companyRoute.py:206`).
+
+**Hallazgo lateral, no corregido aquí.** `.gitignore:25-26` ignora `scripts/` y
+`scripts/*` entero, aunque el directorio ya contiene seis scripts versionados
+(`create_superuser.py`, `migrate_sqlite_to_postgres.py`, los tres `seed_*` y
+`test_embedding.py`) y tres que no lo están
+(`evaluate_resume_skill_extraction.py`, `seed_capstone_analytics.py`,
+`sync_capstone_job_skills.py`). `route_inventory.py` se añadió con `git add -f`,
+igual que viven los otros seis. Arreglar la regla es un cambio transversal que
+destaparía esos tres archivos y no pertenece a esta ficha: queda como finding
+para TASK-029, que consolida configuración.
+
+Límites: la atribución de consumidores cubre `app/templates` y `app/static`;
+`none` significa «ningún consumidor en este repositorio» y no prueba ausencia de
+clientes externos, por lo que los retiros siguen exigiendo comprobar tráfico real
+en TASK-059. Los contratos objetivo son propuestas de esta tarea salvo las 19 que
+§5.2 ya fijaba, marcadas como tales en la columna `note`. No se añadió un test que
+falle si el artefacto queda desactualizado: la verificación es manual, como pide
+la sección Validation, y el check automatizado del contrato pertenece a TASK-043,
+que fija OpenAPI en CI. No se renombró ni se tocó ningún handler.
 
 ### Estimated Impact
 

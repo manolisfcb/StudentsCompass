@@ -171,6 +171,17 @@ seguir como subrecursos/comandos explícitos cuando crean una ejecución auditab
 deben devolver un recurso `run` con identidad, estado y versión, no un efecto
 anónimo.
 
+**La tabla de arriba es un extracto.** TASK-034 la extendió a cobertura completa:
+la correspondencia de los 175 handlers registrados en la app —los 150 propios que
+cuenta §2 más los 25 que generan fastapi-users y FastAPI— está en
+[09_ROUTE_MATRIX.md](09_ROUTE_MATRIX.md) y en `route_targets.csv`, con destino,
+contrato objetivo, actor exigido, consumidor conocido y vertical para cada uno.
+De los 138 que sobreviven como REST, 108 cambian de contrato; las 19 filas de
+esta tabla son parte de esos 108. Ese informe además registra siete hallazgos que
+este plan no contemplaba, incluidos dos contratos duplicados para el perfil de la
+sesión, cinco handlers de posts sin consumidor y un acoplamiento del sitemap con
+las plantillas Jinja que la Fase 5 borra.
+
 ### 5.3 Compatibilidad y retiro
 
 Para cada endpoint:

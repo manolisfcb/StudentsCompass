@@ -1,0 +1,5423 @@
+{
+  "generated_by": "scripts/route_inventory.py",
+  "task": "TASK-034",
+  "handler_count": 175,
+  "handlers": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/",
+      "name": "root",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/about.js",
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js",
+        "app/static/js/base.js",
+        "app/static/js/career_lab.js",
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js",
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js",
+        "app/static/js/company-team.js",
+        "app/static/js/dashboard.js",
+        "app/static/js/home.js",
+        "app/static/js/jobs.js",
+        "app/static/js/login.js",
+        "app/static/js/questionnaire.js",
+        "app/static/js/register.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/roadmap_detail.js",
+        "app/static/js/roadmaps_list.js",
+        "app/static/js/safeDom.js",
+        "app/static/js/userProfile.js",
+        "app/templates/about.html",
+        "app/templates/admin.html",
+        "app/templates/admin_login.html",
+        "app/templates/base.html",
+        "app/templates/career_lab.html",
+        "app/templates/community.html",
+        "app/templates/community_feed.html",
+        "app/templates/company-candidates.html",
+        "app/templates/company-dashboard.html",
+        "app/templates/company-team.html",
+        "app/templates/dashboard.html",
+        "app/templates/home.html",
+        "app/templates/includes/company_header.html",
+        "app/templates/includes/footer.html",
+        "app/templates/includes/header.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/jobs.html",
+        "app/templates/login.html",
+        "app/templates/questionnaire.html",
+        "app/templates/register.html",
+        "app/templates/resource_detail.html",
+        "app/templates/resources.html",
+        "app/templates/roadmap.html",
+        "app/templates/roadmap_detail.html",
+        "app/templates/roadmaps_list.html",
+        "app/templates/userProfile.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /",
+          "vertical": "V1-TASK-046",
+          "note": "Home publica; la sirve el bundle React tras Nginx."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/about",
+      "name": "about",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/templates/about.html",
+        "app/templates/home.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/about",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /about",
+          "vertical": "V1-TASK-046",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/admin",
+      "name": "admin_panel_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/admin",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /admin",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/admin/login",
+      "name": "admin_login_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/admin",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /admin/login",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/applications",
+      "name": "list_applications",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/applications",
+          "vertical": "V8-TASK-053",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/communities",
+      "name": "list_communities",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/communities",
+          "vertical": "V8-TASK-053",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/admin/communities/{community_id}",
+      "name": "delete_community",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/admin/communities/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/companies",
+      "name": "list_companies",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/companies",
+          "vertical": "V8-TASK-053",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/admin/companies/{company_id}",
+      "name": "delete_company",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/admin/companies/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/jobs",
+      "name": "list_jobs",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/job-postings",
+          "vertical": "V8-TASK-053",
+          "note": "La entidad es job posting; jobs colisiona con los jobs de analisis de CV."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/admin/jobs/{job_id}",
+      "name": "delete_job",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/admin/job-postings/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/admin/jobs/{job_id}/toggle-active",
+      "name": "toggle_job_active",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/admin/job-postings/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Mismo criterio que toggle-active de usuarios en 5.2: estado explicito {is_active} en vez de toggle."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/resources",
+      "name": "list_resources",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/resources",
+          "vertical": "V8-TASK-053",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/admin/resources",
+      "name": "create_resource",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/admin/resources",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/admin/resources/upload-file",
+      "name": "upload_resource_file",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/admin/resource-files",
+          "vertical": "V8-TASK-053",
+          "note": "Crea un recurso de archivo con identidad propia; hoy es una accion anonima."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/admin/resources/{resource_id}",
+      "name": "delete_resource",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/admin/resources/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/resources/{resource_id}",
+      "name": "get_resource_detail",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/resources/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PUT"
+      ],
+      "path": "/api/v1/admin/resources/{resource_id}",
+      "name": "update_resource",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "PUT": {
+          "destination": "rest",
+          "target": "PUT /api/v1/admin/resources/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/admin/resources/{resource_id}/toggle-locked",
+      "name": "toggle_resource_locked",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/admin/resources/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Se funde con toggle-published en un PATCH con {is_locked}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/admin/resources/{resource_id}/toggle-published",
+      "name": "toggle_resource_published",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/admin/resources/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Se funde con toggle-locked en un PATCH con {is_published}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/stats",
+      "name": "admin_stats",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/admin/stats",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/stats",
+          "vertical": "V8-TASK-053",
+          "note": "Presenter de admin; unica ruta admin con consumidor literal en el JS actual."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/users",
+      "name": "list_users",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/users",
+          "vertical": "V8-TASK-053",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/admin/users/{user_id}",
+      "name": "delete_user",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/admin/users/{id}",
+          "vertical": "V8-TASK-053",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/admin/users/{user_id}/resource-progress",
+      "name": "user_resource_progress",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/users/{id}/resource-progress",
+          "vertical": "V8-TASK-053",
+          "note": "Proyeccion de progreso; debe salir de la policy unica de TASK-016."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/admin/users/{user_id}/toggle-active",
+      "name": "toggle_user_active",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/admin/users/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Correspondencia explicita en 5.2 del plan 08."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/admin/users/{user_id}/toggle-superuser",
+      "name": "toggle_user_superuser",
+      "module": "app.routes.adminRoute",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_admin_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "admin"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/admin_login.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/admin",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/admin/users/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Se funde con toggle-active en el mismo PATCH con {is_superuser}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/applications",
+      "name": "get_applications",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "List",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/applications",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/applications",
+          "vertical": "V4-TASK-049",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/applications",
+      "name": "create_application",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ApplicationRead",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/applications",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/applications",
+          "vertical": "V4-TASK-049",
+          "note": "Exige Idempotency-Key (5.1 del plan 08 y TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/applications/eligible-resumes",
+      "name": "get_eligible_resumes_for_application",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "List",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/applications/eligible-resumes",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resumes?eligible_for=application",
+          "vertical": "V4-TASK-049",
+          "note": "No es subrecurso de applications sino la coleccion de CV filtrada; consumida por la pantalla de candidatura."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/applications/{application_id}",
+      "name": "delete_application",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/applications",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/applications/{id}",
+          "vertical": "V4-TASK-049",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/applications/{application_id}",
+      "name": "update_application",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ApplicationRead",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/applications",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/applications/{id}",
+          "vertical": "V4-TASK-049",
+          "note": "Las transiciones las decide el backend (TASK-014); React solo proyecta."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/applications/{application_id}/interview-selection",
+      "name": "select_interview_availability",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ApplicationRead",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/applications",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PUT /api/v1/applications/{id}/selected-interview",
+          "vertical": "V4-TASK-049",
+          "note": "Correspondencia explicita en 5.2 del plan 08; seleccion idempotente serializada por TASK-015."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/forgot-password",
+      "name": "reset:forgot_password",
+      "module": "fastapi_users.router.reset",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "companies",
+        "company-auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth/company",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/company/forgot-password",
+          "vertical": "V5-TASK-050",
+          "note": "Generado por fastapi-users; no lo cuenta el recuento de 150 handlers del plan."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/login",
+      "name": "auth:jwt.login",
+      "module": "fastapi_users.router.auth",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "companies",
+        "company-auth"
+      ],
+      "consumers": [
+        "app/static/js/login.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/auth/company/login",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/company/session",
+          "vertical": "V5-TASK-050",
+          "note": "6.2 del plan 08 pide login/logout consistentes por actor; TASK-042."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/logout",
+      "name": "auth:jwt.logout",
+      "module": "fastapi_users.router.auth",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_user_token_dependency"
+      ],
+      "response_model": null,
+      "tags": [
+        "companies",
+        "company-auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/auth/company/logout",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/auth/company/session",
+          "vertical": "V5-TASK-050",
+          "note": "Par simetrico del anterior; TASK-042."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/register",
+      "name": "register_company_with_initial_recruiter",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": "CompanyRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/register.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/auth/company/register",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/companies",
+          "vertical": "V5-TASK-050",
+          "note": "Registrar una compania crea el recurso compania; el actor recruiter sale de ahi."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/request-verify-token",
+      "name": "verify:request-token",
+      "module": "fastapi_users.router.verify",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "companies",
+        "company-auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth/company",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/company/verification-requests",
+          "vertical": "V5-TASK-050",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/reset-password",
+      "name": "reset:reset_password",
+      "module": "fastapi_users.router.reset",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "companies",
+        "company-auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth/company",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/company/password-resets",
+          "vertical": "V5-TASK-050",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/company/verify",
+      "name": "verify:verify",
+      "module": "fastapi_users.router.verify",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": "CompanyRecruiterRead",
+      "tags": [
+        "companies",
+        "company-auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth/company",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/company/verifications",
+          "vertical": "V5-TASK-050",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/forgot-password",
+      "name": "reset:forgot_password",
+      "module": "fastapi_users.router.reset",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/forgot-password",
+          "vertical": "V1-TASK-046",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/auth/register",
+      "name": "register",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/auth/register",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /register",
+          "vertical": "V1-TASK-046",
+          "note": "DEFECTO: es una vista Jinja montada bajo /api/v1 y comparte path con el POST de la API. Retirarla elimina la colision."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/register",
+      "name": "register:register",
+      "module": "fastapi_users.router.register",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": "UserRead",
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/auth/register",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/users",
+          "vertical": "V1-TASK-046",
+          "note": "Registrar crea el recurso usuario; generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/request-verify-token",
+      "name": "verify:request-token",
+      "module": "fastapi_users.router.verify",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/verification-requests",
+          "vertical": "V1-TASK-046",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/reset-password",
+      "name": "reset:reset_password",
+      "module": "fastapi_users.router.reset",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/password-resets",
+          "vertical": "V1-TASK-046",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/verify",
+      "name": "verify:verify",
+      "module": "fastapi_users.router.verify",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": "UserRead",
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/verifications",
+          "vertical": "V1-TASK-046",
+          "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/capstone/analytics/roles",
+      "name": "get_capstone_analytics_roles",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneAnalyticsRolesRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/analytics/roles",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/capstone/roles",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/analytics/seed",
+      "name": "seed_capstone_analytics_catalog",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneAnalyticsSeedSummaryRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/analytics",
+      "decisions": {
+        "POST": {
+          "destination": "internal",
+          "target": "POST /api/v1/internal/capstone/seed",
+          "vertical": "V7-TASK-052",
+          "note": "Operacion de datos semilla; no la consume ninguna pantalla. Debe quedar tras auth interna y fuera del contrato publico."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/capstone/analytics/status",
+      "name": "get_capstone_analytics_status",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneAnalyticsStatusRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/analytics/status",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/capstone/status",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/capstone/catalog/quality",
+      "name": "get_capstone_catalog_quality",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneCatalogQualityRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/catalog/quality",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/capstone/catalog-quality",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/capstone/gap-analysis",
+      "name": "get_capstone_gap_analysis",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneGapAnalysisRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/gap-analysis",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/capstone/gap-analysis",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/job-postings/skills/sync-open",
+      "name": "sync_open_job_posting_skills",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneJobSkillBatchExtractionRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone",
+      "decisions": {
+        "POST": {
+          "destination": "internal",
+          "target": "POST /api/v1/internal/capstone/skill-syncs",
+          "vertical": "V7-TASK-052",
+          "note": "Barrido masivo sobre ofertas abiertas; 5.2 exige que devuelva un run con identidad y estado. Lo hace batch TASK-019."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/job-postings/{job_posting_id}/skills/sync",
+      "name": "sync_job_posting_skills",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneJobSkillExtractionRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/capstone/job-postings/{id}/skill-syncs",
+          "vertical": "V7-TASK-052",
+          "note": "Crea una ejecucion auditable; devuelve run con identidad y estado."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/learning-route/evaluate-baselines",
+      "name": "evaluate_capstone_learning_route_baselines",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneLearningRouteBaselineEvaluationRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/learning-route/evaluate-baselines",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/capstone/learning-route/baseline-runs",
+          "vertical": "V7-TASK-052",
+          "note": "Crea una ejecucion auditable."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/learning-route/optimize",
+      "name": "optimize_capstone_learning_route",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneLearningRouteOptimizationRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/learning-route/optimize",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/capstone/learning-route/runs",
+          "vertical": "V7-TASK-052",
+          "note": "Crea el run que ya lista GET runs; CP-SAT fuera del loop por TASK-022."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/capstone/learning-route/runs",
+      "name": "list_capstone_learning_route_runs",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneLearningRouteRunsRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/capstone/learning-route/runs",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/capstone/learning-route/runs",
+          "vertical": "V7-TASK-052",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills",
+      "name": "list_resume_skills_for_review",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneResumeSkillReviewRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/resumes",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resumes/{id}/skills",
+          "vertical": "V7-TASK-052",
+          "note": "El CV es el mismo recurso que /resumes; capstone no es un espacio de nombres distinto."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills/extract",
+      "name": "extract_resume_skills",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneSkillExtractionRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/resumes",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/resumes/{id}/skill-extractions",
+          "vertical": "V7-TASK-052",
+          "note": "Crea una ejecucion auditable; consume cuota de IA."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills/manual",
+      "name": "add_manual_resume_skill",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneResumeSkillReviewRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/resumes",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/resumes/{id}/skills",
+          "vertical": "V7-TASK-052",
+          "note": "Alta manual de una skill: es la creacion normal de la subcoleccion."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills/sync",
+      "name": "sync_resume_skills_from_summary",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneSkillExtractionRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/resumes",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/resumes/{id}/skill-syncs",
+          "vertical": "V7-TASK-052",
+          "note": "Crea una ejecucion auditable."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills/{resume_skill_id}",
+      "name": "delete_resume_skill",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneResumeSkillReviewRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/resumes",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/resumes/{id}/skills/{skill_id}",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills/{resume_skill_id}",
+      "name": "update_resume_skill_review_status",
+      "module": "app.routes.capstoneAnalyticsRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CapstoneResumeSkillReviewRead",
+      "tags": [
+        "capstone"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/capstone/resumes",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/resumes/{id}/skills/{skill_id}",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/communities",
+      "name": "list_communities",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/communities",
+          "vertical": "V6-TASK-051",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041). El contador sale de membresias (TASK-017)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/communities",
+      "name": "create_community",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CommunityRead",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/communities",
+          "vertical": "V6-TASK-051",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/communities/tags",
+      "name": "list_community_tags",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/communities/tags",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/community-tags",
+          "vertical": "V6-TASK-051",
+          "note": "No es subrecurso de una comunidad concreta; hoy compite con /communities/{id}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/communities/{community_id}",
+      "name": "get_community",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CommunityRead",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/communities/{id}",
+          "vertical": "V6-TASK-051",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/communities/{community_id}/join",
+      "name": "join_community",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CommunityMemberRead",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PUT /api/v1/communities/{id}/members/me",
+          "vertical": "V6-TASK-051",
+          "note": "Correspondencia explicita en 5.2 del plan 08; relacion idempotente."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/communities/{community_id}/leave",
+      "name": "leave_community",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/communities/{id}/members/me",
+          "vertical": "V6-TASK-051",
+          "note": "Correspondencia explicita en 5.2 del plan 08."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/communities/{community_id}/membership",
+      "name": "check_membership",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/communities/{id}/members/me",
+          "vertical": "V6-TASK-051",
+          "note": "Mismo recurso que join/leave leido; hoy tiene nombre propio."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/communities/{community_id}/posts",
+      "name": "list_community_posts",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/communities/{id}/posts",
+          "vertical": "V6-TASK-051",
+          "note": "Se funde con la variante enriched: una sola coleccion con expansion declarada."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/communities/{community_id}/posts",
+      "name": "create_community_post",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CommunityPostRead",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/communities/{id}/posts",
+          "vertical": "V6-TASK-051",
+          "note": "Borrado restringido al propietario por TASK-003."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/communities/{community_id}/posts/enriched",
+      "name": "list_community_posts_enriched",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/communities",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/communities/{id}/posts?expand=author",
+          "vertical": "V6-TASK-051",
+          "note": "DUPLICADO: misma coleccion con otra forma de respuesta. Dos endpoints para un recurso es la fuente de verdad partida que el plan prohibe."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/community-posts/{post_id}/comments",
+      "name": "list_comments",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/community-posts",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/community-posts/{id}/comments",
+          "vertical": "V6-TASK-051",
+          "note": "Se funde con la variante enriched."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/community-posts/{post_id}/comments",
+      "name": "create_comment",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "CommunityPostCommentRead",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/community-posts",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/community-posts/{id}/comments",
+          "vertical": "V6-TASK-051",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/community-posts/{post_id}/comments/enriched",
+      "name": "list_comments_enriched",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/community-posts",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/community-posts/{id}/comments?expand=author",
+          "vertical": "V6-TASK-051",
+          "note": "DUPLICADO: misma coleccion con otra forma de respuesta."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/community-posts/{post_id}/likes",
+      "name": "unlike_post",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/community-posts",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/community-posts/{id}/likes/me",
+          "vertical": "V6-TASK-051",
+          "note": "Relacion del actor con el post; idempotente."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/community-posts/{post_id}/likes",
+      "name": "like_post",
+      "module": "app.routes.communityRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "communities"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/community-posts",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PUT /api/v1/community-posts/{id}/likes/me",
+          "vertical": "V6-TASK-051",
+          "note": "Mismo criterio que join de comunidades en 5.2: relacion idempotente."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me",
+      "name": "get_current_company_profile",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter"
+      ],
+      "response_model": "CompanyRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js",
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/companies/me",
+      "name": "update_current_company_profile",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter"
+      ],
+      "response_model": "CompanyRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js",
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/companies/me",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me/applicants",
+      "name": "list_company_applicants",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter"
+      ],
+      "response_model": "List",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me/applicants",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/applications",
+          "vertical": "V5-TASK-050",
+          "note": "La entidad es la candidatura; applicants nombra a la persona y no al recurso listado."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/companies/me/applicants/{application_id}",
+      "name": "update_company_applicant_pipeline",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter:job_manager",
+      "auth_dependencies": [
+        "current_active_company_recruiter",
+        "current_company_job_manager_recruiter"
+      ],
+      "response_model": "CompanyApplicantRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/applicants",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/companies/me/applications/{id}",
+          "vertical": "V5-TASK-050",
+          "note": "Transiciones centralizadas en el backend (TASK-014)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/companies/me/applicants/{application_id}/interview-availabilities",
+      "name": "publish_company_applicant_interview_availabilities",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter:job_manager",
+      "auth_dependencies": [
+        "current_active_company_recruiter",
+        "current_company_job_manager_recruiter"
+      ],
+      "response_model": "CompanyApplicantRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/applicants",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PUT /api/v1/companies/me/applications/{id}/interview-availabilities",
+          "vertical": "V5-TASK-050",
+          "note": "Reemplaza el conjunto completo de disponibilidades; idempotente."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me/applications/{application_id}/resume/download",
+      "name": "download_company_applicant_resume",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter"
+      ],
+      "response_model": null,
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js",
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/applications/{id}/resume?disposition=attachment",
+          "vertical": "V5-TASK-050",
+          "note": "download y preview son el mismo recurso con distinto Content-Disposition."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me/applications/{application_id}/resume/preview",
+      "name": "preview_company_applicant_resume",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter"
+      ],
+      "response_model": null,
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js",
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/applications/{id}/resume",
+          "vertical": "V5-TASK-050",
+          "note": "Autorizacion por entidad visible (TASK-008)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me/job-postings",
+      "name": "list_current_company_job_postings",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "recruiter:job_manager",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter",
+        "current_company_job_manager_recruiter"
+      ],
+      "response_model": "List",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me/job-postings",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/job-postings",
+          "vertical": "V5-TASK-050",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/companies/me/job-postings",
+      "name": "create_current_company_job_posting",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "recruiter:job_manager",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter",
+        "current_company_job_manager_recruiter"
+      ],
+      "response_model": "JobPostingRead",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me/job-postings",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/companies/me/job-postings",
+          "vertical": "V5-TASK-050",
+          "note": "Exige Idempotency-Key (5.1 del plan 08)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/companies/me/job-postings/{job_posting_id}",
+      "name": "delete_current_company_job_posting",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "recruiter:job_manager",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter",
+        "current_company_job_manager_recruiter"
+      ],
+      "response_model": null,
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/job-postings",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/companies/me/job-postings/{id}",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/companies/me/job-postings/{job_posting_id}",
+      "name": "update_current_company_job_posting",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "recruiter:job_manager",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter",
+        "current_company_job_manager_recruiter"
+      ],
+      "response_model": "JobPostingRead",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/job-postings",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/companies/me/job-postings/{id}",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me/recruiters",
+      "name": "list_company_recruiters",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter:owner",
+      "auth_dependencies": [
+        "current_active_company_recruiter",
+        "current_company_owner_recruiter"
+      ],
+      "response_model": "List",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me/recruiters",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/recruiters",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/companies/me/recruiters",
+      "name": "create_company_recruiter",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter:owner",
+      "auth_dependencies": [
+        "current_active_company_recruiter",
+        "current_company_owner_recruiter"
+      ],
+      "response_model": "CompanyRecruiterManagementRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/companies/me/recruiters",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/companies/me/recruiters",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/companies/me/recruiters/current",
+      "name": "get_current_company_recruiter_profile",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company_recruiter"
+      ],
+      "response_model": "CompanyRecruiterManagementRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/recruiters",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/recruiters/me",
+          "vertical": "V5-TASK-050",
+          "note": "current y me nombran lo mismo; /me es la convencion ya usada en el resto de la API."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/companies/me/recruiters/{recruiter_id}",
+      "name": "delete_company_recruiter",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter:owner",
+      "auth_dependencies": [
+        "current_active_company_recruiter",
+        "current_company_owner_recruiter"
+      ],
+      "response_model": null,
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/recruiters",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/companies/me/recruiters/{id}",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/companies/me/recruiters/{recruiter_id}",
+      "name": "update_company_recruiter",
+      "module": "app.routes.companyRoute",
+      "kind": "api",
+      "actor": "recruiter:owner",
+      "auth_dependencies": [
+        "current_active_company_recruiter",
+        "current_company_owner_recruiter"
+      ],
+      "response_model": "CompanyRecruiterManagementRead",
+      "tags": [
+        "companies"
+      ],
+      "consumers": [
+        "app/static/js/company-team.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/companies/me/recruiters",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/companies/me/recruiters/{id}",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/company_dashboard",
+      "name": "get_company_dashboard",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "recruiter",
+      "auth_dependencies": [
+        "current_active_company",
+        "current_active_company_recruiter"
+      ],
+      "response_model": "Dict",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/company_dashboard",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/companies/me/dashboard",
+          "vertical": "V5-TASK-050",
+          "note": "Correspondencia explicita en 5.2 del plan 08."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/conversations",
+      "name": "list_conversations",
+      "module": "app.routes.messageRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "messages"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/conversations",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR hoy: ninguna plantilla ni JS la llama. La estrena la pantalla React de mensajes (TASK-051) sobre el cursor de TASK-024."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/conversations/direct",
+      "name": "create_direct_conversation",
+      "module": "app.routes.messageRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ConversationSummaryRead",
+      "tags": [
+        "messages"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/conversations",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR hoy. direct es el tipo de conversacion y va en el cuerpo"
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/conversations/{conversation_id}/messages",
+      "name": "list_messages",
+      "module": "app.routes.messageRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "messages"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/conversations/{id}/messages",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR hoy. Paginacion por cursor obligatoria (5.1 del plan 08 y TASK-024)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/conversations/{conversation_id}/messages",
+      "name": "send_message",
+      "module": "app.routes.messageRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "MessageRead",
+      "tags": [
+        "messages"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/conversations/{id}/messages",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR hoy."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/conversations/{conversation_id}/read",
+      "name": "mark_conversation_read",
+      "module": "app.routes.messageRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ConversationReadReceipt",
+      "tags": [
+        "messages"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PUT /api/v1/conversations/{id}/read-receipts/me",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR hoy. Marcar leido es una relacion idempotente del actor."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/dashboard/stats",
+      "name": "get_dashboard_stats",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "Dict",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/dashboard/student",
+          "vertical": "V3-TASK-048",
+          "note": "SIN CONSUMIDOR en el frontend: dashboard.js llama students_dashboard. Solo lo cubren tests. Se funde con students_dashboard en el presenter unico de 5.2."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/delete_post/{post_id}",
+      "name": "delete_post",
+      "module": "app.routes.postRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "DELETE": {
+          "destination": "retire",
+          "target": "DELETE /api/v1/community-posts/{id}",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR: API de posts legacy anterior a las comunidades. Verificar cero trafico antes de retirar (TASK-059)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/friends",
+      "name": "list_friends",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/friends",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/friends",
+          "vertical": "V6-TASK-051",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/friends/requests",
+      "name": "send_friend_request",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "FriendRequestRead",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/friends/requests",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/friend-requests",
+          "vertical": "V6-TASK-051",
+          "note": "La solicitud es un recurso propio; 5.2 ya usa /friend-requests para el accept."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/friends/requests/incoming",
+      "name": "list_incoming_friend_requests",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/friends/requests/incoming",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/friend-requests?direction=incoming",
+          "vertical": "V6-TASK-051",
+          "note": "Direccion como filtro y no como path: es la misma coleccion."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/friends/requests/outgoing",
+      "name": "list_outgoing_friend_requests",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/friends/requests/outgoing",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/friend-requests?direction=outgoing",
+          "vertical": "V6-TASK-051",
+          "note": "Direccion como filtro y no como path: es la misma coleccion."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/friends/requests/{request_id}/accept",
+      "name": "accept_friend_request",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "FriendRequestRead",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/friends/requests",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/friend-requests/{id}",
+          "vertical": "V6-TASK-051",
+          "note": "Correspondencia explicita en 5.2 del plan 08: {status: accepted}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/friends/requests/{request_id}/cancel",
+      "name": "cancel_friend_request",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "FriendRequestRead",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/friends/requests",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/friend-requests/{id}",
+          "vertical": "V6-TASK-051",
+          "note": "Mismo PATCH con {status: cancelled}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/friends/requests/{request_id}/reject",
+      "name": "reject_friend_request",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "FriendRequestRead",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/friends/requests",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/friend-requests/{id}",
+          "vertical": "V6-TASK-051",
+          "note": "Mismo PATCH con {status: rejected}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/friends/status",
+      "name": "get_friendship_statuses",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/friends/status",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/friends/{id}/status",
+          "vertical": "V6-TASK-051",
+          "note": "Hoy recibe el otro usuario por query; la relacion tiene identidad y va en el path."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/friends/{friend_id}",
+      "name": "unfriend_user",
+      "module": "app.routes.friendshipRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "friendships"
+      ],
+      "consumers": [
+        "app/static/js/community_feed.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/friends",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/friends/{id}",
+          "vertical": "V6-TASK-051",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/jobs/board",
+      "name": "list_job_board_postings",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "List",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/jobs/board",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/job-postings",
+          "vertical": "V4-TASK-049",
+          "note": "board es la pantalla y no el recurso. Coleccion con limite de servidor (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/jobs/keywords",
+      "name": "get_job_keywords",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "KeywordsResponse",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/jobs/keywords",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/cv-analyses",
+          "vertical": "V4-TASK-049",
+          "note": "Historial de analisis del actor; es la coleccion de 5.2 leida."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/jobs/keywords/analyze",
+      "name": "start_cv_analysis",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_ai_user"
+      ],
+      "response_model": "JobInitResponse",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/jobs/keywords/analyze",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/cv-analyses",
+          "vertical": "V4-TASK-049",
+          "note": "Correspondencia explicita en 5.2 del plan 08; 202 e Idempotency-Key. Durable por TASK-054."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/jobs/keywords/{job_id}",
+      "name": "get_job_status",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "JobStatusResponse",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/jobs/keywords",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/cv-analyses/{id}",
+          "vertical": "V4-TASK-049",
+          "note": "Correspondencia explicita en 5.2 del plan 08."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/jobs/search",
+      "name": "search_jobs",
+      "module": "app.routes.jobRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "JobSearchResultsResponse",
+      "tags": [
+        "jobs"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/jobs/search",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/job-searches",
+          "vertical": "V4-TASK-049",
+          "note": "Correspondencia explicita en 5.2 del plan 08. Scraper fuera del event loop por TASK-020."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/me/roadmaps",
+      "name": "get_my_roadmaps",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmaps_list.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/me/roadmaps",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/roadmaps?saved_by=me",
+          "vertical": "V3-TASK-048",
+          "note": "Es la misma coleccion filtrada por la relacion de guardado; no un espacio /me aparte."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/posts",
+      "name": "get_all_posts",
+      "module": "app.routes.postRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "GET /api/v1/communities/{id}/posts",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR: API de posts legacy anterior a las comunidades. Verificar cero trafico antes de retirar (TASK-059)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/posts",
+      "name": "create_post",
+      "module": "app.routes.postRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "PostCreate",
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "POST": {
+          "destination": "retire",
+          "target": "POST /api/v1/communities/{id}/posts",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR: API de posts legacy. Verificar cero trafico antes de retirar (TASK-059)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/posts/{post_id}",
+      "name": "get_post",
+      "module": "app.routes.postRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "PostRead",
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "GET /api/v1/community-posts/{id}",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR: API de posts legacy. Verificar cero trafico antes de retirar (TASK-059)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/profile",
+      "name": "read_profile",
+      "module": "app.routes.profileRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "UserRead",
+      "tags": [
+        "profile"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js",
+        "app/static/js/community_feed.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/profile",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/users/me",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08. Colisiona con el GET /users/me de fastapi-users: la vertical debe dejar uno solo."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/profile",
+      "name": "update_profile",
+      "module": "app.routes.profileRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "UserRead",
+      "tags": [
+        "profile"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js",
+        "app/static/js/community_feed.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/profile",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/users/me",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08. Misma colision que el GET."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/profile/cv",
+      "name": "list_resumes",
+      "module": "app.routes.resumeRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "resume"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/profile/cv",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resumes",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/profile/cv/course-audit-attempts",
+      "name": "get_course_audit_attempts",
+      "module": "app.routes.resumeRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ResumeCourseAuditAttemptsRead",
+      "tags": [
+        "resume"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/profile/cv/course-audit-attempts",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resume-course-audits",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08; historial paginado."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/profile/cv/course-audit-upload",
+      "name": "upload_resume_for_course_audit",
+      "module": "app.routes.resumeRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user",
+        "current_ai_user"
+      ],
+      "response_model": "ResumeCourseAuditRead",
+      "tags": [
+        "resume"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/profile/cv/course-audit-upload",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/resume-course-audits",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08; crea auditoria/job."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/profile/cv/upload",
+      "name": "upload_resume",
+      "module": "app.routes.resumeRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "resume"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/profile/cv/upload",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/resumes",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08; multipart y 201. Exige Idempotency-Key: dispara IA."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/profile/cv/{resume_id}",
+      "name": "delete_resume",
+      "module": "app.routes.resumeRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "resume"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/profile/cv",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/resumes/{id}",
+          "vertical": "V2-TASK-047",
+          "note": "Correspondencia explicita en 5.2 del plan 08; ownership obligatorio."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/profile/cv/{resume_id}/similar",
+      "name": "find_similar_resumes",
+      "module": "app.routes.resumeRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "resume"
+      ],
+      "consumers": [
+        "app/static/js/career_lab.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/profile/cv",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resumes/{id}/similar-job-postings",
+          "vertical": "V2-TASK-047",
+          "note": "similar no dice similar a que; embeddings sin regenerar por TASK-021."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/projects/{project_id}/submit",
+      "name": "submit_project",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ProjectSubmissionRead",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/projects",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/projects/{id}/submissions",
+          "vertical": "V3-TASK-048",
+          "note": "Crea una entrega con identidad en vez de un efecto anonimo."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/questionnaire",
+      "name": "get_questionnaire",
+      "module": "app.routes.questionnaireRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "QuestionnaireRead",
+      "tags": [
+        "questionnaire"
+      ],
+      "consumers": [
+        "app/static/js/questionnaire.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/questionnaire",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/questionnaire",
+          "vertical": "V2-TASK-047",
+          "note": "Debe declarar la version del cuestionario que sirve (TASK-030)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/questionnaire",
+      "name": "submit_questionnaire",
+      "module": "app.routes.questionnaireRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "QuestionnaireResult",
+      "tags": [
+        "questionnaire"
+      ],
+      "consumers": [
+        "app/static/js/questionnaire.js",
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/questionnaire",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/questionnaire/responses",
+          "vertical": "V2-TASK-047",
+          "note": "Enviar respuestas crea el recurso respuesta; respeta la version historica (TASK-030)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/questionnaire/profile",
+      "name": "get_user_profile",
+      "module": "app.routes.questionnaireRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "questionnaire"
+      ],
+      "consumers": [
+        "app/static/js/userProfile.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/questionnaire/profile",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/questionnaire/profile",
+          "vertical": "V2-TASK-047",
+          "note": "Proyeccion derivada de las respuestas."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/resources",
+      "name": "get_resources",
+      "module": "app.routes.resourceRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "resources"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/resources",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resources",
+          "vertical": "V3-TASK-048",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/resources/file",
+      "name": "get_resource_file",
+      "module": "app.routes.resourceRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "resources"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/resources",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resources/{id}/file",
+          "vertical": "V3-TASK-048",
+          "note": "Correspondencia explicita en 5.2 del plan 08: autorizacion por entidad y no por key (TASK-008)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/resources/lessons/{lesson_id}/progress",
+      "name": "patch_lesson_progress",
+      "module": "app.routes.resourceRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ResourceProgressRead",
+      "tags": [
+        "resources"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/resources/lessons",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PUT /api/v1/lessons/{id}/progress/me",
+          "vertical": "V3-TASK-048",
+          "note": "Progreso del actor sobre la leccion: relacion idempotente. Consultas agrupadas por TASK-018."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/resources/{resource_id}",
+      "name": "get_resource",
+      "module": "app.routes.resourceRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ResourceDetailRead",
+      "tags": [
+        "resources"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/resources",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resources/{id}",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/resources/{resource_id}/outline",
+      "name": "get_resource_outline",
+      "module": "app.routes.resourceRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [
+        "resources"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/resources",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resources/{id}/outline",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/resources/{resource_id}/progress",
+      "name": "get_resource_progress",
+      "module": "app.routes.resourceRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "ResourceProgressRead",
+      "tags": [
+        "resources"
+      ],
+      "consumers": [
+        "app/static/js/resource_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/resources",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/resources/{id}/progress/me",
+          "vertical": "V3-TASK-048",
+          "note": "Es el progreso del actor y no del recurso; hacerlo explicito evita leerlo como global."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/roadmaps",
+      "name": "list_roadmaps",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "list",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/roadmaps",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/roadmaps",
+          "vertical": "V3-TASK-048",
+          "note": "Coleccion: exige limite de servidor y paginacion (TASK-041)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/roadmaps/{slug}",
+      "name": "get_roadmap",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "RoadmapDetailRead",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/roadmaps",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/roadmaps/{slug}",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/roadmaps/{slug}/save",
+      "name": "unsave_roadmap",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "SaveRoadmapResponse",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/roadmaps",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/roadmaps/{slug}/saves/me",
+          "vertical": "V3-TASK-048",
+          "note": "Correspondencia explicita en 5.2 del plan 08."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/roadmaps/{slug}/save",
+      "name": "save_roadmap",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "SaveRoadmapResponse",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/roadmaps",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "PUT /api/v1/roadmaps/{slug}/saves/me",
+          "vertical": "V3-TASK-048",
+          "note": "Correspondencia explicita en 5.2 del plan 08; relacion idempotente."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/students_dashboard",
+      "name": "get_students_dashboard",
+      "module": "app.routes.dashboardRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "Dict",
+      "tags": [
+        "dashboard"
+      ],
+      "consumers": [
+        "app/static/js/dashboard.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/students_dashboard",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/dashboard/student",
+          "vertical": "V3-TASK-048",
+          "note": "Correspondencia explicita en 5.2 del plan 08. Absorbe dashboard/stats: un solo presenter calculado en DB (TASK-025)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/tasks/{task_id}/progress",
+      "name": "patch_task_progress",
+      "module": "app.routes.roadmapRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": "TaskProgressUpdateResponse",
+      "tags": [
+        "roadmaps"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/tasks",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PUT /api/v1/tasks/{id}/progress/me",
+          "vertical": "V3-TASK-048",
+          "note": "Progreso del actor sobre la tarea: relacion idempotente."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/upload_post",
+      "name": "upload_file",
+      "module": "app.routes.postRoute",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_active_user"
+      ],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "POST": {
+          "destination": "retire",
+          "target": "POST /api/v1/communities/{id}/posts",
+          "vertical": "V6-TASK-051",
+          "note": "SIN CONSUMIDOR: API de posts legacy. Verificar cero trafico antes de retirar (TASK-059)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/users/me",
+      "name": "users:current_user",
+      "module": "fastapi_users.router.users",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "fastapi_users:current_active_user"
+      ],
+      "response_model": "UserRead",
+      "tags": [
+        "users"
+      ],
+      "consumers": [
+        "app/static/js/admin.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/users/me",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/users/me",
+          "vertical": "V1-TASK-046",
+          "note": "Generado por fastapi-users. Colisiona con GET /api/v1/profile: TASK-047 debe dejar un unico contrato."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/users/me",
+      "name": "users:patch_current_user",
+      "module": "fastapi_users.router.users",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "fastapi_users:current_active_user"
+      ],
+      "response_model": "UserRead",
+      "tags": [
+        "users"
+      ],
+      "consumers": [
+        "app/static/js/admin.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/api/v1/users/me",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/users/me",
+          "vertical": "V1-TASK-046",
+          "note": "Generado por fastapi-users. Misma colision que el GET."
+        }
+      }
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/api/v1/users/{id}",
+      "name": "users:delete_user",
+      "module": "fastapi_users.router.users",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "fastapi_users:current_superuser"
+      ],
+      "response_model": null,
+      "tags": [
+        "users"
+      ],
+      "consumers": [
+        "app/static/js/admin.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/users",
+      "decisions": {
+        "DELETE": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/admin/users/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Generado por fastapi-users y exige superuser: pertenece al contrato de admin y duplica DELETE /admin/users/{user_id}."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/users/{id}",
+      "name": "users:user",
+      "module": "fastapi_users.router.users",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "fastapi_users:current_superuser"
+      ],
+      "response_model": "UserRead",
+      "tags": [
+        "users"
+      ],
+      "consumers": [
+        "app/static/js/admin.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/users",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/admin/users/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Generado por fastapi-users y exige superuser: pertenece al contrato de admin."
+        }
+      }
+    },
+    {
+      "methods": [
+        "PATCH"
+      ],
+      "path": "/api/v1/users/{id}",
+      "name": "users:patch_user",
+      "module": "fastapi_users.router.users",
+      "kind": "api",
+      "actor": "admin",
+      "auth_dependencies": [
+        "fastapi_users:current_superuser"
+      ],
+      "response_model": "UserRead",
+      "tags": [
+        "users"
+      ],
+      "consumers": [
+        "app/static/js/admin.js"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/users",
+      "decisions": {
+        "PATCH": {
+          "destination": "rest",
+          "target": "PATCH /api/v1/admin/users/{id}",
+          "vertical": "V8-TASK-053",
+          "note": "Generado por fastapi-users y exige superuser: converge con el PATCH de admin que absorbe los dos toggles."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/auth/jwt/login",
+      "name": "auth:jwt.login",
+      "module": "fastapi_users.router.auth",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/admin_login.js",
+        "app/static/js/login.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/auth/jwt/login",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/session",
+          "vertical": "V1-TASK-046",
+          "note": "6.2 del plan 08; TASK-042. Ademas sale del prefijo /api/v1: hoy es la unica ruta de API fuera de el."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/auth/jwt/logout",
+      "name": "auth:jwt.logout",
+      "module": "fastapi_users.router.auth",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_user_token_dependency"
+      ],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/auth/jwt/logout",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "DELETE /api/v1/auth/session",
+          "vertical": "V1-TASK-046",
+          "note": "Par simetrico del anterior; TASK-042."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/career-lab",
+      "name": "career_lab",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/templates/includes/sidebar.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/career-lab",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /career-lab",
+          "vertical": "V7-TASK-052",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/community",
+      "name": "community",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js",
+        "app/templates/community_feed.html",
+        "app/templates/dashboard.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/community",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /community",
+          "vertical": "V6-TASK-051",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/community/{community_id}",
+      "name": "community_feed",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/community.js",
+        "app/static/js/community_feed.js",
+        "app/templates/community_feed.html",
+        "app/templates/dashboard.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/community",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /community/:communityId",
+          "vertical": "V6-TASK-051",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/company-candidates",
+      "name": "company_candidates_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "recruiter:optional",
+      "auth_dependencies": [
+        "current_active_company_optional",
+        "current_active_company_recruiter_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/company-dashboard.js",
+        "app/templates/company-dashboard.html",
+        "app/templates/includes/company_header.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/company-candidates",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /company/candidates",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/company-dashboard",
+      "name": "company_dashboard",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "recruiter:optional",
+      "auth_dependencies": [
+        "current_active_company_optional",
+        "current_active_company_recruiter_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/login.js",
+        "app/templates/company-candidates.html",
+        "app/templates/includes/company_header.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/company-dashboard",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /company/dashboard",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/company-team",
+      "name": "company_team_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "recruiter:optional",
+      "auth_dependencies": [
+        "current_active_company_optional",
+        "current_active_company_recruiter_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/templates/includes/company_header.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/company-team",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /company/team",
+          "vertical": "V5-TASK-050",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/dashboard",
+      "name": "dashboard",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/login.js",
+        "app/static/js/questionnaire.js",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/userProfile.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/dashboard",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /dashboard",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/docs",
+      "name": "swagger_ui_html",
+      "module": "fastapi.applications",
+      "kind": "asset",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "platform",
+          "target": "GET /docs",
+          "vertical": "",
+          "note": "Generado por FastAPI. Detras del proxy queda accesible; decidir su exposicion publica es parte de TASK-036."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/docs/oauth2-redirect",
+      "name": "swagger_ui_redirect",
+      "module": "fastapi.applications",
+      "kind": "asset",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "platform",
+          "target": "GET /docs/oauth2-redirect",
+          "vertical": "",
+          "note": "Generado por FastAPI."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/favicon.ico",
+      "name": "favicon",
+      "module": "app.app",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [
+        "app/templates/base.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/favicon.ico",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "frontend Nginx",
+          "vertical": "V1-TASK-046",
+          "note": "Estatico: pasa al servicio frontend que sirve el bundle."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/home",
+      "name": "home",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /",
+          "vertical": "V1-TASK-046",
+          "note": "SIN CONSUMIDOR y duplica la home de /. Verificar cero trafico antes de retirar (TASK-059)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/jobs",
+      "name": "jobs_board",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/company-dashboard.js",
+        "app/static/js/jobs.js",
+        "app/templates/company-dashboard.html",
+        "app/templates/dashboard.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/jobs",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /jobs",
+          "vertical": "V4-TASK-049",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/login",
+      "name": "login",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/admin_login.js",
+        "app/static/js/base.js",
+        "app/static/js/career_lab.js",
+        "app/static/js/community_feed.js",
+        "app/static/js/company-candidates.js",
+        "app/static/js/company-dashboard.js",
+        "app/static/js/dashboard.js",
+        "app/static/js/jobs.js",
+        "app/static/js/login.js",
+        "app/static/js/questionnaire.js",
+        "app/static/js/register.js",
+        "app/static/js/resource_detail.js",
+        "app/static/js/userProfile.js",
+        "app/templates/about.html",
+        "app/templates/home.html",
+        "app/templates/register.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/login",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /login",
+          "vertical": "V1-TASK-046",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/openapi.json",
+      "name": "openapi",
+      "module": "fastapi.applications",
+      "kind": "asset",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "platform",
+          "target": "GET /openapi.json",
+          "vertical": "",
+          "note": "Generado por FastAPI. Es la fuente de verdad del contrato y lo exporta CI (TASK-043)."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/questionnaire",
+      "name": "questionnaire",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/questionnaire.js",
+        "app/static/js/userProfile.js",
+        "app/templates/dashboard.html",
+        "app/templates/userProfile.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/questionnaire",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /questionnaire",
+          "vertical": "V2-TASK-047",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/redoc",
+      "name": "redoc_html",
+      "module": "fastapi.applications",
+      "kind": "asset",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "platform",
+          "target": "GET /redoc",
+          "vertical": "",
+          "note": "Generado por FastAPI."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/register",
+      "name": "register_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/register.js",
+        "app/templates/about.html",
+        "app/templates/home.html",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/register",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /register",
+          "vertical": "V1-TASK-046",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/resources",
+      "name": "resources",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/dashboard.js",
+        "app/static/js/resource_detail.js",
+        "app/templates/career_lab.html",
+        "app/templates/dashboard.html",
+        "app/templates/home.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/resource_detail.html",
+        "app/templates/resources.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/resources",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /resources",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/resources/{resource_id}",
+      "name": "resource_detail",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/admin.js",
+        "app/static/js/dashboard.js",
+        "app/static/js/resource_detail.js",
+        "app/templates/career_lab.html",
+        "app/templates/dashboard.html",
+        "app/templates/home.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/resource_detail.html",
+        "app/templates/resources.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/resources",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /resources/:resourceId",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/roadmap",
+      "name": "roadmap_redirect",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js",
+        "app/static/js/roadmaps_list.js",
+        "app/templates/home.html",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/roadmaps_list.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/roadmap",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /roadmaps",
+          "vertical": "V3-TASK-048",
+          "note": "Redirect legacy al listado."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/roadmaps",
+      "name": "roadmaps_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js",
+        "app/static/js/roadmaps_list.js",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/roadmaps_list.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/roadmaps",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /roadmaps",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/roadmaps/{slug}",
+      "name": "roadmap_detail_page",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/roadmap_detail.js",
+        "app/static/js/roadmaps_list.js",
+        "app/templates/includes/navbar.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/roadmaps_list.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/roadmaps",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /roadmaps/:slug",
+          "vertical": "V3-TASK-048",
+          "note": ""
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/robots.txt",
+      "name": "robots",
+      "module": "app.app",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "frontend Nginx",
+          "vertical": "V1-TASK-046",
+          "note": "Estatico: pasa al servicio frontend."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/sitemap.xml",
+      "name": "sitemap",
+      "module": "app.app",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [],
+      "consumers": [],
+      "consumer_match": "none",
+      "consumer_match_fragment": "",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "frontend Nginx",
+          "vertical": "V1-TASK-046",
+          "note": "ACOPLAMIENTO: _build_sitemap_xml deriva lastmod del mtime de app/templates/*.html. TASK-059 borra esas plantillas y lastmod desapareceria en silencio. Mover el sitemap al frontend antes de retirar Jinja."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/user-profile",
+      "name": "user_profile",
+      "module": "app.views.views",
+      "kind": "view",
+      "actor": "student:optional",
+      "auth_dependencies": [
+        "current_active_user_optional"
+      ],
+      "response_model": null,
+      "tags": [
+        "views"
+      ],
+      "consumers": [
+        "app/static/js/jobs.js",
+        "app/templates/career_lab.html",
+        "app/templates/dashboard.html",
+        "app/templates/includes/sidebar.html",
+        "app/templates/jobs.html"
+      ],
+      "consumer_match": "exact",
+      "consumer_match_fragment": "/user-profile",
+      "decisions": {
+        "GET": {
+          "destination": "retire",
+          "target": "SPA /profile",
+          "vertical": "V2-TASK-047",
+          "note": ""
+        }
+      }
+    }
+  ]
+}
