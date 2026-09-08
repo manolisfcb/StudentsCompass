@@ -108,7 +108,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | COMPLETED | TASK-034 | TASK-036 |
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-034, TASK-035 |
-| TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | TODO | TASK-033, TASK-035 | TASK-036 |
+| TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | IN PROGRESS | TASK-033, TASK-035 | TASK-036 |
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | TODO | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | TODO | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
@@ -5036,7 +5036,7 @@ Risk: MEDIUM
 
 ## TASK-037 — Mover el backend a backend/ sin cambiar comportamiento
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M1
 Category: Refactor / Structure
