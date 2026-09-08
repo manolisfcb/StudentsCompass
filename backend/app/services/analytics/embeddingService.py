@@ -6,8 +6,9 @@ import importlib.util
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from functools import lru_cache
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import numpy as np
 from sqlalchemy import func, select
@@ -19,16 +20,71 @@ LOGGER = logging.getLogger(__name__)
 
 MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 EMBEDDING_DIMS = int(os.getenv("EMBEDDING_DIMS", "384"))
+#: Width of ``resume_embeddings.embedding``. Fixed in the column type, so it
+#: is not configurable: ``EMBEDDING_DIMS`` can be pointed at another model,
+#: but a vector that does not fit the column is refused, not truncated.
+EMBEDDING_COLUMN_DIMS = 384
 # Stored as the model_name for hash-fallback vectors so they never share a
 # (resume_id, model_name) key with real sentence-transformer embeddings.
 HASH_MODEL_NAME = "hash-v1"
 DEFAULT_EMBEDDINGS_PROVIDER = "hash"
 LOCAL_PROVIDER_NAMES = {"local", "sentence-transformers", "sentence_transformers"}
+#: Bumped when the fingerprint recipe changes. Every stored fingerprint carries
+#: the version that produced it, so an old one simply stops matching and the
+#: vector is regenerated once — no migration required, no silent reuse of a
+#: fingerprint computed under different rules.
+FINGERPRINT_VERSION = "v1"
 _EMBEDDING_METRICS = {
     "local_failure_count": 0,
     "fallback_to_hash_count": 0,
     "unknown_provider_fallback_count": 0,
+    "generation_skipped_count": 0,
+    "generation_count": 0,
 }
+
+
+class EmbeddingDimensionMismatch(ValueError):
+    """A provider returned a vector the column cannot hold.
+
+    ``resume_embeddings.embedding`` is ``Vector(384)``. A vector of another
+    width is refused here, with the numbers in the message, rather than at the
+    driver as an opaque write error — or, on SQLite, silently stored and left to
+    poison every similarity search made against it.
+    """
+
+    def __init__(self, *, model_name: str, produced: int, expected: int):
+        super().__init__(
+            f"model {model_name!r} produced a {produced}-dimension vector; "
+            f"resume_embeddings.embedding holds {expected}"
+        )
+        self.model_name = model_name
+        self.produced = produced
+        self.expected = expected
+
+
+def normalize_embedding_text(text: str | None) -> str:
+    """The exact string a provider would be handed.
+
+    Deliberately the same transformation ``generate_embedding_with_model``
+    applies — a plain ``strip()`` — and nothing more. A looser normalisation
+    (collapsing inner whitespace, lowercasing) would let two texts that produce
+    *different* vectors share a fingerprint, and the skip would then serve a
+    wrong vector. Under-normalising only costs a regeneration.
+    """
+    return (text or "").strip()
+
+
+def compute_text_fingerprint(text: str | None, *, model_name: str) -> str:
+    """Fingerprint of the text, the model and the scheme version.
+
+    The model is part of the key because the same text under two models is two
+    different vectors, and the version is part of it so this recipe can change
+    without anything having to reinterpret old values.
+    """
+    payload = "\x00".join(
+        (FINGERPRINT_VERSION, model_name, normalize_embedding_text(text))
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def get_embedding_provider() -> str:
@@ -67,6 +123,9 @@ def get_embedding_status() -> dict:
         "local_failure_count": _EMBEDDING_METRICS["local_failure_count"],
         "fallback_to_hash_count": _EMBEDDING_METRICS["fallback_to_hash_count"],
         "unknown_provider_fallback_count": _EMBEDDING_METRICS["unknown_provider_fallback_count"],
+        "generation_count": _EMBEDDING_METRICS["generation_count"],
+        "generation_skipped_count": _EMBEDDING_METRICS["generation_skipped_count"],
+        "fingerprint_version": FINGERPRINT_VERSION,
         "production_recommendation": (
             "Use EMBEDDINGS_PROVIDER=local with sentence-transformers installed and model cache warmed."
             if provider == "hash"
@@ -118,6 +177,25 @@ class ResumeEmbeddingService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def _stored_embedding(
+        self, resume_id: UUID, model_name: str, *, refresh: bool = False
+    ) -> ResumeEmbedding | None:
+        """The stored row, or ``None``.
+
+        ``refresh`` reloads it over whatever the session already has. The upsert
+        writes through Core, which does not go past the identity map, so without
+        this a caller would be handed the pre-write object and conclude nothing
+        had changed.
+        """
+        statement = select(ResumeEmbedding).where(
+            ResumeEmbedding.resume_id == resume_id,
+            ResumeEmbedding.model_name == model_name,
+        )
+        if refresh:
+            statement = statement.execution_options(populate_existing=True)
+        result = await self.session.execute(statement)
+        return result.scalar_one_or_none()
+
     async def upsert_resume_embedding_from_text(
         self,
         *,
@@ -125,15 +203,50 @@ class ResumeEmbeddingService:
         text: str | None,
         model_name: str | None = None,
     ) -> ResumeEmbedding | None:
-        result = await generate_embedding_with_model(text or "")
+        """Store the embedding of ``text``, generating it only if it would differ.
+
+        The old order was: generate, then look, then write — every call paid for
+        a vector and a commit even when nothing had changed. With the hash
+        provider that is CPU; with the local model it is a sentence-transformer
+        forward pass and the RSS that comes with it. Now the fingerprint of
+        (text, model, scheme version) is compared *first*, and an identical
+        request costs one SELECT and nothing else.
+
+        A stored row whose fingerprint is NULL has no demonstrable provenance —
+        it predates the column — so it is regenerated once and then carries one.
+        """
+        expected_model = model_name or get_effective_model_name()
+        clean_text = normalize_embedding_text(text)
+        if not clean_text or not is_embedding_generation_enabled():
+            return None
+
+        fingerprint = compute_text_fingerprint(clean_text, model_name=expected_model)
+        existing = await self._stored_embedding(resume_id, expected_model)
+        if (
+            existing is not None
+            and existing.text_fingerprint == fingerprint
+            and existing.fingerprint_version == FINGERPRINT_VERSION
+            and existing.embedding is not None
+        ):
+            _EMBEDDING_METRICS["generation_skipped_count"] += 1
+            return existing
+
+        result = await generate_embedding_with_model(clean_text)
         if result is None:
             return None
+        _EMBEDDING_METRICS["generation_count"] += 1
         embedding, effective_model_name = result
+
+        # The provider may have fallen back (local -> hash), which is a
+        # different vector space and a different key. Fingerprint under the
+        # model that actually produced the vector, never the one we hoped for.
+        stored_model = model_name or effective_model_name
         return await self.upsert_resume_embedding(
             resume_id=resume_id,
-            model_name=model_name or effective_model_name,
+            model_name=stored_model,
             dims=len(embedding),
             embedding=embedding,
+            text_fingerprint=compute_text_fingerprint(clean_text, model_name=stored_model),
         )
 
     async def upsert_resume_embedding(
@@ -143,27 +256,62 @@ class ResumeEmbeddingService:
         model_name: str,
         dims: int,
         embedding: list[float],
+        text_fingerprint: str | None = None,
     ) -> ResumeEmbedding:
-        result = await self.session.execute(
-            select(ResumeEmbedding).where(
-                ResumeEmbedding.resume_id == resume_id,
-                ResumeEmbedding.model_name == model_name,
+        if len(embedding) != EMBEDDING_COLUMN_DIMS:
+            raise EmbeddingDimensionMismatch(
+                model_name=model_name,
+                produced=len(embedding),
+                expected=EMBEDDING_COLUMN_DIMS,
             )
-        )
-        existing = result.scalar_one_or_none()
-        if existing:
-            existing.dims = dims
-            existing.embedding = embedding
+
+        values = {
+            "resume_id": resume_id,
+            "model_name": model_name,
+            "dims": dims,
+            "embedding": embedding,
+            "text_fingerprint": text_fingerprint,
+            "fingerprint_version": FINGERPRINT_VERSION if text_fingerprint else None,
+        }
+
+        # Atomic on (resume_id, model_name): two first generations racing for
+        # the same resume used to be a check-then-insert against a unique index,
+        # so one of them lost with an IntegrityError.
+        dialect = self.session.bind.dialect.name if self.session.bind is not None else ""
+        if dialect in {"postgresql", "sqlite"}:
+            if dialect == "postgresql":
+                from sqlalchemy.dialects.postgresql import insert as dialect_insert
+            else:
+                from sqlalchemy.dialects.sqlite import insert as dialect_insert
+
+            statement = dialect_insert(ResumeEmbedding).values(
+                id=uuid4(), **values
+            )
+            await self.session.execute(
+                statement.on_conflict_do_update(
+                    index_elements=["resume_id", "model_name"],
+                    set_={
+                        "dims": statement.excluded.dims,
+                        "embedding": statement.excluded.embedding,
+                        "text_fingerprint": statement.excluded.text_fingerprint,
+                        "fingerprint_version": statement.excluded.fingerprint_version,
+                        "updated_at": datetime.now(timezone.utc),
+                    },
+                )
+            )
+            await self.session.commit()
+            stored = await self._stored_embedding(resume_id, model_name, refresh=True)
+            assert stored is not None  # the upsert just wrote it
+            return stored
+
+        existing = await self._stored_embedding(resume_id, model_name)  # pragma: no cover
+        if existing:  # pragma: no cover — no other engine is supported
+            for field, value in values.items():
+                setattr(existing, field, value)
             await self.session.commit()
             await self.session.refresh(existing)
             return existing
-
-        resume_embedding = ResumeEmbedding(
-            resume_id=resume_id,
-            model_name=model_name,
-            dims=dims,
-            embedding=embedding,
-        )
+        resume_embedding = ResumeEmbedding(**values)  # pragma: no cover
         self.session.add(resume_embedding)
         await self.session.commit()
         await self.session.refresh(resume_embedding)

@@ -92,7 +92,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
-| TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
+| TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
 | TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
 | TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
 | TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
@@ -3397,7 +3397,7 @@ TASK-022, no esta ficha.
 
 ## TASK-021 — Evitar regeneración de embeddings idénticos
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance / Database
@@ -3467,12 +3467,12 @@ Grupo D; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Evitar regeneración de embeddings idénticos.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Evitar regeneración de embeddings idénticos.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -3491,6 +3491,110 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: HIGH
+
+### Completion Notes
+
+`upsert_resume_embedding_from_text` generaba el vector, después miraba si ya existía uno, y
+después escribía — en ese orden, en cada llamada. Abrir el gap analysis dos veces sobre un
+CV sin cambios pagaba dos veces el mismo vector y lo escribía dos veces.
+
+**Lo que se persiste.** Dos columnas nuevas en `resume_embeddings`: `text_fingerprint`
+(SHA-256 de texto + modelo + versión del esquema) y `fingerprint_version`. Con fingerprint
+igual, regenerar produciría el mismo vector, así que se saltan **la generación y la
+escritura**: una petición idéntica cuesta un SELECT y nada más.
+
+**La normalización es deliberadamente mínima:** exactamente el `strip()` que
+`generate_embedding_with_model` ya aplica, nada más. Colapsar espacios internos o pasar a
+minúsculas haría que dos textos que producen vectores *distintos* compartieran fingerprint,
+y entonces el salto serviría un vector equivocado. Normalizar de menos solo cuesta una
+regeneración; normalizar de más devuelve datos incorrectos. Fijado en
+`test_normalisation_is_exactly_what_the_provider_receives`.
+
+**El modelo forma parte de la clave** porque el mismo texto bajo dos modelos son dos
+vectores distintos, y la versión también, para que la receta pueda cambiar sin que nada
+tenga que reinterpretar valores viejos: un `fingerprint_version` antiguo simplemente deja de
+coincidir y el vector se regenera una vez. No hace falta migración para eso.
+
+**Espacios de vectores separados.** Si el proveedor local falla y cae a hash, el vector se
+almacena y se fingerprintea bajo el modelo que realmente lo produjo (`hash-v1`), nunca bajo
+el que se esperaba. `hash-v1` y `sentence-transformers/all-MiniLM-L6-v2` conviven como dos
+filas y `find_similar_resumes` sigue filtrando por modelo, verificado contra pgvector real
+en `test_similarity_only_compares_inside_one_model_space`. **No se promete equivalencia de
+calidad entre ambos.**
+
+**Dimensiones.** `resume_embeddings.embedding` es `Vector(384)`. Un vector de otro ancho se
+rechaza aquí con `EmbeddingDimensionMismatch` y los dos números en el mensaje, en vez de
+llegar al driver como un error opaco o —en SQLite— guardarse en silencio y envenenar cada
+búsqueda de similitud posterior.
+
+**Upsert atómico.** Dos primeras generaciones simultáneas sobre el mismo CV eran un
+check-then-insert contra el índice único `(resume_id, model_name)`, así que una perdía con
+IntegrityError. Ahora es `ON CONFLICT DO UPDATE`. Verificado con dos conexiones reales en
+`test_two_first_generations_racing_leave_one_row`.
+
+**Migración `c4a71e2b90d8`** (`down_revision = b2e9f4a71c33`): añade las dos columnas y
+**deja NULL las filas existentes a propósito**. El texto que las produjo no es recuperable
+—`resumes.ai_summary` puede haberse reescrito— así que no hay entrada demostrable que
+fingerprintear. Inventar un hash haría que el servicio se saltara una regeneración
+apoyándose en una suposición. NULL significa «sin provenance»: la fila se regenera una vez,
+bajo demanda, y desde entonces lleva un fingerprint real. El número de filas afectadas se
+registra en el log antes de terminar. `downgrade()` quita las columnas; perder los
+fingerprints solo cuesta una regeneración por fila, que es justo el comportamiento anterior.
+
+**Medición (30 llamadas idénticas tras una primera generación, comparando el orden anterior
+contra el nuevo sobre los mismos datos):**
+
+| Proveedor | Writes | SELECT | CPU/llamada | Wall/llamada |
+| --- | --- | --- | --- | --- |
+| `hash` | 30 → **0** | 30 → 30 | 1.62 → 0.23 ms | 2.17 → 0.28 ms |
+| `local` (fallo simulado de 4 ms) | 30 → **0** | 30 → 30 | 1.79 → 0.51 ms | 7.76 → 0.55 ms |
+
+Con el proveedor local simulado la llamada cálida pasa de 7.76 ms a 0.55 ms — un factor de
+14 — y en ambos casos las escrituras desaparecen por completo. Los contadores nuevos
+`generation_count` y `generation_skipped_count` salen en `get_embedding_status()`: 1
+generación y 30 saltos en la corrida de hash.
+
+**Tests.**
+
+- `backend/tests/test_embedding_fingerprint.py` (nuevo, 13 casos): segunda petición idéntica
+  con cero generaciones y cero escrituras, la normalización exacta, texto cambiado / versión
+  vieja / fingerprint NULL / vector NULL regenerando, los dos espacios de modelo sin
+  mezclarse, el fallback almacenando bajo la clave hash, la dimensión incompatible
+  rechazada, y generación deshabilitada o texto vacío sin escribir nada.
+- `backend/tests/integration/test_embedding_fingerprint_pg.py` (nuevo, 5 casos, lane
+  PostgreSQL): round-trip por pgvector con su fingerprint, la carrera de dos primeras
+  generaciones dejando una fila, similarity que no cruza espacios de modelo, el índice HNSW
+  presente, y la migración dejando las filas viejas sin provenance y regenerándolas una vez.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_embedding_fingerprint.py
+# 13 passed
+
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_embedding_fingerprint_pg.py
+# 5 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 493 passed, 72 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 72 passed
+
+uv run --project backend ruff check backend/app backend/tests backend/alembic
+# All checks passed!
+```
+
+**Límites de la validación.** El delta de RSS midió 0.0 MB en ambos proveedores y **no es una
+medida útil**: el proveedor hash no retiene memoria y el «local» de la prueba es un
+sustituto con una pausa de 4 ms, no un sentence-transformer real. Medir el RSS de verdad
+exigiría descargar el modelo, que es una dependencia pesada y una descarga de red que la
+suite no hace; lo que sí queda demostrado es que la ruta cálida deja de invocar al proveedor
+por completo, así que el coste de memoria del modelo simplemente no se paga. No se hicieron
+llamadas pagadas: ninguno de los dos proveedores es de API. Sin smoke de navegador: la
+sincronización de embeddings ocurre dentro de `analyze_gap` y no cambia ningún payload.
 
 
 ## TASK-022 — Ejecutar CP-SAT fuera del loop con concurrencia acotada

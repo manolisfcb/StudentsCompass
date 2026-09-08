@@ -27,6 +27,18 @@ class ResumeEmbedding(Base):
     # Desactivado: embedding puede ser nulo
     embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=True)
 
+    # What this vector was made from: the fingerprint of the exact text handed
+    # to the provider, together with the model name and the fingerprint scheme
+    # version. Equal fingerprint means regenerating would produce the same
+    # vector, so both the generation and the write are skipped.
+    #
+    # NULL means "no demonstrable provenance": rows written before the column
+    # existed cannot be given a fingerprint, because the text that produced
+    # them is not recoverable. They are regenerated once, on demand, rather
+    # than labelled with an invented hash.
+    text_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fingerprint_version: Mapped[str | None] = mapped_column(String(16), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

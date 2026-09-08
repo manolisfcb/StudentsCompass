@@ -640,6 +640,8 @@ def create_schema(connection) -> None:
         sa.Column('model_name', sa.String(length=120), nullable=False),
         sa.Column('dims', sa.Integer(), nullable=False),
         sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=True),
+        sa.Column('text_fingerprint', sa.String(length=64), nullable=True),
+        sa.Column('fingerprint_version', sa.String(length=16), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(['resume_id'], ['resumes.id'], ondelete='CASCADE'),
