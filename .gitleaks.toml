@@ -10,7 +10,7 @@ title = "StudentsCompass"
 [extend]
 useDefault = true
 
-[allowlist]
+[[allowlists]]
 description = "Fixtures sintéticas del test de redacción"
 # `tests/test_error_redaction.py` prueba que los logs enmascaran credenciales, y
 # para eso tiene que contener credenciales con la forma correcta. Son inventadas
@@ -21,4 +21,20 @@ description = "Fixtures sintéticas del test de redacción"
 # barato.
 paths = [
     '''backend/tests/test_error_redaction\.py''',
+]
+
+[[allowlists]]
+description = "Artefactos generados, que no son parte de ningún commit"
+# El job `secrets` de CI escanea un checkout recién hecho, donde nada de esto
+# existe. Local sí: correr la suite deja `__pycache__` con una copia compilada
+# del propio test de redacción, e instalar el frontend deja `node_modules`. Que
+# el mismo comando dé el mismo veredicto en las dos partes es lo que hace que
+# alguien lo corra antes de commitear. Excluir estos directorios no puede
+# esconder un secreto commiteado: ninguno está versionado.
+paths = [
+    '''(^|/)__pycache__/''',
+    '''(^|/)node_modules/''',
+    '''(^|/)\.venv/''',
+    '''(^|/)htmlcov/''',
+    '''(^|/)dist/''',
 ]
