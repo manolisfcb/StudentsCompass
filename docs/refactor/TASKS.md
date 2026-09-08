@@ -101,7 +101,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | TODO | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
-| TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
+| TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
 | TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
@@ -4784,7 +4784,7 @@ Risk: MEDIUM
 
 ## TASK-030 — Validar respuestas y respetar versión histórica de cuestionario
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-3
 Category: Business Logic / Bug Fix
@@ -4854,12 +4854,12 @@ Grupo B; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Validar respuestas y respetar versión histórica de cuestionario.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Validar respuestas y respetar versión histórica de cuestionario.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4878,6 +4878,116 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+Tres defectos silenciosos en el scoring y uno en el perfil. Todos son Bug Fix declarados de
+esta ficha.
+
+**El scoring aceptaba cualquier cosa.** `submit_questionnaire` buscaba cada respuesta con
+`.get(..., {})` y sumaba lo que saliera:
+
+1. Un `question_id` inexistente aportaba cero y parecía una respuesta legítima.
+2. Un `option_id` de **otra** pregunta hacía lo mismo.
+3. La misma pregunta respondida dos veces **se contaba dos veces**, que es una forma de
+   inflar la puntuación de una carrera repitiendo una respuesta.
+
+`_validate_answers` los rechaza con **422** nombrando los ids ofensivos, así que un cliente
+roto se entera de qué está mal en vez de recibir en silencio un resultado equivocado. Nada se
+persiste cuando la validación falla, fijado en
+`test_nothing_is_persisted_when_the_submission_is_refused`.
+
+**La política de preguntas opcionales queda explícita**, que era un requisito literal de la
+ficha: dejar preguntas sin responder **está permitido** y simplemente no puntúa. Es el
+comportamiento que el endpoint siempre tuvo; ahora está escrito y fijado en
+`test_a_partial_submission_is_accepted_and_scores_only_what_it_answered` y en
+`test_an_empty_submission_is_accepted_and_scores_nothing`, de modo que cambiarlo tenga que
+ser deliberado. Los pesos, el orden descendente y el criterio de desempate no se tocaron:
+`test_the_scores_are_the_sum_of_the_selected_option_weights` verifica la aritmética contra la
+definición.
+
+Un `kind` de pregunta desconocido también es 422. Hoy todas las preguntas de todas las
+definiciones son `single`; añadir otro tipo obliga a pasar por aquí en vez de heredar un
+comportamiento adivinado.
+
+**El perfil mostraba las preguntas equivocadas.** Una fila de `user_questionnaires` guarda la
+`version` bajo la que se respondió, pero `get_user_questionnaire_profile` devolvía
+`get_questionnaire()`, es decir la definición **actual**. Tras revisar el cuestionario, un
+perfil antiguo enseñaba ids de opción que ya no existen junto a preguntas que el usuario
+nunca vio, y un conjunto de resultados que no se deriva ni de unas ni de otras.
+
+`app/services/accounts/questionnaireCatalog.py` (nuevo) indexa las definiciones **por la
+versión que declaran**, no por su nombre de fichero: el fichero vigente es `v1/v2.json` y
+declara `"version": "v3"`, así que una búsqueda por ruta habría estado indexada sobre una
+mentira. Hoy hay dos versiones en disco, `v1` y `v3`.
+
+Cuando la definición almacenada ya no está en disco, el endpoint **lo dice** —
+`questionnaire: null` y `questionnaire_definition_available: false` — en vez de sustituirla
+por la actual. Perder las preguntas es malo; enseñar otras como si fueran las mismas es peor.
+Las respuestas y los resultados del usuario se devuelven igualmente: son su registro.
+
+**Los snapshots no se recalculan.** `results` se devuelve tal como se guardó, nunca
+re-derivado con el JSON actual, fijado en
+`test_a_stored_result_is_never_recomputed_from_the_current_definition`.
+
+**Cambio en un test existente, y por qué.** `test_questionnaire_profile_returns_latest_response`
+guardaba una versión inventada (`"latest"`) y afirmaba que `data["questionnaire"]["version"]`
+venía relleno — es decir, **codificaba el defecto**: la definición actual servida para
+cualquier versión. Se cambió a una versión que existe en disco (`v1`) y a exigir que la
+definición devuelta sea la `v1`. La intención del test —que gana la respuesta más reciente—
+se conserva intacta.
+
+**Evidencia del antes.** Con la implementación anterior, los tests nuevos fallan así:
+
+```
+assert 200 == 422   (question_id desconocido)
+assert 200 == 422   (option_id de otra pregunta)
+assert 200 == 422   (pregunta repetida, misma opción)
+assert 200 == 422   (pregunta repetida, opción distinta)
+assert 1 == 0       (la submission rechazada se había persistido)
+AssertionError: assert 'v3' == 'v1'   (el perfil devolvía la definición actual)
+```
+
+**Tests.**
+
+- `backend/tests/test_questionnaire_validation.py` (nuevo, 17 casos): el catálogo indexado por
+  versión declarada, versión desconocida rechazada, submission válida conservando scores y
+  orden, paridad de la aritmética de pesos, submissions parcial y vacía aceptadas, los cuatro
+  422, nada persistido tras un rechazo, el perfil antiguo con su definición antigua, la
+  definición retirada declarada como ausente, el snapshot no recalculado, definiciones sin
+  versión o con JSON corrupto ignoradas sin reventar, y los `weights` que siguen sin salir al
+  cliente.
+- `backend/tests/test_questionnaire_browser.py` (nuevo, 2 casos, **lane de navegador con
+  Chromium real**): esto era lo importante antes de empezar a devolver 422. Se conduce
+  `questionnaire.js` de verdad, se responde el cuestionario entero, **se vuelve atrás y se
+  cambia una respuesta** —que es exactamente como un cliente ingenuo produciría un
+  duplicado— y se inspecciona el payload que la página postea. El cliente mantiene las
+  respuestas en un objeto indexado por `question_id`, así que un duplicado es imposible por
+  construcción y cambiar una respuesta la **reemplaza**. Ningún `question_id` ni `option_id`
+  sale de fuera de la definición recibida. **El frontend actual no puede provocar ninguno de
+  los 422 nuevos.**
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_questionnaire_validation.py tests/test_questionnaire_profile.py tests/test_questionnaire_browser.py
+# 21 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 557 passed, 76 skipped
+
+uv run --project backend ruff check backend/app backend/tests
+# All checks passed!
+```
+
+**Límites de la validación.** No se ejecutó la lane PostgreSQL: esta ficha no toca schema,
+locks ni migraciones — `user_questionnaires` no cambia de forma. No se hicieron llamadas
+pagadas: el scoring es aritmética local sobre un JSON. El smoke de navegador cubre el flujo
+de responder y enviar; **no** cubre la pantalla de perfil, que lee `questionnaire` y ahora
+puede recibir `null` para una versión retirada: hoy no hay ninguna fila en esa situación
+—las dos versiones en disco son las únicas que el producto ha servido— pero un cliente que
+asuma que ese campo nunca es nulo tendría que tratarlo, y el campo
+`questionnaire_definition_available` existe justamente para que pueda hacerlo sin adivinar.
 
 
 ## TASK-031 — Verificar compatibilidad integrada y ensayar rollout/restore
