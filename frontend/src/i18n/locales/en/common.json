@@ -1,0 +1,12 @@
+{
+  "app.name": "StudentsCompass",
+  "smoke.title": "Same-origin smoke check",
+  "smoke.intro": "The browser loaded this page from one origin. Every probe below is a relative path, so if the answers arrive the proxy in front of the SPA is forwarding to the API without CORS.",
+  "smoke.probe.path": "Path",
+  "smoke.probe.expected": "Expected",
+  "smoke.probe.actual": "Actual",
+  "smoke.probe.pending": "checking…",
+  "smoke.probe.failed": "no response",
+  "smoke.origin": "Origin seen by the browser: {{origin}}",
+  "smoke.rerun": "Run the probes again"
+}

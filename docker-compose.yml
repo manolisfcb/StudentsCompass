@@ -1,0 +1,169 @@
+# Local topology, shaped like production (plan 08 §2, §3, §9 Fase 1).
+#
+# The point of this file is that the browser sees exactly one origin —
+# http://localhost:8080, served by Nginx — just as it will see one domain in
+# Cloud Run. Cookies, CSRF and navigation are therefore exercised locally under
+# the same rules they run under in production, instead of being designed
+# against a cross-site setup and rewritten at deploy time.
+#
+#   docker compose up --build
+#   open http://localhost:8080/__smoke
+#
+# What is deliberately *not* here: no secret is baked into any image, and the
+# frontend image receives API_ORIGIN through Nginx, never through the bundle
+# (§11).
+
+x-backend-env: &backend-env
+  ENV: development
+  DATABASE_URL: postgresql+asyncpg://compass:compass@db:5432/studentscompass
+  REDIS_URL: redis://redis:6379/0
+  # Development-only value. Production reads this from Secret Manager
+  # (TASK-055); userService refuses to start without it when ENV=production.
+  SECRET_KEY: local-development-secret-not-for-deployment
+  # Alembic is the only authority on schema (§12). create_all stays off here
+  # exactly as it is off in production; the migrate service does the work.
+  AUTO_CREATE_TABLES: "0"
+  # The compose network reaches the API from an RFC1918 peer, which is what a
+  # managed load balancer looks like from inside the container.
+  # See docs/ingress_and_client_ip.md.
+  TRUSTED_PROXY_IPS: private
+  # Default off: nobody should discover they spent Gemini quota because a
+  # local stack picked up a real key. Override in your shell to work on AI.
+  AI_KILL_SWITCH: "${AI_KILL_SWITCH:-1}"
+  GENAI_API_KEY: "${GENAI_API_KEY:-}"
+  # Provider credentials are passed through from the developer's shell and are
+  # never written into this file or into an image. Leaving them empty is the
+  # normal case and the stack starts fine; what does not work without them is
+  # CV analysis, because every sweep builds a storage service and S3Service
+  # raises when the bucket is not configured. The api and worker services log
+  # that failure and keep running (the runner never dies on a failed sweep).
+  # See "Límites conocidos" in docs/refactor/ADR-002-frontend-styling-and-i18n.md.
+  AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+  AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
+  AWS_REGION: "${AWS_REGION:-us-east-1}"
+  BUCKET_NAME: "${BUCKET_NAME:-}"
+  RESOURCES_BUCKET_NAME: "${RESOURCES_BUCKET_NAME:-}"
+
+services:
+  db:
+    # Same image the integration CI lane uses, so a migration that needs the
+    # vector extension fails in both places or in neither.
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: compass
+      POSTGRES_PASSWORD: compass
+      POSTGRES_DB: studentscompass
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U compass -d studentscompass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    # Same image as the API, by construction: in Cloud Run the migrate Job runs
+    # the API image at the same SHA (§10 step 3), and using a different build
+    # locally would hide a drift that only appears on deploy.
+    build:
+      context: ./backend
+    environment: *backend-env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ./backend
+    environment: *backend-env
+    ports:
+      # Loopback only, and not the address the browser is meant to use. It
+      # exists so `npm run dev` can proxy to a real backend and so curl can
+      # reach the API directly; pointing a browser here would reintroduce the
+      # second origin this file exists to avoid.
+      - "127.0.0.1:8000:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # /healthz and /readyz do not exist yet — TASK-045 adds them, and
+      # nginx.conf already proxies both. Until then this hits a route that
+      # touches neither the database nor a provider, which is the same thing
+      # /healthz will assert. Swap it for /healthz when TASK-045 lands.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/robots.txt').read()"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  worker:
+    build:
+      context: ./backend
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    # The durable CV-analysis runner as a process of its own, with no HTTP
+    # server attached. Today the API replicas run this same loop inside their
+    # lifespan, so locally two sweepers are live at once; that is safe because
+    # a job is claimed with a single conditional UPDATE, so exactly one of them
+    # ever starts a given analysis (app/services/ai/cvAnalysisRunner.py).
+    #
+    # It is declared here anyway because it is the shape the plan commits to:
+    # TASK-054 replaces this command with an outbox consumer and removes the
+    # loop from the web process, and this service is where that lands. No
+    # backend code changes for this file — it drives the runner's public API.
+    command:
+      - python
+      - -c
+      - |
+        import asyncio
+
+        from app.db import async_session
+        from app.services.ai.cvAnalysisRunner import CVAnalysisRunner
+
+
+        async def main() -> None:
+            runner = CVAnalysisRunner(async_session)
+            await runner.start()
+            await asyncio.Event().wait()
+
+
+        asyncio.run(main())
+
+  web:
+    build:
+      context: ./frontend
+    environment:
+      # Injected into Nginx at container start, never into the bundle (§11).
+      API_ORIGIN: http://api:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:

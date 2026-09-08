@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Design tokens — the single palette of the migration.
+ *
+ * These values are not new. They are lifted verbatim from the stylesheets the
+ * product ships today, which declare the same colours three times under three
+ * naming schemes: `--primary-color` in `style.css`, `--clr-teal-dark` in
+ * `community_feed.css` and `--admin-primary` in `admin.css`. #0F766E is the
+ * brand teal in two of them; the admin sheet drifted to indigo on a dark
+ * ground. Consolidating them here is what stops the React app from inheriting
+ * three sources of truth for one colour.
+ *
+ * Tailwind v4 compiles `@theme` entries into plain CSS custom properties *and*
+ * into utilities, so `--color-brand` is reachable as `bg-brand` from a
+ * component and as `var(--color-brand)` from any hand-written CSS that still
+ * needs it. See docs/refactor/ADR-002-frontend-styling-and-i18n.md.
+ */
+@theme {
+  --color-brand: #0f766e;
+  --color-brand-strong: #0b5d57;
+  --color-brand-soft: #5eead4;
+  --color-accent: #fb7185;
+
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+
+  --color-ink: #0f172a;
+  --color-ink-soft: #475569;
+  --color-ink-muted: #94a3b8;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  --font-sans: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* The admin console is the one screen that ships a dark ground today. It
+ * becomes a scope on the same tokens rather than a fourth palette; the
+ * vertical that migrates admin (TASK-053) fills it in against the captured
+ * baseline. */
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+}

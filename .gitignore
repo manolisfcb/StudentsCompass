@@ -28,6 +28,12 @@ node_modules/
 scripts/
 scripts/*
 
+# Frontend build output (TASK-038). `node_modules/` above already covers
+# frontend/node_modules; the bundle is produced by `npm run build` and by the
+# frontend image, never committed.
+frontend/dist/
+frontend/coverage/
+
 deliverables/
 
 # Baseline visual de TASK-035: 44 PNG, ~18 MB por captura. Se regeneran con

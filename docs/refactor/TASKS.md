@@ -109,7 +109,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | COMPLETED | TASK-034 | TASK-036 |
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-034, TASK-035 |
 | TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | COMPLETED | TASK-033, TASK-035 | TASK-036 |
-| TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | IN PROGRESS | TASK-037 | TASK-036 |
+| TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | COMPLETED | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | TODO | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
 | TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | TODO | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
@@ -5211,7 +5211,7 @@ Risk: MEDIUM
 
 ## TASK-038 — Crear el scaffold React y el compose local con proxy same-origin
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M1
 Category: Frontend / Infrastructure
@@ -5279,13 +5279,141 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] `docker compose up` levanta migrate, api, worker y web, y el navegador ve un solo origen.
-- [ ] El frontend hace lint, typecheck, test y build en limpio.
-- [ ] El bundle no contiene secretos; `API_ORIGIN` se resuelve en Nginx.
-- [ ] La estrategia de estilos e i18n está elegida y escrita, no pendiente.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] `docker compose up` levanta migrate, api, worker y web, y el navegador ve un solo origen.
+- [x] El frontend hace lint, typecheck, test y build en limpio.
+- [x] El bundle no contiene secretos; `API_ORIGIN` se resuelve en Nginx.
+- [x] La estrategia de estilos e i18n está elegida y escrita, no pendiente.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
+
+### Completion Notes
+
+Cero cambios en el backend: el diff es `frontend/` nuevo, `docker-compose.yml`
+nuevo, un ADR y tres líneas de documentación. `backend/` no aparece en él.
+
+**Un solo origen, demostrado en navegador y no leyendo archivos.** Con el stack
+levantado, Chromium carga `http://localhost:8080/__smoke`, la página sondea tres
+rutas relativas y el DOM muestra el status real de cada una. Las peticiones que
+emite el navegador salen todas al mismo origen:
+
+| Petición | Vía Nginx (8080) | Vía Vite dev (5173) | Qué prueba |
+| --- | --- | --- | --- |
+| `GET /__smoke` | 200 HTML | 200 HTML | el fallback de historial sirve rutas profundas |
+| `GET /api/v1/users/me` | 401 JSON | 401 JSON | la petición llegó a FastAPI, no a la SPA |
+| `GET /healthz` | 404 JSON | 404 JSON | el prefijo se proxea (TASK-045 lo publicará) |
+| `GET /readyz` | 404 JSON | 404 JSON | ídem |
+
+`origenes distintos: ['http://localhost:8080']`. Los 404 son la respuesta
+honesta hoy y aun así son evidencia: si el prefijo no se estuviera proxeando,
+`/healthz` devolvería 200 con el HTML de la SPA en vez de 404 JSON del backend.
+Los sondeos se eligieron por eso —cada uno tiene un status *conocido* en un
+sistema correcto—, no para que salieran verdes.
+
+**Bug encontrado y corregido dentro de la ficha: DNS obsoleto en el proxy.** Con
+`proxy_pass http://api:8080` literal, Nginx resuelve el nombre una vez al
+arrancar y cachea la dirección para toda la vida del proceso. Recrear el
+contenedor de la API dejó el proxy devolviendo 502 contra una IP donde ya no
+escuchaba nadie, sin recuperación. Reproducido a propósito: se ocupó la IP
+anterior con un contenedor señuelo para forzar que la API arrancara en otra
+(`172.21.0.4` → `172.21.0.7`), sin tocar el contenedor `web`. Con `resolver` y
+una variable en `proxy_pass` el proxy sigue la dirección nueva; el contenedor
+`web` conserva su `StartedAt` original, así que no se arregló reiniciándolo.
+Importa fuera de local: una plataforma gestionada re-direcciona sus frontends
+igual, y esto habría sido un 502 intermitente que sobrevive a su causa.
+`API_DNS_RESOLVER` queda como segunda variable inyectada (`127.0.0.11` en
+compose); **TASK-056 debe fijarla al nameserver del contenedor en Cloud Run,
+`169.254.169.254`.**
+
+**Sin secretos en la imagen del frontend.** La imagen de runtime contiene
+`index.html`, `50x.html` y `assets/`, y nada más: no hay Node, ni fuentes, ni
+`/build`. Una búsqueda de patrones de credencial (`AKIA…`, `AIza…`, claves
+privadas PEM, `SECRET_KEY`, `AWS_SECRET`, `GENAI_API_KEY`, `IMAGEKIT_PRIVATE`)
+sobre el bundle y sobre `/etc/nginx` no devuelve nada. `API_ORIGIN` vive como
+`${API_ORIGIN}` en la plantilla y solo se resuelve a `http://api:8080` dentro
+del contenedor en marcha; la cadena no aparece en el bundle. El filtro
+`NGINX_ENVSUBST_FILTER='^API_'` es lo que evita que `envsubst` se coma las
+variables propias de Nginx: se verificó que `$uri`, `$request_uri`,
+`$proxy_add_x_forwarded_for` y el bloque `map` sobreviven intactos en la config
+renderizada.
+
+**Validación del frontend, en limpio.**
+
+| Check | Resultado |
+| --- | --- |
+| `npm run lint` | sin hallazgos |
+| `npm run typecheck` | sin errores (`strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`) |
+| `npm test` | 7 passed (2 archivos) |
+| `npm run i18n:check` | 1 locale, 10 claves |
+| `npm run build` | 369 kB JS / 116 kB gzip, 7,9 kB CSS |
+
+Los tests no son de humo: comprueban que toda petición sale con ruta relativa,
+que lleva `credentials: "same-origin"`, y que `apiRequest` **rechaza** una URL
+absoluta —que daría al navegador un segundo origen y dejaría las cookies fuera—.
+
+**Dos decisiones que estaban abiertas, ahora cerradas** en
+[ADR-002](ADR-002-frontend-styling-and-i18n.md), que es lo que la ficha pedía
+escribir:
+
+- *Estilos: Tailwind v4 con la paleta actual en `@theme`.* No es una preferencia
+  de herramienta. Hoy hay 23 hojas y 13 787 líneas con tres bloques `:root` que
+  declaran el mismo color con tres nombres (`--primary-color`, `--clr-teal-dark`,
+  `--admin-primary`); dos coinciden en `#0F766E` y la tercera derivó a otra
+  paleta. En Tailwind v4 `@theme` compila a custom properties *y* a utilidades,
+  así que la opción «tokens CSS» de §7 se obtiene entera y además desaparece el
+  mecanismo que produjo una hoja por pantalla. Los valores se toman literales de
+  `style.css`; no se rediseñó nada.
+- *i18n: i18next desde ya, con `en` como único locale.* El producto es monolingüe
+  (`<html lang="en">`, sin contenido traducido en 27 templates ni en 23 JS), así
+  que la decisión no se toma por el idioma sino por asimetría de coste: adoptarlo
+  ahora cuesta un provider y un JSON; retrofitear `t()` sobre ocho verticales
+  después cuesta reabrirlas todas. Además §10 del plan ya lista «validación i18n»
+  en la lane de frontend, así que el pipeline lo daba por existente.
+
+**Reglas del plan convertidas en checks, no en convenciones.** «Ningún
+componente llama `fetch` directamente» (§7) es una regla de ESLint con una
+excepción declarada para `src/api/client.ts` y para los tests, que sondean el
+global precisamente para probar el contrato. «Rutas relativas» es una excepción
+en tiempo de ejecución dentro de `apiRequest`. «Sin cadenas literales» la vigila
+`tools/check-i18n.mjs`, que además falla si una `t("…")` del código no está en el
+catálogo. Los prefijos proxeados están declarados una vez en `vite.config.ts` y
+una vez en `nginx.conf`, con la nota de que divergir es la clase de bug que esta
+ficha existe para evitar.
+
+**Lo que el compose local todavía no puede hacer, dicho explícitamente.** El
+stack arranca completo y el producto funciona, pero el análisis de CV no: cada
+barrido del runner construye un `S3Service` que lanza si faltan
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` o `BUCKET_NAME`. `api` y `worker`
+registran el fallo y siguen vivos —el runner nunca muere por un barrido
+fallido—, y las credenciales se pasan desde el shell, nunca versionadas. Un
+MinIO local no bastaría sin tocar el backend: `S3Service` no admite
+`endpoint_url`. Queda para TASK-054, que es dueña del worker.
+
+**El servicio `worker`, con su límite actual a la vista.** El plan lo describe
+consumiendo una outbox que todavía no existe (TASK-054). Aquí ejecuta el runner
+durable existente como proceso propio, sin servidor HTTP, usando solo su API
+pública —cero código nuevo de backend—. En local conviven dos barredores, porque
+el proceso `api` también arranca el suyo en el lifespan; es seguro porque
+reclamar un job es un único UPDATE condicional, así que exactamente uno lo
+empieza. Se declara igualmente porque es la forma a la que el plan se
+compromete: TASK-054 sustituye este `command` y saca el loop del proceso web.
+
+**Decisiones menores, registradas para que no se re-litiguen.** El healthcheck
+del compose apunta hoy a una ruta que no toca base de datos ni proveedores,
+porque `/healthz` y `/readyz` no existen hasta TASK-045; el comentario dice
+dónde cambiarlo. `migrate` usa la misma imagen que `api` por construcción,
+igual que el Job de Cloud Run usará la imagen API del mismo SHA. `AUTO_CREATE_TABLES`
+queda en `0`: Alembic es la única autoridad de schema (§12). `AI_KILL_SWITCH`
+por defecto en `1` para que nadie gaste cuota Gemini por levantar el stack. La
+API se publica en `127.0.0.1:8000` solo para `curl` y para `npm run dev`;
+apuntar un navegador ahí reintroduciría el segundo origen. Se fija TypeScript
+5.9 y no 7.0 porque `typescript-eslint` 8.x declara `typescript <6.1.0`, y un
+typecheck que no puede lintarse no es una lane.
+
+**No incluido, deliberadamente.** Ninguna pantalla real: llegan por vertical
+desde TASK-046. Ninguna lane de CI: es TASK-039. Ningún endpoint de salud: es
+TASK-045. Ningún cambio en `backend/`, en reglas de negocio, en permisos ni en
+umbrales.
 
 ### Validation
 
