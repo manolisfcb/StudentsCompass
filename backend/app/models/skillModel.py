@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
@@ -64,6 +65,19 @@ class SkillAliasModel(Base):
 class JobSkillModel(Base):
     __tablename__ = "job_skills"
     __table_args__ = (
+        # Partial, not a plain UniqueConstraint: ``job_posting_id`` is nullable
+        # and PostgreSQL lets unlimited NULLs through a unique constraint, so
+        # the rule is stated where it applies. Mirrors
+        # ``uq_resume_skills_resume_skill_method`` on the resume side.
+        Index(
+            "uq_job_skills_posting_skill_method",
+            "job_posting_id",
+            "skill_id",
+            "extraction_method",
+            unique=True,
+            postgresql_where=text("job_posting_id IS NOT NULL"),
+            sqlite_where=text("job_posting_id IS NOT NULL"),
+        ),
         Index("ix_job_skills_job_posting_id", "job_posting_id"),
         Index("ix_job_skills_skill_id", "skill_id"),
         Index("ix_job_skills_target_role", "target_role"),

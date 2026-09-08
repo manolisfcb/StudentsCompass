@@ -574,6 +574,7 @@ def create_schema(connection) -> None:
         op.create_index('ix_job_skills_job_posting_id', 'job_skills', ['job_posting_id'], unique=False)
         op.create_index('ix_job_skills_skill_id', 'job_skills', ['skill_id'], unique=False)
         op.create_index('ix_job_skills_target_role', 'job_skills', ['target_role'], unique=False)
+        op.create_index('uq_job_skills_posting_skill_method', 'job_skills', ['job_posting_id', 'skill_id', 'extraction_method'], unique=True, postgresql_where=sa.text('job_posting_id IS NOT NULL'))
         op.create_table('optimization_runs',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('user_id', sa.UUID(), nullable=True),

@@ -90,7 +90,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | COMPLETED | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
 | TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
 | TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-025 |
-| TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
+| TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
 | TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
@@ -3004,7 +3004,7 @@ llamadas pagadas.
 
 ## TASK-019 — Hacer batch e idempotente la extracción de skills de ofertas
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-4
 Category: Performance / Database
@@ -3075,12 +3075,12 @@ Grupo C; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Hacer batch e idempotente la extracción de skills de ofertas.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Hacer batch e idempotente la extracción de skills de ofertas.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -3099,6 +3099,116 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: HIGH
+
+### Completion Notes
+
+Dos defectos distintos con la misma raíz: la extracción trataba cada oferta como
+una unidad aislada.
+
+**1. Coste por oferta.** El barrido ya compartía el lookup de skills, pero todo lo demás
+era por oferta: releía la oferta por id, seleccionaba los links que ya tenía y hacía
+`commit()`. Un barrido de 500 ofertas eran 500 SELECT y 500 commits, y un fallo a mitad
+dejaba una ejecución escrita a medias. Ahora `extract_job_skills_for_open_postings`
+trabaja en lotes de `JOB_SKILL_EXTRACTION_BATCH_SIZE = 50`: una lectura de links
+existentes y un INSERT por lote, con un commit por lote. El tope del endpoint sigue
+siendo 500 ofertas, así que son como mucho 10 commits.
+
+**2. Idempotencia sin garantía.** Leer los links existentes y después insertar los que
+faltan es un check-then-act sin nada que lo serialice: dos extracciones simultáneas leen
+el mismo conjunto vacío y las dos insertan. `resume_skills` tenía
+`uq_resume_skills_resume_skill_method` desde la fundación de analytics; el lado de las
+ofertas se quedó sin el equivalente. La migración `b2e9f4a71c33` lo añade y
+`_insert_job_skill_links` inserta con `ON CONFLICT DO NOTHING`, de modo que una fila
+perdida en la carrera no aborta el lote entero.
+
+**El índice es parcial, y no por comodidad.** `job_posting_id` es nullable y en PostgreSQL
+un UNIQUE deja pasar NULLs sin límite, así que un índice total habría sido inocuo ahí y
+equivocado en intención: `seed_capstone_analytics_minimum` escribe los requisitos por rol
+como filas de `job_skills` con `job_posting_id` NULL, y **la misma skill la exigen varios
+roles**, así que esas repeticiones son correctas. Verificado en
+`test_links_without_a_posting_are_left_unconstrained`, que falla si el seed deja de
+repetir. El índice cubre solo `job_posting_id IS NOT NULL`.
+
+**Contratos conservados.** `extract_job_skills_from_job_posting` sigue devolviendo un link
+por match, en orden de match, y sigue devolviendo `[]` sin tocar nada cuando la oferta no
+tiene texto — incluso si ya tenía links, que era el comportamiento anterior y está fijado
+en `test_a_posting_with_no_text_is_skipped_even_when_it_already_has_links`. Lee los links
+de vuelta tras el commit en lugar de devolver los objetos recién construidos: si una
+extracción concurrente ganó el conflicto, el caller debe ver la fila almacenada. El
+método sigue siendo parte de la clave, así que `manual_review_v1` y
+`job_posting_rules_v1` conviven sobre la misma oferta y skill. No se tocó el algoritmo de
+extracción ni se fusionaron los requisitos fallback por rol.
+
+**Migración `b2e9f4a71c33`** (`down_revision = a7d3f81c9e64`, head en el momento de
+integrar): inventario → merge → índice. Los duplicados existentes se **fusionan, no se
+descartan en silencio**: sobrevive la fila más antigua por (oferta, skill, método) y
+hereda de sus duplicados la provenance que le falte (`evidence_text`, `target_role`,
+`importance_score`) antes de que desaparezcan, con cada grupo y cada herencia registrados
+en el log. `downgrade()` quita el índice y deja los merges hechos: deshacerlos
+recrearía exactamente la ambigüedad que la revisión resolvió.
+
+`app/db_baseline.py` se actualizó con el índice nuevo. El baseline se verifica contra la
+metadata mapeada antes de estampar, así que sin ese cambio `upgrade head` sobre una base
+vacía fallaba con `BaselineVerificationError` — que es exactamente lo que debe hacer.
+
+**Medición (lane SQLite, barrido completo sobre N ofertas activas):**
+
+| Ofertas | SELECT antes → después | INSERT antes → después | Commits antes → después | ms antes → después |
+| --- | --- | --- | --- | --- |
+| 10 | 14 → 5 | 10 → 1 | 10 → 1 | 16.8 → 14.1 |
+| 100 | 104 → 6 | 100 → 2 | 100 → 2 | 579.2 → 47.2 |
+| 500 | 504 → 14 | 500 → 10 | 500 → 10 | 465.3 → 218.8 |
+
+Los links producidos son los mismos en los seis casos (50 / 500 / 2500), y una segunda
+pasada no inserta nada ni cambia el conteo, antes y después.
+
+**Concurrencia real (lane PostgreSQL, dos sesiones sobre conexiones distintas):**
+
+| Caso | Antes | Después |
+| --- | --- | --- |
+| Dos extracciones de la misma oferta | 10 links (duplicados) | 5 links, ambas llamadas devuelven 5 |
+| Dos barridos simultáneos, 8 ofertas | 70 links | 40 links |
+
+**Tests.**
+
+- `backend/tests/test_job_skill_extraction_batching.py` (nuevo, 9 casos): commits por lote
+  y no por oferta con 10/100/500, coste que no crece por oferta, segunda pasada sin
+  inserciones, oferta sin texto ignorada, métodos distintos intactos, y paridad de totales
+  entre el barrido y la ruta por oferta. Con el servicio anterior fallan 4 de los 9
+  (`504 selects for 500 postings`).
+- `backend/tests/integration/test_job_skill_uniqueness_pg.py` (nuevo, 6 casos, lane
+  PostgreSQL): las dos carreras de arriba, el índice como backstop ante un INSERT crudo,
+  las filas sin oferta sin restringir, y la migración inventariando, fusionando y
+  preservando provenance y métodos distintos. Las dos de concurrencia fallan sin el
+  cambio (`assert 10 == 5`, `assert 70 == 40`).
+
+Comandos ejecutados:
+
+```
+# lane PostgreSQL + Redis desechables
+docker run -d --name sc-test-pg -e POSTGRES_PASSWORD=testpw -e POSTGRES_USER=testuser \
+    -e POSTGRES_DB=studentscompass_test -p 55432:5432 pgvector/pgvector:pg16
+docker run -d --name sc-test-redis -p 56379:6379 redis:7-alpine
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... \
+  .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration
+# 67 passed (61 era la baseline antes de esta tarea; incluye la cadena de migraciones)
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 471 passed, 67 skipped in 57.12s
+
+uv run --project backend ruff check backend/app backend/tests <migración>
+# All checks passed!
+```
+
+**Límites de la validación.** Los tiempos absolutos de la tabla son de SQLite en memoria y
+no representan producción; lo que sostienen es la forma del coste y el conteo de
+statements y commits, que no dependen del motor. La carrera y el índice sí se verificaron
+en PostgreSQL, que es donde significan algo. No se ejecutó la migración contra ninguna
+base de producción. Sin smoke de navegador: los dos endpoints afectados
+(`POST /capstone/job-postings/{id}/skills/sync` y `.../skills/sync-open`) son de admin y no
+tienen pantalla propia. No se hicieron llamadas pagadas ni se usó LLM: la extracción es
+por reglas.
 
 
 ## TASK-020 — Sacar scraper de LinkedIn del event loop
