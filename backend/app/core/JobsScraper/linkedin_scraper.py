@@ -69,24 +69,48 @@ def _parse_jobs(html: str) -> List[JobPosting]:
 	return jobs
 
 
+#: How long one page request may take. Unchanged; named so the budget below
+#: can be reasoned about against it.
+PAGE_REQUEST_TIMEOUT_SECONDS = 15
+
+
 def fetch_linkedin_jobs(
 	keywords: str,
 	location: str,
 	limit: int = 25,
 	remote: bool = False,
 	throttle_seconds: float = 0.5,
+	budget_seconds: float | None = None,
 ) -> List[JobPosting]:
 	"""
 	Scrape LinkedIn jobs (guest endpoint). Returns up to `limit` results.
+
+	``budget_seconds`` caps the whole walk, not each request. Paging is a loop
+	of 15-second requests separated by sleeps, so without a total budget one
+	slow search could hold its worker for minutes while the caller had long
+	since given up. When the budget runs out the pages collected so far are
+	returned: a short answer beats an empty one, and the parsing and the shape
+	of the result are the same either way.
 	"""
 	results: List[JobPosting] = []
 	seen_urls = set()
 	start = 0
 	page_size = 25  # LinkedIn often returns 10-25 per page
+	deadline = None if budget_seconds is None else time.monotonic() + budget_seconds
+
+	def _remaining() -> Optional[float]:
+		return None if deadline is None else deadline - time.monotonic()
 
 	while len(results) < limit:
+		remaining = _remaining()
+		if remaining is not None and remaining <= 0:
+			break
+
 		url = _build_url(keywords, location, start, remote)
-		resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=15)
+		request_timeout = PAGE_REQUEST_TIMEOUT_SECONDS
+		if remaining is not None:
+			request_timeout = min(request_timeout, remaining)
+		resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=request_timeout)
 		if resp.status_code != 200:
 			break
 
@@ -110,6 +134,11 @@ def fetch_linkedin_jobs(
 		if len(results) >= limit:
 			break
 
+		remaining = _remaining()
+		if remaining is not None and remaining <= throttle_seconds:
+			# Not enough left for another page after the pause; stop here
+			# instead of sleeping into the deadline.
+			break
 		time.sleep(throttle_seconds)
 
 	return results[:limit]

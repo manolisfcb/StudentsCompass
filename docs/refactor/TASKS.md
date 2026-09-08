@@ -91,7 +91,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
 | TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
-| TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
+| TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
 | TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
 | TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
@@ -3213,7 +3213,7 @@ por reglas.
 
 ## TASK-020 — Sacar scraper de LinkedIn del event loop
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-4
 Category: Performance
@@ -3283,12 +3283,12 @@ Grupo B; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Sacar scraper de LinkedIn del event loop.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Sacar scraper de LinkedIn del event loop.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -3307,6 +3307,92 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: MEDIUM
+
+### Completion Notes
+
+`JobSearchService.search` esperaba a `fetch_linkedin_jobs` directamente, y esa función es
+`requests.get` y `time.sleep` dentro de un bucle de paginación. Un `await` sobre una
+llamada bloqueante no cede el control: el event loop se quedaba dentro, así que **una
+búsqueda contra un LinkedIn lento paralizaba todas las demás peticiones del mismo worker**,
+health checks incluidos.
+
+**`app/services/jobs/jobSearchService.py`** — clase `BoundedOffload`, con tres límites que
+fallan de forma distinta y por eso están separados:
+
+- `SCRAPER_MAX_WORKERS = 4`: cuánto trabajo bloqueante corre a la vez. El proveedor es un
+  sitio de terceros al que se pagina con educación; más paralelismo ahí no compensa.
+- `SCRAPER_MAX_QUEUED = 16`: cuánto puede *esperar*. Pasado eso se rechaza de inmediato en
+  vez de encolar — una petición que espera detrás de cincuenta ya le falló al usuario, y
+  una cola sin límite es como un proveedor lento se convierte en un OOM.
+- `SCRAPER_TIMEOUT_SECONDS = 12`: lo que el caller espera.
+
+Un hilo no se puede cancelar, así que **el timeout libera al caller, nunca el slot**. El
+slot se devuelve cuando el hilo termina de verdad (`add_done_callback` sobre un future
+protegido con `asyncio.shield`); si se liberara al vencer el timeout, una racha de timeouts
+repartiría slots ilimitados mientras todos los hilos detrás seguían corriendo. Fijado en
+`test_a_timed_out_call_does_not_hand_its_slot_back_early`.
+
+Las tres formas de fallar —cola llena, timeout, o el proveedor reventando— devuelven una
+lista `linkedin` vacía en vez de tumbar la búsqueda. Los resultados internos ya están en la
+mano y son a lo que el usuario venía. Lista, orden y status quedan compatibles.
+
+**Bug Fix declarado, dentro de F-18:** el proveedor recibía `query.limit` **sin normalizar**
+mientras la búsqueda interna se acotaba con `max(1, min(query.limit, 100))`. Un `limit=5000`
+pedía 5000 resultados a LinkedIn. Ahora recibe el mismo límite normalizado. Fijado en
+`test_the_provider_receives_the_normalised_limit`.
+
+**`app/core/JobsScraper/linkedin_scraper.py`** — `budget_seconds` acota la caminata entera,
+no cada request. Paginar son requests de 15 s separados por pausas, así que sin presupuesto
+total una búsqueda lenta retenía su worker durante minutos con el caller hace rato ido. Al
+agotarse se devuelven las páginas reunidas hasta ese momento: una respuesta corta es mejor
+que una vacía, y el parsing y la forma del resultado son los mismos. El presupuesto
+(`SCRAPER_BUDGET_SECONDS = 10`) queda por debajo del timeout del caller para que el worker
+normalmente se libere solo. **No se tocó el parsing ni la salida.**
+
+**Medición (proveedor falso de 2 s, ticker de 10 ms midiendo el retraso del loop):**
+
+| | Antes | Después |
+| --- | --- | --- |
+| Duración de la búsqueda | 2.01 s | 2.09 s |
+| Peor lag del event loop | **2009.6 ms** | 81.3 ms |
+| p95 del lag | 2.6 ms | 2.4 ms |
+| Ticks servidos durante la búsqueda | 35 | 206 |
+
+El peor caso pasa de dos segundos de loop congelado a 81 ms, que es el arranque del pool de
+hilos en la primera búsqueda del proceso; en las siguientes el peor lag se queda en el
+mismo rango que el p95. El p95 ya era bueno antes porque solo hay un bloqueo por búsqueda:
+lo que cambia es que ese bloqueo deja de existir, no su frecuencia.
+
+**Tests.** `backend/tests/test_job_search_concurrency.py` (nuevo, 9 casos): un proveedor de
+2 s que no congela el loop, una petición liviana que termina mientras la búsqueda lenta
+sigue en vuelo, el límite normalizado, timeout y proveedor que revienta devolviendo solo
+resultados internos, la cola acotada rechazando en vez de crecer, el slot que no vuelve
+antes de tiempo, y la cola llena degradando sin error. Ningún test toca el sitio real: el
+proveedor siempre es falso. `tests/test_job_board.py` (10 casos, sin cambios) sigue pasando,
+que es la compatibilidad de lista/orden/status.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_job_search_concurrency.py tests/test_job_board.py
+# 19 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 480 passed, 67 skipped in 62.03s
+
+uv run --project backend ruff check backend/app backend/tests
+# All checks passed!
+```
+
+**Límites de la validación.** Los tests de concurrencia nuevos no se pueden ejecutar contra
+la implementación anterior porque importan nombres que ella no tiene (`BoundedOffload`,
+`OffloadRejected`); la evidencia del "antes" es la medición de arriba, que ejecuta el
+proveedor bloqueante en línea, exactamente como hacía el código viejo. No se ejecutó la
+lane PostgreSQL: esta tarea no toca schema, locks ni migraciones. Sin smoke de navegador:
+la forma de la respuesta de `POST /api/v1/jobs/search` no cambia y `app/static/js/jobs.js`
+no está en el Scope de esta tarea — el frontend de Jobs lo migra TASK-049. No se scrapeó
+LinkedIn en ningún test. CP-SAT sigue en el loop con su límite de 1 s y un worker: eso es
+TASK-022, no esta ficha.
 
 
 ## TASK-021 — Evitar regeneración de embeddings idénticos
