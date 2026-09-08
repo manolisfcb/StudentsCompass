@@ -20,8 +20,18 @@ Student Compass es una plataforma de navegación de carrera profesional para est
 
 ## 🗂️ Estructura del Proyecto
 
+> **Desde TASK-037, todo el árbol de abajo cuelga de `backend/`.** El
+> repositorio pasó al layout de monorepo de
+> [08_REST_REACT_CLOUD_RUN_PLAN.md](docs/refactor/08_REST_REACT_CLOUD_RUN_PLAN.md)
+> §4: el código Python vive en `backend/` y `frontend/` aparecerá con el
+> scaffold React de TASK-038. En la raíz quedan `docs/`, `.github/` y `.nvmrc`.
+> El movimiento fue mecánico —`git mv` y ajustes de ruta— y no cambió ningún
+> módulo, así que el árbol y las descripciones siguen siendo exactos: solo hay
+> que leer cada ruta con `backend/` delante. Este documento se reescribirá por
+> completo cuando la reorganización interna de `app/` avance por verticales.
+
 ```
-StudentsCompass/
+StudentsCompass/backend/
 ├── main.py                    # Punto de entrada (Uvicorn, puerto 8000)
 ├── pyproject.toml             # Dependencias del proyecto (uv/pip)
 ├── alembic.ini                # Configuración de Alembic

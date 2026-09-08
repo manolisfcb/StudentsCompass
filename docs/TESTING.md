@@ -6,11 +6,28 @@ necesita servicios desechables locales y verifica lo que SQLite no puede.
 Origen: TASK-001 del [tablero de refactor](refactor/TASKS.md). La toolchain que
 se describe abajo la fija TASK-033.
 
+## Dónde se ejecutan
+
+Desde `backend/`. TASK-037 movió el árbol Python ahí y `pytest.ini`, `app/` y
+las rutas que el código resuelve contra el directorio de trabajo viajaron con
+él; lanzar la suite desde la raíz del repositorio ya no encuentra nada.
+
+El entorno virtual sigue en la raíz mientras el monorepo tenga un solo lenguaje
+instalado, así que el intérprete es `../.venv/bin/python`. Todos los comandos de
+este documento asumen ese directorio:
+
+```bash
+cd backend
+```
+
+Las mediciones de abajo se repitieron desde la nueva ubicación y dieron los
+mismos números, que es lo que TASK-037 tenía que demostrar.
+
 ## Toolchain fijada
 
 | Runtime | Versión | Declarada en | Consumida por |
 | --- | --- | --- | --- |
-| Python | 3.12 | `.python-version`, `requires-python` de `pyproject.toml` | `Dockerfile` (`python:3.12-slim`), `actions/setup-python` en las tres lanes de CI, `uv venv` |
+| Python | 3.12 | `backend/.python-version`, `requires-python` de `backend/pyproject.toml` | `Dockerfile` (`python:3.12-slim`), `actions/setup-python` en las tres lanes de CI, `uv venv` |
 | Node | 24 | `.nvmrc` | Aún ninguno: la imagen del frontend y el `engines` de `frontend/package.json` la leerán cuando TASK-038 cree el scaffold |
 
 `requires-python` está acotado por arriba (`>=3.12,<3.13`) a propósito: 3.12 es
@@ -31,13 +48,15 @@ la suite verde en otra versión no dice nada sobre la imagen que se despliega.
 ### Baseline de la migración
 
 Medida el 2026-09-07 sobre `325e92b` con CPython 3.12.12, las tres lanes de
-`.github/workflows/tests.yml`:
+`.github/workflows/tests.yml`. Los comandos aparecen ya en su forma posterior a
+TASK-037, que repitió las tres desde `backend/` y obtuvo los mismos conteos; el
+movimiento no cambió ni un resultado:
 
 | Lane | Comando | Resultado |
 | --- | --- | --- |
-| Rápida | `.venv/bin/python -m pytest -p no:cacheprovider` | 429 passed, 61 skipped |
+| Rápida | `../.venv/bin/python -m pytest -p no:cacheprovider` | 429 passed, 61 skipped |
 | PostgreSQL + Redis | idem con `TEST_DATABASE_URL_PG` y `TEST_REDIS_URL`, sobre `tests/integration` | 61 passed |
-| Navegador | `.venv/bin/python -m pytest -p no:cacheprovider -m browser` | 14 passed, 476 deselected |
+| Navegador | `../.venv/bin/python -m pytest -p no:cacheprovider -m browser` | 14 passed, 476 deselected |
 
 Cero fallos en las tres. Los 61 omitidos de la lane rápida son exactamente los
 que su lane propia cubre: 60 de `tests/integration` sin
@@ -60,7 +79,7 @@ mueve ningún resultado.
 ## Lane rápida (por defecto)
 
 ```bash
-.venv/bin/python -m pytest -p no:cacheprovider
+../.venv/bin/python -m pytest -p no:cacheprovider
 ```
 
 Sin argumentos corre SQLite en memoria, sin red y sin escribir reportes de
@@ -68,7 +87,7 @@ cobertura en el repositorio. Para reproducir exactamente la medición de la
 auditoría:
 
 ```bash
-.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q
+../.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -q
 ```
 
 ### Aislamiento
@@ -96,7 +115,7 @@ un despliegue real. Ambos comportamientos están cubiertos en
 ### Cobertura (opt-in)
 
 ```bash
-.venv/bin/python -m pytest --cov=app --cov-report=term-missing
+../.venv/bin/python -m pytest --cov=app --cov-report=term-missing
 ```
 
 El alcance está fijado en `[tool.coverage.run]` de `pyproject.toml` para que el
@@ -118,7 +137,7 @@ docker run -d --name sc-test-redis -p 56379:6379 redis:7-alpine
 
 TEST_DATABASE_URL_PG='postgresql+asyncpg://testuser:testpw@127.0.0.1:55432/studentscompass_test' \
 TEST_REDIS_URL='redis://127.0.0.1:56379/0' \
-.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration
+../.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/integration
 ```
 
 Sin esas variables, los tests de `tests/integration` se saltan; la lane rápida
@@ -166,8 +185,8 @@ externo.
 
 ```bash
 uv pip install playwright
-.venv/bin/python -m playwright install chromium
-.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -m browser
+../.venv/bin/python -m playwright install chromium
+../.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -m browser
 ```
 
 Sin Playwright o sin el navegador instalado, estos tests se saltan solos.

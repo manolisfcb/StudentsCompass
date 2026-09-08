@@ -13,7 +13,7 @@ también cuenta.
 
 Uso:
 
-    .venv/bin/python scripts/route_inventory.py
+    cd backend && ../.venv/bin/python scripts/route_inventory.py
 
 Escribe docs/refactor/route_inventory.json y docs/refactor/route_inventory.csv.
 Es reejecutable y determinista: mismo código, mismo artefacto.
@@ -29,8 +29,12 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT))
+# Dos raíces desde TASK-037: el código Python vive bajo `backend/` y los
+# documentos de la migración siguen en la raíz del repositorio, que es de todo
+# el monorepo y no solo del backend.
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = BACKEND_ROOT.parent
+sys.path.insert(0, str(BACKEND_ROOT))
 
 # El aislamiento debe correr antes de importar cualquier módulo de `app`: app.db
 # y app.app llaman load_dotenv() y construyen el engine en tiempo de import.
@@ -192,8 +196,8 @@ CONSUMER_GLOBS = (
 def _load_consumer_sources() -> list[tuple[str, str, str]]:
     sources: list[tuple[str, str, str]] = []
     for kind, root, pattern in CONSUMER_GLOBS:
-        for path in sorted((REPO_ROOT / root).rglob(pattern)):
-            sources.append((kind, str(path.relative_to(REPO_ROOT)), path.read_text(errors="replace")))
+        for path in sorted((BACKEND_ROOT / root).rglob(pattern)):
+            sources.append((kind, str(path.relative_to(BACKEND_ROOT)), path.read_text(errors="replace")))
     return sources
 
 
@@ -360,7 +364,7 @@ def main() -> int:
     out_dir = REPO_ROOT / "docs" / "refactor"
 
     payload = {
-        "generated_by": "scripts/route_inventory.py",
+        "generated_by": "backend/scripts/route_inventory.py",
         "task": "TASK-034",
         "handler_count": len(rows),
         "handlers": rows,

@@ -9,7 +9,10 @@ __pycache__/
 *.pyd
 
 # Credentials
-app/credentials/
+# Anclado a la nueva raíz del backend (TASK-037): el patrón lleva barra
+# interna, así que git lo resuelve desde este fichero y `app/credentials/` a
+# secas dejaría de cubrir el árbol movido.
+backend/app/credentials/
 *.pickle
 google_drive.json
 google_oauth_client.json
@@ -28,8 +31,8 @@ scripts/*
 deliverables/
 
 # Baseline visual de TASK-035: 44 PNG, ~18 MB por captura. Se regeneran con
-# `python scripts/capture_baseline.py` y se publican como artefacto de CI; lo
-# versionado es el manifiesto, el OpenAPI y las fixtures.
+# `cd backend && python scripts/capture_baseline.py` y se publican como
+# artefacto de CI; lo versionado es el manifiesto, el OpenAPI y las fixtures.
 # Ver docs/refactor/baseline/README.md.
 docs/refactor/baseline/screens/
 

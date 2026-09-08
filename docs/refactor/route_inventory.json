@@ -1,5 +1,5 @@
 {
-  "generated_by": "scripts/route_inventory.py",
+  "generated_by": "backend/scripts/route_inventory.py",
   "task": "TASK-034",
   "handler_count": 175,
   "handlers": [

@@ -935,7 +935,7 @@
       "vertical": "V1-TASK-046"
     }
   ],
-  "generated_by": "scripts/capture_baseline.py",
+  "generated_by": "backend/scripts/capture_baseline.py",
   "openapi": {
     "file": "openapi.json",
     "paths": 144

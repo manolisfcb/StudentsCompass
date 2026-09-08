@@ -3,6 +3,10 @@
 Origen: TASK-002 / hallazgo F-01 del [tablero de refactor](refactor/TASKS.md).
 Este documento no contiene ningún valor secreto y no debe contenerlo nunca.
 
+Desde TASK-037 el árbol Python vive bajo `backend/`, y con él `alembic.ini`,
+`alembic/` y `scripts/`. Los comandos de este documento se ejecutan desde ese
+directorio (`cd backend`); las rutas citadas en el texto son relativas a él.
+
 ## Un solo destino
 
 La aplicación y el migrador resuelven la base de datos desde la **misma**
@@ -43,7 +47,7 @@ apunta a lo que diga `.env` — que puede ser producción. Exporta
 
 ```bash
 ALEMBIC_DATABASE_URL='postgresql+psycopg://testuser:testpw@127.0.0.1:55432/studentscompass_test' \
-  .venv/bin/alembic upgrade head
+  ../.venv/bin/alembic upgrade head
 ```
 
 ## Dos rutas de schema: baseline e histórico (F-08, F-20)
@@ -99,7 +103,7 @@ INSERT INTO alembic_version VALUES ('<head actual>');
 
 ```bash
 ALEMBIC_DATABASE_URL='postgresql+psycopg://testuser:testpw@127.0.0.1:55432/studentscompass_test' \
-  .venv/bin/alembic revision --autogenerate -m "snapshot"
+  ../.venv/bin/alembic revision --autogenerate -m "snapshot"
 ```
 
 y se traslada el cuerpo de `upgrade()` generado a `create_schema()`. El test

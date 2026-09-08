@@ -1,6 +1,6 @@
 # Baseline de paridad — TASK-035
 
-Generado por `scripts/capture_baseline.py`. No editar a mano: se reescribe entero en cada ejecución.
+Generado por `backend/scripts/capture_baseline.py`. No editar a mano: se reescribe entero en cada ejecución.
 
 - OpenAPI: `openapi.json` (144 paths)
 - Fixtures capturadas: 59 · sin capturar: 6

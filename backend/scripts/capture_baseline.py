@@ -20,12 +20,12 @@ artefacto porque el proceso no puede alcanzar producción.
 
 Uso:
 
-    .venv/bin/python scripts/capture_baseline.py
-    .venv/bin/python scripts/capture_baseline.py --skip-screens
+    cd backend && ../.venv/bin/python scripts/capture_baseline.py
+    cd backend && ../.venv/bin/python scripts/capture_baseline.py --skip-screens
 
 Las capturas necesitan Playwright con Chromium:
 
-    .venv/bin/python -m playwright install chromium
+    cd backend && ../.venv/bin/python -m playwright install chromium
 """
 
 from __future__ import annotations
@@ -47,8 +47,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT))
+# Dos raíces desde TASK-037: el código Python vive bajo `backend/` y la baseline
+# se archiva en `docs/` en la raíz del repositorio, que es de todo el monorepo.
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = BACKEND_ROOT.parent
+sys.path.insert(0, str(BACKEND_ROOT))
 
 # El aislamiento debe correr antes de importar cualquier módulo de `app`: app.db
 # y app.app llaman load_dotenv() y construyen el engine en tiempo de import.
@@ -810,7 +813,7 @@ def capture_screens(out_dir: Path) -> list[dict[str, Any]]:
     except ImportError:  # pragma: no cover - depende del entorno
         raise SystemExit(
             "playwright no está instalado; instálalo o pasa --skip-screens:\n"
-            "  .venv/bin/python -m playwright install chromium"
+            "  cd backend && ../.venv/bin/python -m playwright install chromium"
         )
 
     handlers = load_inventory()
@@ -976,7 +979,7 @@ def write_manifest(
         (screens_dir / "index.json").write_text(
             json.dumps(
                 {
-                    "generated_by": "scripts/capture_baseline.py",
+                    "generated_by": "backend/scripts/capture_baseline.py",
                     "note": (
                         "Los PNG no se versionan (ver docs/refactor/baseline/README.md). "
                         "Este índice viaja con ellos en el artefacto de CI."
@@ -998,7 +1001,7 @@ def write_manifest(
     blocked = sorted({url for urls in blocked_by_screen.values() for url in urls})
 
     manifest = {
-        "generated_by": "scripts/capture_baseline.py",
+        "generated_by": "backend/scripts/capture_baseline.py",
         "task": "TASK-035",
         "seed": {
             "clock": FIXED_NOW.isoformat(),
@@ -1031,7 +1034,7 @@ def write_manifest(
     lines.append("# Baseline de paridad — TASK-035")
     lines.append("")
     lines.append(
-        "Generado por `scripts/capture_baseline.py`. No editar a mano: se reescribe "
+        "Generado por `backend/scripts/capture_baseline.py`. No editar a mano: se reescribe "
         "entero en cada ejecución."
     )
     lines.append("")

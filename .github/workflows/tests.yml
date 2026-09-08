@@ -5,10 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+# Desde TASK-037 el backend vive en `backend/`. Cada job declara ese directorio
+# como raíz de sus `run`: ahí están `requirements.txt` y `pytest.ini`, y el
+# código resuelve alguna ruta contra el directorio de trabajo (por ejemplo el
+# cuestionario versionado). Los pasos que no son `run` —checkout, setup, subida
+# de artefactos— siguen siendo relativos a la raíz del repositorio.
 jobs:
   fast:
     name: fast lane (SQLite, hermetic)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,6 +36,9 @@ jobs:
   integration:
     name: integration lane (PostgreSQL + pgvector, Redis)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -73,6 +84,9 @@ jobs:
   browser:
     name: browser lane (Chromium, no network)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -92,6 +106,9 @@ jobs:
   baseline:
     name: baseline lane (TASK-035, OpenAPI + fixtures + capturas)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

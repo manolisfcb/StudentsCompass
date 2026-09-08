@@ -8,12 +8,12 @@ Origen: TASK-034 del [tablero de refactor](TASKS.md). Extiende §5.2 de
 
 | Archivo | Qué es | Cómo se produce |
 | --- | --- | --- |
-| [route_inventory.json](route_inventory.json) | Inventario completo: método, ruta, actor exigido, dependencias de auth, `response_model`, módulo, consumidor y destino | Generado por `scripts/route_inventory.py` |
+| [route_inventory.json](route_inventory.json) | Inventario completo: método, ruta, actor exigido, dependencias de auth, `response_model`, módulo, consumidor y destino | Generado por `backend/scripts/route_inventory.py` |
 | [route_inventory.csv](route_inventory.csv) | Lo mismo, una fila por método × ruta | Generado |
 | [route_targets.csv](route_targets.csv) | Tabla de decisión: destino, contrato objetivo, vertical y nota por handler | **Escrita a mano y revisada**; el script solo la cruza |
 
 ```bash
-.venv/bin/python scripts/route_inventory.py
+cd backend && ../.venv/bin/python scripts/route_inventory.py
 ```
 
 Reejecutar no cambia los artefactos: se comprobó por hash. El script falla si un

@@ -9,14 +9,14 @@ pantalla migrada. Sin baseline archivada, «se ve igual» es una opinión.
 ## Cómo se regenera
 
 ```
-.venv/bin/python scripts/capture_baseline.py              # todo
-.venv/bin/python scripts/capture_baseline.py --skip-screens  # sin navegador
+cd backend && ../.venv/bin/python scripts/capture_baseline.py              # todo
+cd backend && ../.venv/bin/python scripts/capture_baseline.py --skip-screens  # sin navegador
 ```
 
 Las capturas necesitan Chromium:
 
 ```
-.venv/bin/python -m playwright install chromium
+cd backend && ../.venv/bin/python -m playwright install chromium
 ```
 
 El comando reescribe la carpeta entera. Nada de aquí se edita a mano.
