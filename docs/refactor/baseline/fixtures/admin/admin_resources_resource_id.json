@@ -1,0 +1,52 @@
+{
+  "request": {
+    "as": "admin",
+    "method": "GET",
+    "path": "/api/v1/admin/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d"
+  },
+  "response": {
+    "body": {
+      "category": "career",
+      "created_at": "2026-01-05T12:00:00",
+      "description": "Curso sintético usado por la baseline visual.",
+      "estimated_duration_minutes": 45,
+      "external_url": null,
+      "icon": "📘",
+      "id": "3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "is_locked": false,
+      "is_published": true,
+      "level": "beginner",
+      "modules": [
+        {
+          "description": "Módulo sintético.",
+          "id": "51db6fd0-d770-4fe8-a2f4-2fab4e1cc87e",
+          "lessons": [
+            {
+              "content": "Contenido sintético de la lección.",
+              "content_payload": {
+                "body": "Contenido sintético de la lección."
+              },
+              "content_type": "text",
+              "id": "fcb3c498-f183-4d67-bdc0-900ce5d9a96c",
+              "notes": null,
+              "position": 1,
+              "reading_time_minutes": 5,
+              "resource_url": null,
+              "title": "Lección 1",
+              "video_url": null
+            }
+          ],
+          "position": 1,
+          "title": "Módulo 1"
+        }
+      ],
+      "tags": [
+        "baseline"
+      ],
+      "title": "Baseline Course",
+      "updated_at": "2026-01-05T12:00:00"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

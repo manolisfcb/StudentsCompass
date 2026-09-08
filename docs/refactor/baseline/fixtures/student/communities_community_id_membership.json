@@ -1,0 +1,14 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership"
+  },
+  "response": {
+    "body": {
+      "is_member": true
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

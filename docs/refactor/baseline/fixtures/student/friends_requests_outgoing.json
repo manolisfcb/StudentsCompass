@@ -1,0 +1,12 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/friends/requests/outgoing"
+  },
+  "response": {
+    "body": [],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/capstone/analytics/roles"
+  },
+  "response": {
+    "body": {
+      "roles": [
+        {
+          "is_market_backed": false,
+          "required_skills_count": 0,
+          "requirement_source": "none",
+          "synced_job_postings_count": 0,
+          "target_role": "Business Analyst"
+        },
+        {
+          "is_market_backed": false,
+          "required_skills_count": 0,
+          "requirement_source": "none",
+          "synced_job_postings_count": 0,
+          "target_role": "Data Analyst"
+        },
+        {
+          "is_market_backed": false,
+          "required_skills_count": 0,
+          "requirement_source": "none",
+          "synced_job_postings_count": 0,
+          "target_role": "Junior Data Scientist"
+        }
+      ]
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "request": {
+    "as": "admin",
+    "method": "GET",
+    "path": "/api/v1/admin/applications"
+  },
+  "response": {
+    "body": {
+      "applications": [
+        {
+          "application_date": "2026-01-05T12:00:00",
+          "company_name": "Baseline Company",
+          "id": "35be4548-a1c7-4647-8e06-b0577d893e87",
+          "job_title": "Backend Engineer (Baseline)",
+          "status": "applied",
+          "user_email": null
+        }
+      ]
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

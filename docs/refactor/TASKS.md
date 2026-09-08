@@ -106,7 +106,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
 | TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
-| TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | TODO | TASK-034 | TASK-036 |
+| TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | COMPLETED | TASK-034 | TASK-036 |
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-034, TASK-035 |
 | TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | TODO | TASK-033, TASK-035 | TASK-036 |
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | TODO | TASK-037 | TASK-036 |
@@ -4707,7 +4707,7 @@ Risk: LOW
 
 ## TASK-035 — Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M0
 Category: Testing / Documentation
@@ -4775,12 +4775,12 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] OpenAPI actual archivado como artefacto reproducible.
-- [ ] Fixtures por endpoint relevante, con datos sintéticos y sin secretos ni PII.
-- [ ] Capturas desktop y mobile de cada pantalla, asociadas a su vertical.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] OpenAPI actual archivado como artefacto reproducible.
+- [x] Fixtures por endpoint relevante, con datos sintéticos y sin secretos ni PII.
+- [x] Capturas desktop y mobile de cada pantalla, asociadas a su vertical.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4789,6 +4789,94 @@ Reejecutar la captura y comprobar que produce el mismo conjunto. Verificar que n
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+Ningún archivo de `app/` cambia. La baseline se captura ejecutando la aplicación
+real, no describiéndola.
+
+**Un comando.** `scripts/capture_baseline.py` siembra una SQLite desechable con
+datos sintéticos, exporta el OpenAPI, recorre los endpoints GET del inventario
+de TASK-034 archivando el payload de cada uno, levanta la app en uvicorn sobre
+loopback y fotografía las 22 pantallas en desktop y mobile con Playwright.
+`--skip-screens` corta la parte del navegador. La salida vive en
+`docs/refactor/baseline/`, con [README.md](baseline/README.md) escrito a mano y
+`MANIFEST.md` regenerado.
+
+**Reproducible de verdad, no «se puede volver a correr».** El reloj
+(`2026-01-05T12:00:00`) y el namespace de UUID son fijos, así que los ids y las
+fechas son función del código. Dos ejecuciones completas seguidas producen
+`openapi.json`, las 59 fixtures, `manifest.json` y `MANIFEST.md` byte a byte
+idénticos —comprobado con sha256— incluidos los PNG. Los ids sintéticos llevan
+forzados los bits de versión 4 porque varios schemas declaran `UUID4`: con un
+uuid5 puro la fixture mediría la semilla y no el endpoint.
+
+**Aislamiento, no promesa de aislamiento.** El script reusa
+`tests/isolation.apply_isolation()`. Durante la captura el guard bloqueó de
+hecho dos salidas a S3 desde las rutas de descarga de CV; esas dos quedaron sin
+fixture con su razón registrada, en vez de archivar el fallo del entorno como si
+fuera el contrato. El comando termina revisando las fixtures contra patrones de
+JWT, `Set-Cookie`, hashes de contraseña, claves de proveedor y correos fuera de
+la semilla, y falla sin escribir el manifiesto si encuentra algo.
+
+**Decisión sobre las imágenes (§Proposed Solution la exigía explícita).** Una
+captura completa son 44 PNG y ~18 MB. La baseline se reejecuta una vez por
+vertical, ocho verticales: versionarlos añadiría del orden de 150 MB de binarios
+irreversibles al historial. **No se versionan**: `screens/` entra en
+`.gitignore` y el job `baseline` de `.github/workflows/tests.yml` los publica
+como artefacto con 30 días de retención. Se versiona el manifiesto, el OpenAPI y
+las fixtures (644 KB en total). Los sha256 de los PNG van en
+`screens/index.json`, junto a ellos, para no ensuciar un fichero versionado en
+cada captura.
+
+**Cobertura contra el inventario de TASK-034.** Las 23 rutas de vista tienen
+captura salvo `/roadmap`, que es una redirección 307 a `/roadmaps` y no renderiza
+pantalla propia; queda registrada como tal. Cada pantalla y cada fixture lleva su
+vertical (`V1-TASK-046` … `V8-TASK-053`) leída del inventario, no de una lista
+paralela escrita a mano aquí. De los 65 handlers GET de API, 59 tienen fixture y
+6 tienen razón: `/favicon.ico`, `/robots.txt` y `/sitemap.xml` no describen
+ninguna pantalla; las dos descargas de CV y
+`/api/v1/profile/cv/{resume_id}/similar` no son capturables en este entorno.
+
+Validación ejecutada:
+
+```
+.venv/bin/python scripts/capture_baseline.py
+# openapi: 144 paths
+# fixtures: 59 capturadas, 6 con razón registrada
+# screens:  44 capturas (22 pantallas x 2 viewports), todas HTTP 200
+# revisión de secretos/PII: sin hallazgos
+
+# reejecución completa: sha256 idéntico de openapi.json, manifest.json,
+# MANIFEST.md, las 59 fixtures y los 44 PNG
+
+.venv/bin/python -m pytest -p no:cacheprovider
+# 429 passed, 61 skipped
+```
+
+**Hallazgo, no corregido aquí.** `GET /api/v1/admin/companies` responde 500
+siempre que exista al menos una empresa: `app/routes/adminRoute.py:532` lee
+`c.email` y `Company` no tiene esa columna (`app/models/companyModel.py:17-24`).
+La fixture archiva el 500 porque es el comportamiento actual; corregirlo es un
+Bug Fix rotulado de TASK-053, que es la vertical de admin. Esta tarea captura, no
+arregla.
+
+Límites, todos registrados en `manifest.json` y en el README de la carpeta. El
+navegador solo puede hablar con el servidor local, así que `/questionnaire` se
+captura **sin estilos**: toda su presentación viene de `cdn.tailwindcss.com` en
+tiempo de ejecución, lo que es en sí un hallazgo para TASK-047; `/admin` y
+`/admin/login` pierden la tipografía Inter que `admin.css` importa de Google
+Fonts, pero conservan estructura y color. La comparación sigue siendo válida
+porque legacy y React se capturarán con el mismo bloqueo. La baseline corre sobre
+SQLite, que no es PostgreSQL: el endpoint pgvector no se puede capturar. Las
+fixtures cubren GET; el contrato de las mutaciones lo fija TASK-043 en CI, que es
+donde corresponde. No se añadió un test que falle si el artefacto queda
+desactualizado: la sección Validation pide reejecutar y comparar, y el gate
+automatizado del contrato es de TASK-043.
+
+`scripts/` sigue ignorado en `.gitignore` —el hallazgo lateral que TASK-034 dejó
+para TASK-029—, así que `capture_baseline.py` se añadió con `git add -f`, igual
+que los otros siete scripts versionados.
 
 ### Estimated Impact
 

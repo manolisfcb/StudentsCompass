@@ -1,0 +1,77 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/students_dashboard"
+  },
+  "response": {
+    "body": {
+      "application_breakdown": {
+        "applied": 1,
+        "in_review": 0,
+        "interviews": 0,
+        "offers": 0
+      },
+      "progress": {
+        "interview_prep": 20,
+        "linkedin": 40,
+        "portfolio": 0,
+        "resume": 60
+      },
+      "recent_applications": [
+        {
+          "application_date": "2026-01-05T12:00:00",
+          "company_id": "fae284ff-46b9-4048-8316-2c725d4ec250",
+          "id": "35be4548-a1c7-4647-8e06-b0577d893e87",
+          "job_title": "Backend Engineer (Baseline)",
+          "notes": "Candidatura sintética.",
+          "status": "applied"
+        }
+      ],
+      "resource_navigation": {
+        "interview_prep": "/resources",
+        "linkedin": "/resources",
+        "resume": "/resources"
+      },
+      "resources": [
+        {
+          "icon": "📄",
+          "title": "ATS-Friendly Resume Templates (Tech)",
+          "url": "#"
+        },
+        {
+          "icon": "💼",
+          "title": "LinkedIn Headline & About Examples (Data/Tech)",
+          "url": "#"
+        },
+        {
+          "icon": "🎯",
+          "title": "Interview Question Bank (Behavioral + Technical)",
+          "url": "#"
+        },
+        {
+          "icon": "🎨",
+          "title": "Portfolio Checklist (Projects that recruiters like)",
+          "url": "#"
+        }
+      ],
+      "stats": {
+        "applied": 1,
+        "in_review": 0,
+        "interviews_scheduled": 0,
+        "offers_received": 0,
+        "overall_progress": 40.0,
+        "total_applications": 1
+      },
+      "user": {
+        "email": "baseline-student@example.com",
+        "first_name": "Baseline",
+        "id": "09e52b5d-3781-44a2-9b87-feae1a341adf",
+        "last_name": "Student",
+        "nickname": "baseline_student"
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

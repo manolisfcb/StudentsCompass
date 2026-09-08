@@ -1,0 +1,23 @@
+{
+  "request": {
+    "as": "recruiter",
+    "method": "GET",
+    "path": "/api/v1/companies/me/recruiters/current"
+  },
+  "response": {
+    "body": {
+      "company_id": "fae284ff-46b9-4048-8316-2c725d4ec250",
+      "created_at": "2026-01-05T12:00:00",
+      "email": "baseline-recruiter@example.com",
+      "first_name": "Baseline",
+      "id": "f347fe5e-c3bb-4303-ae86-b668c4f7c903",
+      "is_active": true,
+      "is_verified": true,
+      "last_name": "Recruiter",
+      "role": "owner",
+      "updated_at": "2026-01-05T12:00:00"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

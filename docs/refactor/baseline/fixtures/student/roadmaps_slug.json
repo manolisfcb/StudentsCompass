@@ -1,0 +1,66 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/roadmaps/baseline-backend-engineer"
+  },
+  "response": {
+    "body": {
+      "completed_tasks": 0,
+      "description": "Roadmap sintético de la baseline.",
+      "difficulty": "beginner",
+      "duration_weeks_max": 12,
+      "duration_weeks_min": 8,
+      "id": "e813bc9d-3115-4c81-89b9-4bf3320d06e1",
+      "is_saved": true,
+      "overall_progress_percent": 0,
+      "popularity": 1,
+      "role_target": "Backend Engineer",
+      "slug": "baseline-backend-engineer",
+      "stages": [
+        {
+          "duration_weeks": 4,
+          "id": "f36439cf-59f3-4595-b923-6d32bdaec5ac",
+          "objective": "Objetivo sintético de la etapa.",
+          "order_index": 1,
+          "progress_percent": 0,
+          "projects": [
+            {
+              "acceptance_criteria": [
+                "Criterio A",
+                "Criterio B"
+              ],
+              "brief": "Brief sintético del proyecto.",
+              "estimated_hours": 10,
+              "id": "2fccaa54-7b07-4d54-a9a5-e9736e3ecc21",
+              "rubric": {
+                "alcance": 5,
+                "calidad": 5
+              },
+              "submission": null,
+              "title": "Proyecto sintético"
+            }
+          ],
+          "tasks": [
+            {
+              "description": "Descripción sintética.",
+              "estimated_hours": 6,
+              "id": "d1a3bdce-6e43-48dc-ab52-b24339fa44f7",
+              "order_index": 1,
+              "resource_title": "Documentación sintética",
+              "resource_url": "https://docs.invalid/baseline",
+              "status": "not_started",
+              "task_type": "read",
+              "title": "Tarea sintética"
+            }
+          ],
+          "title": "Fundamentos"
+        }
+      ],
+      "title": "Backend Engineer (Baseline)",
+      "total_tasks": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

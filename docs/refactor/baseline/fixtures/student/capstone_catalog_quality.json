@@ -1,0 +1,39 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/capstone/catalog/quality"
+  },
+  "response": {
+    "body": {
+      "active_courses_count": 0,
+      "average_skills_per_course": 0.0,
+      "courses_count": 0,
+      "courses_with_skill_mapping": 0,
+      "mapped_course_ratio": 0.0,
+      "market_backed_role_count": 0,
+      "metadata_completeness": {
+        "cost": 0.0,
+        "difficulty": 0.0,
+        "duration_hours": 0.0,
+        "overall": 0.0,
+        "rating": 0.0,
+        "url": 0.0
+      },
+      "next_actions": [
+        "Expand the skill catalog toward at least 75 canonical skills for the first production vertical.",
+        "Curate at least 40 active learning resources with reliable cost, duration, difficulty, and rating.",
+        "Add more target role profiles before positioning the feature as a broad career planner.",
+        "Ensure every active course maps to at least one canonical skill.",
+        "Fill missing course metadata so optimization can compare cost, time, difficulty, and quality fairly.",
+        "Sync real job postings so role requirements and demand signals are market-backed."
+      ],
+      "quality_score": 0.0,
+      "quality_version": "catalog_quality_v1",
+      "seed_role_count": 0,
+      "skills_count": 0
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

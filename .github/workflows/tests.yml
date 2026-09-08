@@ -88,3 +88,32 @@ jobs:
       # handler, so the browser reaches no external host.
       - name: Run browser lane
         run: python -m pytest -p no:cacheprovider -m browser
+
+  baseline:
+    name: baseline lane (TASK-035, OpenAPI + fixtures + capturas)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "pytest>=9.0.2" "pytest-asyncio>=1.3.0" "httpx>=0.28.1" "playwright>=1.62.0"
+          python -m playwright install --with-deps chromium
+      # Sin secretos, igual que la lane rápida: la captura corre sobre una
+      # SQLite desechable con datos sintéticos y el aislamiento bloquea la
+      # salida, así que ningún dato real puede acabar en el artefacto. El paso
+      # falla si la revisión de secretos/PII encuentra algo.
+      - name: Capturar la baseline
+        run: python scripts/capture_baseline.py
+      # Los PNG no se versionan (docs/refactor/baseline/README.md): ~18 MB por
+      # captura. Se publican aquí y se comparan descargando dos ejecuciones.
+      - name: Publicar las capturas
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-screens
+          path: docs/refactor/baseline/screens/
+          retention-days: 30

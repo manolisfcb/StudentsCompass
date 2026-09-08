@@ -1,0 +1,70 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/outline"
+  },
+  "response": {
+    "body": {
+      "category": "career",
+      "completed_lesson_ids": [],
+      "completed_lessons": 0,
+      "created_at": "2026-01-05T12:00:00",
+      "description": "Curso sintético usado por la baseline visual.",
+      "estimated_duration_minutes": 45,
+      "external_url": null,
+      "icon": "📘",
+      "id": "3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "is_locked": false,
+      "lesson_count": 1,
+      "level": "beginner",
+      "module_count": 1,
+      "module_progress": [
+        {
+          "completed_lessons": 0,
+          "module_id": "51db6fd0-d770-4fe8-a2f4-2fab4e1cc87e",
+          "progress_percent": 0,
+          "total_lessons": 1
+        }
+      ],
+      "modules": [
+        {
+          "completed_lessons": 0,
+          "description": "Módulo sintético.",
+          "id": "51db6fd0-d770-4fe8-a2f4-2fab4e1cc87e",
+          "lessons": [
+            {
+              "content": "Contenido sintético de la lección.",
+              "content_payload": {
+                "body": "Contenido sintético de la lección."
+              },
+              "content_type": "text",
+              "created_at": "2026-01-05T12:00:00",
+              "id": "fcb3c498-f183-4d67-bdc0-900ce5d9a96c",
+              "is_completed": false,
+              "module_id": "51db6fd0-d770-4fe8-a2f4-2fab4e1cc87e",
+              "notes": null,
+              "position": 1,
+              "reading_time_minutes": 5,
+              "resource_url": null,
+              "title": "Lección 1",
+              "video_url": null
+            }
+          ],
+          "position": 1,
+          "progress_percent": 0,
+          "resource_id": "3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+          "title": "Módulo 1",
+          "total_lessons": 1
+        }
+      ],
+      "progress_percent": 0,
+      "tags": [
+        "baseline"
+      ],
+      "title": "Baseline Course"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

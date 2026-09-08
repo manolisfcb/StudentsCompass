@@ -1,0 +1,17 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/jobs/keywords"
+  },
+  "response": {
+    "body": {
+      "cv_filename": "baseline-resume.pdf",
+      "has_cv": true,
+      "keywords": "",
+      "summary": "Resumen sintético: perfil junior de backend."
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

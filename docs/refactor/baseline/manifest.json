@@ -1,0 +1,1482 @@
+{
+  "files": {
+    "fixtures/admin/admin_applications.json": {
+      "bytes": 525,
+      "sha256": "a12de41b29639d5c11a8bff828119acf1c1ec77855d1566fa5c8756f89db96af"
+    },
+    "fixtures/admin/admin_communities.json": {
+      "bytes": 588,
+      "sha256": "4a2d33b196186c3a81dac951f346a7b56308d8999dda0c0820155e92102bd26f"
+    },
+    "fixtures/admin/admin_companies.json": {
+      "bytes": 256,
+      "sha256": "51524452d1c201b774b473ab3eef1fc98c5444cc8c96ecd464e6821330e6f2e3"
+    },
+    "fixtures/admin/admin_jobs.json": {
+      "bytes": 534,
+      "sha256": "24c17fcd72d23bec23338bd300270f11bbb10d751ab811ac1cc97760becd7300"
+    },
+    "fixtures/admin/admin_resources.json": {
+      "bytes": 795,
+      "sha256": "a061273a268cf83dd4cfb8c0f15e67f9482dd8cc5606181c9f39c041f051f10a"
+    },
+    "fixtures/admin/admin_resources_resource_id.json": {
+      "bytes": 1477,
+      "sha256": "bc4f8a6ec452512b08df49c9de7ba817a56fb1bf1e51d20753e25820140980c2"
+    },
+    "fixtures/admin/admin_stats.json": {
+      "bytes": 444,
+      "sha256": "fd7cd6c6a6c963f5782c9cc45f523225b56a3d7a02cfe621efd91fe25609bcfd"
+    },
+    "fixtures/admin/admin_users.json": {
+      "bytes": 1225,
+      "sha256": "2b2c892fd37b1d2346c0c7c2eadbc7484aa15a8034f8560de9e692efa9c00b5e"
+    },
+    "fixtures/admin/admin_users_user_id_resource_progress.json": {
+      "bytes": 862,
+      "sha256": "2ce7c69ffe7f97346f72835d12f39229065ef18c30359030c7b79f98bb51b28e"
+    },
+    "fixtures/admin/users_id.json": {
+      "bytes": 589,
+      "sha256": "31b93e06eb48a0ced4f462e34c281bda7c448c5e40537eb9a156e15dc9885014"
+    },
+    "fixtures/recruiter/companies_me.json": {
+      "bytes": 620,
+      "sha256": "1a5ba6a3e2f508b9d7a4926086b75c133fad1df05eef02a5aa00df5fc034cdb0"
+    },
+    "fixtures/recruiter/companies_me_applicants.json": {
+      "bytes": 1663,
+      "sha256": "ef924f6b08d42f6c8a0057a0468c45714bc4248eea8f7ce6293787d8934076ab"
+    },
+    "fixtures/recruiter/companies_me_job_postings.json": {
+      "bytes": 1337,
+      "sha256": "2fb2f987a66d7f2c065249db926dba8543408d3e79fbc837ac81dec4ace69747"
+    },
+    "fixtures/recruiter/companies_me_recruiters.json": {
+      "bytes": 634,
+      "sha256": "6cfdfd0c7d600f8529b603a0d28a0c78a95dbefe41c9f06a39cdb5140dafce85"
+    },
+    "fixtures/recruiter/companies_me_recruiters_current.json": {
+      "bytes": 606,
+      "sha256": "1e6c59c3ade6d09757aa51c4727a597f7685f9807ad2cc32c7be8b9901d9ddb8"
+    },
+    "fixtures/recruiter/company_dashboard.json": {
+      "bytes": 1218,
+      "sha256": "a51a51e37d70f0afbefd5100f82aa89cc71465bb5018ce0a199217aca9304c94"
+    },
+    "fixtures/student/applications.json": {
+      "bytes": 1088,
+      "sha256": "5ef1cac413acd378ec1a3e553d6273491d75a806ba350cfb261c005f8925d1b1"
+    },
+    "fixtures/student/applications_eligible_resumes.json": {
+      "bytes": 212,
+      "sha256": "f20fa37c0c4523e82b7e6504e21c2f424234061fd5b7b3a9887493dd03fc07fb"
+    },
+    "fixtures/student/capstone_analytics_roles.json": {
+      "bytes": 903,
+      "sha256": "2c71834f24d26a8fe17a4053f32281d1cc70e7c257373aa5d4028ff99da0b168"
+    },
+    "fixtures/student/capstone_analytics_status.json": {
+      "bytes": 1552,
+      "sha256": "aa0038fa1c98b70b25828049c932bfcd8272e6fede3963dc672f199d305dfefc"
+    },
+    "fixtures/student/capstone_catalog_quality.json": {
+      "bytes": 1364,
+      "sha256": "6ce9e1737e7ed783c21fbe785c03da532978a292b4fd4a01f39837ce7de057e2"
+    },
+    "fixtures/student/capstone_gap_analysis.json": {
+      "bytes": 1678,
+      "sha256": "c4241bc27c57c0e1315cd88e68d7b4538d1da31e7b0f43fad83929c4d10d9ad4"
+    },
+    "fixtures/student/capstone_learning_route_runs.json": {
+      "bytes": 233,
+      "sha256": "064261033d254a0c217718fcf3a7559a23b55f8ba01d4377677097915609a2d4"
+    },
+    "fixtures/student/capstone_resumes_resume_id_skills.json": {
+      "bytes": 326,
+      "sha256": "8a53a7893967b6aff5c4e86fcb652d973fd3d7af4cfe0c9cf700962dc4941944"
+    },
+    "fixtures/student/communities.json": {
+      "bytes": 635,
+      "sha256": "0b6ffe032d39c9ed939c7ee818c5414ed5f155cd150a6819395ed36da3736caa"
+    },
+    "fixtures/student/communities_community_id.json": {
+      "bytes": 632,
+      "sha256": "1ae675d8e3a0745f269a8b03e93696cbda35df41d200f526bec7c99c20f72da6"
+    },
+    "fixtures/student/communities_community_id_membership.json": {
+      "bytes": 271,
+      "sha256": "18d66cca8379a57a38b1c04df9b27d6cc8524ddfa097e367f3c675781771ad1e"
+    },
+    "fixtures/student/communities_community_id_posts.json": {
+      "bytes": 618,
+      "sha256": "d101d4bef5e9083989a698569f0f9b4cf66e2bcbc56da11ae4d437625ab169eb"
+    },
+    "fixtures/student/communities_community_id_posts_enriched.json": {
+      "bytes": 246,
+      "sha256": "ed9663554273299c844a18d2a62f9876373471792cd62ee179d7a985b3782cfc"
+    },
+    "fixtures/student/communities_tags.json": {
+      "bytes": 238,
+      "sha256": "8e9ff41e91e99fedea84aed461c3ee940ca71a3bebe7e121b82101fa5a94e974"
+    },
+    "fixtures/student/community_posts_post_id_comments.json": {
+      "bytes": 526,
+      "sha256": "e4157cdc7c4d682dd5a9ab8ca720fdab124b4a1ce17e8664f05a1185629ee9e1"
+    },
+    "fixtures/student/community_posts_post_id_comments_enriched.json": {
+      "bytes": 253,
+      "sha256": "5dfa99abe74ecd4691a2e5ab2383517023fbb81156a1261c2dbb47c7f423f775"
+    },
+    "fixtures/student/conversations.json": {
+      "bytes": 763,
+      "sha256": "bf9135b2e90a238095ad66003c62748c66145f9ab05ed6cb66ef68f4a2e5d664"
+    },
+    "fixtures/student/conversations_conversation_id_messages.json": {
+      "bytes": 607,
+      "sha256": "1387cfcba012f36d1d4ff1e201239c1236f324851fb2de3cb83484f83f163cca"
+    },
+    "fixtures/student/dashboard_stats.json": {
+      "bytes": 819,
+      "sha256": "a72dcca811c7333f7ca7c0bfd098824ed9b9c964c46039b2e3d94e05cd4a6f3c"
+    },
+    "fixtures/student/friends.json": {
+      "bytes": 496,
+      "sha256": "13495a8d642adada4a0daddfb436959883c492b48028de53081cb5a55de10e1a"
+    },
+    "fixtures/student/friends_requests_incoming.json": {
+      "bytes": 835,
+      "sha256": "284cca719dda37a7b9b2c5a4b8af737d916e374e4b6d002abcfdb062814e1dc5"
+    },
+    "fixtures/student/friends_requests_outgoing.json": {
+      "bytes": 208,
+      "sha256": "2a83067d2321939677ccfe345efbfc320b180ef7f4b134c532ff6b80a451e968"
+    },
+    "fixtures/student/friends_status.json": {
+      "bytes": 379,
+      "sha256": "8eafc1beb600be9c03dd1a3b6dd75ef7c51ecafd576d90b6724c632b6c6fa667"
+    },
+    "fixtures/student/jobs_board.json": {
+      "bytes": 1320,
+      "sha256": "dbcd90284ae0fa87b7a450df861017c8f90c2d874a9283a0dac5ffe95ef43e17"
+    },
+    "fixtures/student/jobs_keywords.json": {
+      "bytes": 354,
+      "sha256": "1f79a599ecbcf4eff77751d8bd431a5265c0cae6c51a412200a6607022523233"
+    },
+    "fixtures/student/jobs_keywords_job_id.json": {
+      "bytes": 270,
+      "sha256": "75788c965188cb90e5b2ba74966de166912883f32b89a91a024e5a173e2b1a73"
+    },
+    "fixtures/student/me_roadmaps.json": {
+      "bytes": 812,
+      "sha256": "a25f3ce2d874c412c2d3d278e8062ac53b0c8c2e0ca9452de9a086698e002e87"
+    },
+    "fixtures/student/posts.json": {
+      "bytes": 504,
+      "sha256": "def663001dacd58bb550f8aee19ce3eb74af03c37055387de365a79eb7f5c3ec"
+    },
+    "fixtures/student/posts_post_id.json": {
+      "bytes": 513,
+      "sha256": "0f2ba59ad47e273996592ce1e0bfebe6527180012062466d5928285552d43bec"
+    },
+    "fixtures/student/profile.json": {
+      "bytes": 556,
+      "sha256": "69a6727398cf0bdf9fdc1d517e2e736a3ec700720c8515bfb0aadd7cd9234e43"
+    },
+    "fixtures/student/profile_cv.json": {
+      "bytes": 685,
+      "sha256": "d79ce155b91c545124aa23a3d693a337b326247b5246d91ebd56ebf2bb86f1fd"
+    },
+    "fixtures/student/profile_cv_course_audit_attempts.json": {
+      "bytes": 301,
+      "sha256": "1b8e8e93c93f26c1656fdc10ec95dcced8528f5e1b2d20e711a008aa911ea1fc"
+    },
+    "fixtures/student/questionnaire.json": {
+      "bytes": 12762,
+      "sha256": "4ec34584721ad26b05928b680f01e6fb50262a0cb26613d6ef407690bca8dfe5"
+    },
+    "fixtures/student/questionnaire_profile.json": {
+      "bytes": 13975,
+      "sha256": "ddfaf9a844d21d7a05cf8071b75a583e8746a17f4f6ec3fa4658b94bf838d287"
+    },
+    "fixtures/student/resources.json": {
+      "bytes": 683,
+      "sha256": "ecec2199e1624097fda25e4d17f8c7a9db0fb41470d7f0b34d79e3ac8fa1dca8"
+    },
+    "fixtures/student/resources_file.json": {
+      "bytes": 273,
+      "sha256": "ab5569bd1cf0c178a96debd0c47656590e0f4a15110ab081b98a4b7812835670"
+    },
+    "fixtures/student/resources_resource_id.json": {
+      "bytes": 1537,
+      "sha256": "61941fcb216dc98bbbe727f2bf618b450f6924018ba71d29e4fd86d248df9800"
+    },
+    "fixtures/student/resources_resource_id_outline.json": {
+      "bytes": 2085,
+      "sha256": "28ead88611d5107accdb76cc69971690f8e594b55163b562dbd0eec74ae513f8"
+    },
+    "fixtures/student/resources_resource_id_progress.json": {
+      "bytes": 687,
+      "sha256": "508eaa92991100dddacd0653b2e17c1d759d1cc80b4d608abfae9b8cde1c65cf"
+    },
+    "fixtures/student/roadmaps.json": {
+      "bytes": 709,
+      "sha256": "49dc10991d4ff2d34cb12c6d078e27b51b625cf7e7c9c240cb83de9aa31ff320"
+    },
+    "fixtures/student/roadmaps_slug.json": {
+      "bytes": 1982,
+      "sha256": "805dde8add68b83f3a7854a9b92825fbd65dfa1707ecba533a710a5d92795f5b"
+    },
+    "fixtures/student/students_dashboard.json": {
+      "bytes": 1984,
+      "sha256": "18a716254a27c6f8c7d50da4a8942002ec31461d428f2f2f59ccfad1098640f8"
+    },
+    "fixtures/student/users_me.json": {
+      "bytes": 557,
+      "sha256": "99bd5d5508792a3b588aa7013a453be387dd8ac32b225a6d7e5d24e72df0a737"
+    },
+    "openapi.json": {
+      "bytes": 390860,
+      "sha256": "9375dfdbbbd1432bd238c3e27dcd854b2bab3268e01ef188e709dad0abfe916a"
+    }
+  },
+  "fixtures": [
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_applications.json",
+      "path": "/api/v1/admin/applications",
+      "request": "/api/v1/admin/applications",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_communities.json",
+      "path": "/api/v1/admin/communities",
+      "request": "/api/v1/admin/communities",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "body_omitted": "respuesta no JSON",
+      "captured": true,
+      "content_type": "text/plain; charset=utf-8",
+      "file": "fixtures/admin/admin_companies.json",
+      "path": "/api/v1/admin/companies",
+      "request": "/api/v1/admin/companies",
+      "status": 500,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_jobs.json",
+      "path": "/api/v1/admin/jobs",
+      "request": "/api/v1/admin/jobs",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_resources.json",
+      "path": "/api/v1/admin/resources",
+      "request": "/api/v1/admin/resources",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_resources_resource_id.json",
+      "path": "/api/v1/admin/resources/{resource_id}",
+      "request": "/api/v1/admin/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_stats.json",
+      "path": "/api/v1/admin/stats",
+      "request": "/api/v1/admin/stats",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_users.json",
+      "path": "/api/v1/admin/users",
+      "request": "/api/v1/admin/users",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/admin_users_user_id_resource_progress.json",
+      "path": "/api/v1/admin/users/{user_id}/resource-progress",
+      "request": "/api/v1/admin/users/09e52b5d-3781-44a2-9b87-feae1a341adf/resource-progress",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/applications.json",
+      "path": "/api/v1/applications",
+      "request": "/api/v1/applications",
+      "status": 200,
+      "vertical": "V4-TASK-049"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/applications_eligible_resumes.json",
+      "path": "/api/v1/applications/eligible-resumes",
+      "request": "/api/v1/applications/eligible-resumes",
+      "status": 200,
+      "vertical": "V4-TASK-049"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/capstone_analytics_roles.json",
+      "path": "/api/v1/capstone/analytics/roles",
+      "request": "/api/v1/capstone/analytics/roles",
+      "status": 200,
+      "vertical": "V7-TASK-052"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/capstone_analytics_status.json",
+      "path": "/api/v1/capstone/analytics/status",
+      "request": "/api/v1/capstone/analytics/status",
+      "status": 200,
+      "vertical": "V7-TASK-052"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/capstone_catalog_quality.json",
+      "path": "/api/v1/capstone/catalog/quality",
+      "request": "/api/v1/capstone/catalog/quality",
+      "status": 200,
+      "vertical": "V7-TASK-052"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/capstone_gap_analysis.json",
+      "path": "/api/v1/capstone/gap-analysis",
+      "request": "/api/v1/capstone/gap-analysis?resume_id=0e475b0f-a365-41fb-baea-25553c1b86fe&target_role=Backend Engineer",
+      "status": 200,
+      "vertical": "V7-TASK-052"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/capstone_learning_route_runs.json",
+      "path": "/api/v1/capstone/learning-route/runs",
+      "request": "/api/v1/capstone/learning-route/runs",
+      "status": 200,
+      "vertical": "V7-TASK-052"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/capstone_resumes_resume_id_skills.json",
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills",
+      "request": "/api/v1/capstone/resumes/0e475b0f-a365-41fb-baea-25553c1b86fe/skills",
+      "status": 200,
+      "vertical": "V7-TASK-052"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/communities.json",
+      "path": "/api/v1/communities",
+      "request": "/api/v1/communities",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/communities_tags.json",
+      "path": "/api/v1/communities/tags",
+      "request": "/api/v1/communities/tags",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/communities_community_id.json",
+      "path": "/api/v1/communities/{community_id}",
+      "request": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/communities_community_id_membership.json",
+      "path": "/api/v1/communities/{community_id}/membership",
+      "request": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/communities_community_id_posts.json",
+      "path": "/api/v1/communities/{community_id}/posts",
+      "request": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/communities_community_id_posts_enriched.json",
+      "path": "/api/v1/communities/{community_id}/posts/enriched",
+      "request": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts/enriched",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/community_posts_post_id_comments.json",
+      "path": "/api/v1/community-posts/{post_id}/comments",
+      "request": "/api/v1/community-posts/8680f5c7-2664-44ea-9727-09a2c8b7ce70/comments",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/community_posts_post_id_comments_enriched.json",
+      "path": "/api/v1/community-posts/{post_id}/comments/enriched",
+      "request": "/api/v1/community-posts/8680f5c7-2664-44ea-9727-09a2c8b7ce70/comments/enriched",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "recruiter",
+      "as": "recruiter",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/recruiter/companies_me.json",
+      "path": "/api/v1/companies/me",
+      "request": "/api/v1/companies/me",
+      "status": 200,
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter",
+      "as": "recruiter",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/recruiter/companies_me_applicants.json",
+      "path": "/api/v1/companies/me/applicants",
+      "request": "/api/v1/companies/me/applicants",
+      "status": 200,
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter",
+      "captured": false,
+      "path": "/api/v1/companies/me/applications/{application_id}/resume/download",
+      "reason": "descarga desde object storage; el aislamiento bloquea la salida y la respuesta describiría el entorno, no el endpoint",
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter",
+      "captured": false,
+      "path": "/api/v1/companies/me/applications/{application_id}/resume/preview",
+      "reason": "previsualización desde object storage; misma razón que /resume/download",
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter:job_manager",
+      "as": "recruiter",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/recruiter/companies_me_job_postings.json",
+      "path": "/api/v1/companies/me/job-postings",
+      "request": "/api/v1/companies/me/job-postings",
+      "status": 200,
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter:owner",
+      "as": "recruiter",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/recruiter/companies_me_recruiters.json",
+      "path": "/api/v1/companies/me/recruiters",
+      "request": "/api/v1/companies/me/recruiters",
+      "status": 200,
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter",
+      "as": "recruiter",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/recruiter/companies_me_recruiters_current.json",
+      "path": "/api/v1/companies/me/recruiters/current",
+      "request": "/api/v1/companies/me/recruiters/current",
+      "status": 200,
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "recruiter",
+      "as": "recruiter",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/recruiter/company_dashboard.json",
+      "path": "/api/v1/company_dashboard",
+      "request": "/api/v1/company_dashboard",
+      "status": 200,
+      "vertical": "V5-TASK-050"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/conversations.json",
+      "path": "/api/v1/conversations",
+      "request": "/api/v1/conversations",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/conversations_conversation_id_messages.json",
+      "path": "/api/v1/conversations/{conversation_id}/messages",
+      "request": "/api/v1/conversations/0188343d-149d-4b53-be1c-9e208c59f1fe/messages",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/dashboard_stats.json",
+      "path": "/api/v1/dashboard/stats",
+      "request": "/api/v1/dashboard/stats",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/friends.json",
+      "path": "/api/v1/friends",
+      "request": "/api/v1/friends",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/friends_requests_incoming.json",
+      "path": "/api/v1/friends/requests/incoming",
+      "request": "/api/v1/friends/requests/incoming",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/friends_requests_outgoing.json",
+      "path": "/api/v1/friends/requests/outgoing",
+      "request": "/api/v1/friends/requests/outgoing",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/friends_status.json",
+      "path": "/api/v1/friends/status",
+      "request": "/api/v1/friends/status?user_ids=d0a4f8d1-ba23-4b6c-b1b7-17942d52e8ce",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/jobs_board.json",
+      "path": "/api/v1/jobs/board",
+      "request": "/api/v1/jobs/board",
+      "status": 200,
+      "vertical": "V4-TASK-049"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/jobs_keywords.json",
+      "path": "/api/v1/jobs/keywords",
+      "request": "/api/v1/jobs/keywords",
+      "status": 200,
+      "vertical": "V4-TASK-049"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/jobs_keywords_job_id.json",
+      "path": "/api/v1/jobs/keywords/{job_id}",
+      "request": "/api/v1/jobs/keywords/6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919",
+      "status": 404,
+      "vertical": "V4-TASK-049"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/me_roadmaps.json",
+      "path": "/api/v1/me/roadmaps",
+      "request": "/api/v1/me/roadmaps",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/posts.json",
+      "path": "/api/v1/posts",
+      "request": "/api/v1/posts",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/posts_post_id.json",
+      "path": "/api/v1/posts/{post_id}",
+      "request": "/api/v1/posts/eeaa992d-0639-464f-b0c4-ace805b280b1",
+      "status": 200,
+      "vertical": "V6-TASK-051"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/profile.json",
+      "path": "/api/v1/profile",
+      "request": "/api/v1/profile",
+      "status": 200,
+      "vertical": "V2-TASK-047"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/profile_cv.json",
+      "path": "/api/v1/profile/cv",
+      "request": "/api/v1/profile/cv",
+      "status": 200,
+      "vertical": "V2-TASK-047"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/profile_cv_course_audit_attempts.json",
+      "path": "/api/v1/profile/cv/course-audit-attempts",
+      "request": "/api/v1/profile/cv/course-audit-attempts",
+      "status": 200,
+      "vertical": "V2-TASK-047"
+    },
+    {
+      "actor": "student",
+      "captured": false,
+      "path": "/api/v1/profile/cv/{resume_id}/similar",
+      "reason": "usa el operador pgvector `<=>`; la baseline corre sobre SQLite y el endpoint declara que exige PostgreSQL con la extensión vector",
+      "vertical": "V2-TASK-047"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/questionnaire.json",
+      "path": "/api/v1/questionnaire",
+      "request": "/api/v1/questionnaire",
+      "status": 200,
+      "vertical": "V2-TASK-047"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/questionnaire_profile.json",
+      "path": "/api/v1/questionnaire/profile",
+      "request": "/api/v1/questionnaire/profile",
+      "status": 200,
+      "vertical": "V2-TASK-047"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/resources.json",
+      "path": "/api/v1/resources",
+      "request": "/api/v1/resources",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/resources_file.json",
+      "path": "/api/v1/resources/file",
+      "request": "/api/v1/resources/file?key=baseline-resource-object",
+      "status": 404,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/resources_resource_id.json",
+      "path": "/api/v1/resources/{resource_id}",
+      "request": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/resources_resource_id_outline.json",
+      "path": "/api/v1/resources/{resource_id}/outline",
+      "request": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/outline",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/resources_resource_id_progress.json",
+      "path": "/api/v1/resources/{resource_id}/progress",
+      "request": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/progress",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/roadmaps.json",
+      "path": "/api/v1/roadmaps",
+      "request": "/api/v1/roadmaps",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/roadmaps_slug.json",
+      "path": "/api/v1/roadmaps/{slug}",
+      "request": "/api/v1/roadmaps/baseline-backend-engineer",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/students_dashboard.json",
+      "path": "/api/v1/students_dashboard",
+      "request": "/api/v1/students_dashboard",
+      "status": 200,
+      "vertical": "V3-TASK-048"
+    },
+    {
+      "actor": "student",
+      "as": "student",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/student/users_me.json",
+      "path": "/api/v1/users/me",
+      "request": "/api/v1/users/me",
+      "status": 200,
+      "vertical": "V1-TASK-046"
+    },
+    {
+      "actor": "admin",
+      "as": "admin",
+      "captured": true,
+      "content_type": "application/json",
+      "file": "fixtures/admin/users_id.json",
+      "path": "/api/v1/users/{id}",
+      "request": "/api/v1/users/09e52b5d-3781-44a2-9b87-feae1a341adf",
+      "status": 200,
+      "vertical": "V8-TASK-053"
+    },
+    {
+      "actor": "public",
+      "captured": false,
+      "path": "/favicon.ico",
+      "reason": "asset binario servido por FileResponse; no hay payload que comparar",
+      "vertical": "V1-TASK-046"
+    },
+    {
+      "actor": "public",
+      "captured": false,
+      "path": "/robots.txt",
+      "reason": "texto plano estático",
+      "vertical": "V1-TASK-046"
+    },
+    {
+      "actor": "public",
+      "captured": false,
+      "path": "/sitemap.xml",
+      "reason": "XML cubierto por tests/test_sitemap.py",
+      "vertical": "V1-TASK-046"
+    }
+  ],
+  "generated_by": "scripts/capture_baseline.py",
+  "openapi": {
+    "file": "openapi.json",
+    "paths": 144
+  },
+  "screens": {
+    "blocked_by_screen": {
+      "admin": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      ],
+      "admin-login": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      ],
+      "questionnaire": [
+        "https://cdn.tailwindcss.com/"
+      ]
+    },
+    "blocked_external_requests": [
+      "https://cdn.tailwindcss.com/",
+      "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    ],
+    "captured": true,
+    "entries": [
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/root.desktop.png",
+        "final_url": "/",
+        "name": "root",
+        "route": "/",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/home.desktop.png",
+        "final_url": "/home",
+        "name": "home",
+        "route": "/home",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/about.desktop.png",
+        "final_url": "/about",
+        "name": "about",
+        "route": "/about",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/login.desktop.png",
+        "final_url": "/login",
+        "name": "login",
+        "route": "/login",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/register.desktop.png",
+        "final_url": "/register",
+        "name": "register",
+        "route": "/register",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/register-api-alias.desktop.png",
+        "final_url": "/api/v1/auth/register",
+        "name": "register-api-alias",
+        "route": "/api/v1/auth/register",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [
+          "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        ],
+        "file": "screens/admin-login.desktop.png",
+        "final_url": "/admin/login",
+        "name": "admin-login",
+        "route": "/admin/login",
+        "status": 200,
+        "vertical": "V8-TASK-053",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/dashboard.desktop.png",
+        "final_url": "/dashboard",
+        "name": "dashboard",
+        "route": "/dashboard",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [
+          "https://cdn.tailwindcss.com/"
+        ],
+        "file": "screens/questionnaire.desktop.png",
+        "final_url": "/questionnaire",
+        "name": "questionnaire",
+        "route": "/questionnaire",
+        "status": 200,
+        "vertical": "V2-TASK-047",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/user-profile.desktop.png",
+        "final_url": "/user-profile",
+        "name": "user-profile",
+        "route": "/user-profile",
+        "status": 200,
+        "vertical": "V2-TASK-047",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/resources.desktop.png",
+        "final_url": "/resources",
+        "name": "resources",
+        "route": "/resources",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/resource-detail.desktop.png",
+        "final_url": "/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d?lesson=fcb3c498-f183-4d67-bdc0-900ce5d9a96c",
+        "name": "resource-detail",
+        "route": "/resources/{resource}",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/roadmaps.desktop.png",
+        "final_url": "/roadmaps",
+        "name": "roadmaps",
+        "route": "/roadmaps",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/roadmap-detail.desktop.png",
+        "final_url": "/roadmaps/baseline-backend-engineer",
+        "name": "roadmap-detail",
+        "route": "/roadmaps/{slug}",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/jobs.desktop.png",
+        "final_url": "/jobs",
+        "name": "jobs",
+        "route": "/jobs",
+        "status": 200,
+        "vertical": "V4-TASK-049",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/community.desktop.png",
+        "final_url": "/community",
+        "name": "community",
+        "route": "/community",
+        "status": 200,
+        "vertical": "V6-TASK-051",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/community-feed.desktop.png",
+        "final_url": "/community/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "name": "community-feed",
+        "route": "/community/{community}",
+        "status": 200,
+        "vertical": "V6-TASK-051",
+        "viewport": "desktop"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/career-lab.desktop.png",
+        "final_url": "/career-lab",
+        "name": "career-lab",
+        "route": "/career-lab",
+        "status": 200,
+        "vertical": "V7-TASK-052",
+        "viewport": "desktop"
+      },
+      {
+        "as": "admin",
+        "blocked_external_requests": [
+          "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        ],
+        "file": "screens/admin.desktop.png",
+        "final_url": "/admin",
+        "name": "admin",
+        "route": "/admin",
+        "status": 200,
+        "vertical": "V8-TASK-053",
+        "viewport": "desktop"
+      },
+      {
+        "as": "recruiter",
+        "blocked_external_requests": [],
+        "file": "screens/company-dashboard.desktop.png",
+        "final_url": "/company-dashboard",
+        "name": "company-dashboard",
+        "route": "/company-dashboard",
+        "status": 200,
+        "vertical": "V5-TASK-050",
+        "viewport": "desktop"
+      },
+      {
+        "as": "recruiter",
+        "blocked_external_requests": [],
+        "file": "screens/company-candidates.desktop.png",
+        "final_url": "/company-candidates",
+        "name": "company-candidates",
+        "route": "/company-candidates",
+        "status": 200,
+        "vertical": "V5-TASK-050",
+        "viewport": "desktop"
+      },
+      {
+        "as": "recruiter",
+        "blocked_external_requests": [],
+        "file": "screens/company-team.desktop.png",
+        "final_url": "/company-team",
+        "name": "company-team",
+        "route": "/company-team",
+        "status": 200,
+        "vertical": "V5-TASK-050",
+        "viewport": "desktop"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/root.mobile.png",
+        "final_url": "/",
+        "name": "root",
+        "route": "/",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "mobile"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/home.mobile.png",
+        "final_url": "/home",
+        "name": "home",
+        "route": "/home",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "mobile"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/about.mobile.png",
+        "final_url": "/about",
+        "name": "about",
+        "route": "/about",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "mobile"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/login.mobile.png",
+        "final_url": "/login",
+        "name": "login",
+        "route": "/login",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "mobile"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/register.mobile.png",
+        "final_url": "/register",
+        "name": "register",
+        "route": "/register",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "mobile"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [],
+        "file": "screens/register-api-alias.mobile.png",
+        "final_url": "/api/v1/auth/register",
+        "name": "register-api-alias",
+        "route": "/api/v1/auth/register",
+        "status": 200,
+        "vertical": "V1-TASK-046",
+        "viewport": "mobile"
+      },
+      {
+        "as": "anonymous",
+        "blocked_external_requests": [
+          "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        ],
+        "file": "screens/admin-login.mobile.png",
+        "final_url": "/admin/login",
+        "name": "admin-login",
+        "route": "/admin/login",
+        "status": 200,
+        "vertical": "V8-TASK-053",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/dashboard.mobile.png",
+        "final_url": "/dashboard",
+        "name": "dashboard",
+        "route": "/dashboard",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [
+          "https://cdn.tailwindcss.com/"
+        ],
+        "file": "screens/questionnaire.mobile.png",
+        "final_url": "/questionnaire",
+        "name": "questionnaire",
+        "route": "/questionnaire",
+        "status": 200,
+        "vertical": "V2-TASK-047",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/user-profile.mobile.png",
+        "final_url": "/user-profile",
+        "name": "user-profile",
+        "route": "/user-profile",
+        "status": 200,
+        "vertical": "V2-TASK-047",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/resources.mobile.png",
+        "final_url": "/resources",
+        "name": "resources",
+        "route": "/resources",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/resource-detail.mobile.png",
+        "final_url": "/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d?lesson=fcb3c498-f183-4d67-bdc0-900ce5d9a96c",
+        "name": "resource-detail",
+        "route": "/resources/{resource}",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/roadmaps.mobile.png",
+        "final_url": "/roadmaps",
+        "name": "roadmaps",
+        "route": "/roadmaps",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/roadmap-detail.mobile.png",
+        "final_url": "/roadmaps/baseline-backend-engineer",
+        "name": "roadmap-detail",
+        "route": "/roadmaps/{slug}",
+        "status": 200,
+        "vertical": "V3-TASK-048",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/jobs.mobile.png",
+        "final_url": "/jobs",
+        "name": "jobs",
+        "route": "/jobs",
+        "status": 200,
+        "vertical": "V4-TASK-049",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/community.mobile.png",
+        "final_url": "/community",
+        "name": "community",
+        "route": "/community",
+        "status": 200,
+        "vertical": "V6-TASK-051",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/community-feed.mobile.png",
+        "final_url": "/community/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "name": "community-feed",
+        "route": "/community/{community}",
+        "status": 200,
+        "vertical": "V6-TASK-051",
+        "viewport": "mobile"
+      },
+      {
+        "as": "student",
+        "blocked_external_requests": [],
+        "file": "screens/career-lab.mobile.png",
+        "final_url": "/career-lab",
+        "name": "career-lab",
+        "route": "/career-lab",
+        "status": 200,
+        "vertical": "V7-TASK-052",
+        "viewport": "mobile"
+      },
+      {
+        "as": "admin",
+        "blocked_external_requests": [
+          "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        ],
+        "file": "screens/admin.mobile.png",
+        "final_url": "/admin",
+        "name": "admin",
+        "route": "/admin",
+        "status": 200,
+        "vertical": "V8-TASK-053",
+        "viewport": "mobile"
+      },
+      {
+        "as": "recruiter",
+        "blocked_external_requests": [],
+        "file": "screens/company-dashboard.mobile.png",
+        "final_url": "/company-dashboard",
+        "name": "company-dashboard",
+        "route": "/company-dashboard",
+        "status": 200,
+        "vertical": "V5-TASK-050",
+        "viewport": "mobile"
+      },
+      {
+        "as": "recruiter",
+        "blocked_external_requests": [],
+        "file": "screens/company-candidates.mobile.png",
+        "final_url": "/company-candidates",
+        "name": "company-candidates",
+        "route": "/company-candidates",
+        "status": 200,
+        "vertical": "V5-TASK-050",
+        "viewport": "mobile"
+      },
+      {
+        "as": "recruiter",
+        "blocked_external_requests": [],
+        "file": "screens/company-team.mobile.png",
+        "final_url": "/company-team",
+        "name": "company-team",
+        "route": "/company-team",
+        "status": 200,
+        "vertical": "V5-TASK-050",
+        "viewport": "mobile"
+      }
+    ],
+    "skipped": [
+      {
+        "name": "roadmap-redirect",
+        "path": "/roadmap",
+        "reason": "redirección 307 a /roadmaps; no renderiza pantalla propia"
+      }
+    ],
+    "viewports": {
+      "desktop": {
+        "height": 900,
+        "width": 1440
+      },
+      "mobile": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  "seed": {
+    "clock": "2026-01-05T12:00:00",
+    "database": "sqlite (desechable, sembrada por el propio script)",
+    "uuid_namespace": "6f1f5a2e-0f7f-4c2b-9a5b-2f0f0a5f3c11"
+  },
+  "task": "TASK-035"
+}

@@ -1,0 +1,33 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/applications"
+  },
+  "response": {
+    "body": [
+      {
+        "application_date": "2026-01-05T12:00:00",
+        "application_url": null,
+        "assigned_recruiter_id": "f347fe5e-c3bb-4303-ae86-b668c4f7c903",
+        "available_interview_slots": [],
+        "company_id": "fae284ff-46b9-4048-8316-2c725d4ec250",
+        "company_location": "Remote",
+        "company_name": "Baseline Company",
+        "created_at": "2026-01-05T12:00:00",
+        "id": "35be4548-a1c7-4647-8e06-b0577d893e87",
+        "job_posting_id": "6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919",
+        "job_title": "Backend Engineer (Baseline)",
+        "match_strength": "match",
+        "notes": "Candidatura sintética.",
+        "resume_id": "0e475b0f-a365-41fb-baea-25553c1b86fe",
+        "selected_interview_slot": null,
+        "status": "applied",
+        "updated_at": "2026-01-05T12:00:00",
+        "user_id": "09e52b5d-3781-44a2-9b87-feae1a341adf"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

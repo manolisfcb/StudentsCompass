@@ -1,0 +1,27 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/communities"
+  },
+  "response": {
+    "body": [
+      {
+        "activity_status": "active",
+        "created_at": "2026-01-05T12:00:00",
+        "created_by": "09e52b5d-3781-44a2-9b87-feae1a341adf",
+        "description": "Comunidad sintética de la baseline.",
+        "icon": "🧭",
+        "id": "27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "member_count": 2,
+        "name": "Baseline Community",
+        "tags": [
+          "baseline",
+          "backend"
+        ]
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

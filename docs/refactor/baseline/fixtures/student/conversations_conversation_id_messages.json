@@ -1,0 +1,22 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/conversations/0188343d-149d-4b53-be1c-9e208c59f1fe/messages"
+  },
+  "response": {
+    "body": [
+      {
+        "content": "Mensaje sintético.",
+        "conversation_id": "0188343d-149d-4b53-be1c-9e208c59f1fe",
+        "created_at": "2026-01-05T12:00:00",
+        "id": "7c2b859d-e277-448d-9b21-7a2cd206f247",
+        "is_mine": false,
+        "sender_display_name": "Baseline Friend",
+        "sender_id": "d0a4f8d1-ba23-4b6c-b1b7-17942d52e8ce"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

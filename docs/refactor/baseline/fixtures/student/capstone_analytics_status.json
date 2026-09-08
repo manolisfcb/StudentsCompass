@@ -1,0 +1,44 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/capstone/analytics/status"
+  },
+  "response": {
+    "body": {
+      "aliases_count": 0,
+      "catalog_ready": false,
+      "confirmed_resume_skills_count": 0,
+      "course_skills_count": 0,
+      "courses_count": 0,
+      "detected_resume_skills_count": 0,
+      "embedding_fallback_provider": "hash",
+      "embedding_fallback_to_hash_count": 0,
+      "embedding_local_failure_count": 0,
+      "embedding_model_cache_strategy": "lru_cache_process_memory",
+      "embedding_model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "embedding_production_recommendation": "Use EMBEDDINGS_PROVIDER=local with sentence-transformers installed and model cache warmed.",
+      "embedding_provider": "hash",
+      "local_embedding_package_available": true,
+      "local_embedding_provider_configured": false,
+      "manual_resume_skills_count": 0,
+      "next_action": "Run the capstone analytics seed to create the starter skill, course, and role catalog.",
+      "real_job_skill_links_count": 0,
+      "rejected_resume_skills_count": 0,
+      "resume_embeddings_count": 0,
+      "resume_skills_count": 0,
+      "role_seed_requirements_count": 0,
+      "schema_ready": true,
+      "semantic_matching_ready": false,
+      "skills_count": 0,
+      "supported_seed_roles": [
+        "Business Analyst",
+        "Data Analyst",
+        "Junior Data Scientist"
+      ],
+      "synced_job_postings_count": 0
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,416 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/questionnaire/profile"
+  },
+  "response": {
+    "body": {
+      "answers": {
+        "experience": "junior",
+        "goal": "backend"
+      },
+      "created_at": "2026-01-05T12:00:00",
+      "questionnaire": {
+        "questions": [
+          {
+            "id": "decision_making",
+            "kind": "single",
+            "options": [
+              {
+                "id": "map_long_term_outcomes",
+                "label": "I map long-term outcomes before choosing."
+              },
+              {
+                "id": "test_a_few_paths",
+                "label": "I test a few paths and learn from what I find."
+              },
+              {
+                "id": "choose_and_start_now",
+                "label": "I choose quickly and start moving."
+              },
+              {
+                "id": "ask_trusted_people_first",
+                "label": "I ask trusted people for input first."
+              }
+            ],
+            "subtitle": null,
+            "title": "When making an important career decision, what do you do first?"
+          },
+          {
+            "id": "energy_source",
+            "kind": "single",
+            "options": [
+              {
+                "id": "clear_direction_and_priorities",
+                "label": "Having a clear direction and priorities."
+              },
+              {
+                "id": "new_topics_and_fresh_ideas",
+                "label": "New topics and fresh ideas."
+              },
+              {
+                "id": "finishing_concrete_tasks",
+                "label": "Finishing concrete tasks."
+              },
+              {
+                "id": "helping_and_rallying_people",
+                "label": "Helping and rallying people."
+              }
+            ],
+            "subtitle": null,
+            "title": "What gives you the most professional energy?"
+          },
+          {
+            "id": "learning_style",
+            "kind": "single",
+            "options": [
+              {
+                "id": "framework_then_practice",
+                "label": "I learn a framework first, then apply it."
+              },
+              {
+                "id": "explore_many_sources",
+                "label": "I explore many sources and connect ideas."
+              },
+              {
+                "id": "learn_by_building",
+                "label": "I learn by building and repeating."
+              },
+              {
+                "id": "learn_with_people",
+                "label": "I learn fastest through discussion and collaboration."
+              }
+            ],
+            "subtitle": null,
+            "title": "How do you learn new skills best?"
+          },
+          {
+            "id": "risk_tolerance",
+            "kind": "single",
+            "options": [
+              {
+                "id": "managed_risk_with_plan",
+                "label": "I take managed risks with a plan."
+              },
+              {
+                "id": "high_experiment_risk",
+                "label": "I am comfortable trying bold experiments."
+              },
+              {
+                "id": "practical_risk_for_progress",
+                "label": "I take practical risks to keep progress moving."
+              },
+              {
+                "id": "risk_when_team_is_aligned",
+                "label": "I take risks when people are aligned and supported."
+              }
+            ],
+            "subtitle": null,
+            "title": "How do you usually approach risk?"
+          },
+          {
+            "id": "planning_vs_action",
+            "kind": "single",
+            "options": [
+              {
+                "id": "plan_before_committing",
+                "label": "I prefer planning before committing."
+              },
+              {
+                "id": "keep_options_open",
+                "label": "I prefer keeping options open while exploring."
+              },
+              {
+                "id": "act_then_adjust",
+                "label": "I prefer acting fast and adjusting on the way."
+              },
+              {
+                "id": "align_people_then_move",
+                "label": "I prefer aligning people first, then moving."
+              }
+            ],
+            "subtitle": null,
+            "title": "Which statement sounds most like you?"
+          },
+          {
+            "id": "social_orientation",
+            "kind": "single",
+            "options": [
+              {
+                "id": "shape_the_structure",
+                "label": "Shape the structure and priorities."
+              },
+              {
+                "id": "bring_new_angles",
+                "label": "Bring new angles and possibilities."
+              },
+              {
+                "id": "turn_talk_into_tasks",
+                "label": "Turn ideas into clear next tasks."
+              },
+              {
+                "id": "connect_people_and_momentum",
+                "label": "Connect people and keep momentum positive."
+              }
+            ],
+            "subtitle": null,
+            "title": "In group settings, you usually..."
+          },
+          {
+            "id": "ambiguity_comfort",
+            "kind": "single",
+            "options": [
+              {
+                "id": "define_the_problem",
+                "label": "Define the problem and create a direction."
+              },
+              {
+                "id": "explore_the_unknown",
+                "label": "Explore the unknown and gather signals."
+              },
+              {
+                "id": "start_small_and_iterate",
+                "label": "Start small and iterate quickly."
+              },
+              {
+                "id": "clarify_through_conversation",
+                "label": "Clarify through conversations with others."
+              }
+            ],
+            "subtitle": null,
+            "title": "When goals are unclear, what is your default move?"
+          },
+          {
+            "id": "motivation_driver",
+            "kind": "single",
+            "options": [
+              {
+                "id": "building_a_meaningful_direction",
+                "label": "Building a meaningful long-term direction."
+              },
+              {
+                "id": "discovering_new_possibilities",
+                "label": "Discovering new possibilities and paths."
+              },
+              {
+                "id": "shipping_visible_results",
+                "label": "Shipping visible results and progress."
+              },
+              {
+                "id": "creating_impact_with_people",
+                "label": "Creating impact with and through people."
+              }
+            ],
+            "subtitle": null,
+            "title": "What motivates you most in your career?"
+          },
+          {
+            "id": "feedback_style",
+            "kind": "single",
+            "options": [
+              {
+                "id": "strategic_context_feedback",
+                "label": "Feedback that clarifies priorities and direction."
+              },
+              {
+                "id": "feedback_that_sparks_ideas",
+                "label": "Feedback that opens new ideas to try."
+              },
+              {
+                "id": "direct_actionable_feedback",
+                "label": "Direct, actionable feedback I can apply today."
+              },
+              {
+                "id": "relational_supportive_feedback",
+                "label": "Supportive feedback delivered through conversation."
+              }
+            ],
+            "subtitle": null,
+            "title": "What kind of feedback helps you most?"
+          },
+          {
+            "id": "pace_preference",
+            "kind": "single",
+            "options": [
+              {
+                "id": "steady_deliberate_pace",
+                "label": "Steady and deliberate with clear milestones."
+              },
+              {
+                "id": "variable_and_dynamic_pace",
+                "label": "Dynamic, changing pace with room to pivot."
+              },
+              {
+                "id": "fast_execution_pace",
+                "label": "Fast execution with quick check-ins."
+              },
+              {
+                "id": "rhythm_with_people",
+                "label": "A social rhythm with regular collaboration."
+              }
+            ],
+            "subtitle": null,
+            "title": "What working pace feels best to you?"
+          },
+          {
+            "id": "generalist_vs_specialist",
+            "kind": "single",
+            "options": [
+              {
+                "id": "strategic_specialist",
+                "label": "A specialist with a strong strategic lens."
+              },
+              {
+                "id": "curious_generalist",
+                "label": "A curious generalist across different areas."
+              },
+              {
+                "id": "craft_focused_doer",
+                "label": "A craft-focused doer who gets things done."
+              },
+              {
+                "id": "relationship_centered_generalist",
+                "label": "A relationship-centered generalist."
+              }
+            ],
+            "subtitle": null,
+            "title": "Which identity feels more natural to you right now?"
+          },
+          {
+            "id": "opportunity_path",
+            "kind": "single",
+            "options": [
+              {
+                "id": "targeted_search_with_criteria",
+                "label": "I target opportunities that fit clear criteria."
+              },
+              {
+                "id": "follow_curiosity_and_patterns",
+                "label": "I follow curiosity and emerging patterns."
+              },
+              {
+                "id": "create_opportunities_by_doing",
+                "label": "I create opportunities by showing my work."
+              },
+              {
+                "id": "build_relationships_for_openings",
+                "label": "I build relationships that open the right doors."
+              }
+            ],
+            "subtitle": null,
+            "title": "How do you usually find your best opportunities?"
+          },
+          {
+            "id": "project_kickoff",
+            "kind": "single",
+            "options": [
+              {
+                "id": "set_scope_and_success_criteria",
+                "label": "Set scope and define success criteria."
+              },
+              {
+                "id": "scan_options_before_committing",
+                "label": "Scan options before committing."
+              },
+              {
+                "id": "build_a_small_first_version",
+                "label": "Build a small first version right away."
+              },
+              {
+                "id": "gather_people_and_roles",
+                "label": "Gather people and align roles."
+              }
+            ],
+            "subtitle": null,
+            "title": "At the start of a new project, you first..."
+          },
+          {
+            "id": "collaboration_role",
+            "kind": "single",
+            "options": [
+              {
+                "id": "direction_setter",
+                "label": "Direction setter."
+              },
+              {
+                "id": "idea_catalyst",
+                "label": "Idea catalyst."
+              },
+              {
+                "id": "execution_driver",
+                "label": "Execution driver."
+              },
+              {
+                "id": "relationship_glue",
+                "label": "Relationship glue."
+              }
+            ],
+            "subtitle": null,
+            "title": "What role do you naturally play in a team?"
+          },
+          {
+            "id": "success_definition",
+            "kind": "single",
+            "options": [
+              {
+                "id": "clear_trajectory_and_growth",
+                "label": "A clear trajectory with steady growth."
+              },
+              {
+                "id": "many_meaningful_experiences",
+                "label": "Many meaningful experiences across paths."
+              },
+              {
+                "id": "visible_results_and_ownership",
+                "label": "Visible results and strong ownership."
+              },
+              {
+                "id": "impact_through_people",
+                "label": "Impact through people and shared wins."
+              }
+            ],
+            "subtitle": null,
+            "title": "Which outcome feels most like career success to you?"
+          },
+          {
+            "id": "next_move_preference",
+            "kind": "single",
+            "options": [
+              {
+                "id": "design_a_90_day_plan",
+                "label": "Design a focused 90-day plan and priorities."
+              },
+              {
+                "id": "try_three_new_paths",
+                "label": "Try three new directions and see what clicks."
+              },
+              {
+                "id": "ship_one_serious_project",
+                "label": "Ship one serious project from start to finish."
+              },
+              {
+                "id": "grow_network_with_intent",
+                "label": "Grow your network through intentional conversations."
+              }
+            ],
+            "subtitle": null,
+            "title": "If you had one free month to invest in your career, you would..."
+          }
+        ],
+        "title": "Discover Your Professional Archetype",
+        "version": "v3"
+      },
+      "results": {
+        "recommended_role": "Backend Engineer",
+        "score": 72
+      },
+      "user_email": "baseline-student@example.com",
+      "user_id": "09e52b5d-3781-44a2-9b87-feae1a341adf",
+      "user_name": "Baseline Student",
+      "version": "v1"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

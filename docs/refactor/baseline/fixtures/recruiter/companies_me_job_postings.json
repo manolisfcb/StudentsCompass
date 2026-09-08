@@ -1,0 +1,40 @@
+{
+  "request": {
+    "as": "recruiter",
+    "method": "GET",
+    "path": "/api/v1/companies/me/job-postings"
+  },
+  "response": {
+    "body": [
+      {
+        "application_url": null,
+        "benefits": "Sintéticos",
+        "company_description": "Empresa sintética de la baseline.",
+        "company_id": "fae284ff-46b9-4048-8316-2c725d4ec250",
+        "company_location": "Remote",
+        "company_name": "Baseline Company",
+        "company_website": "https://company.invalid",
+        "created_at": "2026-01-05T12:00:00",
+        "description": "Puesto sintético para la baseline visual.",
+        "expires_at": null,
+        "id": "6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919",
+        "is_active": true,
+        "job_type": "full-time",
+        "listed_context": null,
+        "location": "Remote",
+        "requirements": "Python, FastAPI, PostgreSQL",
+        "responsibilities": "Construir y mantener servicios de la plataforma.",
+        "salary_range": "CAD 60k-80k",
+        "seniority_level": "junior",
+        "source": "students_compass",
+        "source_context": null,
+        "source_label": "Students Compass",
+        "title": "Backend Engineer (Baseline)",
+        "updated_at": "2026-01-05T12:00:00",
+        "workplace_type": "remote"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

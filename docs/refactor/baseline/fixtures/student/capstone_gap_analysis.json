@@ -1,0 +1,56 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/capstone/gap-analysis?resume_id=0e475b0f-a365-41fb-baea-25553c1b86fe&target_role=Backend Engineer"
+  },
+  "response": {
+    "body": {
+      "analysis_version": "semantic_gap_v1",
+      "context_evidence_sources": [
+        "role_required_skills",
+        "role_seed"
+      ],
+      "context_match_level": "fallback_disabled",
+      "context_similarity_score": 0.0,
+      "coverage_ratio": 0.0,
+      "current_skills": [],
+      "exact_match_count": 0,
+      "gap_insights": [
+        {
+          "insight_type": "readiness",
+          "message": "The resume is early for this target role; prioritize foundational missing skills first.",
+          "severity": "high",
+          "skill_id": null,
+          "skill_name": null
+        }
+      ],
+      "market_signals": {
+        "skills": [],
+        "source": "none",
+        "synced_job_postings_count": 0,
+        "target_role": "Backend Engineer"
+      },
+      "match_score": 0.0,
+      "matched_required_skills": [],
+      "missing_skills": [],
+      "overall_readiness_score": 0.0,
+      "priority_gap_score": 0.0,
+      "priority_missing_skills": [],
+      "recommended_courses": [],
+      "required_skills": [],
+      "requirements_source": "none",
+      "resume_id": "0e475b0f-a365-41fb-baea-25553c1b86fe",
+      "semantic_context_ready": false,
+      "semantic_match_count": 0,
+      "semantic_matched_skills": [],
+      "semantic_score": 0.0,
+      "status": "ok",
+      "target_role": "Backend Engineer",
+      "weak_match_count": 0,
+      "weak_matched_skills": []
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

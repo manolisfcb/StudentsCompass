@@ -1,0 +1,14 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/capstone/learning-route/runs"
+  },
+  "response": {
+    "body": {
+      "runs": []
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "request": {
+    "as": "admin",
+    "method": "GET",
+    "path": "/api/v1/admin/companies"
+  },
+  "response": {
+    "body": {
+      "__not_json__": true,
+      "bytes": 21
+    },
+    "content_type": "text/plain; charset=utf-8",
+    "status": 500
+  }
+}

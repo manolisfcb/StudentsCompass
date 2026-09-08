@@ -1,0 +1,31 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/me/roadmaps"
+  },
+  "response": {
+    "body": [
+      {
+        "roadmap": {
+          "completed_tasks": 0,
+          "description": "Roadmap sintético de la baseline.",
+          "difficulty": "beginner",
+          "duration_weeks_max": 12,
+          "duration_weeks_min": 8,
+          "id": "e813bc9d-3115-4c81-89b9-4bf3320d06e1",
+          "is_saved": true,
+          "overall_progress_percent": 0,
+          "popularity": 1,
+          "role_target": "Backend Engineer",
+          "slug": "baseline-backend-engineer",
+          "title": "Backend Engineer (Baseline)",
+          "total_tasks": 1
+        },
+        "saved_at": "2026-01-05T12:00:00"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

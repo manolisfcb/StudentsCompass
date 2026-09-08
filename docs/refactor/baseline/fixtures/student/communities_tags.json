@@ -1,0 +1,15 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/communities/tags"
+  },
+  "response": {
+    "body": [
+      "backend",
+      "baseline"
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

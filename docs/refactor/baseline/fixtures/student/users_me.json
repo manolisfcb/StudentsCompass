@@ -1,0 +1,25 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/users/me"
+  },
+  "response": {
+    "body": {
+      "address": null,
+      "age": null,
+      "email": "baseline-student@example.com",
+      "first_name": "Baseline",
+      "id": "09e52b5d-3781-44a2-9b87-feae1a341adf",
+      "is_active": true,
+      "is_superuser": false,
+      "is_verified": true,
+      "last_name": "Student",
+      "nickname": "baseline_student",
+      "phone": null,
+      "sex": null
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "request": {
+    "as": "admin",
+    "method": "GET",
+    "path": "/api/v1/admin/communities"
+  },
+  "response": {
+    "body": {
+      "communities": [
+        {
+          "activity_status": "active",
+          "created_at": "2026-01-05T12:00:00",
+          "creator_email": null,
+          "description": "Comunidad sintética de la baseline.",
+          "icon": "🧭",
+          "id": "27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+          "member_count": 2,
+          "name": "Baseline Community"
+        }
+      ]
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

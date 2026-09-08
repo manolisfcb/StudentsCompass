@@ -1,0 +1,18 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/friends/status?user_ids=d0a4f8d1-ba23-4b6c-b1b7-17942d52e8ce"
+  },
+  "response": {
+    "body": [
+      {
+        "request_id": null,
+        "status": "friends",
+        "user_id": "d0a4f8d1-ba23-4b6c-b1b7-17942d52e8ce"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

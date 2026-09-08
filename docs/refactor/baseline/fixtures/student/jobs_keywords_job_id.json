@@ -1,0 +1,14 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/jobs/keywords/6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919"
+  },
+  "response": {
+    "body": {
+      "detail": "Job not found"
+    },
+    "content_type": "application/json",
+    "status": 404
+  }
+}

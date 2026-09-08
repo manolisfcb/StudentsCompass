@@ -1,0 +1,22 @@
+{
+  "request": {
+    "as": "admin",
+    "method": "GET",
+    "path": "/api/v1/admin/stats"
+  },
+  "response": {
+    "body": {
+      "recent_users": 0,
+      "total_applications": 1,
+      "total_communities": 1,
+      "total_companies": 1,
+      "total_jobs": 1,
+      "total_questionnaires": 1,
+      "total_resources": 1,
+      "total_resumes": 1,
+      "total_users": 3
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

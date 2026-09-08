@@ -1,0 +1,20 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/community-posts/8680f5c7-2664-44ea-9727-09a2c8b7ce70/comments"
+  },
+  "response": {
+    "body": [
+      {
+        "content": "Comentario sintético.",
+        "created_at": "2026-01-05T12:00:00",
+        "id": "2f715e60-cf1b-4909-988f-5efe28e34f7b",
+        "post_id": "8680f5c7-2664-44ea-9727-09a2c8b7ce70",
+        "user_id": "d0a4f8d1-ba23-4b6c-b1b7-17942d52e8ce"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

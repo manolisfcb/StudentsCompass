@@ -1,0 +1,24 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/profile/cv"
+  },
+  "response": {
+    "body": [
+      {
+        "ai_summary": "Resumen sintético: perfil junior de backend.",
+        "contact_phone": null,
+        "created_at": "2026-01-05T12:00:00",
+        "folder_id": "baseline-folder",
+        "id": "0e475b0f-a365-41fb-baea-25553c1b86fe",
+        "original_filename": "baseline-resume.pdf",
+        "storage_file_id": "baseline-resume-object",
+        "user_id": "09e52b5d-3781-44a2-9b87-feae1a341adf",
+        "view_url": "https://storage.invalid/baseline/resume.pdf"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

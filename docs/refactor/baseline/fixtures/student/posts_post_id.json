@@ -1,0 +1,19 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/posts/eeaa992d-0639-464f-b0c4-ace805b280b1"
+  },
+  "response": {
+    "body": {
+      "caption": "Publicación sintética de la baseline",
+      "created_at": "2026-01-05T12:00:00",
+      "file_name": "baseline-post.png",
+      "file_type": "image/png",
+      "id": "eeaa992d-0639-464f-b0c4-ace805b280b1",
+      "url": "https://storage.invalid/baseline/post.png"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "request": {
+    "as": "recruiter",
+    "method": "GET",
+    "path": "/api/v1/companies/me/applicants"
+  },
+  "response": {
+    "body": [
+      {
+        "application": {
+          "application_date": "2026-01-05T12:00:00",
+          "assigned_recruiter_id": "f347fe5e-c3bb-4303-ae86-b668c4f7c903",
+          "available_interview_slots": [],
+          "id": "35be4548-a1c7-4647-8e06-b0577d893e87",
+          "job_posting_id": "6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919",
+          "job_title": "Backend Engineer (Baseline)",
+          "match_strength": "match",
+          "notes": "Candidatura sintética.",
+          "selected_interview_slot": null,
+          "status": "applied"
+        },
+        "candidate": {
+          "address": null,
+          "age": null,
+          "email": "baseline-student@example.com",
+          "first_name": "Baseline",
+          "full_name": "Baseline Student",
+          "id": "09e52b5d-3781-44a2-9b87-feae1a341adf",
+          "last_name": "Student",
+          "phone": null,
+          "sex": null
+        },
+        "certifications": [],
+        "resume": {
+          "download_url": "/api/v1/companies/me/applications/35be4548-a1c7-4647-8e06-b0577d893e87/resume/download",
+          "id": "0e475b0f-a365-41fb-baea-25553c1b86fe",
+          "original_filename": "baseline-resume.pdf",
+          "phone": null,
+          "preview_url": "/api/v1/companies/me/applications/35be4548-a1c7-4647-8e06-b0577d893e87/resume/preview",
+          "summary": "Resumen sintético: perfil junior de backend.",
+          "uploaded_at": "2026-01-05T12:00:00"
+        }
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

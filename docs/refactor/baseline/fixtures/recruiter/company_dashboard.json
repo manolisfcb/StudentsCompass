@@ -1,0 +1,46 @@
+{
+  "request": {
+    "as": "recruiter",
+    "method": "GET",
+    "path": "/api/v1/company_dashboard"
+  },
+  "response": {
+    "body": {
+      "company": {
+        "company_name": "Baseline Company",
+        "id": "fae284ff-46b9-4048-8316-2c725d4ec250",
+        "industry": "Technology",
+        "location": "Remote"
+      },
+      "current_recruiter": {
+        "email": "baseline-recruiter@example.com",
+        "first_name": "Baseline",
+        "id": "f347fe5e-c3bb-4303-ae86-b668c4f7c903",
+        "is_active": true,
+        "last_name": "Recruiter",
+        "role": "owner"
+      },
+      "recent_job_postings": [
+        {
+          "application_count": 1,
+          "created_at": "2026-01-05T12:00:00",
+          "id": "6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919",
+          "is_active": true,
+          "job_type": "full-time",
+          "location": "Remote",
+          "status": "active",
+          "status_label": "Active",
+          "title": "Backend Engineer (Baseline)"
+        }
+      ],
+      "stats": {
+        "active_job_postings": 1,
+        "scheduled_interviews": 0,
+        "shortlisted": 0,
+        "total_applications": 1
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "request": {
+    "as": "student",
+    "method": "GET",
+    "path": "/api/v1/conversations"
+  },
+  "response": {
+    "body": [
+      {
+        "created_at": "2026-01-05T12:00:00",
+        "id": "0188343d-149d-4b53-be1c-9e208c59f1fe",
+        "kind": "direct",
+        "last_message_at": "2026-01-05T12:00:00",
+        "last_message_preview": "Mensaje sintético.",
+        "other_user": {
+          "display_name": "Baseline Friend",
+          "first_name": "Baseline",
+          "id": "d0a4f8d1-ba23-4b6c-b1b7-17942d52e8ce",
+          "last_name": "Friend",
+          "nickname": "baseline_friend"
+        },
+        "unread_count": 0,
+        "updated_at": "2026-01-05T12:00:00"
+      }
+    ],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

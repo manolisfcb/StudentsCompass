@@ -1,0 +1,33 @@
+{
+  "request": {
+    "as": "admin",
+    "method": "GET",
+    "path": "/api/v1/admin/users/09e52b5d-3781-44a2-9b87-feae1a341adf/resource-progress"
+  },
+  "response": {
+    "body": {
+      "resources": [
+        {
+          "completed_lesson_ids": [
+            "fcb3c498-f183-4d67-bdc0-900ce5d9a96c"
+          ],
+          "completed_lessons": 1,
+          "modules": [
+            {
+              "completed_lessons": 1,
+              "module_id": "51db6fd0-d770-4fe8-a2f4-2fab4e1cc87e",
+              "progress_percent": 100,
+              "total_lessons": 1
+            }
+          ],
+          "progress_percent": 100,
+          "resource_id": "3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+          "total_lessons": 1
+        }
+      ],
+      "user_id": "09e52b5d-3781-44a2-9b87-feae1a341adf"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}
