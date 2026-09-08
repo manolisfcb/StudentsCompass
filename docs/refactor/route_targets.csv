@@ -32,7 +32,7 @@ DELETE,/api/v1/applications/{application_id},rest,DELETE /api/v1/applications/{i
 PATCH,/api/v1/applications/{application_id},rest,PATCH /api/v1/applications/{id},V4-TASK-049,Las transiciones las decide el backend (TASK-014); React solo proyecta.
 POST,/api/v1/applications/{application_id}/interview-selection,rest,PUT /api/v1/applications/{id}/selected-interview,V4-TASK-049,Correspondencia explicita en 5.2 del plan 08; seleccion idempotente serializada por TASK-015.
 POST,/api/v1/auth/company/forgot-password,rest,POST /api/v1/auth/company/forgot-password,V5-TASK-050,Generado por fastapi-users; no lo cuenta el recuento de 150 handlers del plan.
-POST,/api/v1/auth/company/login,rest,POST /api/v1/auth/company/session,V5-TASK-050,6.2 del plan 08 pide login/logout consistentes por actor; TASK-042.
+POST,/api/v1/auth/company/login,rest,POST /api/v1/auth/company/login,V5-TASK-050,TASK-042 dejo esta ruta como esta y espejo la de estudiante contra ella: la consistencia por actor que pide 6.2 ya se cumple y renombrarla romperia el login de compania sin necesidad.
 POST,/api/v1/auth/company/logout,rest,DELETE /api/v1/auth/company/session,V5-TASK-050,Par simetrico del anterior; TASK-042.
 POST,/api/v1/auth/company/register,rest,POST /api/v1/companies,V5-TASK-050,Registrar una compania crea el recurso compania; el actor recruiter sale de ahi.
 POST,/api/v1/auth/company/request-verify-token,rest,POST /api/v1/auth/company/verification-requests,V5-TASK-050,Generado por fastapi-users.
@@ -43,6 +43,10 @@ GET,/api/v1/auth/register,retire,SPA /register,V1-TASK-046,DEFECTO: es una vista
 POST,/api/v1/auth/register,rest,POST /api/v1/users,V1-TASK-046,Registrar crea el recurso usuario; generado por fastapi-users.
 POST,/api/v1/auth/request-verify-token,rest,POST /api/v1/auth/verification-requests,V1-TASK-046,Generado por fastapi-users.
 POST,/api/v1/auth/reset-password,rest,POST /api/v1/auth/password-resets,V1-TASK-046,Generado por fastapi-users.
+GET,/api/v1/auth/session,rest,GET /api/v1/auth/session,V1-TASK-046,Alta de TASK-042: 6.2 del plan 08. Devuelve el actor efectivo y su tipo; es el guard del SPA.
+POST,/api/v1/auth/session/refresh,rest,POST /api/v1/auth/session/refresh,V1-TASK-046,Alta de TASK-042: rotacion explicita de sesion y de token CSRF.
+POST,/api/v1/auth/student/login,rest,POST /api/v1/auth/student/login,V1-TASK-046,Alta de TASK-042: espeja /api/v1/auth/company/login y mete el login dentro de /api/v1.
+POST,/api/v1/auth/student/logout,rest,POST /api/v1/auth/student/logout,V1-TASK-046,Par simetrico del anterior; TASK-042.
 POST,/api/v1/auth/verify,rest,POST /api/v1/auth/verifications,V1-TASK-046,Generado por fastapi-users.
 GET,/api/v1/capstone/analytics/roles,rest,GET /api/v1/capstone/roles,V7-TASK-052,
 POST,/api/v1/capstone/analytics/seed,internal,POST /api/v1/internal/capstone/seed,V7-TASK-052,Operacion de datos semilla; no la consume ninguna pantalla. Debe quedar tras auth interna y fuera del contrato publico.
@@ -147,8 +151,8 @@ PATCH,/api/v1/users/me,rest,PATCH /api/v1/users/me,V1-TASK-046,Generado por fast
 DELETE,/api/v1/users/{id},rest,DELETE /api/v1/admin/users/{id},V8-TASK-053,Generado por fastapi-users y exige superuser: pertenece al contrato de admin y duplica DELETE /admin/users/{user_id}.
 GET,/api/v1/users/{id},rest,GET /api/v1/admin/users/{id},V8-TASK-053,Generado por fastapi-users y exige superuser: pertenece al contrato de admin.
 PATCH,/api/v1/users/{id},rest,PATCH /api/v1/admin/users/{id},V8-TASK-053,Generado por fastapi-users y exige superuser: converge con el PATCH de admin que absorbe los dos toggles.
-POST,/auth/jwt/login,rest,POST /api/v1/auth/session,V1-TASK-046,6.2 del plan 08; TASK-042. Ademas sale del prefijo /api/v1: hoy es la unica ruta de API fuera de el.
-POST,/auth/jwt/logout,rest,DELETE /api/v1/auth/session,V1-TASK-046,Par simetrico del anterior; TASK-042.
+POST,/auth/jwt/login,retire,POST /api/v1/auth/student/login,V1-TASK-046,TASK-042 lo reemplazo por /api/v1/auth/student/login en vez de POST /api/v1/auth/session: con dos identidades de cookie separada un unico recurso /session no distingue actor sin discriminador en el cuerpo. Se mantiene sin documentar hasta TASK-059 porque las paginas Jinja lo llaman.
+POST,/auth/jwt/logout,retire,POST /api/v1/auth/student/logout,V1-TASK-046,Par simetrico del anterior; TASK-042.
 GET,/career-lab,retire,SPA /career-lab,V7-TASK-052,
 GET,/community,retire,SPA /community,V6-TASK-051,
 GET,/community/{community_id},retire,SPA /community/:communityId,V6-TASK-051,

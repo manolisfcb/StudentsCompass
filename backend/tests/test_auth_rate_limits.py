@@ -16,6 +16,8 @@ from typing import AsyncIterator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+
+from tests.csrf_client import CSRFAsyncClient
 from starlette.requests import Request
 
 from app.app import app, rate_limiter
@@ -143,7 +145,7 @@ async def public_peer_client(setup_db) -> AsyncIterator[AsyncClient]:
     rate_limiter._events.clear()
     await reset_counter_store()
 
-    async with AsyncClient(
+    async with CSRFAsyncClient(
         transport=ASGITransport(app=app, client=(PUBLIC_PEER, 41234)),
         base_url="http://test",
     ) as ac:

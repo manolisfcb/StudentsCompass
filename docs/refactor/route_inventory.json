@@ -1,7 +1,7 @@
 {
   "generated_by": "backend/scripts/route_inventory.py",
   "task": "TASK-034",
-  "handler_count": 175,
+  "handler_count": 179,
   "handlers": [
     {
       "methods": [
@@ -28,6 +28,7 @@
         "app/static/js/company-candidates.js",
         "app/static/js/company-dashboard.js",
         "app/static/js/company-team.js",
+        "app/static/js/csrf.js",
         "app/static/js/dashboard.js",
         "app/static/js/home.js",
         "app/static/js/jobs.js",
@@ -1106,9 +1107,9 @@
       "decisions": {
         "POST": {
           "destination": "rest",
-          "target": "POST /api/v1/auth/company/session",
+          "target": "POST /api/v1/auth/company/login",
           "vertical": "V5-TASK-050",
-          "note": "6.2 del plan 08 pide login/logout consistentes por actor; TASK-042."
+          "note": "TASK-042 dejo esta ruta como esta y espejo la de estudiante contra ella: la consistencia por actor que pide 6.2 ya se cumple y renombrarla romperia el login de compania sin necesidad."
         }
       }
     },
@@ -1412,6 +1413,140 @@
           "target": "POST /api/v1/auth/password-resets",
           "vertical": "V1-TASK-046",
           "note": "Generado por fastapi-users."
+        }
+      }
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v1/auth/session",
+      "name": "read_session",
+      "module": "app.routes.authRoute",
+      "kind": "api",
+      "actor": "recruiter:optional",
+      "auth_dependencies": [
+        "current_active_company_recruiter_optional",
+        "current_active_user_optional"
+      ],
+      "response_model": "SessionRead",
+      "tags": [
+        "auth",
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "GET": {
+          "destination": "rest",
+          "target": "GET /api/v1/auth/session",
+          "vertical": "V1-TASK-046",
+          "note": "Alta de TASK-042: 6.2 del plan 08. Devuelve el actor efectivo y su tipo; es el guard del SPA."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/session/refresh",
+      "name": "refresh_session",
+      "module": "app.routes.authRoute",
+      "kind": "api",
+      "actor": "recruiter:optional",
+      "auth_dependencies": [
+        "current_active_company_recruiter_optional",
+        "current_active_user_optional"
+      ],
+      "response_model": "SessionRead",
+      "tags": [
+        "auth",
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/session/refresh",
+          "vertical": "V1-TASK-046",
+          "note": "Alta de TASK-042: rotacion explicita de sesion y de token CSRF."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/student/login",
+      "name": "auth:jwt.login",
+      "module": "fastapi_users.router.auth",
+      "kind": "api",
+      "actor": "public",
+      "auth_dependencies": [],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/student/login",
+          "vertical": "V1-TASK-046",
+          "note": "Alta de TASK-042: espeja /api/v1/auth/company/login y mete el login dentro de /api/v1."
+        }
+      }
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v1/auth/student/logout",
+      "name": "auth:jwt.logout",
+      "module": "fastapi_users.router.auth",
+      "kind": "api",
+      "actor": "student",
+      "auth_dependencies": [
+        "current_user_token_dependency"
+      ],
+      "response_model": null,
+      "tags": [
+        "auth"
+      ],
+      "consumers": [
+        "app/static/js/base.js",
+        "app/static/js/login.js",
+        "app/static/js/register.js",
+        "app/templates/login.html"
+      ],
+      "consumer_match": "prefix",
+      "consumer_match_fragment": "/api/v1/auth",
+      "decisions": {
+        "POST": {
+          "destination": "rest",
+          "target": "POST /api/v1/auth/student/logout",
+          "vertical": "V1-TASK-046",
+          "note": "Par simetrico del anterior; TASK-042."
         }
       }
     },
@@ -4594,10 +4729,10 @@
       "consumer_match_fragment": "/auth/jwt/login",
       "decisions": {
         "POST": {
-          "destination": "rest",
-          "target": "POST /api/v1/auth/session",
+          "destination": "retire",
+          "target": "POST /api/v1/auth/student/login",
           "vertical": "V1-TASK-046",
-          "note": "6.2 del plan 08; TASK-042. Ademas sale del prefijo /api/v1: hoy es la unica ruta de API fuera de el."
+          "note": "TASK-042 lo reemplazo por /api/v1/auth/student/login en vez de POST /api/v1/auth/session: con dos identidades de cookie separada un unico recurso /session no distingue actor sin discriminador en el cuerpo. Se mantiene sin documentar hasta TASK-059 porque las paginas Jinja lo llaman."
         }
       }
     },
@@ -4624,8 +4759,8 @@
       "consumer_match_fragment": "/auth/jwt/logout",
       "decisions": {
         "POST": {
-          "destination": "rest",
-          "target": "DELETE /api/v1/auth/session",
+          "destination": "retire",
+          "target": "POST /api/v1/auth/student/logout",
           "vertical": "V1-TASK-046",
           "note": "Par simetrico del anterior; TASK-042."
         }

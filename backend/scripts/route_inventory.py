@@ -97,6 +97,8 @@ NON_ACTOR_DEPENDENCY_NAMES = {
 # misma condición que exige `current_admin_user`).
 GENERATED_ROUTER_ACTOR_OVERRIDES = {
     ("POST", "/auth/jwt/logout"): ("current_user_token_dependency", "student"),
+    # Mismo router generado, montado tambien bajo /api/v1 por TASK-042.
+    ("POST", "/api/v1/auth/student/logout"): ("current_user_token_dependency", "student"),
     ("POST", "/api/v1/auth/company/logout"): ("current_user_token_dependency", "recruiter"),
     ("GET", "/api/v1/users/me"): ("fastapi_users:current_active_user", "student"),
     ("PATCH", "/api/v1/users/me"): ("fastapi_users:current_active_user", "student"),

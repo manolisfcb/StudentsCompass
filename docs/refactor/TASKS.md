@@ -48,7 +48,7 @@ Las fases M no bloquean globalmente a las anteriores: una tarea de backend pendi
 | TASK-024 | **Vigente, con su consumidor reasignado.** El cursor estable y la paginación siguen siendo suyos y TASK-041 los generaliza; el inbox lo migra TASK-051 en React, no reescribiendo el JS legacy. |
 | TASK-026 | **SUPERSEDED.** Su Proposed Solution dice literalmente «sin cambiar a React», que es lo contrario del plan vigente. Su intención —separar API, estado y render de Jobs y Career Lab— la cumplen TASK-049 y TASK-052 sobre React. El backend de Capstone lo sigue dividiendo TASK-023, que continúa vigente. |
 | TASK-028 | **Vigente y ampliada.** TASK-045 añade health, readiness y logging estructurado que Cloud Run consume; TASK-057 construye alertas sobre las métricas que TASK-028 emite. No son dos telemetrías. |
-| TASK-029 | **Vigente y ampliada.** El alcance pasa a cubrir dependencias de backend y de frontend, y el lock de cada uno. |
+| TASK-029 | **Vigente y ampliada.** El alcance pasa a cubrir dependencias de backend y de frontend, y el lock de cada uno. TASK-026 se retiró de sus Dependencies por quedar SUPERSEDED: una tarea SUPERSEDED nunca llega a COMPLETED y dejaba a TASK-029 sin poder alcanzar READY. |
 | TASK-031 | **Vigente y ampliada.** Verifica compatibilidad integrada sobre el monolito; TASK-058 hace lo propio sobre la topología de dos servicios. TASK-058 depende de ella. |
 | TASK-032 | **Absorbida por TASK-040.** Extender el mapeo de errores a las rutas restantes se hace ya con la forma final del error model (`code` estable, `request_id`), en vez de normalizar dos veces. TASK-032 sigue siendo su dependencia formal. |
 
@@ -89,7 +89,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-015 | Serializar selección de entrevista por candidatura | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-014 | TASK-006, TASK-012, TASK-021 |
 | TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | COMPLETED | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
 | TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
-| TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-025 |
+| TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | IN PROGRESS | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
@@ -100,7 +100,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | TODO | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
-| TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-026, TASK-028, TASK-030 | NONE |
+| TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
@@ -113,7 +113,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | COMPLETED | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
 | TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | TODO | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
-| TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | IN PROGRESS | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
+| TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
 | TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | TODO | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
 | TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
 | TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | TODO | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
@@ -2839,7 +2839,7 @@ Risk: MEDIUM
 
 ## TASK-018 — Agrupar consultas de progreso de recursos
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-4
 Category: Performance
@@ -3935,6 +3935,8 @@ Priority: LOW
 Phase: PHASE-6
 Category: Maintainability
 
+**Nota de reconciliación (plan 08):** TASK-026 se retiró de sus Dependencies por quedar SUPERSEDED. Una tarea SUPERSEDED nunca pasa a COMPLETED, así que mantenerla como dependencia dejaba a TASK-029 imposible de alcanzar READY, y con ella a TASK-031 y al cutover de TASK-058. El alcance de configuración de frontend que el plan 08 añade a esta tarea no dependía de TASK-026.
+
 **Nota de reconciliación (plan 08):** el alcance pasa a cubrir dependencias y lock de backend **y** de frontend, en el layout de monorepo de TASK-037 y TASK-038.
 
 ### Objective
@@ -4010,7 +4012,7 @@ OUT OF SCOPE:
 
 ### Dependencies
 
-Depends on: TASK-001, TASK-002, TASK-007, TASK-010, TASK-026, TASK-028, TASK-030
+Depends on: TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030
 
 ### Blocks
 
@@ -5916,7 +5918,7 @@ Risk: MEDIUM
 
 ## TASK-042 — Exponer sesión, login y logout por actor con CSRF double-submit
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: CRITICAL
 Phase: PHASE-M2
 Category: Security / API Contract
@@ -5986,13 +5988,92 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] `GET /auth/session` devuelve el actor efectivo y su tipo, o `401` sin filtrar existencia de cuentas.
-- [ ] Todo método mutante exige token CSRF válido; sin él responde `403`.
-- [ ] Las cookies son httpOnly, `SameSite=Lax` y `Secure` en producción.
-- [ ] Un actor no puede operar sobre recursos del otro tipo de identidad.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] `GET /auth/session` devuelve el actor efectivo y su tipo, o `401` sin filtrar existencia de cuentas.
+- [x] Todo método mutante exige token CSRF válido; sin él responde `403`.
+- [x] Las cookies son httpOnly, `SameSite=Lax` y `Secure` en producción.
+- [x] Un actor no puede operar sobre recursos del otro tipo de identidad.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
+
+### Completion Notes
+
+**Qué existe ahora.** `GET /api/v1/auth/session` devuelve el actor efectivo, su
+tipo y el token CSRF, o `401`. `POST /api/v1/auth/session/refresh` rota sesión y
+token de forma explícita. El login/logout de estudiante pasa a
+`POST /api/v1/auth/student/login` y `/logout`, espejo de
+`/api/v1/auth/company/login`, que no se tocó. Todo método mutante exige
+`X-CSRF-Token` igual a la cookie `studentscompass_csrf` y un `Origin` conocido.
+
+**Por qué el contrato de sesión devuelve una lista y no un actor.** Las dos
+identidades tienen cookies separadas y el plan §6.2 pide conservarlas separadas
+durante la migración, así que ambas pueden estar presentes a la vez. `actor` es
+con cuál presentarse —estudiante primero— y `actors` lista las que el navegador
+tiene. Devolver solo una haría que el cliente ofreciera un login que la persona
+no necesita.
+
+**Desvío registrado respecto a la matriz de TASK-034.** `route_targets.csv`
+proponía `POST`/`DELETE /api/v1/auth/session` como destino del login. No se
+adoptó: un único recurso `/session` no puede expresar *como qué actor* se inicia
+sesión sin un discriminador en el cuerpo, que es la misma distinción movida a un
+sitio peor. La matriz declara los contratos objetivo como propuestas corregibles
+por la vertical que los implementa; la corrección y su razón quedan en
+[09_ROUTE_MATRIX.md](09_ROUTE_MATRIX.md) §7, no solo aquí.
+
+**Dónde se aplica el CSRF y por qué ahí.** En middleware, no en una dependencia
+por ruta. El modo de fallo de la versión por ruta es el silencio: un endpoint
+mutante nuevo que olvida la dependencia queda desprotegido y nada lo dice. Aquí
+el defecto es cerrado y una exención hay que escribirla.
+
+**Los dos clientes.** `app/static/js/csrf.js` envuelve `fetch` una vez en lugar
+de editar los ~68 puntos de llamada del JS Jinja; se carga antes que cualquier
+otro script y sin la condición `use_app_shell`, porque las páginas que hacen
+POST sin app shell —login, registro, admin— son justamente las que lo necesitan.
+`tests/csrf_client.py` hace lo mismo para la suite. Los dos se comportan igual
+que la capa HTTP que construirá TASK-044, y por eso el backend no necesita saber
+cuál de los tres le habla.
+
+**Bug Fix incluido.** Un `403` de CSRF no emitía token nuevo, así que un cliente
+sin token —expirado, o que abre con un POST— no tenía forma de conseguir lo que
+le faltaba y todos sus reintentos fallaban igual. Ahora la negativa emite token,
+lo que hace que un solo reintento funcione. No filtra nada: una página ajena no
+puede leer esa respuesta, que es exactamente por qué el esquema funciona.
+
+**Qué demuestra que no cambió el comportamiento.**
+
+| Prueba | Antes | Después |
+| --- | --- | --- |
+| Lane rápida | 429 passed, 61 skipped | 457 passed, 61 skipped |
+| Lane PostgreSQL + Redis | 61 passed | 61 passed |
+| Lane navegador | 14 passed | 18 passed |
+| Inventario de rutas | 175 handlers, 0 sin clasificar | 179 handlers, 0 sin clasificar |
+
+Los 429 de la lane rápida se midieron en el árbol sin estos cambios y vuelven a
+pasar con el CSRF activo: ni un solo test existente necesitó tocarse, porque el
+cliente de la suite echa el token como lo echa un navegador. Los 28 nuevos son
+24 de sesión/CSRF y 4 de navegador, que corren `csrf.js` real en Chromium contra
+una cookie real y comprueban que el token no viaja a un origen ajeno.
+
+**Contra la baseline de TASK-035.** El schema pasa de 144 a 146 paths: cuatro
+altas y dos bajas. Las bajas son `/auth/jwt/login` y `/auth/jwt/logout`, que
+siguen sirviéndose y con test que lo comprueba, pero salen de OpenAPI
+(`include_in_schema=False`) para que los tipos que genere TASK-043 no arrastren
+la ruta legacy. `docs/refactor/baseline/openapi.json` no se regenera: es la foto
+del «antes» y regenerarla borraría la evidencia.
+
+**No incluido, deliberadamente.** No se unificaron las dos identidades en un
+modelo de usuario. No se renombró `/api/v1/auth/company/login`: la consistencia
+por actor que pide §6.2 ya se cumple espejándola, y renombrarla rompería el
+login de compañía sin necesidad, dentro de la vertical de otra ficha
+(TASK-050). No se retiró `/auth/jwt/*`, que es de TASK-059. No se trató CORS
+como barrera de seguridad: comparte la lista de orígenes con el CSRF para que
+las dos no discrepen, y nada más.
+
+**Hallazgo de la auditoría cerrado aquí.**
+[02_AUDIT_FINDINGS.md](02_AUDIT_FINDINGS.md) §Cobertura pedía «revisar
+Origin/CSRF en formularios mutadores»: queda cubierto por el middleware y sus
+casos negativos. El documento no se edita, porque es la foto de la auditoría y
+no un tablero.
 
 ### Validation
 
@@ -7744,13 +7825,13 @@ Can start when each task's concrete dependencies are COMPLETED (no barrera globa
 
 Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
 
-- TASK-029 — Consolidar configuración y documentar dependencias activas; depends on TASK-001, TASK-002, TASK-007, TASK-010, TASK-026, TASK-028, TASK-030.
+- TASK-029 — Consolidar configuración y documentar dependencias activas; depends on TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030.
 
 ### Parallel Group K
 
 Can start when each task's concrete dependencies are COMPLETED (no barrera global del grupo previo):
 
-- TASK-031 — Verificar compatibilidad integrada y ensayar rollout/restore; depends on TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-026, TASK-027, TASK-028, TASK-029, TASK-030.
+- TASK-031 — Verificar compatibilidad integrada y ensayar rollout/restore; depends on TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030.
 
 ## PARALLEL EXECUTION GROUPS — plan 08 (fases M)
 

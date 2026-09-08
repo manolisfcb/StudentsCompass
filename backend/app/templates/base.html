@@ -45,6 +45,10 @@
 </head>
 <body class="{{ body_class | default('') }}">
   {% block content %}{% endblock %}
+  {# The CSRF wrapper must be installed before any script can call `fetch`, so
+     it goes first and is never gated: the pages that post without the app shell
+     (login, register, admin) are exactly the ones that need it most. #}
+  <script defer src="{{ asset_url('js/csrf.js') }}"></script>
   {% if use_app_shell %}
   <script defer src="{{ asset_url('js/base.js') }}"></script>
   {% endif %}

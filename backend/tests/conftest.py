@@ -19,6 +19,7 @@ apply_isolation()
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
+from tests.csrf_client import CSRFAsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
@@ -94,27 +95,49 @@ async def setup_db() -> AsyncGenerator[None, None]:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest_asyncio.fixture
-async def client(setup_db) -> AsyncGenerator[AsyncClient, None]:
-    """Create a test client."""
+@contextlib.asynccontextmanager
+async def _app_client(client_class) -> AsyncGenerator[AsyncClient, None]:
+    """Wire the app to the test database and yield a client of ``client_class``."""
     # Override get_session dependency
     async def override_get_session():
         async with TestSessionLocal() as session:
             yield session
-    
+
     app.dependency_overrides[get_session] = override_get_session
     rate_limiter._events.clear()
     await reset_counter_store()
 
-    # Create test client
-    async with AsyncClient(
+    async with client_class(
         transport=ASGITransport(app=app),
         base_url="http://test"
     ) as ac:
         yield ac
-    
+
     # Cleanup
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def client(setup_db) -> AsyncGenerator[AsyncClient, None]:
+    """Create a test client.
+
+    CSRFAsyncClient echoes the CSRF cookie back in the header exactly as a
+    browser does, so tests that are not about CSRF keep exercising their
+    endpoint instead of the middleware in front of it.
+    """
+    async with _app_client(CSRFAsyncClient) as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture
+async def raw_client(setup_db) -> AsyncGenerator[AsyncClient, None]:
+    """A client that sends exactly what the test tells it to, and nothing more.
+
+    For tests *about* the CSRF barrier: they need to control the token, so the
+    helper that always supplies one would defeat the point.
+    """
+    async with _app_client(AsyncClient) as ac:
+        yield ac
 
 
 @pytest_asyncio.fixture

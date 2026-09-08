@@ -34,10 +34,11 @@ router y las anidadas— y compara **por identidad de objeto** contra las
 dependencias declaradas en `userService`, `adminService` y `companyService`.
 Cuando un handler exige varias identidades se registra la más restrictiva.
 
-Las siete rutas que genera fastapi-users (`/auth/jwt/logout`,
-`/api/v1/auth/company/logout` y las cinco de `/api/v1/users`) usan closures
-creados dentro del paquete, sin objeto alcanzable con el que compararlas: se
-declaran una a una en `GENERATED_ROUTER_ACTOR_OVERRIDES`, con el actor leído de
+Las ocho rutas que genera fastapi-users (`/auth/jwt/logout`,
+`/api/v1/auth/student/logout`, `/api/v1/auth/company/logout` y las cinco de
+`/api/v1/users`) usan closures creados dentro del paquete, sin objeto alcanzable
+con el que compararlas: se declaran una a una en
+`GENERATED_ROUTER_ACTOR_OVERRIDES`, con el actor leído de
 `fastapi_users/router/users.py`. Cualquier otra dependencia `current_*` o
 `require_*` no reconocida rompe el script en vez de contarse como pública.
 
@@ -48,15 +49,22 @@ declaran una a una en `GENERATED_ROUTER_ACTOR_OVERRIDES`, con el actor leído de
 | `app/routes/` | 127 |
 | `app/views/views.py` | 23 |
 | **Subtotal propio** | **150** |
-| Generados por fastapi-users (auth, register, verify, reset, users) | 18 |
+| Generados por fastapi-users (auth, register, verify, reset, users) | 20 |
 | Generados por FastAPI (`/docs`, `/docs/oauth2-redirect`, `/redoc`, `/openapi.json`) | 4 |
 | Declarados en `app/app.py` (`/favicon.ico`, `/robots.txt`, `/sitemap.xml`) | 3 |
-| **Total registrado en la app** | **175** |
+| Propios añadidos por TASK-042 (`GET /auth/session`, `POST /auth/session/refresh`) | 2 |
+| **Total registrado en la app** | **179** |
 
 El plan §2 cuenta «150 handlers, 23 de ellos vistas». Coincide exacto con el
-subtotal propio: el plan contó lo declarado en `app/routes` y `app/views`. Los 25
-restantes existen en la app en ejecución y también hay que decidirlos, porque un
-endpoint generado por una librería se sirve igual que uno propio.
+subtotal propio en el momento del inventario: el plan contó lo declarado en
+`app/routes` y `app/views`. Los restantes existen en la app en ejecución y
+también hay que decidirlos, porque un endpoint generado por una librería se sirve
+igual que uno propio.
+
+Las cuatro altas de TASK-042 son las dos rutas de sesión y el segundo montaje del
+router de login/logout de estudiante bajo `/api/v1/auth/student`. El montaje
+antiguo en `/auth/jwt` sigue registrado a la vez y por eso el total sube en
+cuatro, no en dos.
 
 ## Actor exigido
 
@@ -192,11 +200,25 @@ sitemap tiene que moverse al frontend antes de borrar las plantillas, no despué
 
 ### 7. Una ruta de API fuera de `/api/v1`
 
-`POST /auth/jwt/login` y `POST /auth/jwt/logout` cuelgan de `/auth/jwt`, fuera
+`POST /auth/jwt/login` y `POST /auth/jwt/logout` colgaban de `/auth/jwt`, fuera
 del prefijo versionado. El proxy Nginx del plan §1 enruta `/api`, `/healthz` y
-`/readyz`; con este par tal cual, el login no entra por ninguna de las tres.
-TASK-042 los mueve a `POST`/`DELETE /api/v1/auth/session`, y hasta entonces la
-configuración del proxy tiene que contemplarlos explícitamente.
+`/readyz`; con ese par tal cual, el login no entraba por ninguna de las tres.
+
+**Resuelto en TASK-042**, con una forma distinta a la que esta matriz proponía.
+El destino escrito aquí era `POST`/`DELETE /api/v1/auth/session`; lo implantado
+es `POST /api/v1/auth/student/login` y `/logout`, espejo exacto de
+`/api/v1/auth/company/login`, que ya existía. La razón es que un único recurso
+`/api/v1/auth/session` no puede expresar *como qué actor* se inicia sesión: son
+dos identidades con cookies separadas, y el plan §6.2 pide explícitamente
+conservarlas separadas durante la migración. Reducirlas a un solo recurso exigiría
+un discriminador en el cuerpo, que es la misma distinción movida a un sitio peor.
+`GET /api/v1/auth/session` sí existe, y es de lectura: dice qué actor eres, no te
+convierte en uno.
+
+`/auth/jwt/*` sigue montado y sin documentar en OpenAPI hasta TASK-059, porque las
+páginas Jinja todavía lo llaman y retirarlo cerraría la sesión de todo el mundo a
+mitad de migración. El proxy ya no necesita contemplarlo para que el login
+funcione, pero sí mientras esas páginas se sirvan.
 
 ## Límites
 
@@ -209,6 +231,7 @@ Los contratos objetivo son propuestas de esta tarea salvo las 19 que §5.2 ya
 fijaba, marcadas como tales en la columna `note`. Cada vertical puede corregir el
 suyo al implementarlo; lo que no puede es dejarlo sin decidir.
 
-La matriz no cubre endpoints que aún no existen. El plan §6.2 pide añadir
-`GET /api/v1/auth/session`, y §5.1 los de health y readiness (TASK-045): son
-altas, no correspondencias, y por eso no tienen fila.
+La matriz no cubre endpoints que aún no existen. §5.1 pide los de health y
+readiness (TASK-045): son altas, no correspondencias, y por eso no tienen fila.
+`GET /api/v1/auth/session` era una de esas altas y ya existe, así que ahora tiene
+fila como cualquier otro handler.

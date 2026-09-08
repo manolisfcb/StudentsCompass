@@ -21,6 +21,8 @@ import os
 from contextlib import asynccontextmanager
 from app.routes.postRoute import router as post_router
 from app.services.accounts.userService import fastapi_users, current_active_user, auth_backend
+from app.middleware.csrf import CSRFMiddleware
+from app.routes.authRoute import router as auth_router
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
 from app.views.views import router as views_router
 from app.routes.questionnaireRoute import router as questionnaire_router
@@ -155,13 +157,26 @@ def _load_cors_origins() -> list[str]:
     ]
 
 
+ALLOWED_ORIGINS = _load_cors_origins()
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_load_cors_origins(),
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# The origin list is shared with CORS so the two cannot disagree about what "our
+# frontend" means. They are not redundant: CORS is a browser-side courtesy that
+# only governs what script may *read* back, while this refuses the write.
+app.add_middleware(
+    CSRFMiddleware,
+    allowed_origins=ALLOWED_ORIGINS,
+    # Logging in or out changes which identity the cookie carries, so the token
+    # bound to the previous one must not survive it.
+    rotate_paths=("/login", "/logout"),
 )
 
 # Added last so it wraps everything else: the body has to be bounded before the
@@ -211,7 +226,19 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = configure_template_helpers(Jinja2Templates(directory="app/templates"))
 
 app.include_router(post_router, prefix="/api/v1")
-app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])
+# Two mounts of the same router, on purpose. ``/api/v1/auth/student`` is the
+# contract: it matches ``/api/v1/auth/company`` so a client addresses either
+# actor the same way. ``/auth/jwt`` is the path the Jinja pages have always
+# called and stays until they are gone (TASK-059), because breaking it would
+# log every current session out mid-migration.
+app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/api/v1/auth/student", tags=["auth"])
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+    include_in_schema=False,
+)
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/api/v1/auth", tags=["auth"])
 app.include_router(fastapi_users.get_reset_password_router(), prefix="/api/v1/auth", tags=["auth"])
 app.include_router(fastapi_users.get_verify_router(UserRead), prefix="/api/v1/auth", tags=["auth"])
