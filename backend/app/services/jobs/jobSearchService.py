@@ -2,19 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Callable, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.JobsScraper.linkedin_scraper import fetch_linkedin_jobs
+from app.core.offload import BoundedOffload, OffloadRejected
 from app.models.jobPostingModel import JobPosting
 from app.services.jobs.jobPostingService import JobPostingService
 
 LOGGER = logging.getLogger(__name__)
-
-T = TypeVar("T")
 
 #: Threads that may be scraping at once. The provider is a third-party site
 #: being paged politely; more parallelism there is not a win worth the memory.
@@ -31,72 +28,6 @@ SCRAPER_TIMEOUT_SECONDS = 12.0
 #: so a worker is normally released by its own budget rather than abandoned
 #: mid-walk with the caller already gone.
 SCRAPER_BUDGET_SECONDS = 10.0
-
-
-class BoundedOffload:
-    """Runs blocking work in a bounded pool of threads, off the event loop.
-
-    Three separate bounds, because they fail differently:
-
-    * ``max_workers`` — how much blocking work runs at once;
-    * ``max_queued`` — how much may wait for it. Over this, callers are refused
-      immediately instead of piling up;
-    * a per-call timeout the caller passes in.
-
-    A thread cannot be cancelled, so the timeout releases the *caller*, never
-    the slot. The slot is returned when the thread actually finishes, which is
-    what keeps the bound honest: otherwise a stream of timeouts would hand out
-    unlimited slots while the threads behind them were all still running.
-    """
-
-    def __init__(self, *, max_workers: int, max_queued: int, thread_name_prefix: str):
-        self._executor = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix=thread_name_prefix
-        )
-        self._capacity = max_workers + max_queued
-        self._in_flight = 0
-
-    @property
-    def in_flight(self) -> int:
-        return self._in_flight
-
-    @property
-    def is_full(self) -> bool:
-        return self._in_flight >= self._capacity
-
-    async def run(self, work: Callable[[], T], *, timeout: float) -> T:
-        """Run ``work`` in a worker thread.
-
-        Raises :class:`OffloadRejected` when the queue is full and
-        :class:`asyncio.TimeoutError` when the call outlives ``timeout``.
-        """
-        if self.is_full:
-            raise OffloadRejected(self._in_flight, self._capacity)
-
-        self._in_flight += 1
-        loop = asyncio.get_running_loop()
-        future = loop.run_in_executor(self._executor, work)
-        future.add_done_callback(self._release)
-        try:
-            # Shielded: cancelling the wrapper would mark the future done while
-            # its thread was still running, and the slot would come back early.
-            return await asyncio.wait_for(asyncio.shield(future), timeout)
-        except asyncio.CancelledError:
-            # The client went away. The thread keeps its slot until it finishes,
-            # which is exactly the back-pressure this class exists to provide.
-            raise
-
-    def _release(self, _future) -> None:
-        self._in_flight -= 1
-
-
-class OffloadRejected(RuntimeError):
-    """The bounded queue was full; the work was never scheduled."""
-
-    def __init__(self, in_flight: int, capacity: int):
-        super().__init__(f"offload queue full ({in_flight}/{capacity})")
-        self.in_flight = in_flight
-        self.capacity = capacity
 
 
 #: One pool for the process. Module level so the threads are reused across

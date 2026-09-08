@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 from dataclasses import dataclass
 from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.offload import BoundedOffload, OffloadRejected
 from app.services.analytics.courseCatalogQueries import load_active_course_links
 
 try:
@@ -13,8 +16,28 @@ except ModuleNotFoundError:  # pragma: no cover - depends on optional runtime de
     cp_model = None
 
 
+LOGGER = logging.getLogger(__name__)
+
 OBJECTIVE_VERSION_HEURISTIC = "heuristic_route_v1"
 OBJECTIVE_VERSION_CP_SAT = "cp_sat_route_v1"
+
+#: Solves that may run at once. Each one is capped at a second of CPU with a
+#: single search worker, so this is how many cores the optimiser may occupy.
+SOLVER_MAX_WORKERS = 2
+#: Solves that may wait for one. Past this a request is answered UNKNOWN
+#: immediately rather than queued behind a wall of one-second solves.
+SOLVER_MAX_QUEUED = 8
+#: The whole thing: queueing plus the solve. The solver's own
+#: ``max_time_in_seconds = 1`` is the real bound; this only catches a saturated
+#: pool, so it is generous enough never to fire on a healthy one.
+SOLVER_TIMEOUT_SECONDS = 8.0
+
+#: One pool for the process, so threads are reused across requests.
+SOLVER_OFFLOAD = BoundedOffload(
+    max_workers=SOLVER_MAX_WORKERS,
+    max_queued=SOLVER_MAX_QUEUED,
+    thread_name_prefix="cp-sat-solver",
+)
 
 
 @dataclass(frozen=True)
@@ -407,7 +430,7 @@ class ORToolsLearningRouteOptimizer:
                 remaining_gaps=list(missing_by_id.values()),
             )
 
-        solution = self._solve_cp_sat(
+        solution = await self._solve_cp_sat_off_loop(
             candidates=scored_candidates,
             missing_by_id=missing_by_id,
             constraints=constraints,
@@ -474,6 +497,68 @@ class ORToolsLearningRouteOptimizer:
             "model_explanation": self._build_model_explanation(solution),
         }
 
+    async def _solve_cp_sat_off_loop(
+        self,
+        *,
+        candidates: list[dict],
+        missing_by_id: dict[str, dict],
+        constraints: LearningRouteConstraints,
+    ) -> dict:
+        """Build and solve the model in a worker thread.
+
+        ``Solve`` is a C++ call that does not release control to the event loop:
+        with ``max_time_in_seconds = 1`` every optimisation froze the whole
+        worker for up to a second, and model construction on a large catalogue
+        adds to that. Both halves move to the thread together, because building
+        the model is the part that scales with the number of candidates.
+
+        Only plain data crosses the boundary — the candidate dicts, the missing
+        skills and the frozen constraints. **The AsyncSession never does**: the
+        catalogue is already loaded by the time this is called, and a session
+        touched from a thread is a corruption bug waiting to happen.
+
+        The solver's own limits are unchanged and are still the primary bound;
+        the offload adds a second one for how many solves may run at once.
+        """
+
+        def solve() -> dict:
+            return self._solve_cp_sat(
+                candidates=candidates,
+                missing_by_id=missing_by_id,
+                constraints=constraints,
+            )
+
+        try:
+            return await SOLVER_OFFLOAD.run(solve, timeout=SOLVER_TIMEOUT_SECONDS)
+        except OffloadRejected as exc:
+            LOGGER.warning("CP-SAT solve shed, solver queue full: %s", exc)
+            return self._unanswered_solution()
+        except asyncio.TimeoutError:
+            # The solver is capped at one second, so this means the thread never
+            # started within the budget: the pool is saturated.
+            LOGGER.warning(
+                "CP-SAT solve exceeded %ss including queueing; reporting UNKNOWN",
+                SOLVER_TIMEOUT_SECONDS,
+            )
+            return self._unanswered_solution()
+
+    @staticmethod
+    def _unanswered_solution() -> dict:
+        """What a solve that never ran looks like.
+
+        ``UNKNOWN`` is CP-SAT's own word for "no answer within the limits",
+        which is exactly what a shed or timed-out solve is, so the caller's
+        existing handling of it applies unchanged and no new status value
+        enters the contract.
+        """
+        return {
+            "solver_status": "UNKNOWN",
+            "objective_value": 0.0,
+            "selected_course_indexes": [],
+            "sequence_positions": {},
+            "covered_skill_ids": set(),
+        }
+
     def _solve_cp_sat(
         self,
         *,
@@ -481,6 +566,7 @@ class ORToolsLearningRouteOptimizer:
         missing_by_id: dict[str, dict],
         constraints: LearningRouteConstraints,
     ) -> dict:
+        """Pure: data in, solution dict out. Runs in a worker thread."""
         model = cp_model.CpModel()
         course_vars = [
             model.NewBoolVar(f"x_course_{index}")

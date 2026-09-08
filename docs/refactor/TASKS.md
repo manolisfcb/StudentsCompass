@@ -93,7 +93,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
-| TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
+| TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
 | TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
 | TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
 | TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-018 |
@@ -3599,7 +3599,7 @@ sincronización de embeddings ocurre dentro de `analyze_gap` y no cambia ningún
 
 ## TASK-022 — Ejecutar CP-SAT fuera del loop con concurrencia acotada
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance
@@ -3669,12 +3669,12 @@ Grupo E; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Ejecutar CP-SAT fuera del loop con concurrencia acotada.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Ejecutar CP-SAT fuera del loop con concurrencia acotada.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -3693,6 +3693,115 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: MEDIUM
+
+### Completion Notes
+
+`solver.Solve` es una llamada a C++ que no cede el control, y el modelo está topado en
+`max_time_in_seconds = 1`. Cada optimización congelaba el worker entero hasta un segundo,
+más lo que costara construir el modelo sobre el catálogo.
+
+**`_solve_cp_sat_off_loop`** ejecuta construcción y `Solve` juntos en un hilo. Van juntos a
+propósito: construir el modelo es la parte que escala con el número de candidatos, así que
+dejarla en el loop habría movido el bloqueo sin quitarlo. Cruzan la frontera **solo datos
+planos** —los dicts de candidatos, las skills faltantes y las constraints, que son un
+dataclass congelado—. **La AsyncSession nunca cruza**: el catálogo ya está cargado cuando se
+llama a esto, y una sesión tocada desde un hilo es corrupción esperando a ocurrir. Fijado en
+`test_the_session_never_crosses_into_the_worker_thread`, que comprueba el thread id y el
+conjunto exacto de argumentos.
+
+**Los límites del solver no se tocaron:** `max_time_in_seconds = 1`, `num_search_workers = 1`
+y `random_seed = 42` siguen siendo el bound real, y hay un test que lo verifica sobre el
+fuente. El offload añade un segundo límite, de cuántos solves corren a la vez
+(`SOLVER_MAX_WORKERS = 2`, `SOLVER_MAX_QUEUED = 8`), no uno que reemplace al primero.
+
+**Degradación.** Cola llena o timeout devuelven `solver_status = "UNKNOWN"`, que es la
+palabra que CP-SAT ya usa para «sin respuesta dentro de los límites». El caller la trata como
+antes y **no entra ningún valor nuevo en el contrato**: acaba en el mismo payload de ruta
+inviable, con `objective_version` `cp_sat_route_v1` y los gaps intactos.
+
+**Reuso, no duplicación (desviación declarada).** TASK-020 introdujo `BoundedOffload` dentro
+de `jobSearchService`. Esta tarea la necesita igual, así que se movió a `app/core/offload.py`
+y `jobSearchService` la importa desde ahí. Tocar `jobSearchService` queda fuera del Scope
+literal de esta ficha, pero la Definition of Done prohíbe duplicación significativa y una
+segunda fuente de verdad, y la alternativa era copiar la clase o que el solver importara del
+servicio de búsqueda de empleo. Los 19 tests de TASK-020 pasan sin cambios tras el
+movimiento.
+
+**Medición.** Dos modelos, porque el tamaño decide si el tope de 1 s llega a morder.
+
+*Modelo pequeño (2 skills, 2 cursos), 20 solves:*
+
+| | Antes | Después |
+| --- | --- | --- |
+| Solve p50 / p95 | 1.25 / 2.16 ms | 2.29 / 6.79 ms |
+| Peor lag del loop | 75.1 ms | **2.4 ms** |
+| p95 del lag | 2.22 ms | 2.20 ms |
+| Δ RSS | 6.1 MB | 0.0 MB |
+
+*Modelo que satura el solver (60 skills, 120 cursos), 6 solves:*
+
+| | Antes | Después |
+| --- | --- | --- |
+| Solve p50 / p95 | 1071 / 1119 ms | 1070 / 1100 ms |
+| Peor lag del loop | **6471.0 ms** | **18.0 ms** |
+| p95 del lag | 2.17 ms | 2.18 ms |
+| Ticks servidos | 52 | **575** |
+| Δ RSS | 30.6 MB | 0.0 MB |
+| Status | FEASIBLE | FEASIBLE |
+
+El solve tarda lo mismo —es el mismo solver con los mismos límites— pero el loop deja de
+pararse: seis segundos y medio de bloqueo pasan a 18 ms, y un ticker de 10 ms pasa de servir
+52 ticks a 575. El coste añadido por solve (unos 1–4 ms de ida y vuelta al pool) solo se nota
+en el modelo pequeño, donde el solve entero dura 1 ms.
+
+**Tests.** `backend/tests/test_solver_offload.py` (nuevo, 11 casos): golden de que el solve en
+hilo devuelve **exactamente** el mismo dict que el síncrono (selección, objetivo, cobertura y
+posiciones), reproducibilidad con el seed, los tres parámetros del solver intactos, un solve
+lento que no congela el loop, una corrutina liviana que termina mientras el solve corre, los
+bounds del pool, cola llena y timeout devolviendo UNKNOWN, UNKNOWN aflorando como ruta
+inviable en el payload público, la sesión que no cruza al hilo, y el pool liberando slots tras
+una ráfaga. Los goldens existentes de `test_capstone_analytics_models.py` siguen llamando a
+`_solve_cp_sat` directamente y pasan sin cambios.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_solver_offload.py
+# 11 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_job_search_concurrency.py tests/test_job_board.py
+# 19 passed (TASK-020 tras mover BoundedOffload)
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 504 passed, 72 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 72 passed
+
+uv run --project backend ruff check backend/app backend/tests
+# All checks passed!
+```
+
+**Límites de la validación.** OR-Tools **sí** está instalado en este entorno
+(`ORToolsLearningRouteOptimizer.is_available()` es `True`), así que los goldens del solver se
+ejecutaron de verdad y no quedaron saltados. Las mediciones son de esta máquina y de un
+catálogo sintético; lo que sostienen es la diferencia entre las dos ejecuciones, medida en la
+misma corrida y sobre los mismos datos. No se ejecutó la lane PostgreSQL para esta tarea por
+necesidad —no toca schema, locks ni migraciones— pero se corrió igualmente y sigue verde. Sin
+smoke de navegador: no cambia ningún payload; el frontend de Career Lab lo migra TASK-052.
+
+**Intermitencia observada, no resuelta.** En 2 de unas 15 corridas completas de la suite
+apareció un fallo que no se ha podido reproducir: `AttributeError: 'float' object has no
+attribute 'replace'` dentro de `uuid.UUID`, es decir una columna UUID leyendo un float. Cayó
+una vez en `test_the_cv_approval_is_checked_once_for_the_whole_listing` (TASK-018) y otra en
+`test_the_sweep_commits_per_batch_not_per_posting[500]` (TASK-019). **No se reproduce**: 8
+corridas completas consecutivas limpias y 5 corridas aisladas de cada test, todas verdes. Las
+dos apariciones fueron la primera corrida tras editar un fuente. Se descartó que la lane use
+un fichero compartido (`TEST_DATABASE_URL` es `sqlite+aiosqlite:///:memory:` con `StaticPool`)
+y que las funciones SQLite registradas en `conftest` tengan que ver (`btrim` y `char_length`,
+ninguna relacionada con UUID). Queda anotado aquí en vez de darse por cerrado; merece una
+ficha propia si vuelve a aparecer.
 
 
 ## TASK-023 — Dividir Capstone conservando facade y contratos
