@@ -38,6 +38,10 @@ dev = [
     # separate download: `python -m playwright install chromium`. Tests marked
     # `browser` skip cleanly when either is missing.
     "playwright>=1.62.0",
+    # Linter de la lane de backend (TASK-039). Vive en el grupo dev para que
+    # `uv run ruff` local y la lane de CI usen la misma versión resuelta por el
+    # lock, en vez de que cada uno instale la última publicada ese día.
+    "ruff>=0.14.6",
 ]
 
 # --- Dev tooling -----------------------------------------------------------
@@ -55,3 +59,64 @@ omit = [
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+
+# --- Lint (TASK-039) -------------------------------------------------------
+# Plan 08 §10 pide Ruff en la lane de backend. Se activa el conjunto por defecto
+# (E4 imports, E7 sentencias, E9 errores de sintaxis, F pyflakes): son fallos
+# reales, no estilo opinado.
+#
+# `ruff format` NO se ejecuta en CI y no se configura aquí. Formatear el árbol
+# entero es un diff que toca cada fichero de `app/` y no cabe en una tarea de
+# infraestructura que declara «sin cambios de comportamiento en la aplicación».
+# Adoptarlo es una decisión con su propia ficha.
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+# El conjunto por defecto, explícito: que se lea en el fichero qué se exige.
+select = ["E4", "E7", "E9", "F"]
+
+# Dos clases de excepción conviven en esta tabla y no significan lo mismo.
+#
+# E402 en `app/app.py` y `tests/conftest.py` es **permanente y justificado**: en
+# ambos ficheros hay código que debe correr antes de los imports, que es
+# exactamente lo que E402 prohíbe. `app/app.py` llama `load_dotenv()` antes de
+# importar `app.db`, que construye el engine en tiempo de import;
+# `tests/conftest.py` llama `apply_isolation()` antes de importar nada de `app`,
+# y eso es lo que impide que la suite lea `.env` o salga a la red.
+# (`scripts/capture_baseline.py` hace lo mismo y ya lo marca línea a línea con
+# `# noqa: E402`, por eso no aparece aquí.)
+#
+# F401, F841 y E741 son **deuda preexistente inventariada**: 43 hallazgos que ya
+# estaban cuando se activó Ruff. No se corrigen en esta ficha, que declara no
+# cambiar comportamiento, y parte de esos F401 no es import muerto sino registro
+# de mappers de SQLAlchemy —`app/models/applicationModel.py` importa
+# `JobPosting` para que la relación resuelva—, así que borrarlos a ciegas sí
+# sería un cambio de comportamiento. Quedan acotados por fichero: un import
+# muerto en cualquier otro punto del árbol rompe CI. **TASK-060 los retira y
+# vacía estas entradas; no se añaden ficheros nuevos a la lista.**
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/05d0f99636af_add_job_analysis_table_for_async_cv_.py" = ["F401"]
+"alembic/versions/462d490a97a1_update_user_table.py" = ["F401"]
+"app/app.py" = ["E402", "F401"]
+"app/db.py" = ["F401"]
+"app/models/applicationModel.py" = ["F401"]
+"app/models/jobAnalysisModel.py" = ["F401"]
+"app/models/postModel.py" = ["F401"]
+"app/models/resumeEmbeddingsModel.py" = ["F401"]
+"app/models/resumeModel.py" = ["F401"]
+"app/routes/jobRoute.py" = ["F401", "F841"]
+"app/schemas/jobPostingSchema.py" = ["F401"]
+"app/schemas/questionnaireSchema.py" = ["F401"]
+"app/schemas/resumeEmbeddingSchema.py" = ["F401"]
+"app/schemas/resumeSchema.py" = ["F401"]
+"app/schemas/userSchema.py" = ["F401"]
+"app/services/accounts/userService.py" = ["F401"]
+"app/services/admin/adminService.py" = ["E741", "F401"]
+"app/services/applications/applicationService.py" = ["F401"]
+"app/services/resources/resourceService.py" = ["E741"]
+"app/services/storage/s3Service.py" = ["F401"]
+"tests/conftest.py" = ["E402", "F401"]
+"tests/test_application_transitions.py" = ["F401"]
+"tests/test_embedding_service.py" = ["F401"]
+"tests/test_migration_config.py" = ["F401"]

@@ -1,0 +1,24 @@
+# Configuración del escaneo de secretos de CI (TASK-039).
+#
+# CI escanea el árbol del checkout, no la historia. La historia es asunto de
+# TASK-002 —que retiró los secretos versionados— y reescribirla no cabe en una
+# ficha de infraestructura. Lo que este escaneo garantiza es lo que importa a
+# partir de ahora: que ningún commit nuevo introduzca una credencial en el árbol.
+
+title = "StudentsCompass"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fixtures sintéticas del test de redacción"
+# `tests/test_error_redaction.py` prueba que los logs enmascaran credenciales, y
+# para eso tiene que contener credenciales con la forma correcta. Son inventadas
+# —`AKIAIOSFODNN7EXAMPLE` es el ejemplo de la documentación de AWS— y su valor
+# está en el propio test: es el fichero que demuestra que un secreto real no
+# saldría en un log. Silenciar el fichero entero, no una línea, porque añadir
+# formas nuevas de credencial a esa tabla es justamente lo que debe seguir siendo
+# barato.
+paths = [
+    '''backend/tests/test_error_redaction\.py''',
+]

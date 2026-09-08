@@ -48,7 +48,7 @@ la suite verde en otra versión no dice nada sobre la imagen que se despliega.
 ### Baseline de la migración
 
 Medida el 2026-09-07 sobre `325e92b` con CPython 3.12.12, las tres lanes de
-`.github/workflows/tests.yml`. Los comandos aparecen ya en su forma posterior a
+`.github/workflows/ci.yml`. Los comandos aparecen ya en su forma posterior a
 TASK-037, que repitió las tres desde `backend/` y obtuvo los mismos conteos; el
 movimiento no cambió ni un resultado:
 
@@ -203,15 +203,86 @@ Sin Playwright o sin el navegador instalado, estos tests se saltan solos.
 
 ## CI
 
-`.github/workflows/tests.yml` corre ambas lanes. Al job rápido no se le pasa
-ningún secreto a propósito: si un test alcanza un proveedor real, falla ahí y no
-en producción.
+`.github/workflows/ci.yml` (hasta TASK-039, `tests.yml`). Son ocho jobs
+independientes: backend y frontend no comparten job, ni caché, ni instalación,
+así que un error de tipos de TypeScript no puede teñir de rojo la suite de Python
+ni al revés.
+
+| Job | Qué ejecuta | Bloquea |
+| --- | --- | --- |
+| `secrets` | gitleaks sobre el árbol del checkout | Sí |
+| `deps-audit` | osv-scanner sobre `backend/requirements.txt` y `frontend/package-lock.json` | No — ver abajo |
+| `backend-lint` | `uv lock --check` y `ruff check .` | Sí |
+| `backend-fast` | lane rápida (SQLite) y export del OpenAPI del SHA | Sí |
+| `backend-integration` | lane PostgreSQL + pgvector y Redis | Sí |
+| `backend-browser` | lane de navegador (Chromium) | Sí |
+| `backend-baseline` | `scripts/capture_baseline.py` y capturas como artefacto | Sí |
+| `frontend` | `npm ci`, ESLint, `tsc --noEmit`, i18n, Vitest y build | Sí |
+
+Al job rápido no se le pasa ningún secreto a propósito: si un test alcanza un
+proveedor real, falla ahí y no en producción. Ningún job imprime variables de
+entorno; las únicas credenciales que aparecen en el workflow son las del
+PostgreSQL efímero de la lane de integración, que nace y muere con el job.
+
+**Versiones desde ficheros versionados.** `actions/setup-python` lee
+`backend/.python-version` y `actions/setup-node` lee `.nvmrc`, en vez de repetir
+el número en el workflow. Hasta TASK-039 `.nvmrc` era una declaración sin ningún
+consumidor que la verificara.
+
+**El artefacto de contrato.** `backend-fast` publica `openapi-<sha>` con la
+salida de `scripts/export_openapi.py`. Va en esa lane y no en la de baseline
+porque solo necesita que la aplicación sea importable: colgarlo de la lane de
+baseline dejaría al SHA sin contrato cada vez que fallara Chromium. TASK-043 lo
+convierte en la fuente de los tipos TypeScript del frontend.
+
+**Verificación de locks.** `uv lock --check` falla si alguien añade una
+dependencia a `backend/pyproject.toml` sin correr `uv lock`; `npm ci` falla si
+`frontend/package-lock.json` no concuerda con `package.json`. Nótese que
+`backend/requirements.txt` —lo que instalan la imagen y las lanes de test— es un
+tercer artefacto que hoy **no** concuerda con `uv.lock`: 58 paquetes difieren de
+versión y 8 pines no existen en el lock. Es deuda anterior a esta tarea y su
+dueño es TASK-029.
+
+**Por qué `deps-audit` no bloquea.** Los pines actuales ya arrastran advisories
+conocidos: 74 sobre 10 paquetes de `backend/requirements.txt` el 2026-09-08
+(`starlette`, `python-multipart`, `pyjwt`, `cryptography`, `transformers`,
+`torch`, `pillow`, `pyasn1`, `setuptools`, `soupsieve`);
+`frontend/package-lock.json` sale limpio. Subir esas versiones es un cambio de
+dependencias que pertenece a TASK-029, y bloquear con la deuda puesta pondría en
+rojo PRs que no tocaron ninguna dependencia. El informe queda visible en cada run
+y TASK-029 retira el `continue-on-error`.
 
 ## Lint / typecheck
 
-**N/A.** El repositorio no tiene linter ni type checker configurado (no hay
-`ruff`, `flake8`, `mypy` ni `pyright` en `pyproject.toml`, `requirements.txt` ni
-en configuración versionada), y TASK-001 no introduce uno. La Definition of Done
-global exige documentarlo en vez de declarar aprobado un check inexistente. Si
-se incorpora uno más adelante, debe registrarse aquí con herramienta, versión y
-alcance.
+Hasta TASK-039 esto era **N/A**: no había linter ni type checker en
+configuración versionada, y la Definition of Done global exigía documentarlo en
+vez de declarar aprobado un check inexistente. TASK-039 incorporó los dos.
+
+| Capa | Herramienta | Versión | Alcance | Configuración |
+| --- | --- | --- | --- | --- |
+| Backend, lint | Ruff | resuelta por `backend/uv.lock` (0.16.6 al integrar) | `backend/`, reglas `E4`, `E7`, `E9`, `F` | `[tool.ruff]` de `backend/pyproject.toml` |
+| Frontend, lint | ESLint | fijada por `frontend/package-lock.json` | `frontend/` | `frontend/eslint.config.js` (TASK-038) |
+| Frontend, tipos | TypeScript | fijada por `frontend/package-lock.json` | `tsc -b --noEmit` | `frontend/tsconfig*.json` (TASK-038) |
+
+```bash
+cd backend  && uv run ruff check .
+cd frontend && npm run lint && npm run typecheck
+```
+
+Ruff **no** formatea. `ruff format` no se ejecuta en CI ni se configura:
+formatear el árbol entero es un diff que toca cada fichero de `app/` y no cabía
+en una ficha que declara no cambiar comportamiento. Adoptarlo es una decisión con
+su propia ficha.
+
+En `[tool.ruff.lint.per-file-ignores]` conviven dos clases de excepción, que no
+significan lo mismo:
+
+- **Permanente y justificada.** `E402` en `app/app.py` y `tests/conftest.py`: en
+  los dos hay código que debe correr antes de los imports, que es exactamente lo
+  que la regla prohíbe —`load_dotenv()` antes de construir el engine, y
+  `apply_isolation()` antes de importar nada de `app`—.
+- **Deuda inventariada.** 43 hallazgos `F401`/`F841`/`E741` que ya existían al
+  activar Ruff. No se corrigieron en TASK-039 porque parte de esos `F401` no es
+  import muerto sino registro de mappers de SQLAlchemy, y borrarlos a ciegas sí
+  sería un cambio de comportamiento. Están acotados por fichero: un import muerto
+  en cualquier otro punto del árbol rompe CI. **Los retira TASK-060.**

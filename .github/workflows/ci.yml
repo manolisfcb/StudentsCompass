@@ -1,0 +1,309 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Solo lectura del repositorio. Ningún job de CI necesita escribir, y publicar
+# imágenes o tocar la nube pertenece a `deploy.yml` (TASK-055/TASK-056), que
+# tendrá sus propios permisos y su propia identidad federada.
+permissions:
+  contents: read
+
+# Un push que llega mientras corre el anterior cancela el anterior: lo que
+# importa es el veredicto del último commit de la rama.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Desde TASK-037 el backend vive en `backend/` y desde TASK-038 el frontend en
+# `frontend/`. Cada job declara su directorio como raíz de sus `run`: ahí están
+# `requirements.txt`/`pytest.ini` y `package.json`, y el código resuelve alguna
+# ruta contra el directorio de trabajo (por ejemplo el cuestionario versionado).
+# Los pasos que no son `run` —checkout, setup, subida de artefactos— siguen
+# siendo relativos a la raíz del repositorio.
+#
+# TASK-039 separó las lanes: las de `backend-*` y la de `frontend` no comparten
+# job, ni caché, ni instalación, así que un error de tipos de TypeScript no puede
+# teñir de rojo la suite de Python ni al revés. Ningún job imprime variables de
+# entorno: los valores que aparecen abajo son de loopback y desechables, y no hay
+# secretos declarados en este workflow.
+jobs:
+  secrets:
+    name: secretos (gitleaks, árbol del checkout)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Binario fijado por versión y verificado por sha256 antes de ejecutarlo:
+      # un escáner de secretos que se descarga sin comprobar qué descargó no es
+      # un control de seguridad. Se instala fuera del árbol para que no se
+      # escanee a sí mismo.
+      - name: Instalar gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -sSLf -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar xzf gitleaks.tar.gz gitleaks
+      # `--redact` para que un hallazgo no publique el secreto en el log público
+      # del run, que sería filtrarlo una segunda vez. Se escanea el árbol del
+      # checkout, no la historia: la historia es asunto de TASK-002 y reescribirla
+      # no cabe aquí. Lo que este job garantiza es que ningún commit nuevo
+      # introduzca una credencial. Excepciones documentadas en `.gitleaks.toml`.
+      - name: Escanear el árbol
+        run: "$RUNNER_TEMP/gitleaks dir . --no-banner --redact --exit-code 1 --config .gitleaks.toml"
+
+  deps-audit:
+    name: dependencias (osv-scanner, informativo)
+    runs-on: ubuntu-latest
+    # NO bloquea, y es una decisión, no un descuido. Dos razones: los pines
+    # actuales ya arrastran advisories conocidos —74 sobre 10 paquetes de
+    # `backend/requirements.txt` el 2026-09-08— y subirlos es un cambio de
+    # dependencias que pertenece a TASK-029; y un advisory publicado río arriba
+    # pondría en rojo PRs que no tocaron ninguna dependencia. El informe queda
+    # visible en cada run. **TASK-029 remedia y quita este `continue-on-error`.**
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar osv-scanner
+        env:
+          OSV_VERSION: v2.5.1
+          OSV_SHA256: f9f25499a2c8cc367b3af45df2ea7eeca7fbccceab9c35079968f4b3652194be
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -sSLf -o osv-scanner \
+            "https://github.com/google/osv-scanner/releases/download/${OSV_VERSION}/osv-scanner_linux_amd64"
+          echo "${OSV_SHA256}  osv-scanner" | sha256sum -c -
+          chmod +x osv-scanner
+      # Un solo escáner para los dos lockfiles: el de Python y el de npm. Se
+      # audita `requirements.txt` porque es lo que instalan la imagen y estas
+      # lanes; `uv.lock` describe además el grupo dev, que no se despliega.
+      - name: Auditar los lockfiles
+        run: |
+          "$RUNNER_TEMP/osv-scanner" scan source \
+            --lockfile=backend/requirements.txt \
+            --lockfile=frontend/package-lock.json
+
+  backend-lint:
+    name: backend — lock y Ruff
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          # `working-directory` es el input de la acción, no el `defaults` de
+          # arriba: es lo que hace que encuentre `backend/uv.lock` y
+          # `backend/.python-version`. El glob de caché es relativo a él.
+          working-directory: backend
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      # Esto es lo que rompe cuando alguien añade una dependencia a
+      # `pyproject.toml` y no corre `uv lock`: el lock deja de describir el
+      # proyecto y el job falla antes de instalar nada.
+      - name: Verificar que uv.lock está al día
+        run: uv lock --check
+      # Ruff no necesita la aplicación instalada, así que este job no instala
+      # `requirements.txt`: solo el grupo dev del lock, que son trece paquetes.
+      # La versión de Ruff sale del lock, no de una línea suelta de este fichero,
+      # para que `uv run ruff` en local y CI sean el mismo binario.
+      - name: Instalar el grupo dev desde el lock
+        run: uv sync --frozen --only-group dev
+      - name: Ruff
+        run: uv run --no-sync ruff check .
+
+  backend-fast:
+    name: backend — fast lane (SQLite) y OpenAPI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Ruta desde la raíz del repositorio: `defaults.run.working-directory`
+          # solo afecta a los pasos `run`, no a los `uses`.
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "pytest>=9.0.2" "pytest-asyncio>=1.3.0" "pytest-cov>=7.0.0" "httpx>=0.28.1"
+      # No secrets are provided to this job on purpose: tests/isolation.py
+      # installs placeholder credentials and blocks outbound sockets, so a test
+      # that reaches a real provider fails here instead of in production.
+      - name: Run fast lane
+        run: python -m pytest -p no:cacheprovider
+      # El contrato del SHA (plan 08 §10). Va en esta lane y no en la de
+      # baseline porque solo necesita que la aplicación sea importable, que es
+      # lo que esta lane ya demostró: colgarlo de la lane de baseline dejaría al
+      # SHA sin contrato cada vez que fallara Chromium. TASK-043 lo convierte en
+      # la fuente de los tipos TypeScript del frontend.
+      - name: Exportar el OpenAPI del SHA
+        run: python scripts/export_openapi.py -o "$RUNNER_TEMP/openapi.json"
+      - name: Publicar el OpenAPI
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-${{ github.sha }}
+          path: ${{ runner.temp }}/openapi.json
+          retention-days: 30
+
+  backend-integration:
+    name: backend — integration lane (PostgreSQL + pgvector, Redis)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpw
+          POSTGRES_DB: studentscompass_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Ruta desde la raíz del repositorio: `defaults.run.working-directory`
+          # solo afecta a los pasos `run`, no a los `uses`.
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "pytest>=9.0.2" "pytest-asyncio>=1.3.0" "pytest-cov>=7.0.0" "httpx>=0.28.1"
+      # Both URLs are loopback: tests/isolation.assert_local_url refuses to aim
+      # this lane at anything else, so a stale variable cannot hit a real
+      # deployment. La contraseña es la del servicio efímero de arriba, nace y
+      # muere con el job y no da acceso a nada.
+      - name: Run integration lane
+        env:
+          TEST_DATABASE_URL_PG: postgresql+asyncpg://testuser:testpw@127.0.0.1:5432/studentscompass_test
+          TEST_REDIS_URL: redis://127.0.0.1:6379/0
+        run: python -m pytest -p no:cacheprovider tests/integration
+
+  backend-browser:
+    name: backend — browser lane (Chromium, no network)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Ruta desde la raíz del repositorio: `defaults.run.working-directory`
+          # solo afecta a los pasos `run`, no a los `uses`.
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "pytest>=9.0.2" "pytest-asyncio>=1.3.0" "httpx>=0.28.1" "playwright>=1.62.0"
+          python -m playwright install --with-deps chromium
+      # Every request the page makes is fulfilled by the test's own route
+      # handler, so the browser reaches no external host.
+      - name: Run browser lane
+        run: python -m pytest -p no:cacheprovider -m browser
+
+  backend-baseline:
+    name: backend — baseline lane (TASK-035, fixtures + capturas)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Ruta desde la raíz del repositorio: `defaults.run.working-directory`
+          # solo afecta a los pasos `run`, no a los `uses`.
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "pytest>=9.0.2" "pytest-asyncio>=1.3.0" "httpx>=0.28.1" "playwright>=1.62.0"
+          python -m playwright install --with-deps chromium
+      # Sin secretos, igual que la lane rápida: la captura corre sobre una
+      # SQLite desechable con datos sintéticos y el aislamiento bloquea la
+      # salida, así que ningún dato real puede acabar en el artefacto. El paso
+      # falla si la revisión de secretos/PII encuentra algo.
+      - name: Capturar la baseline
+        run: python scripts/capture_baseline.py
+      # Los PNG no se versionan (docs/refactor/baseline/README.md): ~18 MB por
+      # captura. Se publican aquí y se comparan descargando dos ejecuciones.
+      - name: Publicar las capturas
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-screens
+          path: docs/refactor/baseline/screens/
+          retention-days: 30
+
+  frontend:
+    name: frontend — lint, tipos, i18n, tests y build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      # La versión sale de `.nvmrc` (TASK-033), no de un literal aquí: hasta
+      # ahora esa declaración no tenía ningún consumidor que la verificara.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      # `npm ci`, no `npm install`: instala exactamente el lock y falla si el
+      # lock no concuerda con `package.json`. Ese es el equivalente frontend de
+      # `uv lock --check`.
+      - name: Instalación limpia desde el lock
+        run: npm ci
+      # Pasos separados y nombrados para que el fallo diga qué se rompió sin
+      # abrir el log: lint, tipos, i18n, tests y bundle son cinco veredictos
+      # distintos.
+      - name: ESLint
+        run: npm run lint
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Claves de i18n
+        run: npm run i18n:check
+      - name: Vitest
+        run: npm test
+      - name: Build
+        run: npm run build
