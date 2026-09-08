@@ -110,7 +110,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-034, TASK-035 |
 | TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | COMPLETED | TASK-033, TASK-035 | TASK-036 |
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | COMPLETED | TASK-037 | TASK-036 |
-| TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | IN PROGRESS | TASK-037, TASK-038 | TASK-036 |
+| TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | COMPLETED | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
 | TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | TODO | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | IN PROGRESS | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
@@ -131,6 +131,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | TODO | TASK-028, TASK-056 | NONE |
 | TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | TODO | TASK-031, TASK-053, TASK-057 | NONE |
 | TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
+| TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | TODO | TASK-039 | NONE |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -3949,6 +3950,32 @@ F-26: ENV/helpers de configuración repetidos; extra sqlchemy mal escrito en fas
 - `app/config.py; app/db.py:16; app/services/accounts/userService.py:24; app/services/companies/companyService.py:21; pyproject.toml:13; app/models/resourceModel.py:36; .gitignore; README.md` (Confidence: HIGH). 
 - Alcance de edición conocido: app/config.py; app/db.py helpers; userService.py y companies/companyService.py configuración compartida; pyproject.toml/uv.lock/requirements.txt; README/PROJECT_STRUCTURE; .gitignore scripts y comentarios obsoletos.
 
+**Medido en TASK-039 (2026-09-08), sobre `backend/`.** La Proposed Solution ya
+pedía «comparar uv.lock con requirements usado por Docker y consultar advisories
+vigentes»; aquí están los números, para que la tarea no vuelva a medirlos:
+
+- **`requirements.txt` y `uv.lock` no concuerdan.** 58 paquetes difieren de
+  versión (`starlette` 1.0.0 vs 0.50.0, `fastapi` 0.136.1 vs 0.128.0,
+  `google-genai` 2.4.0 vs 1.59.0, `torch` 2.12.0 vs 2.10.0, entre otros) y 8
+  pines de `requirements.txt` no existen en el lock (`async-timeout`,
+  `exceptiongroup`, `markdown-it-py`, `mdurl`, `pytz`, `rich`, `tomli`, `typer`).
+  Importa porque `requirements.txt` es lo que instalan la imagen y las lanes de
+  test, mientras `uv lock --check` —añadido en TASK-039— solo prueba que el lock
+  describe `pyproject.toml`. Hoy los tres artefactos describen tres entornos.
+- **74 advisories vigentes** sobre 10 paquetes de `requirements.txt`, medidos con
+  `osv-scanner` v2.5.1: `starlette`, `python-multipart`, `pyjwt`, `cryptography`,
+  `transformers`, `torch`, `pillow`, `pyasn1`, `setuptools`, `soupsieve`. Varios
+  con severidad 7.5. `frontend/package-lock.json` sale limpio.
+- El job `deps-audit` de `ci.yml` publica ese informe en cada run pero **no
+  bloquea** (`continue-on-error: true`), precisamente porque la deuda ya está
+  puesta. **Retirar ese `continue-on-error` es criterio de salida de esta
+  tarea.**
+- El extra mal escrito `fastapi-users[sqlalchemy,sqlchemy]` sigue provocando un
+  warning en cada resolución de `uv`.
+- El finding de `.gitignore` que TASK-034 enrutó aquí sigue abierto:
+  `export_openapi.py` (TASK-039) entró con `git add -f`, igual que los otros
+  scripts versionados.
+
 ### Why this is a problem
 
 La causa raíz y consecuencias están descritas en Problem, con evidencia del snapshot. Esta tarea resuelve la parte delimitada en Scope; no trata síntomas ajenos ni asume que el estado de producción coincide con SQLite de tests.
@@ -5433,7 +5460,7 @@ Risk: MEDIUM
 
 ## TASK-039 — Separar CI en lanes de backend y frontend
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M1
 Category: Infrastructure / Testing
@@ -5489,7 +5516,7 @@ Depends on: TASK-037, TASK-038
 
 ### Blocks
 
-Blocks: TASK-043, TASK-055
+Blocks: TASK-043, TASK-055, TASK-060
 
 ### Parallelization
 
@@ -5501,13 +5528,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Backend y frontend fallan de forma independiente y con mensajes accionables.
-- [ ] El lock del backend se verifica; una dependencia añadida sin actualizar el lock rompe CI.
-- [ ] CI publica el OpenAPI del SHA como artefacto.
-- [ ] Ningún job imprime variables sensibles.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Backend y frontend fallan de forma independiente y con mensajes accionables.
+- [x] El lock del backend se verifica; una dependencia añadida sin actualizar el lock rompe CI.
+- [x] CI publica el OpenAPI del SHA como artefacto.
+- [x] Ningún job imprime variables sensibles.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -5516,6 +5543,179 @@ Provocar deliberadamente un fallo en cada lane (test roto, error de tipos, lock 
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+
+### Completion Notes
+
+`tests.yml` pasa a `ci.yml` con `git mv` —la historia del fichero se conserva— y
+se reescribe en **ocho jobs**. Ningún fichero de `app/` cambia.
+
+| Job | Qué ejecuta | Bloquea |
+| --- | --- | --- |
+| `secrets` | gitleaks sobre el árbol del checkout | Sí |
+| `deps-audit` | osv-scanner sobre los dos lockfiles | No, a propósito |
+| `backend-lint` | `uv lock --check` y `ruff check .` | Sí |
+| `backend-fast` | lane rápida (SQLite) y export del OpenAPI del SHA | Sí |
+| `backend-integration` | PostgreSQL + pgvector y Redis | Sí |
+| `backend-browser` | Chromium | Sí |
+| `backend-baseline` | `capture_baseline.py` y capturas como artefacto | Sí |
+| `frontend` | `npm ci`, ESLint, `tsc --noEmit`, i18n, Vitest y build | Sí |
+
+**Independencia.** Backend y frontend no comparten job, ni caché, ni
+instalación. Es la razón de que `frontend` sea un job con cinco pasos nombrados
+en vez de cinco jobs: los cinco veredictos ya se distinguen por el nombre del
+paso, y partirlos costaría cuatro `npm ci` más sin separar nada que importe. Las
+lanes de backend sí van separadas porque ya lo estaban y porque cada una tiene
+servicios distintos.
+
+**Las versiones salen de ficheros versionados**, no de literales del workflow:
+`actions/setup-python` lee `backend/.python-version` y `actions/setup-node` lee
+`.nvmrc`. Hasta ahora `.nvmrc` era una declaración sin ningún consumidor que la
+verificara — el límite que TASK-033 se dejó anotado.
+
+**Ruff, y lo que no se corrigió.** El conjunto por defecto (`E4`, `E7`, `E9`,
+`F`) encuentra **92 hallazgos preexistentes**. 49 son `E402` en dos ficheros
+donde el import tardío es el diseño —`app/app.py` llama `load_dotenv()` antes de
+importar `app.db`, que construye el engine en tiempo de import;
+`tests/conftest.py` llama `apply_isolation()` antes de importar nada de `app`—:
+esa excepción es permanente y está justificada en el propio `pyproject.toml`. Los
+43 restantes (`F401`, `F841`, `E741`) son deuda real y **no se corrigen aquí**.
+No por comodidad: parte de esos `F401` no es import muerto sino registro de
+mappers de SQLAlchemy —`app/models/applicationModel.py` importa `JobPosting` para
+que la relación resuelva por nombre—, y borrarlos a ciegas sería exactamente el
+cambio de comportamiento que esta ficha declara no tener. Quedan inventariados
+fichero a fichero, con el bloque rotulado, y **TASK-060** los retira. La lista no
+es un silenciador global: un import muerto en cualquier otro punto del árbol
+rompe CI hoy.
+
+`ruff format` no se ejecuta ni se configura. Formatear el árbol entero toca cada
+fichero de `app/` y no cabe en esta ficha; adoptarlo es una decisión con la suya.
+
+**El lock se verifica de verdad.** `uv lock --check` en `backend-lint`. Añadir
+`ruff` al grupo dev dejó el lock desactualizado y el check lo detectó antes de
+relockear, que es la demostración que pedía Validation. El relock solo añadió
+`ruff==0.16.6`: ninguna otra versión se movió. `backend-lint` no instala
+`requirements.txt` —Ruff no necesita la aplicación— sino `uv sync --frozen
+--only-group dev`, trece paquetes, y la versión de Ruff sale del lock para que
+`uv run ruff` local y CI sean el mismo binario.
+
+**El artefacto de contrato.** `scripts/export_openapi.py`, nuevo, importa la app
+bajo el aislamiento de `tests/isolation.py` y escribe el schema con `sort_keys` e
+`indent` fijos para que dos SHA se puedan comparar con `diff`. Su salida es
+**idéntica byte a byte** al `openapi.json` de la baseline de TASK-035, que se
+produce por otro camino: es la comprobación de que el export ligero no pierde
+nada. Va en `backend-fast` y no en `backend-baseline` porque solo necesita que la
+aplicación sea importable; colgado de la lane de baseline, un fallo de Chromium
+dejaría al SHA sin contrato. TASK-043 lo toma como fuente de los tipos
+TypeScript.
+
+**Escaneo de secretos.** gitleaks fijado por versión **y verificado por sha256**
+antes de ejecutarse: un escáner que se descarga sin comprobar qué descargó no es
+un control de seguridad. Se instala en `$RUNNER_TEMP` para que no se escanee a sí
+mismo, y corre con `--redact` para que un hallazgo no publique el secreto en el
+log del run — filtrarlo una segunda vez. Escanea el **árbol del checkout, no la
+historia**: la historia es asunto de TASK-002 y reescribirla no cabe aquí; lo que
+este job garantiza es que ningún commit nuevo introduzca una credencial.
+`.gitleaks.toml` permite `tests/test_error_redaction.py`, que contiene
+credenciales con la forma correcta porque su trabajo es probar que los logs las
+enmascaran.
+
+Dos cosas se encontraron probándolo, y las dos habrían dado un job inútil:
+gitleaks 8.30 **rechaza** `[allowlist]` junto a `[[allowlists]]`, así que la
+config no cargaba y el job habría fallado por configuración, no por hallazgos; y
+correr la suite deja en `__pycache__` una copia compilada del test permitido, que
+sí se detectaba. Ambas corregidas en `d35a5ab`.
+
+**Escaneo de dependencias, y por qué no bloquea.** osv-scanner, también fijado y
+verificado por sha256, sobre `backend/requirements.txt` y
+`frontend/package-lock.json`. **No bloquea, y es una decisión registrada, no un
+descuido:** los pines actuales ya arrastran **74 advisories** sobre 10 paquetes
+(`starlette`, `python-multipart`, `pyjwt`, `cryptography`, `transformers`,
+`torch`, `pillow`, `pyasn1`, `setuptools`, `soupsieve`), varios con severidad 7.5;
+el frontend sale limpio. Subir esas versiones es un cambio de dependencias que
+pertenece a **TASK-029**, y bloquear con la deuda puesta pondría en rojo PRs que
+no tocaron ninguna dependencia. El informe queda visible en cada run y TASK-029
+retira el `continue-on-error`.
+
+**Ningún job imprime variables sensibles.** No hay `secrets` declarados en el
+workflow, `permissions` es `contents: read`, ningún paso vuelca el entorno y
+gitleaks va con `--redact`. Las únicas credenciales del fichero son las del
+PostgreSQL efímero de la lane de integración, que nace y muere con el job y ya
+estaban antes de esta tarea.
+
+Validación, ejecutada en un **worktree limpio en `d8b403a`** para que los números
+no llevaran mezclado el trabajo en curso de TASK-042 (ver más abajo):
+
+```
+uv lock --check                              # ok
+uv sync --frozen --only-group dev            # 13 paquetes
+uv run --no-sync ruff check .                # All checks passed (ruff 0.16.6)
+python -m pytest -p no:cacheprovider         # 429 passed, 61 skipped
+python scripts/export_openapi.py             # 144 paths, idéntico a la baseline
+python -m pytest -p no:cacheprovider -m browser   # 14 passed, 476 deselected
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... \
+  python -m pytest -p no:cacheprovider tests/integration   # 61 passed
+npm ci && npm run lint && npm run typecheck && npm run i18n:check
+npm test                                     # 2 files, 7 tests
+npm run build                                # ok
+gitleaks dir . --redact --exit-code 1        # no leaks
+osv-scanner scan source --lockfile=...       # 74 hallazgos, informativo
+```
+
+Los conteos de backend cuadran exacto con la baseline de TASK-033/TASK-037
+(429/61, 61, 14): la tarea no movió ningún resultado.
+
+**Fallo deliberado por lane, como pedía Validation.** Cada sonda se revirtió:
+
+| Sonda | Falla | No afecta a |
+| --- | --- | --- |
+| Dependencia añadida a `pyproject.toml` sin relockear | `backend-lint` (`uv lock --check`, exit 1) | resto |
+| `import hashlib` muerto en `app/config.py` | `backend-lint` (4 errores Ruff) | resto |
+| El mismo import en un fichero de la lista inventariada | nada — es la deuda acotada, a propósito | — |
+| `const broken: number = "…"` en `src/app/queryClient.ts` | `frontend` (TS2322), y solo el paso TypeScript | backend |
+| `expect(1).toBe(2)` en `src/api/client.test.ts` | `frontend` (Vitest, exit 1) | backend |
+| Par AKID + secret aleatorio en `backend/app/leak_probe.py` | `secrets` (exit 1) | resto |
+
+Nota de la sonda de secretos: el primer intento usó
+`wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` y gitleaks **no** lo marcó — es el
+ejemplo publicado en la documentación de AWS y su configuración por defecto lo
+permite. Con un valor aleatorio lo detecta. La sonda buena es la segunda.
+
+**Workspace compartido.** Mientras corría esta ficha, otro agente reclamó
+TASK-042 en el mismo árbol (`d221b7b`) y su commit de reclamación arrastró
+`backend/scripts/export_openapi.py`, que estaba en el índice. El fichero es el
+correcto y está en el repositorio; queda anotado porque el commit que lo
+introduce no lleva el ID de esta tarea. No hay solapamiento de ficheros: TASK-042
+toca `app/` y `tests/`, esta ficha toca `.github/`, `.gitleaks.toml`,
+`pyproject.toml`, `uv.lock` y documentación. Los commits de esta tarea se hicieron
+con rutas explícitas para no arrastrar su trabajo en curso.
+
+**Hallazgos laterales, enrutados y no corregidos aquí.**
+
+1. **`requirements.txt` y `uv.lock` no concuerdan.** 58 paquetes difieren de
+   versión y 8 pines de `requirements.txt` no existen en el lock. Importa porque
+   `requirements.txt` es lo que instalan la imagen y las lanes de test, mientras
+   `uv lock --check` solo prueba que el lock describe `pyproject.toml`. Conciliar
+   los tres artefactos es un cambio de dependencias: es de **TASK-029**, que ya lo
+   tiene en su Proposed Solution («comparar uv.lock con requirements usado por
+   Docker»). Documentado en [docs/TESTING.md](../TESTING.md#ci).
+2. **Los 74 advisories** del punto anterior, misma dueña.
+3. **`fastapi-users[sqlalchemy,sqlchemy]`**, el extra mal escrito que `uv`
+   advierte en cada resolución, sigue en `pyproject.toml`. Ya está en el Problem
+   de **TASK-029**; no se toca aquí.
+4. **`.gitignore` sigue ignorando `scripts/`.** TASK-034 lo dejó como finding para
+   TASK-029 y así se respeta: `export_openapi.py` entró con `git add -f`, igual
+   que viven los otros scripts versionados. Es un campo de minas —un script nuevo
+   se vuelve invisible sin aviso— pero arreglarlo destapa tres ficheros no
+   versionados y no es de esta ficha.
+
+Límites: nada de esto se ha ejecutado todavía en GitHub Actions. Cada job se
+validó ejecutando sus comandos verbatim en local sobre el worktree limpio, pero
+la primera ejecución real puede tropezar con la caché de las acciones o con la
+descarga de los binarios fijados. Las acciones de terceros son
+`astral-sh/setup-uv@v10.0.1`, fijada a versión exacta; gitleaks y osv-scanner no
+usan acción, se descargan y se verifican por sha256. El E2E con Playwright que
+menciona §10 no entra aquí: llega con las verticales, como dice Scope.
 
 ### Estimated Impact
 
@@ -7866,3 +8066,141 @@ graph TD
     T057 --> T058
     T058 --> T059
 ```
+
+## TASK-060 — Retirar la deuda de lint inventariada en per-file-ignores
+
+Status: TODO
+Priority: LOW
+Phase: PHASE-M2
+Category: Maintainability
+
+### Objective
+
+Dejar `[tool.ruff.lint.per-file-ignores]` de `backend/pyproject.toml` con solo
+las excepciones permanentes y justificadas, corrigiendo los 43 hallazgos que
+TASK-039 inventarió en lugar de corregir.
+
+### Problem
+
+TASK-039 activó Ruff con el conjunto por defecto y encontró 92 hallazgos
+preexistentes. 49 son `E402` en `app/app.py` y `tests/conftest.py`, donde el
+import tardío es el diseño y la excepción es permanente. Los otros 43 —`F401`,
+`F841`, `E741`— son deuda real que quedó silenciada fichero a fichero para que la
+lane de lint pudiera activarse sin cambiar código de aplicación en una ficha de
+infraestructura.
+
+Mientras el bloque exista, esos 24 ficheros están exentos también para el código
+que se escriba mañana: un import muerto nuevo en `app/services/admin/adminService.py`
+no rompe CI.
+
+### Evidence / Location
+
+- `backend/pyproject.toml`, bloque «Deuda preexistente, inventariada» de
+  `[tool.ruff.lint.per-file-ignores]` (Confidence: HIGH).
+- `docs/TESTING.md`, sección «Lint / typecheck».
+- Reproducible con `cd backend && uv run ruff check .` tras vaciar el bloque.
+
+### Why this is a problem
+
+Una lista de exenciones sin fecha de caducidad deja de leerse y se convierte en
+la configuración normal. Además la exención es por fichero, no por línea, así que
+protege código futuro que nadie ha revisado.
+
+### Desired State
+
+`ruff check .` pasa con `per-file-ignores` reducido a las dos entradas `E402`
+justificadas. Ningún comportamiento de la aplicación cambia.
+
+### Proposed Solution
+
+Fichero a fichero, no en masa. Cada `F401` se clasifica antes de tocarlo:
+
+- **Import muerto de verdad** (por ejemplo `io.BytesIO` en `s3Service.py`,
+  `typing.Dict`/`Any` en `questionnaireSchema.py`): se borra.
+- **Registro de mappers de SQLAlchemy** (por ejemplo `JobPosting` en
+  `applicationModel.py`, `CommunityMemberModel` y `UserStatsModel` en
+  `adminService.py`): **no se borra.** El import existe para que la relación
+  resuelva por nombre, y quitarlo rompe la configuración del mapper en runtime
+  sin que ningún test unitario lo note necesariamente. Se marca con
+  `# noqa: F401` y una razón, o se mueve a un punto de registro explícito.
+- **Re-export deliberado** (por ejemplo los schemas de `userService.py`): se
+  declara en `__all__`, que es la forma que Ruff entiende.
+
+`F841` en `jobRoute.py:380` es un `except ... as e` cuyo `e` no se usa: o se
+registra o se quita el binding. `E741` son dos variables `l`: renombrar.
+
+Para cada fichero tocado, ejecutar la suite antes de pasar al siguiente. Un
+cambio que altere comportamiento va rotulado Bug Fix y separado.
+
+### Scope
+
+IN SCOPE:
+
+- Los 24 ficheros listados en el bloque de deuda de
+  `backend/pyproject.toml` y el propio bloque.
+- `docs/TESTING.md`, sección «Lint / typecheck».
+
+OUT OF SCOPE:
+
+- Ampliar el conjunto de reglas de Ruff o adoptar `ruff format`: decisión propia.
+- Las dos excepciones `E402` permanentes.
+- Cambiar reglas de negocio, umbrales, pesos de scoring o permisos.
+- Reordenar imports, renombrar módulos o cualquier refactor no exigido por un
+  hallazgo de la lista.
+
+### Files / Components Likely Affected
+
+- `backend/pyproject.toml` y los ficheros del bloque de deuda.
+- Sin cambios de comportamiento en la aplicación.
+
+### Dependencies
+
+Depends on: TASK-039
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: NONE
+
+Toca ficheros repartidos por `app/` y `tests/`. Coordinar antes de reclamarla si
+hay verticales en curso: el conflicto no es de diseño, es de edición simultánea.
+
+### Implementation Notes
+
+Leer las Completion Notes de TASK-039 antes de editar: explican por qué cada
+categoría está donde está. El riesgo entero de esta ficha está en confundir un
+import de registro de mappers con un import muerto.
+
+### Acceptance Criteria
+
+- [ ] `per-file-ignores` conserva solo las dos entradas `E402` justificadas.
+- [ ] `ruff check .` pasa sin hallazgos.
+- [ ] Cada `F401` conservado lleva `# noqa` con razón, o `__all__`.
+- [ ] Las lanes rápida, de integración y de navegador dan los mismos conteos.
+- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Ejecutar las tres lanes de backend y comparar conteos con la baseline vigente. Un
+import de registro de mappers borrado por error no siempre falla en la lane
+rápida: comprobar además que la lane de integración PostgreSQL sigue verde, que
+es donde las relaciones se ejercitan de verdad.
+
+### Rollback / Risk Notes
+
+Revertir solo los ficheros de la tarea. Preferir forward fix. Si una relación de
+SQLAlchemy deja de resolver, restaurar el import y marcarlo, no reescribir el
+modelo.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: MEDIUM
+Cost: LOW
+Risk: MEDIUM
