@@ -96,7 +96,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
 | TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
 | TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
-| TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-018 |
+| TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-018 |
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | TODO | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
@@ -132,6 +132,9 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | TODO | TASK-031, TASK-053, TASK-057 | NONE |
 | TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
 | TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | TODO | TASK-039 | NONE |
+| TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | TODO | TASK-024 | TASK-062 |
+| TASK-062 | Paginar el listado de candidaturas del estudiante | MEDIUM | PHASE-4 | TODO | TASK-024, TASK-025 | TASK-061 |
+| TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | TODO | TASK-018, TASK-025 | TASK-061, TASK-062 |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -4142,7 +4145,7 @@ plan —index scan acotado frente a sort del historial completo— que no depend
 
 ## TASK-025 — Calcular dashboard en DB y definir transición de listados
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance
@@ -4212,12 +4215,12 @@ Grupo H; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Calcular dashboard en DB y definir transición de listados.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Calcular dashboard en DB y definir transición de listados.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4236,6 +4239,115 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: MEDIUM
+
+### Completion Notes
+
+Abrir el dashboard costaba el historial entero del usuario. Los dos puntos de entrada
+—`get_student_dashboard` y `get_user_dashboard_data`— seleccionaban **todas** las
+candidaturas, contaban los estados en Python y ordenaban la lista para quedarse con cinco.
+Cuatro enteros y cinco filas, pagados con la historia completa de quien más ha usado el
+producto.
+
+**Los agregados.** `_aggregate_student_application_stats` hace una consulta con
+`COUNT(*) FILTER` por estado y devuelve el mismo dict que `_build_student_application_stats`.
+Ese método se conserva —hay callers que ya tienen la lista en memoria— pero el dashboard ya
+no lo usa.
+
+**Los cinco recientes.** `_fetch_recent_applications` ordena y limita en la base:
+`ORDER BY application_date DESC, id DESC LIMIT 5`. **El desempate por `id` no es decorativo:**
+dos candidaturas enviadas el mismo día son lo normal en una sesión de aplicar en bloque, y sin
+él los cinco de arriba eran el orden en que la base devolviera las filas, así que el dashboard
+podía enseñar cinco distintos en cada refresco. Fijado en
+`test_ties_on_the_application_date_produce_a_stable_five`, que lee cinco veces y exige el
+mismo resultado.
+
+Se eliminó de paso un `sorted(applications, key=lambda x: x.application_date)` que habría
+reventado con `TypeError` si `application_date` llegara a ser NULL; hoy la columna es
+`nullable=False`, así que era un fallo latente, no uno vivo. No se declara como Bug Fix
+porque no había comportamiento defectuoso observable.
+
+**Paridad, no aproximación.** Los tests comparan la implementación nueva contra la anterior
+sobre los mismos datos, con 0 / 1 / 100 / 10 000 candidaturas y con los seis estados
+presentes, y exigen igualdad exacta tanto de las cuatro cifras como de los cinco payloads
+serializados.
+
+**Medición (misma sesión, mismos datos, ámbito equivalente: stats + top 5):**
+
+| Candidaturas | Filas cargadas | SELECT por llamada | p50 | p95 |
+| --- | --- | --- | --- | --- |
+| 0 | 0 → 0 | 1 → 2 | 0.31 → 1.16 ms | 2.12 → 3.00 ms |
+| 100 | 100 → 5 | 1 → 2 | 1.19 → 0.82 ms | 1.72 → 0.93 ms |
+| 10 000 | 10 000 → **5** | 1 → 2 | 171.45 → **6.35 ms** | 239.78 → **6.76 ms** |
+
+El intercambio es explícito y vale la pena decirlo: **se paga un round trip más** —dos
+consultas en vez de una— y a cambio el coste deja de crecer. Con la base vacía eso hace el
+dashboard 0.85 ms más lento; con 10 000 candidaturas lo hace 27 veces más rápido y deja de
+materializar 10 000 objetos ORM para enseñar cinco.
+
+### Inventario y decisión de los listados F-22 restantes
+
+La ficha pedía medir los demás listados de F-22 y crear tareas donde el presupuesto se
+excediera. Medido en la lane SQLite, mediana de 5 lecturas:
+
+| Listado | 10 / 20 | 1 000 / 200 | 10 000 / 2 000 | Decisión |
+| --- | --- | --- | --- | --- |
+| `postService.get_all_posts` | 0.5 ms | 5.8 ms | **124.4 ms** | **TASK-061** (nueva) |
+| `applicationService.list_user_applications` | 1.2 ms | 10.6 ms | **108.7 ms** | **TASK-062** (nueva) |
+| `resourceService.list_published_resources` | 0.4 ms | 1.6 ms | 14.5 ms | **TASK-063** (nueva, LOW) |
+| `resumeService.list_user_resumes` | 0.3 ms (5) | 0.6 ms (50) | 3.2 ms (500) | **Sin tarea** |
+| `messageService.list_messages` | — | — | — | Ya resuelto por **TASK-024** |
+
+- **TASK-061 — feed de la comunidad.** El caso más claro: `get_all_posts` no está acotado por
+  usuario, es el feed global, así que su coste crece con la actividad de toda la plataforma y
+  lo paga cada persona que abre la comunidad. Y a diferencia del inbox, **este sí tiene
+  consumidor legacy** (`app/static/js/community_feed.js`), así que la tarea incluye migrarlo.
+- **TASK-062 — candidaturas.** El dashboard ya no las materializa, pero la pantalla de
+  candidaturas sí, con `selectinload` de compañía y entrevistas por fila.
+- **TASK-063 — catálogo de recursos.** Prioridad LOW y el motivo está escrito en la ficha: el
+  catálogo crece con lo que publica un administrador, no con la actividad de los usuarios, así
+  que hoy son decenas de filas. Se registra porque el patrón —cargar todo y filtrar en
+  Python— hay que corregirlo antes de que crezca, no porque duela ahora.
+- **`list_user_resumes` — sin tarea, y la razón es la que importa:** está acotado por usuario y
+  un usuario tiene un puñado de CVs, no un historial. 500 CVs de una persona es un escenario
+  que no ocurre; a 50, que ya es mucho, cuesta 0.6 ms. Crear una ficha de paginación aquí sería
+  trabajo inventado.
+
+**Ninguna respuesta se truncó sin migrar a sus callers**, que es lo que la ficha prohibía
+explícitamente: los tres listados que exceden presupuesto quedan como tareas con su consumidor
+identificado, no acotados por sorpresa.
+
+**Tests.** `backend/tests/test_dashboard_aggregates.py` (nuevo, 17 casos): paridad exacta de
+las cifras con 0/1/100/10 000, cada estado contado bajo su nombre, las candidaturas de otro
+usuario fuera del agregado, paridad exacta de los cinco recientes con 0/3/100/10 000, los
+cinco estables ante empates de fecha, número de queries que no crece con el historial, el
+`LIMIT` presente en la SQL de recientes, el agregado siendo un `COUNT` que no carga filas, y
+las dos formas de payload —con y sin notas— intactas.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_dashboard_aggregates.py tests/test_dashboard.py
+# 24 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 538 passed, 76 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 76 passed
+
+uv run --project backend ruff check backend/app backend/tests
+# All checks passed!
+```
+
+**Límites de la validación.** Las mediciones son de SQLite en memoria; los tiempos absolutos no
+son los de producción y no hay volúmenes reales con los que calibrarlos. Lo que sostienen es la
+forma del coste —filas cargadas y statements por llamada— que no depende del motor. No se
+ejecutó la lane PostgreSQL por necesidad de esta tarea (no toca schema, locks ni migraciones);
+se corrió igualmente y sigue verde. **Sin EXPLAIN de producción**, que es exactamente la
+salvedad que F-22 ya hacía: no hay acceso a volúmenes reales para afirmar que estos escaneos
+sean lentos *hoy*, solo que crecen sin techo. Sin smoke de navegador: el payload del dashboard
+no cambia de forma, verificado campo a campo en dos tests.
 
 
 ## TASK-026 — Separar API, estado y render de Jobs y Career Lab
@@ -8899,3 +9011,256 @@ Performance: LOW
 Maintainability: MEDIUM
 Cost: LOW
 Risk: MEDIUM
+
+## TASK-061 — Paginar el feed de la comunidad con cursor estable
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-4
+Category: Performance
+
+### Objective
+
+Acotar `PostService.get_all_posts`, que hoy devuelve **todos** los posts de la plataforma en una sola respuesta, con el contrato de cursor que TASK-024 estableció para mensajes.
+
+### Problem
+
+F-22. Creada por TASK-025 tras medir los listados restantes. `get_all_posts` es
+`SELECT * FROM posts ORDER BY created_at DESC` sin `LIMIT`, y a diferencia de los demás
+listados de F-22 **no está acotado por usuario**: es el feed global, así que su coste crece
+con la actividad de toda la plataforma y lo paga cada persona que abre la comunidad.
+
+Medición (lane SQLite, mediana de 5 lecturas):
+
+| Posts en la plataforma | Filas devueltas | ms |
+| --- | --- | --- |
+| 10 | 10 | 0.5 |
+| 1 000 | 1 000 | 5.8 |
+| 10 000 | 10 000 | **124.4** |
+
+Lineal y sin techo. Es el listado de F-22 con el presupuesto más claramente excedido.
+
+### Evidence / Location
+
+- `app/services/community/postService.py` `get_all_posts` (Confidence: HIGH).
+- Medición y decisión registradas en las Completion Notes de TASK-025.
+
+### Desired State
+
+El feed responde una página acotada con cursor estable; ningún caller recibe una respuesta
+truncada sin haber migrado.
+
+### Proposed Solution
+
+Reutilizar el contrato de cursor de TASK-024 —`(created_at, id)` en base64url, `has_more`
+derivado de pedir una fila de más, techo duro de página— en vez de inventar un segundo
+esquema de paginación. Índice compuesto si EXPLAIN lo justifica. Mantener la forma legacy
+durante la transición y migrar el consumidor: `app/static/js/community_feed.js` **sí** llama
+a este endpoint, a diferencia del inbox de TASK-024, así que aquí la migración del cliente
+es parte de la tarea o se reasigna explícitamente a la vertical de React (TASK-051).
+
+### Scope
+
+IN SCOPE:
+
+- `app/services/community/postService.py`; `app/routes/postRoute.py`; schemas de posts;
+  índice nuevo si EXPLAIN lo justifica; el consumidor de feed identificado; tests propios.
+- Pruebas de regresión/contrato y documentación estrictamente necesarias para el cambio.
+
+OUT OF SCOPE:
+
+- Cambiar reglas de visibilidad, autoría o permisos del feed.
+- Reescribir el feed en React: eso es TASK-051.
+
+### Dependencies
+
+Depends on: TASK-024
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+Feed de 10 000 posts recorrido sin omisiones ni duplicados con timestamps repetidos; payload
+máximo fijo; orden estable entre lecturas; EXPLAIN antes y después; smoke de navegador del
+consumidor migrado.
+
+### Estimated Impact
+
+Security: LOW
+Performance: HIGH
+Maintainability: MEDIUM
+Cost: LOW
+Risk: MEDIUM
+
+
+## TASK-062 — Paginar el listado de candidaturas del estudiante
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-4
+Category: Performance
+
+### Objective
+
+Acotar `ApplicationService.list_user_applications`, que devuelve todas las candidaturas de
+un usuario con sus compañías y entrevistas cargadas.
+
+### Problem
+
+F-22. Creada por TASK-025 tras medir los listados restantes. TASK-025 quitó del **dashboard**
+la materialización de todas las candidaturas —las cuatro cifras son ya un agregado SQL y las
+cinco recientes salen con `ORDER BY ... LIMIT`— pero el listado completo de la pantalla de
+candidaturas sigue sin acotar, y además hace `selectinload` de `company` y de
+`interview_availabilities` por cada fila.
+
+Medición (lane SQLite, mediana de 5 lecturas):
+
+| Candidaturas del usuario | Filas devueltas | ms |
+| --- | --- | --- |
+| 10 | 10 | 1.2 |
+| 1 000 | 1 000 | 10.6 |
+| 10 000 | 10 000 | **108.7** |
+
+Un usuario con historial largo es precisamente el que más usa el producto.
+
+### Evidence / Location
+
+- `app/services/applications/applicationService.py` `list_user_applications` (Confidence: HIGH).
+- Medición y decisión registradas en las Completion Notes de TASK-025.
+
+### Desired State
+
+El listado responde una página acotada con cursor estable, conservando los filtros de
+propiedad y la información de compañía y entrevistas que la pantalla necesita.
+
+### Proposed Solution
+
+Cursor `(created_at, id)` como TASK-024. Conservar `selectinload` **por página**, no por
+historial. Mantener la forma legacy durante la transición y migrar el consumidor antes de
+truncar: la pantalla de candidaturas la migra TASK-049 en React, así que la decisión de si el
+cliente legacy se toca aquí o allí debe quedar escrita, no implícita.
+
+### Scope
+
+IN SCOPE:
+
+- `app/services/applications/applicationService.py` `list_user_applications`;
+  `app/routes/applicationRoute.py` o equivalente; schemas; tests propios.
+- Pruebas de regresión/contrato y documentación estrictamente necesarias para el cambio.
+
+OUT OF SCOPE:
+
+- Cambiar transiciones de estado, agregados diarios o permisos: eso es TASK-014.
+- Tocar el dashboard, ya resuelto por TASK-025.
+
+### Dependencies
+
+Depends on: TASK-024, TASK-025
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+0/100/10000 candidaturas recorridas sin omisiones ni duplicados con empates de fecha;
+número de queries fijo por página; payload acotado; usuario ajeno denegado; EXPLAIN antes y
+después.
+
+### Estimated Impact
+
+Security: LOW
+Performance: HIGH
+Maintainability: MEDIUM
+Cost: LOW
+Risk: MEDIUM
+
+
+## TASK-063 — Filtrar y ordenar el catálogo de recursos en SQL
+
+Status: TODO
+Priority: LOW
+Phase: PHASE-4
+Category: Performance
+
+### Objective
+
+Empujar a SQL el filtrado por categoría, la búsqueda por texto y el orden de
+`ResourceService.list_published_resources`, que hoy cargan el catálogo entero en memoria.
+
+### Problem
+
+F-22. Creada por TASK-025 tras medir los listados restantes. El método hace
+`SELECT * FROM resources WHERE is_published` y después filtra por categoría, busca en título,
+descripción y tags, y ordena — todo en Python. Devolver 11 recursos cuesta cargar los 20; a
+2 000 recursos publicados cuesta cargar los 2 000.
+
+Medición (lane SQLite, mediana de 5 lecturas, filtrando por categoría y buscando texto):
+
+| Recursos publicados | Devueltos | Cargados en memoria | ms |
+| --- | --- | --- | --- |
+| 20 | 11 | 20 | 0.4 |
+| 200 | 102 | 200 | 1.6 |
+| 2 000 | 1 013 | 2 000 | 14.5 |
+
+**Prioridad LOW, y el motivo importa:** a diferencia de posts y candidaturas, este catálogo
+no crece con la actividad de los usuarios sino con lo que un administrador publica, así que
+hoy son decenas de filas y el coste absoluto es despreciable. Se registra porque el patrón
+—cargar todo y filtrar en Python— es el que hay que corregir antes de que el catálogo crezca,
+no porque duela ahora.
+
+### Evidence / Location
+
+- `app/services/resources/resourceService.py` `list_published_resources` (Confidence: HIGH).
+- Medición y decisión registradas en las Completion Notes de TASK-025.
+
+### Desired State
+
+El filtrado, la búsqueda y el orden ocurren en la consulta; los resultados son idénticos a
+los actuales, incluida la priorización de los cursos obligatorios.
+
+### Proposed Solution
+
+Llevar categoría y orden a `WHERE`/`ORDER BY`. La búsqueda cubre `tags`, que es una columna
+JSON, así que hay que decidir y documentar la forma en PostgreSQL antes de escribirla; una
+búsqueda que se comporte distinto en SQLite y en PostgreSQL es peor que la actual.
+`prioritize_mandatory_resources` se conserva tal cual: es una regla de producto, no un orden
+de base de datos.
+
+### Scope
+
+IN SCOPE:
+
+- `app/services/resources/resourceService.py` `list_published_resources`; índice nuevo si
+  EXPLAIN lo justifica; tests propios de paridad de resultados.
+- Pruebas de regresión/contrato y documentación estrictamente necesarias para el cambio.
+
+OUT OF SCOPE:
+
+- Cambiar el orden que ve el usuario ni la lista de cursos obligatorios.
+- Tocar `list_user_enrollment_progress`, resuelto por TASK-018.
+
+### Dependencies
+
+Depends on: TASK-018, TASK-025
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+Resultados idénticos a la implementación en memoria para cada combinación de categoría,
+búsqueda y orden, incluidos acentos, mayúsculas y tags; filas cargadas iguales a filas
+devueltas; paridad verificada también en la lane PostgreSQL por la búsqueda sobre JSON.
+
+### Estimated Impact
+
+Security: LOW
+Performance: MEDIUM
+Maintainability: MEDIUM
+Cost: LOW
+Risk: LOW
+

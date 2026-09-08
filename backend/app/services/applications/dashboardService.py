@@ -129,16 +129,18 @@ class DashboardService:
         try:
             logger.info(f"Fetching dashboard data for user: {user_id}")
             
-            # Get all user applications
-            applications_query = select(ApplicationModel).where(
-                ApplicationModel.user_id == user_id
-            ).order_by(ApplicationModel.application_date.desc())
-            result = await session.execute(applications_query)
-            applications = result.scalars().all()
-            
-            logger.info(f"Found {len(applications)} applications for user {user_id}")
-            
-            application_stats = DashboardService._build_student_application_stats(applications)
+            # Counted in the database. Materialising every application to
+            # produce four integers made opening the dashboard cost the user's
+            # whole history.
+            application_stats = await DashboardService._aggregate_student_application_stats(
+                user_id, session
+            )
+
+            logger.info(
+                "Found %s applications for user %s",
+                application_stats["total_applications"],
+                user_id,
+            )
             
             logger.info(
                 "Stats calculated - Total: %s, In Review: %s, Interviews: %s, Offers: %s",
@@ -152,9 +154,9 @@ class DashboardService:
 
             logger.info(f"Progress data: {progress_data}")
             
-            # Get recent applications with company info
+            # Ordered and limited by the database, not sliced off a full list.
             recent_applications = DashboardService._serialize_recent_applications(
-                applications[:5],
+                await DashboardService._fetch_recent_applications(user_id, session),
                 include_notes=True,
             )
             
@@ -228,18 +230,12 @@ class DashboardService:
         """
         Get all dashboard data for a user including stats and recent applications
         """
-        # Get all user applications
-        applications_query = select(ApplicationModel).where(
-            ApplicationModel.user_id == user_id
+        application_stats = await DashboardService._aggregate_student_application_stats(
+            user_id, session
         )
-        result = await session.execute(applications_query)
-        applications = result.scalars().all()
-        
-        # Calculate stats on-the-fly
-        application_stats = DashboardService._build_student_application_stats(applications)
-        
+
         progress_data = await DashboardService._project_student_progress(user_id, session)
-        
+
         return {
             "stats": {
                 "total_applications": application_stats["total_applications"],
@@ -249,12 +245,22 @@ class DashboardService:
             },
             "progress": progress_data,
             "recent_applications": DashboardService._serialize_recent_applications(
-                sorted(applications, key=lambda x: x.application_date, reverse=True)[:5]
+                await DashboardService._fetch_recent_applications(user_id, session)
             )
         }
 
+    #: Recent applications shown on the dashboard. Named rather than inlined so
+    #: the bound is visible where the payload is built.
+    RECENT_APPLICATIONS_LIMIT = 5
+
     @staticmethod
     def _build_student_application_stats(applications) -> Dict[str, int]:
+        """Counts over an in-memory list. Kept for callers that already hold one.
+
+        The dashboard no longer does: see
+        :meth:`_aggregate_student_application_stats`, which asks the database
+        the same question without loading the rows.
+        """
         return {
             "total_applications": len(applications),
             "in_review": sum(1 for app in applications if app.status == ApplicationStatus.IN_REVIEW),
@@ -262,6 +268,60 @@ class DashboardService:
             "offers": sum(1 for app in applications if app.status == ApplicationStatus.OFFER),
             "applied": sum(1 for app in applications if app.status == ApplicationStatus.APPLIED),
         }
+
+    @staticmethod
+    async def _aggregate_student_application_stats(
+        user_id: UUID, session: AsyncSession
+    ) -> Dict[str, int]:
+        """The same four counts, as one aggregate query.
+
+        The dashboard used to select every application a user had ever made and
+        count them in Python, so the cost of opening it grew with the history —
+        and the whole list was resident just to produce four integers and five
+        rows. ``COUNT(*) FILTER`` reads the same rows the count needs and
+        returns numbers.
+        """
+
+        def counted(status: ApplicationStatus):
+            return func.count(ApplicationModel.id).filter(ApplicationModel.status == status)
+
+        result = await session.execute(
+            select(
+                func.count(ApplicationModel.id),
+                counted(ApplicationStatus.IN_REVIEW),
+                counted(ApplicationStatus.INTERVIEW),
+                counted(ApplicationStatus.OFFER),
+                counted(ApplicationStatus.APPLIED),
+            ).where(ApplicationModel.user_id == user_id)
+        )
+        total, in_review, interviews, offers, applied = result.one()
+        return {
+            "total_applications": int(total or 0),
+            "in_review": int(in_review or 0),
+            "interviews": int(interviews or 0),
+            "offers": int(offers or 0),
+            "applied": int(applied or 0),
+        }
+
+    @staticmethod
+    async def _fetch_recent_applications(
+        user_id: UUID, session: AsyncSession, *, limit: int | None = None
+    ) -> list:
+        """The newest applications, ordered and limited by the database.
+
+        ``id`` is the tie-break. Two applications submitted on the same date are
+        ordinary — a bulk apply session — and without it the top five would be
+        whatever order the rows came back in, so the dashboard could show a
+        different five on each refresh.
+        """
+        page_size = DashboardService.RECENT_APPLICATIONS_LIMIT if limit is None else limit
+        result = await session.execute(
+            select(ApplicationModel)
+            .where(ApplicationModel.user_id == user_id)
+            .order_by(ApplicationModel.application_date.desc(), ApplicationModel.id.desc())
+            .limit(page_size)
+        )
+        return list(result.scalars().all())
 
     @staticmethod
     def _serialize_recent_applications(applications, *, include_notes: bool = False) -> list[Dict]:
