@@ -335,17 +335,30 @@ class ResourceService:
         return file_bytes, media_type, filename
 
     async def list_user_enrollment_progress(self, user_id: UUID) -> list[dict]:
+        """Progress for every course, at a cost that does not grow with the catalogue.
+
+        The projector answers for a list of courses in a fixed number of
+        queries, so it is asked once for all of them instead of once per
+        resource: the loop used to spend two statements per course plus one
+        approval check for every course carrying a ``resume_upload`` lesson.
+        Order, DTO and completion semantics are the projector's, unchanged.
+        """
         resource_result = await self.session.execute(
             select(ResourceModel)
             .options(selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons))
             .order_by(ResourceModel.created_at.desc())
         )
         resources = list(resource_result.scalars().all())
-        progress_payloads: list[dict] = []
-        for resource in resources:
-            completed_ids = await self.get_completed_lesson_ids_for_resource(resource.id, user_id)
-            progress_payloads.append(self.to_progress_payload(resource, completed_ids))
-        return progress_payloads
+        if not resources:
+            return []
+
+        completed_by_resource = await self.progress_projector.completed_lesson_ids(
+            user_id=user_id, resource_ids=[resource.id for resource in resources]
+        )
+        return [
+            self.to_progress_payload(resource, completed_by_resource.get(resource.id, set()))
+            for resource in resources
+        ]
 
     def to_detail_payload(
         self,

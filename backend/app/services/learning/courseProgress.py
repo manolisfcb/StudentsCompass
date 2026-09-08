@@ -130,6 +130,22 @@ class CourseProgressProjector:
         lesson is actually among them — one existence check on the evaluations.
         """
         lessons = await self._lessons_of(resource_ids)
+        return await self._completed_from_lessons(
+            user_id=user_id, resource_ids=resource_ids, lessons=lessons
+        )
+
+    async def _completed_from_lessons(
+        self,
+        *,
+        user_id: UUID,
+        resource_ids: list[UUID],
+        lessons: list[tuple[UUID, UUID, str]],
+    ) -> dict[UUID, set[UUID]]:
+        """The projection itself, over lessons the caller already has.
+
+        Split out so a caller that needs the lesson rows for something else —
+        ``completion_of`` needs them for the totals — does not fetch them twice.
+        """
         if not lessons:
             return {resource_id: set() for resource_id in resource_ids}
 
@@ -169,7 +185,11 @@ class CourseProgressProjector:
         for _, resource_id, _ in lessons:
             totals[resource_id] = totals.get(resource_id, 0) + 1
 
-        completed = await self.completed_lesson_ids(user_id=user_id, resource_ids=resource_ids)
+        # Reuses the rows already fetched above; asking ``completed_lesson_ids``
+        # would run the same lessons query a second time.
+        completed = await self._completed_from_lessons(
+            user_id=user_id, resource_ids=resource_ids, lessons=lessons
+        )
         return {
             resource_id: CourseCompletion(
                 resource_id=resource_id,

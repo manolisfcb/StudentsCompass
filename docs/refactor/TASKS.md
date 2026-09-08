@@ -89,7 +89,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-015 | Serializar selección de entrevista por candidatura | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-014 | TASK-006, TASK-012, TASK-021 |
 | TASK-016 | Unificar aprobación de CV y proyección de progreso | HIGH | PHASE-3 | COMPLETED | TASK-001, TASK-009, TASK-011, TASK-012, TASK-014 | TASK-028 |
 | TASK-017 | Derivar contador de comunidad desde membresías | HIGH | PHASE-2 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-019, TASK-024 |
-| TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | IN PROGRESS | TASK-001, TASK-016 | TASK-025 |
+| TASK-018 | Agrupar consultas de progreso de recursos | HIGH | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-025 |
 | TASK-019 | Hacer batch e idempotente la extracción de skills de ofertas | HIGH | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-024 |
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | TODO | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
@@ -2839,7 +2839,7 @@ Risk: MEDIUM
 
 ## TASK-018 — Agrupar consultas de progreso de recursos
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-4
 Category: Performance
@@ -2909,12 +2909,12 @@ Grupo H; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Agrupar consultas de progreso de recursos.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Agrupar consultas de progreso de recursos.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -2933,6 +2933,73 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: MEDIUM
+
+### Completion Notes
+
+El N+1 estaba en el *caller*, no en la proyección. `CourseProgressProjector.completed_lesson_ids`
+ya aceptaba una lista de `resource_ids` y respondía en un número fijo de queries desde TASK-016,
+pero `ResourceService.list_user_enrollment_progress` la llamaba una vez por recurso dentro de un
+bucle. Cada vuelta costaba dos SELECT (lecciones + filas de progreso) y, si el curso tenía una
+lección `resume_upload`, una comprobación de aprobación de CV más.
+
+Dos cambios, ambos dentro de Scope:
+
+1. **`app/services/resources/resourceService.py` — `list_user_enrollment_progress`.** Una sola
+   llamada al proyector con todos los `resource_ids`. Se conservan el DTO, el orden
+   (`created_at desc`) y la semántica de completado, que siguen siendo los del proyector. El caso
+   sin recursos devuelve `[]` sin tocar la base.
+2. **`app/services/learning/courseProgress.py` — `completion_of`.** Ejecutaba `_lessons_of` y
+   después `completed_lesson_ids`, que vuelve a ejecutar `_lessons_of`: la misma query de lecciones
+   dos veces por llamada. Se extrajo `_completed_from_lessons`, que proyecta sobre filas que el
+   caller ya tiene; `completed_lesson_ids` mantiene su firma y su contrato públicos.
+
+No se tocó `get_completed_lesson_ids_for_resource` (la usa la página de curso, que pide un solo
+recurso) ni la extracción de ofertas de `capstoneAnalyticsService`, que pertenece a TASK-019.
+`list_user_enrollment_progress` sigue listando recursos sin filtrar por `is_published`: es el
+comportamiento previo y filtrarlo cambiaría el resultado del panel de admin, fuera de Scope.
+
+**Medición (lane SQLite, 25 repeticiones por punto, comparando el bucle anterior contra el batch
+en la misma sesión y los mismos datos):**
+
+| Caso | SELECT antes → después | Chequeos de aprobación | p50 ms antes → después | p95 ms antes → después | Payload |
+| --- | --- | --- | --- | --- | --- |
+| 1 curso | 5 → 5 | 0 → 0 | 5.81 → 6.27 | 7.51 → 8.47 | 287 B, idéntico |
+| 10 cursos | 23 → 5 | 0 → 0 | 12.09 → 6.78 | 14.42 → 8.26 | 2 870 B, idéntico |
+| 100 cursos | 203 → 5 | 0 → 0 | 110.41 → 13.67 | 944.44 → 17.75 | 28 700 B, idéntico |
+| 1 curso con `resume_upload` | 6 → 6 | 1 → 1 | 9.19 → 6.37 | 14.87 → 8.93 | 287 B, idéntico |
+| 10 con `resume_upload` | 33 → 6 | 10 → 1 | 14.69 → 6.43 | 21.27 → 17.56 | 2 870 B, idéntico |
+| 100 con `resume_upload` | 303 → 6 | 100 → 1 | 146.67 → 13.04 | 442.37 → 35.27 | 28 700 B, idéntico |
+
+El número de SELECT deja de crecer con el catálogo: 5 constantes (recursos + los dos `selectinload`
+de módulos y lecciones + lecciones del proyector + filas de progreso), 6 cuando hay una lección
+`resume_upload` en el lote. El payload es byte a byte el mismo en los seis casos, verificado
+comparando ambas implementaciones sobre los mismos datos.
+
+**Tests.** `backend/tests/test_resource_progress_batching.py` (nuevo, 5 casos): coste constante con
+1/10/100 recursos, una sola comprobación de aprobación para todo el lote, paridad con el proyector
+por recurso, orden preservado y catálogo vacío. Los dos primeros fallaban antes del cambio
+(`1 course: 5 selects, 10: 23, 100: 203` y `20 approval checks`), que es la evidencia del N+1.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_resource_progress_batching.py tests/test_course_progress_projection.py tests/test_dashboard.py tests/test_resource_storage.py tests/test_contract_baseline.py tests/test_resume_course_audit_recovery.py
+# 78 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 462 passed, 61 skipped in 61.97s
+
+uv run --project backend ruff check <archivos de la tarea>
+# All checks passed!
+```
+
+**Límites de la validación.** Las cifras salen de la lane SQLite en memoria, así que los tiempos
+absolutos no son los de producción; lo que la medición sostiene es la *forma* del coste (constante
+frente a lineal) y el conteo de statements, que no dependen del motor. No se ejecutó la lane
+PostgreSQL: este cambio no introduce locks, constraints, vector ni migraciones. Sin smoke de
+navegador: `list_user_enrollment_progress` solo la consume
+`GET /api/v1/admin/users/{user_id}/resource-progress`, que no tiene pantalla propia. No se hicieron
+llamadas pagadas.
 
 
 ## TASK-019 — Hacer batch e idempotente la extracción de skills de ofertas
