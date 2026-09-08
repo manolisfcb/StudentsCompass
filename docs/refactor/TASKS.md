@@ -108,7 +108,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | COMPLETED | TASK-034 | TASK-036 |
 | TASK-036 | Decidir y registrar el patrón de ingreso a Cloud Run | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-034, TASK-035 |
-| TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | IN PROGRESS | TASK-033, TASK-035 | TASK-036 |
+| TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | COMPLETED | TASK-033, TASK-035 | TASK-036 |
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | TODO | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | TODO | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
@@ -5036,7 +5036,7 @@ Risk: MEDIUM
 
 ## TASK-037 — Mover el backend a backend/ sin cambiar comportamiento
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M1
 Category: Refactor / Structure
@@ -5106,13 +5106,92 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] El backend vive bajo `backend/` y la suite pasa con los mismos conteos que la baseline de TASK-033.
-- [ ] El diff no contiene cambios de lógica: solo movimientos y ajustes de ruta.
-- [ ] `git log --follow` sigue el historial de los archivos movidos.
-- [ ] Ninguna clave de storage ni ID cambió como efecto del movimiento.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] El backend vive bajo `backend/` y la suite pasa con los mismos conteos que la baseline de TASK-033.
+- [x] El diff no contiene cambios de lógica: solo movimientos y ajustes de ruta.
+- [x] `git log --follow` sigue el historial de los archivos movidos.
+- [x] Ninguna clave de storage ni ID cambió como efecto del movimiento.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
+
+### Completion Notes
+
+Movimiento mecánico: 360 ficheros renombrados con `git mv`, de los cuales **358
+son renombres puros** —ni un byte de contenido cambia en `app/`, `tests/`,
+`alembic/`, `main.py`, `Dockerfile`, `pytest.ini` ni `pyproject.toml`—. El diff
+de contenido se limita a dos ficheros y a configuración y documentación.
+
+**Los dos scripts que sí cambian.** `scripts/route_inventory.py` y
+`scripts/capture_baseline.py` usaban `parent.parent` para dos cosas a la vez:
+como raíz de importación de `app` y como raíz desde la que escribir en
+`docs/refactor/`. Tras el movimiento esas dos raíces dejan de coincidir, porque
+`docs/` documenta el monorepo entero y se queda arriba. Ahora declaran
+`BACKEND_ROOT` y `REPO_ROOT` por separado. Es el ajuste de ruta que la ficha
+autoriza, no un refactor.
+
+**Regresión de `.gitignore` detectada y corregida.** `app/credentials/` lleva
+barra interna, así que git ancla el patrón al directorio del propio
+`.gitignore`: tras mover el árbol habría dejado de cubrir
+`backend/app/credentials/` y unas credenciales podrían haberse commiteado sin
+aviso. Reanclado y verificado con `git check-ignore -v`. El caso contrario
+también se comprobó: `scripts/` no lleva barra interna, sigue cubriendo
+`backend/scripts/` y por eso esos ficheros siguen necesitando `git add -f`,
+exactamente como antes del movimiento.
+
+**Dónde corre ahora.** Desde `backend/`. No es una preferencia: `pytest.ini`
+declara `testpaths = tests` y algún módulo resuelve rutas contra el directorio
+de trabajo —`questionnaireService.py` abre `app/data/questionnaires/v1/v2.json`
+como ruta relativa—. CI declara `working-directory: backend` en las cuatro
+lanes; la subida de artefactos no lleva ese default porque no es un paso `run`
+y su ruta sigue siendo la raíz del repo. El entorno virtual se queda arriba
+mientras el monorepo tenga un solo lenguaje instalado, así que el intérprete
+documentado es `../.venv/bin/python`; TASK-038 y TASK-039 fijarán la forma
+definitiva al añadir el compose y separar las lanes.
+
+El `.env` local se movió junto al código: `app/app.py` lo resuelve como
+`parents[1]/.env`, así que moverlo mantiene la resolución intacta sin tocar el
+módulo. `.env` no lleva barra en `.gitignore` y sigue ignorado en su nueva
+ubicación.
+
+**Qué demuestra que no cambió el comportamiento.** Tres pruebas independientes:
+
+| Prueba | Antes | Después |
+| --- | --- | --- |
+| Lane rápida | 429 passed, 61 skipped | 429 passed, 61 skipped |
+| Lane PostgreSQL + Redis | 61 passed | 61 passed |
+| Lane navegador | 14 passed, 476 deselected | 14 passed, 476 deselected |
+| Baseline TASK-035 | `openapi.json` + 59 fixtures | byte a byte idénticos |
+| Imagen Docker | — | construye, arranca, sirve los mismos 144 paths |
+
+Las fixtures idénticas son la evidencia de que ningún id ni clave de storage
+cambió como efecto del movimiento: se generan a partir de payloads reales de la
+aplicación levantada. Lo único que cambia en los artefactos regenerados es el
+campo `generated_by`, que ahora es relativo a la raíz del repositorio para que
+no quede ambiguo a qué `scripts/` se refiere.
+
+`git log --follow` sigue el historial a través del movimiento:
+`backend/app/app.py` conserva sus 38 commits hasta el primero del repositorio.
+
+**Documentación.** `docs/TESTING.md` gana una sección «Dónde se ejecutan»;
+`docs/DATABASE_CONFIG.md`, `docs/refactor/09_ROUTE_MATRIX.md` y
+`docs/refactor/baseline/README.md` actualizan sus comandos.
+`PROJECT_STRUCTURE.md` lleva una nota de layout en vez de una reescritura: su
+árbol y sus descripciones siguen siendo exactos leyendo cada ruta con
+`backend/` delante, y reescribirlo entero ahora sería adelantar la
+reorganización interna de `app/`, que ocurre por vertical y no aquí.
+
+**No incluido, deliberadamente.** No se reorganizó `app/` en `api/v1`,
+`repositories`, etc.; no se tocó ningún import interno; no se renombró ningún
+módulo. `docs/`, `.github/` y `.nvmrc` se quedan en la raíz porque son del
+monorepo, no del backend.
+
+**Hallazgo registrado, no corregido aquí.** `questionnaireService.py:12` fija
+`QUESTIONNAIRE_PATH = Path("app/data/questionnaires/v1/v2.json")`, una ruta
+relativa al directorio de trabajo del proceso. Funciona en la imagen porque el
+`Dockerfile` fija `WORKDIR /app` y copia `app` dentro, y funciona en la suite
+porque ahora corre desde `backend/`, pero ata el arranque al `cwd` en vez de al
+módulo. Es un cambio de comportamiento potencial y por tanto queda fuera de
+esta ficha; le corresponde a la vertical que toque el cuestionario (TASK-047).
 
 ### Validation
 
