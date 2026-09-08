@@ -1,17 +1,30 @@
 from __future__ import annotations
 
+import base64
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, literal, or_, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel
 from app.models.userModel import User
 from app.schemas.friendshipSchema import FriendUserSummary
-from app.schemas.messageSchema import ConversationSummaryRead, MessageRead
+from app.schemas.messageSchema import (
+    ConversationSummaryRead,
+    MessagePageRead,
+    MessageRead,
+)
 from app.services.community.friendshipService import are_friends
 from app.services.community.userDisplay import build_display_name_from_user, build_user_summary
+
+
+class InvalidMessageCursor(ValueError):
+    """The cursor did not come from :meth:`MessageService.encode_message_cursor`."""
+
+    def __init__(self, cursor: str):
+        super().__init__("The pagination cursor is not valid.")
+        self.cursor = cursor
 
 
 def _build_direct_key(first_user_id: UUID, second_user_id: UUID) -> str:
@@ -168,31 +181,116 @@ class MessageService:
             unread_count=unread_count,
         )
 
-    async def list_messages(self, *, conversation_id: UUID, user_id: UUID) -> list[MessageRead]:
+    #: Messages returned when the caller does not say. One screenful of history.
+    DEFAULT_MESSAGE_PAGE_SIZE = 50
+    #: The most any single request may return, whatever it asks for. This is the
+    #: bound that makes the payload finite: the endpoint used to serialise every
+    #: message a conversation had ever contained.
+    MAX_MESSAGE_PAGE_SIZE = 200
+
+    @staticmethod
+    def encode_message_cursor(message: MessageModel) -> str:
+        """An opaque cursor addressing one message by ``(created_at, id)``.
+
+        Not an offset: rows inserted while a client pages would shift every
+        offset after them, so a conversation being actively written to would
+        skip and repeat messages. And not ``created_at`` alone — two messages
+        sent in the same millisecond would make the boundary ambiguous, which
+        is exactly the case the 10 000-message test exercises.
+        """
+        raw = f"{message.created_at.isoformat()}|{message.id}"
+        return base64.urlsafe_b64encode(raw.encode("utf-8")).decode("ascii")
+
+    @staticmethod
+    def decode_message_cursor(cursor: str) -> tuple[datetime, UUID]:
+        """Parse a cursor, or refuse it.
+
+        A cursor is client-supplied input; a malformed one is a 400, never a
+        500 and never a silently ignored filter that would quietly return the
+        wrong page.
+        """
+        try:
+            raw = base64.urlsafe_b64decode(cursor.encode("ascii")).decode("utf-8")
+            timestamp, _, identifier = raw.partition("|")
+            return datetime.fromisoformat(timestamp), UUID(identifier)
+        except Exception as exc:  # noqa: BLE001 — every malformed shape is one answer
+            raise InvalidMessageCursor(cursor) from exc
+
+    async def list_message_page(
+        self,
+        *,
+        conversation_id: UUID,
+        user_id: UUID,
+        before: str | None = None,
+        limit: int | None = None,
+    ) -> MessagePageRead:
+        """One bounded page of a conversation, oldest first, walking backwards.
+
+        The query orders newest-first so the newest page is the cheap one — that
+        is what a chat opens on — and the page is reversed before it is
+        returned, so the payload reads in conversation order either way.
+        """
+        page_size = self.DEFAULT_MESSAGE_PAGE_SIZE if limit is None else limit
+        page_size = max(1, min(page_size, self.MAX_MESSAGE_PAGE_SIZE))
+
+        conditions = [MessageModel.conversation_id == conversation_id]
+        if before:
+            cursor_created_at, cursor_id = self.decode_message_cursor(before)
+            # Row-value comparison, so the tie-break on identical timestamps is
+            # part of the index scan rather than a filter applied afterwards.
+            conditions.append(
+                tuple_(MessageModel.created_at, MessageModel.id)
+                < tuple_(literal(cursor_created_at), literal(cursor_id))
+            )
+
         result = await self.session.execute(
             select(MessageModel)
-            .where(MessageModel.conversation_id == conversation_id)
-            .order_by(MessageModel.created_at.asc())
+            .where(*conditions)
+            .order_by(MessageModel.created_at.desc(), MessageModel.id.desc())
+            # One extra row: whether a further page exists is a fact about the
+            # data, not something to infer from a full page.
+            .limit(page_size + 1)
         )
-        messages = result.scalars().all()
+        rows = list(result.scalars().all())
+        has_more = len(rows) > page_size
+        rows = rows[:page_size]
+        rows.reverse()
 
-        senders = await self._get_users_by_ids({message.sender_id for message in messages})
+        senders = await self._get_users_by_ids({message.sender_id for message in rows})
+        items = [self._build_message_read(message, senders, user_id) for message in rows]
 
-        payload: list[MessageRead] = []
-        for message in messages:
-            sender = senders.get(message.sender_id)
-            payload.append(
-                MessageRead(
-                    id=message.id,
-                    conversation_id=message.conversation_id,
-                    sender_id=message.sender_id,
-                    sender_display_name=build_display_name_from_user(sender) if sender else "Student",
-                    content=message.content,
-                    created_at=message.created_at,
-                    is_mine=message.sender_id == user_id,
-                )
-            )
-        return payload
+        return MessagePageRead(
+            items=items,
+            next_cursor=self.encode_message_cursor(rows[0]) if rows and has_more else None,
+            has_more=has_more,
+            limit=page_size,
+        )
+
+    def _build_message_read(
+        self, message: MessageModel, senders: dict, user_id: UUID
+    ) -> MessageRead:
+        sender = senders.get(message.sender_id)
+        return MessageRead(
+            id=message.id,
+            conversation_id=message.conversation_id,
+            sender_id=message.sender_id,
+            sender_display_name=build_display_name_from_user(sender) if sender else "Student",
+            content=message.content,
+            created_at=message.created_at,
+            is_mine=message.sender_id == user_id,
+        )
+
+    async def list_messages(self, *, conversation_id: UUID, user_id: UUID) -> list[MessageRead]:
+        """The legacy shape: a bare list, oldest first.
+
+        Kept while the callers are migrated — the React inbox is TASK-051 — but
+        no longer unbounded. It answers with the **most recent** page rather
+        than the oldest, because a client that renders whatever it is given and
+        scrolls to the bottom shows the right thing that way; the oldest page
+        would have silently truncated the conversation at its beginning.
+        """
+        page = await self.list_message_page(conversation_id=conversation_id, user_id=user_id)
+        return page.items
 
     async def send_message(self, *, conversation_id: UUID, sender_id: UUID, content: str) -> MessageRead:
         timestamp = datetime.utcnow()

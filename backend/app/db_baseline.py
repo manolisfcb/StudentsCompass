@@ -372,6 +372,7 @@ def create_schema(connection) -> None:
         sa.ForeignKeyConstraint(['sender_id'], ['users.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('ix_messages_conversation_created_id', 'messages', ['conversation_id', 'created_at', 'id'], unique=False)
         op.create_index('ix_messages_conversation_id', 'messages', ['conversation_id'], unique=False)
         op.create_index('ix_messages_created_at', 'messages', ['created_at'], unique=False)
         op.create_table('posts',

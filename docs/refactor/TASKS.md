@@ -95,7 +95,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
 | TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
 | TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
-| TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
+| TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
 | TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-016 | TASK-018 |
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | TODO | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
@@ -3904,7 +3904,7 @@ Risk: MEDIUM
 
 ## TASK-024 — Paginar mensajes con cursor estable y migrar inbox
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance
@@ -3976,12 +3976,12 @@ Grupo C; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Paginar mensajes con cursor estable y migrar inbox.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Paginar mensajes con cursor estable y migrar inbox.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4000,6 +4000,144 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+`GET /conversations/{id}/messages` seleccionaba **todos** los mensajes que la conversación
+hubiera tenido nunca y los serializaba. Dos años de chat eran una sola respuesta.
+
+**El contrato de cursor.** `(created_at, id)` codificado en base64url. Los dos campos, no
+uno: mensajes enviados en el mismo milisegundo son cosa corriente —un cliente
+reintentando, dos personas contestando a la vez— y un cursor solo sobre el timestamp deja
+ambigua la frontera entre páginas, así que un mensaje se repite o desaparece. **Todos los
+tests que siembran historial lo siembran con timestamps repetidos** (grupos de 7) por esa
+razón exacta.
+
+Tampoco es un offset: filas insertadas mientras el cliente pagina desplazarían cada offset
+posterior, así que una conversación viva se saltaría mensajes. Fijado en
+`test_a_message_sent_mid_walk_does_not_shift_the_pages`.
+
+**La página.** `GET /conversations/{id}/messages/page?before=&limit=` devuelve
+`MessagePageRead {items, next_cursor, has_more, limit}`, más antiguo primero, caminando
+hacia atrás. La consulta ordena descendente —la página más nueva es la barata, que es
+donde abre un chat— y se invierte antes de responder. Se pide una fila de más:
+que exista otra página es un hecho sobre los datos, no algo a deducir de que la página
+venga llena. Techo duro de 200 (`MAX_MESSAGE_PAGE_SIZE`), por defecto 50.
+
+**La forma legacy se conserva.** `GET .../messages` sigue devolviendo `list[MessageRead]`
+tal cual, mientras los callers migran; el inbox en React es TASK-051, según la
+reconciliación con el plan 08. Lo que cambia es que ya no es ilimitado: responde con la
+página **más reciente**, no la más antigua, porque un cliente que pinta lo que le den y
+baja al final muestra lo correcto así, mientras que la página más antigua habría truncado
+la conversación silenciosamente por su principio.
+
+**Un cursor malformado es un 400**, no un 500 ni —peor— un filtro descartado en silencio
+que devolvería la página equivocada como si fuera la buena. Un extraño recibe **404**, la
+misma respuesta que una conversación inexistente: confirmar que existe ya es una
+divulgación.
+
+**Sobre el orden con timestamps iguales:** dentro de un grupo que comparte timestamp el
+desempate es por `id`, que es un UUID aleatorio. Es un orden total y estable —todo lo que
+un cursor keyset necesita— pero no es el orden de inserción. Los tests lo comparan contra
+el orden canónico `(created_at, id)` preguntado a la base, no contra el bucle de siembra.
+
+**Índice `ix_messages_conversation_created_id`** (migración `d5b83f1a6c27`,
+`down_revision = c4a71e2b90d8`). La tabla solo tenía índices de una columna, sobre
+`conversation_id` y sobre `created_at`, y ninguno responde a este orden. **EXPLAIN (ANALYZE,
+BUFFERS) sobre PostgreSQL con 20 000 mensajes en dos conversaciones:**
+
+*Antes — la lectura sin límite:*
+
+```
+Sort  (cost=2449.26..2499.49 rows=20093) (actual time=4.529..5.725 rows=20000 loops=1)
+  Sort Key: created_at
+  Sort Method: quicksort  Memory: 2800kB
+  Buffers: shared hit=287
+  ->  Bitmap Heap Scan on messages  (actual rows=20000)
+Execution Time: 6.558 ms
+```
+
+*Después — la página, con el índice compuesto:*
+
+```
+Limit  (cost=0.41..30.73 rows=200) (actual time=0.015..0.055 rows=200 loops=1)
+  Buffers: shared hit=14
+  ->  Index Scan Backward using ix_messages_conversation_created_id
+Execution Time: 0.068 ms
+```
+
+*El índice, justificado — la misma página sin él:*
+
+```
+Limit  (actual time=0.095..0.195 rows=200 loops=1)
+  Buffers: shared hit=78
+  ->  Incremental Sort  (Sort Key: created_at DESC, id DESC)
+        ->  Index Scan Backward using ix_messages_created_at
+              Filter: (conversation_id = ...)
+              Rows Removed by Filter: 204
+```
+
+| | Antes (sin límite) | Después, sin índice compuesto | Después, con índice |
+| --- | --- | --- | --- |
+| Filas producidas | 20 000 | 200 (204 descartadas por filtro) | 200 |
+| Buffers | 287 | 78 | **14** |
+| Memoria de sort | 2 800 kB | 29 kB | **ninguna** |
+| Execution time | 6.558 ms | 0.226 ms | **0.068 ms** |
+
+El índice elimina el sort *y* el filtro. Los 204 «Rows Removed by Filter» son con solo dos
+conversaciones en la tabla; con muchas, esa cifra crece sin techo. Los índices de una
+columna se dejan en su sitio: otras consultas los usan y retirarlos exige demostrar que no.
+
+**Payload.** Una página de 200 mensajes sobre una conversación de 5 000 pesa menos de
+100 kB serializados, y ese techo no cambia por larga que se haga la conversación. La
+lectura anterior crecía con el historial sin límite.
+
+**Tests.**
+
+- `backend/tests/test_message_pagination.py` (nuevo, 17 casos): 10 000 mensajes con
+  timestamps repetidos recorridos exactamente una vez (50 páginas, 10 000 únicos, orden
+  canónico), el mismo historial idéntico a tamaño de página 1/7/50/200, un mensaje enviado
+  a mitad del recorrido que no desplaza nada, el techo de payload con `limit` de 500 /
+  10 000 / −1 / 0, la forma legacy devolviendo la página más nueva, número de queries
+  constante entre 50 y 5 000 mensajes, round-trip del cursor, cinco formas de cursor
+  malformado rechazadas, el 400 del endpoint, el 404 al extraño, un participante paginando
+  lo suyo, y no leídos y orden del inbox intactos.
+- `backend/tests/integration/test_message_pagination_pg.py` (nuevo, 4 casos, lane
+  PostgreSQL): los planes de arriba comprobados sobre el planner real (índice presente, sin
+  `Seq Scan`, filas producidas acotadas), el paginado con cursor siguiendo en el índice, el
+  recorrido completo sin huecos sobre PostgreSQL, y el payload acotado en bytes.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_message_pagination.py tests/test_messages.py
+# 23 passed
+
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_message_pagination_pg.py
+# 4 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 521 passed, 76 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 76 passed
+
+uv run --project backend ruff check backend/app backend/tests backend/alembic
+# All checks passed!
+```
+
+**Límites de la validación. Sin smoke de navegador, y esta vez porque no hay nada que
+mirar:** no existe consumidor legacy del inbox. `grep` sobre `app/templates` y
+`app/static/js` no encuentra ninguna llamada a `/conversations` ni a `/messages` — las tres
+coincidencias son la palabra «conversations» en un texto de marketing de `jobs.html` y en
+dos cadenas de UI de `community_feed.js` y `jobs.js`, ninguna una petición. La carga
+incremental del inbox la construye TASK-051 sobre React, como fija la reconciliación con el
+plan 08; el contrato de cursor que consumirá está aquí y probado. Los números de EXPLAIN son
+de un PostgreSQL 16 local con 20 000 mensajes sembrados y `ANALYZE` ejecutado, no de
+producción: no hay acceso a volúmenes reales, así que lo que sostienen es la **forma** del
+plan —index scan acotado frente a sort del historial completo— que no depende del volumen.
 
 
 ## TASK-025 — Calcular dashboard en DB y definir transición de listados

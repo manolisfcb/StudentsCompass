@@ -58,6 +58,10 @@ class ConversationParticipantModel(Base):
 class MessageModel(Base):
     __tablename__ = "messages"
     __table_args__ = (
+        # The keyset index: the paged read orders by (created_at, id) inside one
+        # conversation, and without the composite the planner scans the
+        # conversation's whole history to answer for the newest page.
+        Index("ix_messages_conversation_created_id", "conversation_id", "created_at", "id"),
         Index("ix_messages_conversation_id", "conversation_id"),
         Index("ix_messages_created_at", "created_at"),
     )
