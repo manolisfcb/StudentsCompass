@@ -3,16 +3,15 @@ Pytest fixtures and configuration for tests
 """
 import asyncio
 import contextlib
-import os
 import uuid
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 # Isolation must run before any app module: app.db and app.app call
 # load_dotenv() at import time and app.db builds its engine from DATABASE_URL at
 # import time. apply_isolation() disables dotenv, installs fake credentials
 # (including DB_DISABLE_POOL=1, because pytest-asyncio gives each test its own
 # event loop and a reused pool is not loop-safe) and blocks outbound sockets.
-from tests.isolation import ExternalConnectionBlocked, apply_isolation
+from tests.isolation import apply_isolation
 
 apply_isolation()
 
@@ -28,7 +27,6 @@ from app.db import Base, get_session
 from app.models.userModel import User
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
-from app.services.accounts.userService import UserManager, get_user_manager
 from app.services.ratelimit.counterStore import reset_counter_store
 from fastapi_users.password import PasswordHelper
 

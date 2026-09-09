@@ -13,20 +13,22 @@ from datetime import datetime
 from typing import Optional, Sequence
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import func, select, update, delete
+from sqlalchemy import func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db import get_session
 from app.models.userModel import User
-from app.models.communityModel import CommunityModel, CommunityMemberModel
+# CommunityMemberModel is imported for mapper registration, not for use here:
+# community relationships resolve it by name. See applicationModel for why
+# app/models/registry.py does not cover this at runtime.
+from app.models.communityModel import CommunityModel, CommunityMemberModel  # noqa: F401
 from app.models.resourceModel import ResourceModel, ResourceModuleModel, ResourceLessonModel
 from app.models.jobPostingModel import JobPosting
 from app.models.companyModel import Company
 from app.models.applicationModel import ApplicationModel
 from app.models.questionnaireModel import UserQuestionnaire
 from app.models.resumeModel import ResumeModel
-from app.models.userStatsModel import UserStatsModel
+from app.models.userStatsModel import UserStatsModel  # noqa: F401 — mapper registration
 from app.services.accounts.userService import current_active_user
 from app.services.resources.resourceLessonContentCodec import ResourceLessonContentCodec
 from app.services.storage.storageService import (
@@ -171,7 +173,7 @@ class AdminService:
             return None
         resource.modules.sort(key=lambda m: m.position)
         for module in resource.modules:
-            module.lessons.sort(key=lambda l: l.position)
+            module.lessons.sort(key=lambda lesson: lesson.position)
         return resource
 
     async def _replace_resource_modules(

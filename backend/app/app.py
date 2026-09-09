@@ -20,7 +20,7 @@ import os
 
 from contextlib import asynccontextmanager
 from app.routes.postRoute import router as post_router
-from app.services.accounts.userService import fastapi_users, current_active_user, auth_backend
+from app.services.accounts.userService import fastapi_users, auth_backend
 from app.middleware.csrf import CSRFMiddleware
 from app.routes.authRoute import router as auth_router
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
@@ -37,11 +37,15 @@ from app.routes.messageRoute import router as message_router
 from app.routes.resourceRoute import router as resource_router
 from app.routes.roadmapRoute import router as roadmap_router
 from app.routes.adminRoute import router as admin_router
+import logging
+
 from app.routes.capstoneAnalyticsRoute import router as capstone_analytics_router
+from app.routes.internalTasksRoute import router as internal_tasks_router
 from app.core.resume_analyzer.resume_text_extractor import shutdown_resume_text_extractors
 from app.services.ai.cvAnalysisRunner import start_runner, stop_runner
 from app.services.roadmaps.roadmapSeedService import seed_roadmaps_on_startup_if_dev
 from app.config import (
+    CV_ANALYSIS_INLINE_RUNNER,
     MAX_POST_UPLOAD_BYTES,
     MAX_REQUEST_BODY_BYTES,
     MAX_UPLOAD_BYTES,
@@ -54,6 +58,8 @@ from app.middleware.rate_limit import RequestRateLimiter
 from fastapi import Response
 from fastapi.responses import FileResponse
 
+
+LOGGER_APP = logging.getLogger(__name__)
 
 SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
 register_namespace("", SITEMAP_NAMESPACE)
@@ -121,12 +127,26 @@ async def lifespan(app: FastAPI):
     # Controlled via ENV/AUTO_CREATE_TABLES in app/db.py
     await create_db_and_tables()
     await seed_roadmaps_on_startup_if_dev()
-    # Picks up CV analyses this process (or a previous one) left unfinished.
-    await start_runner()
+    # No CV-analysis polling loop here any more (TASK-054, plan 08 §6.3).
+    #
+    # A loop inside the web process is wrong in both directions on Cloud Run: a
+    # replica scaled to zero runs no loop, so queued analyses simply do not
+    # happen, and N replicas run N loops competing for the same rows. The
+    # durable path is now the outbox plus a task queue calling
+    # /internal/tasks/cv-analyses/{id}, and the local worker consumes the same
+    # outbox.
+    #
+    # CV_ANALYSIS_INLINE_RUNNER re-enables the loop for a single-process
+    # deployment with no queue in front of it. It is off by default so the safe
+    # topology is the one you get without deciding anything.
+    if CV_ANALYSIS_INLINE_RUNNER:
+        LOGGER_APP.info("CV_ANALYSIS_INLINE_RUNNER is on: starting the in-process runner")
+        await start_runner()
     try:
         yield
     finally:
-        await stop_runner()
+        if CV_ANALYSIS_INLINE_RUNNER:
+            await stop_runner()
         shutdown_resume_text_extractors()
 
 
@@ -257,3 +277,6 @@ app.include_router(resource_router, prefix="/api/v1", tags=["resources"])
 app.include_router(roadmap_router, prefix="/api/v1", tags=["roadmaps"])
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(capstone_analytics_router, prefix="/api/v1", tags=["capstone"])
+# Deliberately *not* under /api/v1: these are not part of the public contract
+# and are reachable only with a task credential (app/core/internalAuth.py).
+app.include_router(internal_tasks_router, tags=["internal"])

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import MAX_UPLOAD_BYTES
+from app.core.idempotency import actor_key, begin_idempotent_request
 from app.core.uploads import ensure_allowed_upload, read_upload_within_limit
 from app.services.resumes.resumeService import (
     RESUME_AUDIT_CONTENT_TYPES,
@@ -135,18 +136,37 @@ async def upload_resume_for_course_audit(
     )
     storage_location_id = _require_resume_storage_location_id()
 
-    audit_service = ResumeCourseAuditService(session)
-    # Cheap pre-check for fast rejection; the atomic reservation happens inside
-    # upload_and_evaluate_resume before any LLM spend.
-    await audit_service.ensure_daily_limit(user.id)
-    payload, _ = await audit_service.upload_and_evaluate_resume(
-        user_id=user.id,
-        storage_location_id=storage_location_id,
-        file_bytes=file_bytes,
-        filename=cv.filename,
-        content_type=cv.content_type,
+    # The upload that spends AI credit, so plan 08 §5.1 names it for
+    # ``Idempotency-Key``. The fingerprint is the file itself: a client that
+    # retries the same upload after a lost response gets the first evaluation
+    # back, and the same key over a *different* CV is a 409 rather than someone
+    # else's audit.
+    guard = await begin_idempotent_request(
+        session,
+        request=request,
+        actor=actor_key("user", user.id),
+        endpoint="POST /profile/cv/course-audit-upload",
+        payload=file_bytes,
     )
-    return ResumeCourseAuditRead(**payload)
+    if guard.is_replay:
+        return guard.replay
+
+    audit_service = ResumeCourseAuditService(session)
+    try:
+        # Cheap pre-check for fast rejection; the atomic reservation happens inside
+        # upload_and_evaluate_resume before any LLM spend.
+        await audit_service.ensure_daily_limit(user.id)
+        payload, _ = await audit_service.upload_and_evaluate_resume(
+            user_id=user.id,
+            storage_location_id=storage_location_id,
+            file_bytes=file_bytes,
+            filename=cv.filename,
+            content_type=cv.content_type,
+        )
+    except Exception:
+        await guard.release()
+        raise
+    return await guard.store(ResumeCourseAuditRead(**payload))
 
 
 @router.get("/profile/cv/course-audit-attempts", response_model=ResumeCourseAuditAttemptsRead)

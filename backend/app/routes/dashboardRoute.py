@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.idempotency import actor_key, begin_idempotent_request
 from app.db import get_session
 from app.services.companies.companyService import current_active_company, current_active_company_recruiter
 from app.services.accounts.userService import current_active_user
-from app.services.applications.applicationService import ApplicationService
+from app.services.applications.applicationService import (
+    ApplicationService,
+    InvalidApplicationCursor,
+)
 from app.services.applications.dashboardService import DashboardService
 from app.models.userModel import User
 from app.models.companyModel import Company
@@ -11,6 +15,7 @@ from app.models.companyRecruiterModel import CompanyRecruiter
 from app.schemas.applicationSchema import (
     ApplicationCreate,
     ApplicationEligibleResumeRead,
+    ApplicationPageRead,
     ApplicationRead,
     ApplicationUpdate,
 )
@@ -102,19 +107,39 @@ async def get_dashboard_stats(
 
 @router.post("/applications", response_model=ApplicationRead)
 async def create_application(
+    request: Request,
     application: ApplicationCreate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Create a new job application
+
+    Retry-safe when the caller sends ``Idempotency-Key``: applying twice to the
+    same posting because a response was lost is a duplicate the student then has
+    to explain, so the second call replays the first application instead of
+    filing another one.
     """
-    application_service = ApplicationService(session)
-    new_application = await application_service.create_application(
-        user_id=user.id,
+    guard = await begin_idempotent_request(
+        session,
+        request=request,
+        actor=actor_key("user", user.id),
+        endpoint="POST /applications",
         payload=application,
     )
-    return new_application
+    if guard.is_replay:
+        return guard.replay
+
+    application_service = ApplicationService(session)
+    try:
+        new_application = await application_service.create_application(
+            user_id=user.id,
+            payload=application,
+        )
+    except Exception:
+        await guard.release()
+        raise
+    return await guard.store(ApplicationRead.model_validate(new_application))
 
 
 @router.get("/applications/eligible-resumes", response_model=List[ApplicationEligibleResumeRead])
@@ -136,11 +161,46 @@ async def get_applications(
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Get all applications for the current user
+    Get applications for the current user
+
+    Legacy shape: a bare list, newest first, now capped at one window. Callers
+    move to the paged endpoint below; the React applications screen is TASK-049.
     """
     application_service = ApplicationService(session)
     applications = await application_service.list_user_applications(user_id=user.id)
     return applications
+
+
+@router.get("/applications/page", response_model=ApplicationPageRead)
+async def get_application_page(
+    before: str | None = Query(
+        default=None,
+        description="Cursor from a previous page's next_cursor; returns older applications.",
+    ),
+    limit: int = Query(
+        default=ApplicationService.DEFAULT_APPLICATION_PAGE_SIZE,
+        ge=1,
+        le=ApplicationService.MAX_APPLICATION_PAGE_SIZE,
+    ),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """One bounded page of the caller's own applications, newest first."""
+    application_service = ApplicationService(session)
+    try:
+        rows, next_cursor, has_more, page_size = (
+            await application_service.list_user_application_page(
+                user_id=user.id, before=before, limit=limit
+            )
+        )
+    except InvalidApplicationCursor as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return ApplicationPageRead(
+        items=[ApplicationRead.model_validate(row) for row in rows],
+        next_cursor=next_cursor,
+        has_more=has_more,
+        limit=page_size,
+    )
 
 
 @router.post("/applications/{application_id}/interview-selection", response_model=ApplicationRead)

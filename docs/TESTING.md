@@ -274,15 +274,26 @@ formatear el árbol entero es un diff que toca cada fichero de `app/` y no cabí
 en una ficha que declara no cambiar comportamiento. Adoptarlo es una decisión con
 su propia ficha.
 
-En `[tool.ruff.lint.per-file-ignores]` conviven dos clases de excepción, que no
-significan lo mismo:
+`[tool.ruff.lint.per-file-ignores]` conserva **solo** dos entradas, y las dos son
+la misma excepción permanente: `E402` en `app/app.py` y en `tests/conftest.py`.
+En ambos ficheros hay código que debe correr antes de los imports, que es
+exactamente lo que la regla prohíbe —`load_dotenv()` antes de construir el
+engine, y `apply_isolation()` antes de importar nada de `app`—.
 
-- **Permanente y justificada.** `E402` en `app/app.py` y `tests/conftest.py`: en
-  los dos hay código que debe correr antes de los imports, que es exactamente lo
-  que la regla prohíbe —`load_dotenv()` antes de construir el engine, y
-  `apply_isolation()` antes de importar nada de `app`—.
-- **Deuda inventariada.** 43 hallazgos `F401`/`F841`/`E741` que ya existían al
-  activar Ruff. No se corrigieron en TASK-039 porque parte de esos `F401` no es
-  import muerto sino registro de mappers de SQLAlchemy, y borrarlos a ciegas sí
-  sería un cambio de comportamiento. Están acotados por fichero: un import muerto
-  en cualquier otro punto del árbol rompe CI. **Los retira TASK-060.**
+La deuda que TASK-039 inventarió ahí —`F401`, `F841` y `E741`, exenta fichero a
+fichero— la retiró **TASK-060**, y con ella la propiedad que la hacía peligrosa:
+una exención por fichero exime también al código que se escriba mañana, así que
+mientras existió, un import muerto **nuevo** en cualquiera de esos 24 ficheros no
+rompía CI.
+
+Los pocos imports que siguen sin usarse llevan `# noqa: F401` **con su razón en
+la línea**, que es donde se lee. Casi todos son registro de mappers de
+SQLAlchemy: `app/models/applicationModel.py` importa `JobPosting` para que
+`relationship("JobPosting")` resuelva por nombre, y borrarlo rompe el mapeo en
+runtime sin que ningún test unitario tenga por qué notarlo —
+`app/models/registry.py` lo importa todo, pero lo usan Alembic y los tests, no la
+aplicación en ejecución—. Los dos ficheros de `alembic/versions/` conservan la
+cabecera `op`/`sa` que genera la plantilla de Alembic.
+
+No se añaden ficheros nuevos a la lista. Lo que necesite una excepción la lleva
+en su línea.

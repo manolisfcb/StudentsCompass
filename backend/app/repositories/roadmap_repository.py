@@ -7,6 +7,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.pagination import MAX_COLLECTION_ROWS
+
 from app.models.roadmapModel import (
     RoadmapModel,
     RoadmapStageModel,
@@ -61,7 +63,7 @@ class RoadmapRepository:
         else:
             stmt = stmt.order_by(popularity_col.desc(), RoadmapModel.created_at.desc())
 
-        result = await self.session.execute(stmt)
+        result = await self.session.execute(stmt.limit(MAX_COLLECTION_ROWS))
         return [(item[0], int(item[1] or 0)) for item in result.all()]
 
     async def get_roadmap_by_slug(self, slug: str, public_only: bool = False) -> RoadmapModel | None:
@@ -147,6 +149,7 @@ class RoadmapRepository:
             .outerjoin(popularity_subq, popularity_subq.c.roadmap_id == RoadmapModel.id)
             .where(UserRoadmapModel.user_id == user_id)
             .order_by(UserRoadmapModel.saved_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
 
         result = await self.session.execute(stmt)

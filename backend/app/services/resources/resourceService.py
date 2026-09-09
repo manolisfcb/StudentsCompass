@@ -4,11 +4,12 @@ from datetime import datetime
 import mimetypes
 from typing import Iterable
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 
+from app.core.pagination import MAX_COLLECTION_ROWS
 from app.models.resourceModel import (
     ResourceLessonModel,
     ResourceLessonProgressModel,
@@ -86,40 +87,110 @@ class ResourceService:
         remaining = [resource for resource in resources if resource.id not in mandatory_ids]
         return mandatory_ordered + remaining
 
+    #: What the catalogue may return in one read. The filtering is in SQL now,
+    #: so this is a bound on the answer rather than on what is scanned.
+    MAX_CATALOGUE_ROWS = MAX_COLLECTION_ROWS
+
+    def _tag_matches(self, pattern: str):
+        """``EXISTS`` over the tag array, element by element.
+
+        ``tags`` is a JSON array, and matching it as *text* — ``CAST(tags AS
+        TEXT) LIKE '%q%'`` — would be portable but wrong: it would also match
+        the array's own punctuation and match across the boundary between two
+        elements, so ``'a","b'`` would find ``["a", "b"]``. The in-memory
+        version tested each tag on its own, and so does this.
+
+        Both dialects can expand a JSON array into rows; only the function name
+        differs, so the semantics are the same on the test lane and in
+        production rather than merely similar.
+        """
+        dialect = self.session.bind.dialect.name if self.session.bind else "postgresql"
+        if dialect == "postgresql":
+            # A set-returning function aliased as a scalar: `tag_value` is both
+            # the derived table and its single column.
+            source = (
+                "jsonb_array_elements_text(resources.tags::jsonb) AS tag_value"
+            )
+            element = "tag_value"
+        else:
+            # SQLite's json_each exposes the element under `value`, and it does
+            # not accept a column list in the alias.
+            source = "json_each(resources.tags) AS tag_element"
+            element = "tag_element.value"
+        return text(
+            "resources.tags IS NOT NULL AND EXISTS ("
+            f"SELECT 1 FROM {source} "
+            f"WHERE lower({element}) LIKE :tag_pattern ESCAPE '\\')"
+        ).bindparams(tag_pattern=pattern)
+
     async def list_published_resources(
         self,
         category: str | None = None,
         search: str | None = None,
         sort: str = "recent",
     ) -> list[ResourceModel]:
-        result = await self.session.execute(
-            select(ResourceModel).where(ResourceModel.is_published.is_(True))
-        )
-        resources = list(result.scalars().all())
+        """The published catalogue, filtered, searched and ordered by the database.
+
+        This used to be ``SELECT * FROM resources WHERE is_published`` followed
+        by three passes in Python: returning eleven resources cost loading
+        every one of them. The category, the search and the order are now
+        predicates and an ``ORDER BY``, so rows loaded equals rows returned.
+
+        ``prioritize_mandatory_resources`` deliberately stays in Python. It is a
+        product rule — three named courses come first, in a fixed order — not a
+        database ordering, and expressing it as a ``CASE`` would bury it in the
+        query where nobody looks for it.
+        """
+        conditions = [ResourceModel.is_published.is_(True)]
 
         if category and category.lower() != "all":
-            cat = category.strip().lower()
-            resources = [r for r in resources if (r.category or "").strip().lower() == cat]
+            # ``btrim`` + ``lower`` mirrors the in-memory comparison exactly,
+            # which trimmed and lowered both sides.
+            conditions.append(
+                func.lower(func.trim(ResourceModel.category)) == category.strip().lower()
+            )
 
-        if search:
-            q = search.strip().lower()
-            if q:
-                def _matches(resource: ResourceModel) -> bool:
-                    haystack = [resource.title or "", resource.description or ""]
-                    tags = resource.tags or []
-                    haystack.extend(tags)
-                    return any(q in str(v).lower() for v in haystack)
+        query = (search or "").strip().lower()
+        if query:
+            pattern = f"%{self._escape_like(query)}%"
+            conditions.append(
+                or_(
+                    func.lower(ResourceModel.title).like(pattern, escape="\\"),
+                    func.lower(ResourceModel.description).like(pattern, escape="\\"),
+                    self._tag_matches(pattern),
+                )
+            )
 
-                resources = [r for r in resources if _matches(r)]
+        statement = select(ResourceModel).where(*conditions)
 
         if sort == "name":
-            resources.sort(key=lambda r: (r.title or "").lower())
+            statement = statement.order_by(func.lower(ResourceModel.title))
         elif sort == "duration":
-            resources.sort(key=lambda r: (r.estimated_duration_minutes or 10**9, (r.title or "").lower()))
+            # NULL sorted last, which is what ``or 10**9`` did in Python, then
+            # title as the tie-break — the same two keys, in the same order.
+            statement = statement.order_by(
+                ResourceModel.estimated_duration_minutes.is_(None),
+                ResourceModel.estimated_duration_minutes,
+                func.lower(ResourceModel.title),
+            )
         else:
-            resources.sort(key=lambda r: r.created_at, reverse=True)
+            statement = statement.order_by(ResourceModel.created_at.desc())
 
-        return self.prioritize_mandatory_resources(resources)
+        result = await self.session.execute(statement.limit(self.MAX_CATALOGUE_ROWS))
+        return self.prioritize_mandatory_resources(list(result.scalars().all()))
+
+    @staticmethod
+    def _escape_like(value: str) -> str:
+        """Neutralise LIKE wildcards in user input.
+
+        Without this a search for ``100%`` matches everything, and ``_`` matches
+        any character: the caller would be writing patterns without knowing it.
+        The in-memory version used ``in``, which has no wildcards at all, so
+        escaping is what preserves that meaning.
+        """
+        for special in ("\\", "%", "_"):
+            value = value.replace(special, f"\\{special}")
+        return value
 
     async def get_resource_with_outline(self, resource_id: UUID) -> ResourceModel | None:
         return await self.get_published_resource(resource_id, include_locked=False)
@@ -150,7 +221,7 @@ class ResourceService:
 
         resource.modules.sort(key=lambda m: m.position)
         for module in resource.modules:
-            module.lessons.sort(key=lambda l: l.position)
+            module.lessons.sort(key=lambda lesson: lesson.position)
 
         return resource
 

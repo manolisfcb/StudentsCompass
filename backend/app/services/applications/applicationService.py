@@ -16,6 +16,15 @@ from app.models.applicationAnalyticsModel import (
     ApplicationEventType,
     ApplicationStatusEventModel,
 )
+from app.core.pagination import (
+    MAX_COLLECTION_ROWS,
+    InvalidCursor,
+    clamp_page_size,
+    encode_cursor,
+    fetch_probe_limit,
+    keyset_before,
+    split_probe,
+)
 from app.models.applicationModel import (
     ApplicationMatchStrength,
     ApplicationModel,
@@ -25,7 +34,6 @@ from app.models.companyRecruiterModel import CompanyRecruiter
 from app.models.userModel import User
 from app.models.resumeCourseEvaluationModel import (
     ResumeCourseEvaluationModel,
-    ResumeCourseEvaluationStatus,
 )
 from app.models.resumeModel import ResumeModel
 from app.schemas.applicationSchema import ApplicationCreate, ApplicationUpdate
@@ -38,6 +46,10 @@ from app.services.learning.resumeApproval import (
     approved_evaluation_clauses,
 )
 from app.services.notifications.emailNotificationService import EmailNotificationService
+
+
+class InvalidApplicationCursor(InvalidCursor):
+    """The cursor did not come from :meth:`ApplicationService.encode_application_cursor`."""
 
 
 @dataclass(frozen=True)
@@ -221,7 +233,24 @@ class ApplicationService:
         )
         return result.scalar_one_or_none()
 
+    #: Applications returned when the caller does not say. One screenful.
+    DEFAULT_APPLICATION_PAGE_SIZE = 20
+    #: The most any single request may return, whatever it asks for.
+    MAX_APPLICATION_PAGE_SIZE = 100
+
     async def list_user_applications(self, *, user_id: UUID) -> List[ApplicationModel]:
+        """Legacy shape: a bare list, newest first, now capped at one window.
+
+        TASK-025 removed the materialisation of every application from the
+        *dashboard*; this is the applications screen, which still read the whole
+        history — and eagerly loaded the company and every interview slot for
+        each row, so the cost per row was not one row's worth.
+
+        The shape is unchanged while callers move to
+        :meth:`list_user_application_page`. What changed is that it is finite,
+        truncated at the oldest end: a student's current applications are the
+        ones they are acting on.
+        """
         result = await self.session.execute(
             select(ApplicationModel)
             .options(
@@ -229,9 +258,61 @@ class ApplicationService:
                 selectinload(ApplicationModel.interview_availabilities),
             )
             .where(ApplicationModel.user_id == user_id)
-            .order_by(ApplicationModel.created_at.desc())
+            .order_by(ApplicationModel.created_at.desc(), ApplicationModel.id.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    def encode_application_cursor(application: ApplicationModel) -> str:
+        """An opaque cursor addressing one application by ``(created_at, id)``."""
+        return encode_cursor(application.created_at, application.id)
+
+    async def list_user_application_page(
+        self,
+        *,
+        user_id: UUID,
+        before: str | None = None,
+        limit: int | None = None,
+    ) -> tuple[List[ApplicationModel], str | None, bool, int]:
+        """One bounded page of this user's applications, newest first.
+
+        ``user_id`` is part of the query, not a check afterwards, so another
+        student's applications are not reachable by paging: a stranger's cursor
+        addresses a row that this ``WHERE`` never selects.
+
+        The eager loads stay, and that is the point of the bound — they are what
+        made the unpaged version expensive. They now run once per *page*
+        instead of once per history.
+        """
+        page_size = clamp_page_size(
+            limit,
+            default=self.DEFAULT_APPLICATION_PAGE_SIZE,
+            maximum=self.MAX_APPLICATION_PAGE_SIZE,
+        )
+
+        conditions = [ApplicationModel.user_id == user_id]
+        if before:
+            try:
+                conditions.append(
+                    keyset_before(ApplicationModel.created_at, ApplicationModel.id, before)
+                )
+            except InvalidCursor as exc:
+                raise InvalidApplicationCursor(before) from exc
+
+        result = await self.session.execute(
+            select(ApplicationModel)
+            .options(
+                selectinload(ApplicationModel.company),
+                selectinload(ApplicationModel.interview_availabilities),
+            )
+            .where(*conditions)
+            .order_by(ApplicationModel.created_at.desc(), ApplicationModel.id.desc())
+            .limit(fetch_probe_limit(page_size))
+        )
+        rows, has_more = split_probe(list(result.scalars().all()), page_size)
+        next_cursor = self.encode_application_cursor(rows[-1]) if rows and has_more else None
+        return rows, next_cursor, has_more, page_size
 
     async def list_approved_resumes(self, *, user_id: UUID) -> list[ApprovedResumeOption]:
         result = await self.session.execute(
@@ -250,6 +331,7 @@ class ApplicationService:
                 ResumeCourseEvaluationModel.completed_at.desc(),
                 ResumeCourseEvaluationModel.created_at.desc(),
             )
+            .limit(MAX_COLLECTION_ROWS)
         )
 
         approved_options: list[ApprovedResumeOption] = []

@@ -76,7 +76,7 @@ target-version = "py312"
 # El conjunto por defecto, explícito: que se lea en el fichero qué se exige.
 select = ["E4", "E7", "E9", "F"]
 
-# Dos clases de excepción conviven en esta tabla y no significan lo mismo.
+# Una sola clase de excepción vive en esta tabla, y es permanente.
 #
 # E402 en `app/app.py` y `tests/conftest.py` es **permanente y justificado**: en
 # ambos ficheros hay código que debe correr antes de los imports, que es
@@ -87,36 +87,16 @@ select = ["E4", "E7", "E9", "F"]
 # (`scripts/capture_baseline.py` hace lo mismo y ya lo marca línea a línea con
 # `# noqa: E402`, por eso no aparece aquí.)
 #
-# F401, F841 y E741 son **deuda preexistente inventariada**: 43 hallazgos que ya
-# estaban cuando se activó Ruff. No se corrigen en esta ficha, que declara no
-# cambiar comportamiento, y parte de esos F401 no es import muerto sino registro
-# de mappers de SQLAlchemy —`app/models/applicationModel.py` importa
-# `JobPosting` para que la relación resuelva—, así que borrarlos a ciegas sí
-# sería un cambio de comportamiento. Quedan acotados por fichero: un import
-# muerto en cualquier otro punto del árbol rompe CI. **TASK-060 los retira y
-# vacía estas entradas; no se añaden ficheros nuevos a la lista.**
+# La deuda de F401, F841 y E741 que TASK-039 inventarió aquí fichero a fichero
+# **ya no existe**: TASK-060 la retiró. Los pocos imports que se conservan sin
+# usar llevan `# noqa: F401` con su razón en la línea, que es donde se lee — casi
+# todos son registro de mappers de SQLAlchemy, donde borrar el import rompe la
+# resolución de una relación en runtime sin que ningún test unitario tenga por
+# qué notarlo.
+#
+# **No se añaden ficheros nuevos a esta lista.** Una exención por fichero también
+# exime al código que se escriba mañana; si algo necesita una excepción, va en su
+# línea.
 [tool.ruff.lint.per-file-ignores]
-"alembic/versions/05d0f99636af_add_job_analysis_table_for_async_cv_.py" = ["F401"]
-"alembic/versions/462d490a97a1_update_user_table.py" = ["F401"]
-"app/app.py" = ["E402", "F401"]
-"app/db.py" = ["F401"]
-"app/models/applicationModel.py" = ["F401"]
-"app/models/jobAnalysisModel.py" = ["F401"]
-"app/models/postModel.py" = ["F401"]
-"app/models/resumeEmbeddingsModel.py" = ["F401"]
-"app/models/resumeModel.py" = ["F401"]
-"app/routes/jobRoute.py" = ["F401", "F841"]
-"app/schemas/jobPostingSchema.py" = ["F401"]
-"app/schemas/questionnaireSchema.py" = ["F401"]
-"app/schemas/resumeEmbeddingSchema.py" = ["F401"]
-"app/schemas/resumeSchema.py" = ["F401"]
-"app/schemas/userSchema.py" = ["F401"]
-"app/services/accounts/userService.py" = ["F401"]
-"app/services/admin/adminService.py" = ["E741", "F401"]
-"app/services/applications/applicationService.py" = ["F401"]
-"app/services/resources/resourceService.py" = ["E741"]
-"app/services/storage/s3Service.py" = ["F401"]
-"tests/conftest.py" = ["E402", "F401"]
-"tests/test_application_transitions.py" = ["F401"]
-"tests/test_embedding_service.py" = ["F401"]
-"tests/test_migration_config.py" = ["F401"]
+"app/app.py" = ["E402"]
+"tests/conftest.py" = ["E402"]

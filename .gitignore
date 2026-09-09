@@ -45,3 +45,6 @@ docs/refactor/baseline/screens/
 
 data/
 data/*
+
+# TASK-055: names a project and its identities; not this repository's business.
+infra/gcp/config.env

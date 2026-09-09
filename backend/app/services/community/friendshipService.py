@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.pagination import MAX_COLLECTION_ROWS
 from app.models.friendshipModel import FriendRequestModel, FriendshipModel
 from app.models.userModel import User
 from app.schemas.friendshipSchema import (
@@ -140,6 +141,7 @@ class FriendshipService:
                 FriendRequestModel.status == "pending",
             )
             .order_by(FriendRequestModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         requests = result.scalars().all()
         senders = await self._get_users_by_ids([request.sender_id for request in requests])
@@ -160,6 +162,7 @@ class FriendshipService:
                 FriendRequestModel.status == "pending",
             )
             .order_by(FriendRequestModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         requests = result.scalars().all()
         receivers = await self._get_users_by_ids([request.receiver_id for request in requests])
@@ -177,6 +180,7 @@ class FriendshipService:
             select(FriendshipModel)
             .where(FriendshipModel.user_id == user_id)
             .order_by(FriendshipModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         friendships = result.scalars().all()
         friends = await self._get_users_by_ids([friendship.friend_id for friendship in friendships])

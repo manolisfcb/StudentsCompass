@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from app.core.pagination import MAX_COLLECTION_ROWS
 from app.models.communityModel import CommunityModel, CommunityMemberModel
 from app.models.communityPostModel import (
     CommunityPostModel,
@@ -53,8 +54,16 @@ class CommunityService:
         return result.scalar_one_or_none()
 
     async def list_communities(self, tags: list[str] | None = None) -> list[CommunityModel]:
+        # Bounded window. Tag filtering still happens in Python because `tags`
+        # is a JSON column and a predicate over it behaves differently on SQLite
+        # and PostgreSQL — the same problem TASK-063 has to settle for the
+        # resource catalogue. What changes here is that the window the filter
+        # runs over is finite: the query used to hand it every community on the
+        # platform.
         result = await self.session.execute(
-            select(CommunityModel).order_by(CommunityModel.created_at.desc())
+            select(CommunityModel)
+            .order_by(CommunityModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         communities = result.scalars().all()
         normalized_tags = {tag.casefold() for tag in self.normalize_tags(tags)}
@@ -72,7 +81,9 @@ class CommunityService:
         return filtered
 
     async def list_available_tags(self, query: str | None = None, limit: int = 12) -> list[str]:
-        result = await self.session.execute(select(CommunityModel.tags))
+        result = await self.session.execute(
+            select(CommunityModel.tags).limit(MAX_COLLECTION_ROWS)
+        )
         tag_map: dict[str, str] = {}
         normalized_query = (query or "").strip().casefold()
         for community_tags in result.scalars().all():
@@ -225,6 +236,7 @@ class CommunityService:
             select(CommunityPostModel)
             .where(CommunityPostModel.community_id == community_id)
             .order_by(CommunityPostModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         return result.scalars().all()
 
@@ -295,6 +307,7 @@ class CommunityService:
             select(CommunityPostCommentModel)
             .where(CommunityPostCommentModel.post_id == post_id)
             .order_by(CommunityPostCommentModel.created_at.asc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         return result.scalars().all()
 
@@ -345,6 +358,7 @@ class CommunityService:
             .outerjoin(my_like_sq, CommunityPostModel.id == my_like_sq.c.post_id)
             .where(CommunityPostModel.community_id == community_id)
             .order_by(CommunityPostModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
 
         result = await self.session.execute(stmt)
@@ -380,6 +394,7 @@ class CommunityService:
             .join(User, CommunityPostCommentModel.user_id == User.id)
             .where(CommunityPostCommentModel.post_id == post_id)
             .order_by(CommunityPostCommentModel.created_at.asc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         result = await self.session.execute(stmt)
         rows = result.all()

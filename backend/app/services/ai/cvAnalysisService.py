@@ -14,6 +14,7 @@ from app.core.resume_analyzer.llm_model import ask_llm_model
 from app.core.resume_analyzer.resume_text_extractor import extract_resume_text_from_bytes
 from app.models.jobAnalysisModel import JobAnalysisModel, JobStatus
 from app.models.resumeModel import ResumeModel
+from app.services.tasks.outbox import enqueue_cv_analysis
 from app.services.ai.aiUsageService import AIFeature, AIUsageService, QuotaReservation
 from app.services.analytics.embeddingService import ResumeEmbeddingService
 from app.services.resumes.resumeService import ResumeService
@@ -158,6 +159,14 @@ class CVAnalysisService:
                 raise
             LOGGER.info("Joined the analysis already queued for resume %s", resume_id)
             return existing
+
+        # The dispatch is written in *this* transaction, beside the job it
+        # refers to (TASK-054). Enqueuing a task cannot join a database
+        # transaction, so doing it before the commit can create a task for a
+        # job that never exists, and doing it after can lose the task if the
+        # process dies in between. A row loses neither.
+        await enqueue_cv_analysis(self.session, job_id=job_id)
+
         await self.session.commit()
         return await self._get_job(job_id)
 

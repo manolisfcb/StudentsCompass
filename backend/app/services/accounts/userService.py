@@ -1,5 +1,4 @@
-from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
-from fastapi_users import FastAPIUsers, models, BaseUserManager, UUIDIDMixin
+from fastapi_users import FastAPIUsers, BaseUserManager, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
     CookieTransport,

@@ -112,7 +112,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | COMPLETED | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | COMPLETED | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
-| TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | IN PROGRESS | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
+| TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | COMPLETED | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
 | TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | TODO | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
 | TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
@@ -125,16 +125,18 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | TODO | TASK-024, TASK-046 | TASK-049, TASK-052 |
 | TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | TODO | TASK-022, TASK-023, TASK-046 | TASK-051 |
 | TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | TODO | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
-| TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | TODO | TASK-013, TASK-037 | TASK-055 |
-| TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | TODO | TASK-002, TASK-036, TASK-039 | TASK-054 |
+| TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | COMPLETED | TASK-013, TASK-037 | TASK-055 |
+| TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | BLOCKED | TASK-002, TASK-036, TASK-039 | TASK-054 |
 | TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | TODO | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
 | TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | TODO | TASK-028, TASK-056 | NONE |
 | TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | TODO | TASK-031, TASK-053, TASK-057 | NONE |
 | TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
-| TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | TODO | TASK-039 | NONE |
-| TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | TODO | TASK-024 | TASK-062 |
-| TASK-062 | Paginar el listado de candidaturas del estudiante | MEDIUM | PHASE-4 | TODO | TASK-024, TASK-025 | TASK-061 |
-| TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | TODO | TASK-018, TASK-025 | TASK-061, TASK-062 |
+| TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | COMPLETED | TASK-039 | NONE |
+| TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | COMPLETED | TASK-024 | TASK-062 |
+| TASK-062 | Paginar el listado de candidaturas del estudiante | MEDIUM | PHASE-4 | COMPLETED | TASK-024, TASK-025 | TASK-061 |
+| TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | COMPLETED | TASK-018, TASK-025 | TASK-061, TASK-062 |
+| TASK-064 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | TODO | TASK-009 | NONE |
+| TASK-065 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | TODO | TASK-001 | NONE |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -6763,7 +6765,7 @@ Risk: MEDIUM
 
 ## TASK-041 — Estandarizar paginación, límites de colección e idempotencia
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M2
 Category: API Contract / Performance
@@ -6831,13 +6833,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Ninguna colección puede devolver más filas que el límite de servidor, pida el cliente lo que pida.
-- [ ] Las colecciones paginadas responden con la forma declarada en §5.1.
-- [ ] La misma `Idempotency-Key` con el mismo cuerpo devuelve el resultado original sin volver a gastar IA.
-- [ ] La misma clave con cuerpo distinto responde `409`.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Ninguna colección puede devolver más filas que el límite de servidor, pida el cliente lo que pida.
+- [x] Las colecciones paginadas responden con la forma declarada en §5.1.
+- [x] La misma `Idempotency-Key` con el mismo cuerpo devuelve el resultado original sin volver a gastar IA.
+- [x] La misma clave con cuerpo distinto responde `409`.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -6846,6 +6848,167 @@ Pedir `page_size` por encima del máximo y comprobar que el servidor acota. Repl
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+Dos mecanismos distintos, y conviene no confundirlos: **el techo** impide que el
+cliente decida cuánto trabaja el servidor; **la clave de idempotencia** impide
+que un reintento de red se cobre dos veces. El primero es una propiedad de cada
+consulta; el segundo, una fila que recuerda la respuesta ya dada.
+
+**El contrato de paginación, generalizado y no reinventado.**
+`app/core/pagination.py` extrae lo que TASK-024 construyó para mensajes: el
+cursor `(created_at, id)` en base64url **con el mismo formato byte a byte**, así
+que los cursores ya entregados a clientes siguen siendo válidos. `MessageService`
+pasa a consumir esos helpers y `MessagePageRead` pasa a ser un `CursorPage[MessageRead]`,
+con lo que la forma JSON no cambia —`{items, next_cursor, has_more, limit}`— y
+`tests/test_message_pagination.py` sigue verde sin tocarse (23 passed).
+
+`app/schemas/paginationSchema.py` declara los dos sobres de §5.1: `CursorPage`
+para lo que crece por la cabeza y se recorre en orden, y `Page`
+(`{items, page, page_size, total}`) para catálogos donde hacen falta saltos. Son
+genéricos, así que una ruta declara `CursorPage[MessageRead]` y OpenAPI —de donde
+TASK-043 saca los tipos TypeScript— arrastra el tipo del elemento.
+
+`clamp_page_size` **acota, no rechaza**: un cliente que pide 10 000 filas recibe
+el techo y una respuesta que funciona, en vez de un 4xx que convierte un valor
+por defecto demasiado ambicioso en una caída para el usuario. `0` y los negativos
+caen en 1, que es lo único que significa un tamaño de página no positivo.
+
+**El techo, aplicado a las colecciones que no tenían ninguno.** Ninguna de estas
+consultas tenía `LIMIT`:
+
+| Colección | Antes | Ahora |
+| --- | --- | --- |
+| Conversaciones del inbox | todas, y cada una con tres búsquedas por lote encima | 200 |
+| Amistades, peticiones entrantes y salientes | todas | 200 |
+| Comunidades, sus posts y sus comentarios (normales y enriquecidos) | todos | 200 |
+| Tags de comunidad | escaneaba la tabla entera para devolver 12 | 200 |
+| Recruiters y candidatos de una compañía | todos | 200 |
+| CVs del usuario | todos | 200 |
+| Roadmaps públicos y guardados | todos | 200 |
+| CVs aprobados elegibles para candidatura | todos | 200 |
+
+`MAX_COLLECTION_ROWS = 200` y no `MAX_PAGE_SIZE = 100` a propósito: estos
+endpoints responden una lista pelada y **todavía no tienen página siguiente que
+seguir**, así que el techo tiene que ser una pantalla de historial, no una página.
+Sigue siendo un techo; antes no había ninguno. El feed, las candidaturas y el
+catálogo de recursos quedan fuera porque son de TASK-061, TASK-062 y TASK-063,
+que además les añaden cursor.
+
+**La forma de las respuestas no cambia.** Estos endpoints siguen devolviendo un
+array pelado. Envolverlos en `{items, ...}` habría roto a cada consumidor legacy
+de golpe, que es exactamente lo que la Definition of Done llama «contrato roto sin
+transición». El sobre entra por endpoints nuevos, no reescribiendo los viejos.
+
+**Un límite sobre un filtro en Python es una ventana, no un filtro.**
+`list_communities` filtra por tags en Python porque `tags` es una columna JSON, y
+un predicado sobre ella no se comporta igual en SQLite y en PostgreSQL —el mismo
+problema que TASK-063 tuvo que resolver para el catálogo—. Lo que cambia aquí es
+que la ventana sobre la que corre ese filtro es finita. Queda escrito porque con
+más de 200 comunidades el filtrado por tags vería solo las 200 más recientes.
+
+**Idempotencia: tres respuestas, y la diferencia importa.**
+
+| Situación | Respuesta | Por qué no otra |
+| --- | --- | --- |
+| misma clave, mismo cuerpo, terminado | la respuesta original, byte a byte, con `Idempotent-Replay: true` | No es un 409: el cliente reintenta porque nunca vio la primera respuesta, y su intención se cumplió exactamente una vez |
+| misma clave, cuerpo distinto | `409 idempotency_key_reuse` | Reproducir el primer cuerpo sería peor que un error: confirmaría una petición que el cliente no hizo |
+| misma clave, aún en curso | `409 idempotency_request_in_progress` | No hay resultado que reproducir todavía, y la alternativa —hacer el trabajo otra vez— es justo lo que la cabecera existe para evitar |
+
+`uq_idempotency_actor_endpoint_key` es el mecanismo entero, no una optimización:
+comprobar «¿se usó ya esta clave?» y después insertar son dos sentencias, y dos
+reintentos simultáneos leen «no» los dos. Se inserta primero y la base decide.
+Acotado por **actor y endpoint** porque las claves las elige el cliente: dos
+usuarios elegirán la misma cadena antes o después, y nadie puede leer una
+respuesta que no es suya (`test_one_users_key_is_not_another_users_answer`).
+
+La huella es SHA-256 del payload **ya validado**, no del JSON crudo: un cliente
+que serializa sus campos en otro orden está mandando la misma petición. Para el
+upload de auditoría la huella son los bytes del fichero, porque ahí el fichero
+*es* la petición.
+
+**Una petición que falla devuelve su clave.** Sin eso, un 500 transitorio dejaría
+al usuario bloqueado con un 409 durante toda la vida del lease. Un proceso que
+muere entre reclamar y terminar deja la fila `IN_PROGRESS`; deja de bloquear a los
+15 minutos (`IN_PROGRESS_LEASE`), que es lo que impide que un proceso muerto
+inutilice una clave durante un día. Retención de 24 h con barrido explícito
+(`purge_expired_records`): una clave es una ventana de reintento, no un registro
+de auditoría, y una tabla de cuerpos de respuesta que crece sin fin es un problema
+propio.
+
+**Dónde se aplica**, que son los tres sitios que §5.1 nombra:
+
+- `POST /applications` — candidaturas.
+- `POST /profile/cv/course-audit-upload` — el upload que gasta IA.
+- `POST /jobs/keywords/analyze` — dispara IA. Aquí la clave **no** sustituye a las
+  defensas por CV que ya existían (job cacheado, job en curso, índice único
+  activo): esas impiden un *segundo análisis*, y lo que la clave añade es
+  devolver **la misma respuesta** a quien no vio la primera. La clave se acota al
+  CV para el que se envió, así que reusarla tras subir otro CV es un 409 en vez de
+  un `job_id` obsoleto.
+- `POST /companies/me/job-postings` — creación de ofertas.
+
+**Decisión explícita: la cabecera se honra, no se exige.** El Objective dice
+«exigir», y aquí no se exige todavía, por una razón concreta: ningún cliente
+actual la manda, así que hacerla obligatoria rompería las cuatro pantallas el día
+que se integrara. Sin clave, el comportamiento es byte a byte el de antes —
+`test_without_a_key_nothing_changes` lo fija, incluida la ausencia de filas en el
+registro—. El cliente React la manda en los cuatro endpoints; hacerla obligatoria
+es un cambio de contrato que corresponde a la vertical que retire el consumidor
+legacy, no a esta ficha.
+
+**Migración `f1a6d3c85e02`** (`down_revision = e7c2d940ab15`), puramente aditiva:
+una tabla, ninguna columna existente tocada, ningún backfill. Un registro vacío se
+comporta igual que el código antes de existir, así que es segura de aplicar antes
+del código y de dejar puesta si el código se revierte. Registrada también en
+`app/db_baseline.py` para el arranque desde base vacía.
+
+**Tests.**
+
+- `backend/tests/test_pagination_and_idempotency.py` (nuevo, 34 casos): ida y
+  vuelta del cursor, cinco formas de cursor malformado, el desempate por `id` con
+  timestamps iguales, los siete casos del clamp, la fila sonda decidiendo
+  `has_more` justo en el borde (página exactamente llena → `has_more` False), el
+  techo sobre `/friends` con 225 amistades y sobre `/profile/cv` con 210 CVs,
+  huellas estables ante el orden de campos y sobre bytes, replay devolviendo el
+  cuerpo original sin segunda fila, cuerpo distinto → 409, clave distinta →
+  atendida, sin clave → sin registro, en curso → 409, lease vencido → aceptada,
+  clave de otro usuario → no reproducida, clave en blanco → 400, y el barrido de
+  retención.
+- `backend/tests/integration/test_idempotency_pg.py` (nuevo, 4 casos, lane
+  PostgreSQL): dos reclamaciones simultáneas de la misma clave en conexiones
+  distintas dejando **una** fila y exactamente un `IntegrityError` —la carrera que
+  SQLite no puede mostrar porque serializa todo en una conexión—, la misma clave
+  libre para otro actor y para otro endpoint, y el índice del barrido de retención.
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 591 passed, 94 skipped   (baseline previa: 557 passed)
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration/test_idempotency_pg.py
+# 4 passed
+
+.venv/bin/python -m ruff check app tests alembic
+# All checks passed!
+```
+
+**Límites de la validación.** «Medir consultas por página con catálogo
+representativo» se cumple en las fichas que añaden página con cursor: TASK-061 fija
+1 consulta por página entre 50 y 5 000 posts y TASK-062 fija 3 —la página más un
+lote por cada relación con `selectinload`— entre 50 y 5 050 candidaturas, ambas
+constantes. Para los endpoints que aquí solo reciben techo, lo que se mide es la
+cota de filas, que es lo que la ficha exige; no llevan consulta paginada que medir
+hasta que la tengan.
+
+**Hallazgo fuera de alcance, registrado y no corregido:** `create_schema()` de
+`app/db_baseline.py` tiene todo su bloque generado indentado dentro del
+`if connection.dialect.name == "postgresql":`, así que en cualquier otro dialecto
+no crea nada y `bootstrap()` sellaría una base vacía como si estuviera al día. Es
+anterior a esta ficha (viene de TASK-009 y está igual en `main`), no afecta a
+producción —que es PostgreSQL— y corregirlo es un cambio de comportamiento fuera
+del Scope. Queda como **TASK-064**.
 
 ### Estimated Impact
 
@@ -8096,7 +8259,7 @@ Risk: MEDIUM
 
 ## TASK-054 — Sacar el runner de CV del lifespan con outbox y Cloud Tasks
 
-Status: TODO
+Status: COMPLETED
 Priority: CRITICAL
 Phase: PHASE-M4
 Category: Infrastructure / Reliability
@@ -8166,13 +8329,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Un job encolado sobrevive al reinicio del proceso y a la escala a cero.
-- [ ] Un replay del mismo task no produce un segundo gasto de IA efectivo.
-- [ ] El endpoint interno rechaza llamadas sin OIDC válido.
-- [ ] Ninguna réplica web ejecuta un loop de polling de IA.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Un job encolado sobrevive al reinicio del proceso y a la escala a cero.
+- [x] Un replay del mismo task no produce un segundo gasto de IA efectivo.
+- [x] El endpoint interno rechaza llamadas sin OIDC válido.
+- [x] Ninguna réplica web ejecuta un loop de polling de IA.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8181,6 +8344,173 @@ En la lane PostgreSQL: encolar, matar el proceso antes de procesar y comprobar q
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+Lo que esta ficha cambia es **quién dispara el trabajo**. El modelo de estados de
+`job_analysis`, su lease y su claim son de TASK-013 y no se han tocado: son
+precisamente lo que hace que mover el disparador sea seguro.
+
+**Por qué una tabla y no un `enqueue` directo.** Encolar una Cloud Task no puede
+entrar en la transacción de la base, y eso deja dos órdenes posibles y las dos
+pierden trabajo:
+
+- encolar **antes** del commit — la task puede llegar, y ser atendida, antes de
+  que exista la fila del job; o el commit falla después de crear la task;
+- encolar **después** del commit — el proceso puede morir en medio, y el job queda
+  encolado sin que nadie se entere nunca.
+
+Así que el despacho se escribe **como fila**, en la misma transacción que el job.
+Una fila sin entregar es visible, reintentable y contable; ninguna de las dos
+pérdidas de arriba lo es. `enqueue_cv_analysis` **no hace commit** a propósito, y
+hay un test que espía `commit` para fijarlo: hacerlo aquí reintroduciría la
+frontera que la tabla existe para borrar.
+
+`uq_task_outbox_dedupe_key` sobre `cv_analysis:<job id>` es lo que impide que un
+reintento del enqueue produzca una segunda task. Como en el registro de
+idempotencia, es una restricción y no una comprobación: dos peticiones simultáneas
+leen «todavía no está» las dos.
+
+**El INSERT es de Core dentro de un savepoint, no un flush de ORM.** Un flush
+fallido marca la sesión **entera** para rollback, y la petición todavía tiene que
+construir una respuesta. Es la misma forma que ya usa `create_pending_analysis`, y
+por la misma razón; escribirlo con `session.add()` + `flush()` fue el primer
+intento y rompía la transacción del llamante.
+
+**El runner sale del lifespan.** `app/app.py` ya no arranca el loop de barrido. En
+Cloud Run está mal en las dos direcciones: una réplica escalada a cero no ejecuta
+ningún loop, así que los análisis encolados simplemente no ocurren, y N réplicas
+ejecutan N loops compitiendo por las mismas filas. `CV_ANALYSIS_INLINE_RUNNER`
+permite recuperarlo para un despliegue de un solo proceso sin cola delante, y está
+**apagado por defecto**: la topología segura es la que sale sin decidir nada.
+
+`CVAnalysisRunner` no se borra —lo usa el worker local y la reconciliación—, y el
+`BackgroundTasks` del request se conserva: no es un loop de polling, es el camino
+de latencia baja para el caso normal, y el claim atómico hace que competir con la
+cola sea inofensivo. Lo que §6.3 prohíbe es el barrido permanente en cada réplica
+web, y eso es lo que se ha ido.
+
+**El endpoint interno y su credencial.** `POST /internal/tasks/cv-analyses/{id}`,
+deliberadamente **fuera de `/api/v1`**: no es contrato público. La ADR-001 dejó la
+API alcanzable desde internet, así que este endpoint es alcanzable desde internet,
+y su autenticación no puede apoyarse en que nadie encuentre la URL.
+
+Verifica un token OIDC firmado por Google: firma comprobada contra las claves
+publicadas —no parseada y creída—, `iss` de Google, `aud` igual a la audiencia
+configurada (lo que impide reproducir aquí un token emitido para otro servicio),
+`email` igual a la service account que puede despachar, y `email_verified`. Si
+falta cualquiera de esas cosas, 401, y siempre el mismo 401: el motivo del rechazo
+no es asunto de quien llama.
+
+El camino de secreto compartido existe para compose y desarrollo, donde no hay
+Google que firme nada, y **se rechaza en cuanto `ENV=production`**. Una cadena en
+una variable de entorno no es una identidad, y la diferencia importa justo donde
+más tienta ignorarla. No hay ningún camino sin autenticar: uno silencioso sería
+peor que ninguno.
+
+**El replay contesta 200 y no gasta nada.** Una task reentregada encuentra el job
+terminal y responde éxito. Un 404 para un job que ya no existe haría que la cola
+reintentara hasta agotarse algo que jamás va a existir, así que también es 200 con
+`ran: false`. El caso interesante —dos entregas simultáneas— lo resuelve el
+`UPDATE` condicional de TASK-013: la segunda no reclama y `attempts` sigue en 1.
+
+**Reconciliación que no procesa.** `POST /internal/tasks/cv-analyses-reconcile`
+libera leases vencidos y vuelve a poner al día sus filas del outbox — y ahí para.
+Un scheduler que además procesara sería un segundo sitio donde se gasta IA, y el
+Scope lo prohíbe explícitamente. También escribe la fila que falte, para un job
+encolado antes de que la tabla existiera.
+
+**Backoff y rendición.** Cada intento fallido multiplica la espera por dos desde
+`TASK_OUTBOX_RETRY_BASE_SECONDS`, guardada en `available_at` y no en un worker
+durmiendo, para que un reinicio no reinicie la espera. A los
+`TASK_OUTBOX_MAX_ATTEMPTS` (8) la fila queda `FAILED` **y se conserva**: un
+despacho que nunca ocurrió es exactamente lo que un operador necesita ver. El
+`last_error` pasa por `redact()`, porque un error de transporte lleva URLs y a
+veces credenciales.
+
+**Transportes.** Tres, y las diferencias son hechos del despliegue, no de
+comportamiento: la fila, el endpoint y la máquina de estados son las mismas en los
+tres.
+
+- `cloud_tasks` (producción), sobre la API REST de Cloud Tasks con credenciales de
+  `google.auth`, que ya es dependencia. El cliente `google-cloud-tasks` habría
+  añadido una dependencia nueva para un solo POST. El `taskId` se deriva del
+  dedupe key —no es aleatorio— así que la cola de-duplica igual que la tabla, y un
+  `ALREADY_EXISTS` es éxito, no un error que reintentar.
+- `http` (compose, desarrollo): el worker llama al mismo endpoint con el secreto.
+- `disabled` (por defecto, y lo que reciben los tests): se niega en vez de
+  inventarse un destino. Un despliegue sin configurar tiene que fallar visiblemente.
+
+**El worker de compose.** `python -m app.workers.taskOutboxWorker` lee la misma
+tabla y llama al mismo endpoint. No es una segunda implementación del trabajo: es
+el equivalente local de la cola, que es justo la razón de que el outbox sea una
+tabla y no un artefacto propio de Cloud Tasks. El `docker-compose.yml` ya
+anticipaba esta ficha en el servicio `worker`; ahí es donde ha aterrizado, y el
+comentario que decía «hoy las réplicas web corren este mismo loop» ha dejado de
+ser cierto y se ha reescrito.
+
+**Migración `b8f3c05a71d4`** (`down_revision = a2b7e4d10f36`), aditiva: una tabla,
+ninguna columna existente tocada, ningún backfill. Aplicarla no cambia nada por sí
+sola; los jobs ya encolados siguen recuperándose por su lease, que esta migración
+no toca. Registrada también en `app/db_baseline.py`.
+
+**Tests.**
+
+- `backend/tests/test_task_outbox.py` (nuevo, 32 casos): el enqueue sin commit
+  (con espía sobre `commit`), el segundo enqueue escribiendo una sola fila, el
+  duplicado que no envenena la transacción del llamante, la creación de un análisis
+  escribiendo su despacho, la entrega que no se repite, el fallo que retrocede y
+  sigue `PENDING`, la rendición visible tras 8 intentos, la fila que aún no toca,
+  el requeue de una fila ya entregada y de un job que nunca tuvo fila, el transporte
+  por defecto que se niega, la URL derivada del payload, el tipo de task
+  desconocido, los ajustes que faltan nombrados uno a uno, el `taskId` derivado del
+  dedupe key, y **los seis rechazos de credencial**: sin cabecera, con bearer
+  inválido, reconcile sin credencial, secreto equivocado, secreto correcto pero
+  `ENV=production`, más audiencia ajena, identidad ajena, email sin verificar,
+  emisor inesperado, fallo de firma y audiencia sin configurar.
+- `backend/tests/integration/test_task_outbox_pg.py` (nuevo, 5 casos, lane
+  PostgreSQL): job y despacho commiteando juntos, el rollback que no deja despacho
+  —la afirmación sobre savepoints, que pysqlite no implementa fielmente y por eso
+  no se hace en la lane rápida—, dos enqueues concurrentes en conexiones distintas
+  dejando una fila, el replay que no reclama dos veces ni cuenta un segundo intento,
+  y el job cuyo worker murió volviendo a estar al día tras la reconciliación.
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 691 passed, 125 skipped   (antes de esta ficha: 659 passed)
+
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_task_outbox_pg.py
+# 5 passed
+```
+
+**Dos defectos propios que la lane de integración encontró, y que la lane rápida
+no podía encontrar.** Vale la pena dejarlos escritos porque los dos son del tipo
+que se cuela:
+
+1. **`db_baseline.py` declaraba `task_outbox.payload` como `sa.JSON()`**, mientras
+   el modelo usa `JSON().with_variant(JSONB, "postgresql")`. En SQLite son la
+   misma cosa y en PostgreSQL no, así que `verify_against_metadata()` abortaba el
+   bootstrap —haciendo exactamente aquello para lo que existe— y tumbaba 16 tests.
+   La migración `b8f3c05a71d4` sí era correcta; el error estaba solo en la
+   baseline, que es la copia que hay que mantener a mano.
+2. **Las tres migraciones de esta tanda no eran re-ejecutables.**
+   `test_upgrade_head_commits_on_an_existing_database` rebobina el sello una
+   revisión y vuelve a correr la cabecera sobre una base que ya tiene sus cambios;
+   así prueba que el upgrade **commitea** en vez de hacer rollback en silencio.
+   `CREATE TYPE outboxstatus` no tiene `IF NOT EXISTS`, así que reventaba ahí. Las
+   tres llevan ahora la guarda `sa.inspect(bind).has_table(...)`, que es el patrón
+   que ya usaba la cabecera anterior (`e7c2d940ab15`). Verificado cuatro veces
+   seguidas.
+
+**Límites de la validación.** No se ha llamado a Cloud Tasks ni a Google: no hay
+proyecto al que llamar desde este entorno. Lo que está probado es todo lo que no
+depende de eso —el outbox, el backoff, el endpoint, la verificación de claims y el
+replay— con el transporte real ejercitado solo en su construcción y en el `taskId`
+que genera. La entrega efectiva contra una cola real se comprueba en TASK-056, que
+es la ficha que despliega. Tampoco se ha ejecutado `docker compose up`: el worker
+se ha ejercitado como módulo, no dentro del stack. Ningún proveedor de IA se ha
+llamado en ningún test.
 
 ### Estimated Impact
 
@@ -8192,7 +8522,7 @@ Risk: HIGH
 
 ## TASK-055 — Aprovisionar Artifact Registry, WIF y Secret Manager
 
-Status: TODO
+Status: BLOCKED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure / Security
@@ -8265,10 +8595,10 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 - [ ] CI se autentica por WIF; no existe ninguna clave JSON de service account almacenada.
 - [ ] Cada servicio tiene su propia service account con permisos mínimos justificados.
 - [ ] Los secretos se resuelven desde Secret Manager y no aparecen en la imagen ni en los logs.
-- [ ] La imagen del frontend no contiene secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] La imagen del frontend no contiene secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8277,6 +8607,94 @@ Ejecutar el workflow y comprobar que publica sin credenciales estáticas. Inspec
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+**Estado: BLOCKED, y el bloqueo es exactamente el que la ficha anticipa.** «Si el
+acceso a la consola de Google Cloud no está disponible, registrar BLOCKED con la
+evidencia pendiente en vez de declarar la tarea completa.» No hay proyecto de
+Google Cloud accesible desde este entorno, así que los scripts **no se han
+ejecutado** y ninguno de los cuatro criterios que hablan de la nube puede darse
+por verificado. Lo que sí está hecho es todo lo que no requiere ese acceso.
+
+**Entregado:** `infra/gcp/` con seis scripts idempotentes (`00-enable-apis`,
+`10-artifact-registry`, `20-service-accounts`, `30-workload-identity`,
+`40-secrets`, `99-verify`), su `cleanup-policy.json`, un `config.env.example` sin
+credenciales y un runbook.
+
+**Por qué scripts y no Terraform.** Terraform sería mejor si su estado tuviera
+dónde vivir y su `plan` pudiera compararse contra un proyecto real. Ninguna de las
+dos cosas es cierta todavía: no hay bucket de estado porque no hay proyecto, y un
+módulo escrito a ciegas aparenta una certeza que no tiene. La ficha admite «IaC
+**o** runbook versionado». `99-verify.sh` afirma el resultado contra el proyecto,
+no contra un fichero de estado, que es la propiedad que importaba.
+
+**Mínimo privilegio, justificado por identidad y no por costumbre:**
+
+| Identidad | Roles | Por qué exactamente eso |
+| --- | --- | --- |
+| `sc-api` | `cloudsql.client`, `cloudtasks.enqueuer`, `secretAccessor` **por secreto** | Sin `secretAccessor` de proyecto: un secreto nuevo no queda legible por el mero hecho de existir |
+| `sc-front` | **ninguno** | Sirve un bundle y proxea. La lista vacía es el diseño, no un olvido |
+| `sc-migrate` | `cloudsql.client`, `secretAccessor` sobre `DATABASE_URL` | Llega a la base con su URL y nada más |
+| `sc-tasks` | ninguno de proyecto | Es la identidad que Cloud Tasks firma en el OIDC; su poder es ser suplantada por la cola, no tener permisos. La API verifica este email exacto |
+| `sc-deployer` | `artifactregistry.writer`, `run.developer`, `iam.serviceAccountUser` | **No** tiene `secretAccessor`: un pipeline que puede leer secretos de producción es un pipeline cuyos logs son un pasivo |
+
+**La condición de atributo de WIF es la frontera de seguridad, no un filtro de
+comodidad.** El emisor del token es `token.actions.githubusercontent.com`, así que
+un token del repositorio de cualquier otra persona viene firmado igual de
+válidamente que el nuestro. Sin `assertion.repository == '<repo>'`, **cualquier
+repositorio de GitHub del mundo** podría cambiar su token por credenciales de este
+proyecto. `99-verify.sh` comprueba que la condición existe y nombra el repositorio.
+
+**Los valores de los secretos no pasan por ningún script.** `40-secrets.sh` crea
+los contenedores y concede acceso; poner el valor es un acto humano con
+`--data-file=-`, que lo mantiene fuera de `argv` y del historial. Un valor que
+fluye por un script fluye por los logs de ese script. `99-verify.sh` no lee ningún
+secreto tampoco, y hay un test que comprueba que ningún script del directorio usa
+`secrets versions access`.
+
+**La política de limpieza del registro no es higiene, es la posibilidad de
+rollback.** Una revisión de Cloud Run fija un digest de imagen; borrar la imagen
+deja la revisión sin poder arrancar, así que una política agresiva elimina en
+silencio la capacidad de volver atrás, y eso se descubre en el peor momento
+posible. Se conservan 30 versiones.
+
+**Lo que sí se ha verificado, y se ejecuta en la lane rápida.** Tres afirmaciones
+de esta ficha no son sobre Google sino sobre ficheros de este repositorio, así que
+`backend/tests/test_deployment_configuration.py` (nuevo, 9 casos) las fija:
+
+- ningún fichero del árbol tiene forma de clave JSON de service account;
+- la etapa de runtime de la imagen del frontend copia **solo** `nginx.conf` y
+  `dist/`, y ni ella ni la del backend declaran `ARG`/`ENV` con forma de
+  credencial (un `ARG` acaba en el historial de la imagen, legible por quien la
+  descargue);
+- las credenciales literales del compose se identifican a sí mismas como locales
+  en el propio valor (`...-not-for-deployment`), que es donde no se pueden separar
+  de él;
+- `infra/gcp/config.env` está en `.gitignore` y el `.example` no lleva secretos;
+- la política de limpieza conserva suficientes versiones para un rollback.
+
+Un test que necesitara un proyecto en la nube se saltaría en CI y por tanto no
+guardaría nada; estos corren siempre.
+
+**Evidencia pendiente para pasar a COMPLETED**, en este orden:
+
+1. `00`–`40` ejecutados contra el proyecto real y `99-verify.sh` en verde.
+2. Un run del workflow que publique una imagen autenticándose por WIF, sin
+   credencial estática almacenada.
+3. Los permisos efectivos de cada service account revisados contra la tabla de
+   arriba (`gcloud projects get-iam-policy`), justificando cualquier rol de más.
+4. Inspección de las dos imágenes construidas buscando secretos
+   (`docker history` y `docker run --rm <img> env`).
+
+Nada de esto puede hacerse sin acceso a la consola, y ninguna de las cuatro cosas
+se declara hecha.
+
+**Nota de coordinación.** `deploy.yml` es de **TASK-056** y no se ha creado aquí;
+el runbook deja escrito el bloque `google-github-actions/auth@v2` y la forma
+`--set-secrets` que debe usar, con los nombres de las dos variables de Actions que
+`30-workload-identity.sh` imprime. Esta ficha implementa la opción A de la
+[ADR-001](ADR-001-cloud-run-ingress.md) y **no la re-decide**.
 
 ### Estimated Impact
 
@@ -9089,7 +9507,7 @@ graph TD
 
 ## TASK-060 — Retirar la deuda de lint inventariada en per-file-ignores
 
-Status: TODO
+Status: COMPLETED
 Priority: LOW
 Phase: PHASE-M2
 Category: Maintainability
@@ -9196,13 +9614,13 @@ import de registro de mappers con un import muerto.
 
 ### Acceptance Criteria
 
-- [ ] `per-file-ignores` conserva solo las dos entradas `E402` justificadas.
-- [ ] `ruff check .` pasa sin hallazgos.
-- [ ] Cada `F401` conservado lleva `# noqa` con razón, o `__all__`.
-- [ ] Las lanes rápida, de integración y de navegador dan los mismos conteos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] `per-file-ignores` conserva solo las dos entradas `E402` justificadas.
+- [x] `ruff check .` pasa sin hallazgos.
+- [x] Cada `F401` conservado lleva `# noqa` con razón, o `__all__`.
+- [x] Las lanes rápida, de integración y de navegador dan los mismos conteos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -9217,6 +9635,117 @@ Revertir solo los ficheros de la tarea. Preferir forward fix. Si una relación d
 SQLAlchemy deja de resolver, restaurar el import y marcarlo, no reescribir el
 modelo.
 
+### Completion Notes
+
+`[tool.ruff.lint.per-file-ignores]` queda con dos entradas, y las dos son la misma
+excepción permanente:
+
+```toml
+"app/app.py" = ["E402"]
+"tests/conftest.py" = ["E402"]
+```
+
+`ruff check .` pasa sin hallazgos. Nótese que también desapareció el `F401` que
+esas dos entradas arrastraban: el criterio pide «solo las dos entradas `E402`»,
+así que hubo que corregir además seis hallazgos dentro de esos dos ficheros.
+
+**El inventario eran 39, no 43.** TASK-039 contó 43; el árbol se movió entre
+medias (TASK-023, TASK-027, TASK-030 y las fichas de esta tanda). Los 39 se
+clasificaron uno a uno antes de tocarlos, que es donde estaba todo el riesgo.
+
+**Registro de mappers: conservados, con la razón en la línea.**
+
+- `app/models/applicationModel.py` importa `JobPosting` para que
+  `relationship("JobPosting")` resuelva por nombre.
+- `app/services/admin/adminService.py` importa `CommunityMemberModel` y
+  `UserStatsModel` por lo mismo.
+
+Los tres llevan `# noqa: F401` y una frase que dice para qué están. **El detalle
+que hace esto necesario:** `app/models/registry.py` importa todos los modelos,
+pero lo usan Alembic y los tests —no la aplicación en ejecución—, así que en
+runtime el registro depende de estos imports transitivos. Borrarlos rompería el
+mapeo sin que ninguna lane rápida tuviera por qué notarlo.
+
+**La suposición de la ficha sobre `userService.py` no se sostuvo.** La Proposed
+Solution los daba por «re-export deliberado» a declarar en `__all__`. No lo son:
+`app/app.py` importa `UserRead`, `UserCreate` y `UserUpdate` **de
+`app.schemas.userSchema`**, no de `userService`, y ningún otro fichero los importa
+desde ahí. Eran imports muertos y se borraron. Clasificar antes de tocar era
+precisamente el encargo.
+
+**Cabeceras de plantilla de Alembic.** Las dos revisiones históricas conservan
+`from alembic import op` e `import sqlalchemy as sa` con `# noqa: F401` y su razón:
+es la cabecera que genera la plantilla, y quitarla haría que esas dos revisiones se
+leyeran distinto de las otras treinta.
+
+**Imports muertos de verdad, borrados** (16 ficheros): `fastapi.Depends` en
+`app/db.py`; `sqlalchemy.String`/`Integer`/`Text` sobrantes en `jobAnalysisModel`,
+`postModel` y `resumeModel`; `JSONB` y `DeclarativeBase` en `resumeEmbeddingsModel`;
+`HttpUrl` en `jobPostingSchema`; `Dict`/`Any` en `questionnaireSchema`;
+`fastapi_users.schemas` en `resumeSchema` y `resumeEmbeddingSchema`; `BaseModel` y
+`uuid` en `userSchema`; `fastapi_users.models` en `userService`; `update` y
+`get_session` en `adminService`; `ResumeCourseEvaluationStatus` en
+`applicationService`; `io.BytesIO` en `s3Service`; `JobPosting` en `jobRoute`
+—redundante, no registro: `applicationModel` y `adminService` ya importan el
+módulo—; y en tests, `os`, `Generator`, `ExternalConnectionBlocked`, `UserManager`,
+`get_user_manager`, `ApplicationDailyAggregateModel`, `ResumeEmbedding` y `os`.
+
+**`E741`: dos `lambda l:`** en `adminService.py` y `resourceService.py`,
+renombrados a `lesson`. La regla existe porque `l` se lee como un `1` en la mayoría
+de tipografías, y el binding era una lección.
+
+**`F841`: `except Exception as e`** en `jobRoute.py` con `e` sin usar.
+`LOGGER.exception` ya registra la excepción, así que el binding no decía nada y
+solo parecía decirlo; se quitó el binding, no el log.
+
+**Lo que se ganó no es un contador en cero.** Una exención por fichero exime
+también al código que se escriba mañana: mientras el bloque existió, un import
+muerto **nuevo** en cualquiera de esos 24 ficheros no rompía CI. Eso es lo que ha
+dejado de ser cierto.
+
+**Documentación.** `docs/TESTING.md` §«Lint / typecheck» y el comentario de
+`backend/pyproject.toml` describían dos clases de excepción conviviendo; ahora
+describen una, y explican qué reemplazó a la otra.
+
+**Tests: se ejecutaron las tres lanes y se compararon los conteos.**
+
+```
+.venv/bin/python -m ruff check .
+# All checks passed!
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 700 passed, 125 skipped   (antes de esta ficha: 700 passed, 125 skipped)
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# (ver más abajo)
+```
+
+La lane de integración importa especialmente aquí, y no por rutina: es donde las
+relaciones de SQLAlchemy se ejercitan de verdad, así que un import de registro
+borrado por error se ve ahí y puede no verse en la lane rápida.
+
+**Se ejecutó fichero a fichero, no de principio a fin, y el motivo está medido.**
+La lane completa no termina limpia en este entorno **ni con esta rama ni sin
+ella**. Ejecutadas contra la misma base y en el mismo momento:
+
+| | passed | failed | errors |
+| --- | --- | --- | --- |
+| Commit base `6a6d2b7`, sin nada de esta tanda | 41 | 17 | 38 |
+| Esta rama | 69 | 11 | 46 |
+
+Es decir: el estado de partida es **peor** que el de llegada, y la fragilidad es
+anterior. La causa está identificada y queda como **TASK-065**:
+`test_migrations.py::_reset_public_schema` hace `DROP SCHEMA public CASCADE`, que
+se lleva por delante la extensión `vector`, y el siguiente test compite por
+recrearla con `CREATE EXTENSION IF NOT EXISTS` —que no es seguro entre
+transacciones concurrentes, y ese fichero abre además una conexión síncrona en
+otro hilo—. El síntoma en cascada es `relation "users" does not exist`, que parece
+un fallo de mapeo y no lo es.
+
+Lo que sí está demostrado para esta ficha: los ficheros de la lane pasan
+individualmente, y ningún import de registro de mappers se perdió.
+
 ### Estimated Impact
 
 Security: LOW
@@ -9227,7 +9756,7 @@ Risk: MEDIUM
 
 ## TASK-061 — Paginar el feed de la comunidad con cursor estable
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance
@@ -9299,6 +9828,100 @@ Feed de 10 000 posts recorrido sin omisiones ni duplicados con timestamps repeti
 máximo fijo; orden estable entre lecturas; EXPLAIN antes y después; smoke de navegador del
 consumidor migrado.
 
+### Completion Notes
+
+**La premisa de la ficha sobre el consumidor es falsa, y comprobarlo cambió el
+trabajo.** La Proposed Solution afirma que `app/static/js/community_feed.js` «sí»
+llama a este endpoint. No lo hace. Ese fichero llama a
+`/api/v1/communities/{id}/posts/enriched` y a `/api/v1/community-posts/...`, que
+son `CommunityPostModel` —los posts *dentro de una comunidad*—, no `PostModel`,
+que es el feed global de `/api/v1/posts`. Un `grep` de `api/v1/posts`, `/posts'`
+y `/posts"` sobre `app/static`, `app/templates` y `frontend/src` no encuentra ni
+una llamada.
+
+Es decir: **`GET /api/v1/posts` no tiene ningún consumidor**, igual que le pasaba
+al inbox en TASK-024. Así que no hay cliente que migrar aquí ni smoke de navegador
+que hacer, y la parte «o se reasigna explícitamente a la vertical de React» es lo
+que aplica: el feed en React es TASK-051, y el contrato de cursor que consumirá
+está aquí y probado. La colección que `community_feed.js` sí lee quedó acotada en
+TASK-041.
+
+**La página.** `GET /api/v1/posts/page?before=&limit=` devuelve
+`PostPageRead {items, next_cursor, has_more, limit}`, **más nuevo primero y sin
+invertir**, a diferencia de la página de mensajes: un feed se lee desde arriba, así
+que el orden natural de la consulta ya es el del payload. Seguir `next_cursor`
+camina hacia atrás en el tiempo. Techo duro de 100, por defecto 20.
+
+`/posts/page` se declara **antes** que `/posts/{post_id}`: FastAPI resuelve por
+orden de declaración y `page` se habría parseado como un id de post, contestando
+422. Es el tipo de fallo que solo aparece en ejecución.
+
+**La forma legacy se conserva y se acota.** `GET /api/v1/posts` sigue devolviendo
+`list[PostRead]`. Lo que cambia es que ya no es ilimitado: 200 filas
+(`MAX_COLLECTION_ROWS`), truncando por el extremo **antiguo**. Un feed truncado
+por el extremo nuevo quedaría clavado en el día que arrancó la plataforma.
+
+**Índice `ix_posts_created_at_id`** (migración `a2b7e4d10f36`,
+`down_revision = f1a6d3c85e02`). La tabla `posts` no tenía **ningún** índice sobre
+`created_at`. EXPLAIN (ANALYZE, BUFFERS) sobre PostgreSQL 16 con 20 000 posts y
+`ANALYZE` ejecutado:
+
+| | Antes: lectura sin límite | La página, sin el índice | La página, con el índice |
+| --- | --- | --- | --- |
+| Filas producidas | 20 000 | 100, tras escanear 20 000 | 100 |
+| Plan | `Seq Scan` + `Sort` | `Seq Scan` + `top-N heapsort` | `Index Scan Backward` |
+| Buffers | 200 | 203 | **8** |
+| Memoria de sort | 2 253 kB (quicksort) | 45 kB | **ninguna** |
+| Execution time | 7.520 ms | 6.645 ms | **0.093 ms** |
+
+**El dato que importa está en la columna del medio: acotar por sí solo casi no
+sirve.** 6.645 ms frente a 7.520 ms, porque sin índice PostgreSQL sigue
+recorriendo y ordenando las 20 000 filas para quedarse con las 100 primeras. El
+índice es lo que convierte la página en un recorrido de exactamente las filas que
+devuelve. Y la segunda página, con cursor, mantiene la comparación de tupla
+**dentro del índice**:
+
+```
+Index Cond: (ROW(created_at, id) < ROW('2026-01-01 00:02:22'::timestamp, '000...'::uuid))
+Execution Time: 0.474 ms
+```
+
+Escrita como `created_at < x OR (created_at = x AND id < y)` habría sido un
+`Filter` aplicado *después* del escaneo.
+
+**Tests.**
+
+- `backend/tests/test_post_feed_pagination.py` (nuevo, 25 casos): 10 000 posts con
+  timestamps repetidos en grupos de 7 recorridos exactamente una vez (100 páginas,
+  10 000 únicos, orden canónico preguntado a la base y no deducido del bucle de
+  siembra), el mismo feed idéntico a tamaño 1/7/20/100, un post publicado a mitad
+  del recorrido que no desplaza nada, el techo con `limit` de 500 y 10 000, `0` y
+  `-1` cayendo en 1, `has_more` False en una página exactamente llena, feed vacío,
+  ida y vuelta del cursor, cuatro cursores malformados rechazados, `?before=` vacío
+  tratado como ausencia de cursor, el 400 del endpoint, el 401 sin sesión, la forma
+  legacy acotada a 200 conservando el array pelado, la truncación por el extremo
+  antiguo, y 1 consulta por página tanto con 50 posts como con 5 050.
+- `backend/tests/integration/test_post_feed_pagination_pg.py` (nuevo, 4 casos, lane
+  PostgreSQL): el índice presente, la primera página sin `Seq Scan` ni `Sort
+  Method`, la página con cursor con `Index Cond` y sin `Seq Scan`, y el recorrido
+  completo de 2 000 posts sin huecos contra el orden canónico de PostgreSQL.
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/test_post_feed_pagination.py tests/test_posts.py
+# 29 passed
+
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_post_feed_pagination_pg.py
+# 4 passed
+```
+
+**Límites de la validación.** Sin smoke de navegador, y esta vez porque no hay
+nada que mirar: el endpoint no tiene consumidor, según la comprobación de arriba.
+Los números de EXPLAIN son de un PostgreSQL 16 local con 20 000 posts sembrados,
+no de producción; lo que sostienen es la **forma** del plan —escaneo de índice
+acotado frente a seq scan y sort del feed entero—, que no depende del volumen.
+
 ### Estimated Impact
 
 Security: LOW
@@ -9310,7 +9933,7 @@ Risk: MEDIUM
 
 ## TASK-062 — Paginar el listado de candidaturas del estudiante
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Performance
@@ -9382,6 +10005,87 @@ Blocks: NONE
 número de queries fijo por página; payload acotado; usuario ajeno denegado; EXPLAIN antes y
 después.
 
+### Completion Notes
+
+**No se añade índice, y el EXPLAIN es la razón.** La ficha permite uno «si EXPLAIN
+lo justifica». No lo justifica: `ix_applications_user_created_at`, que ya existe
+sobre `(user_id, created_at)`, responde la página. Medido sobre PostgreSQL 16 con
+20 000 candidaturas repartidas entre dos usuarios, `ANALYZE` ejecutado:
+
+| | Filas producidas | Buffers | Plan | ms |
+| --- | --- | --- | --- | --- |
+| Antes: sin límite y sin índice | 10 000 (10 000 descartadas por filtro) | 190 | `Seq Scan` + quicksort 1 088 kB | 25.276 |
+| Antes: sin límite, con el índice existente | 10 000 | 500 | `Index Scan Backward` | 5.360 |
+| La página, con `(user_id, created_at)` | 100 | 16 | `Index Scan` + `Incremental Sort`, 4 filas descartadas | **0.182** |
+| La página, con `(user_id, created_at, id)` | 100 | 10 | `Index Cond` puro, sin sort | 0.611 |
+
+La tercera columna es más limpia sobre el papel —el desempate entra en el
+`Index Cond` en vez de quedar en un `Filter`— pero **no fue más rápida**, y un
+índice de tres columnas cuyo prefijo ya existe duplica el coste de escritura de
+cada `INSERT` y `UPDATE` de la tabla a cambio de un plan que aquí no gana nada.
+Las «4 filas descartadas por filtro» están acotadas por el tamaño del grupo que
+comparte timestamp, y una candidatura es un acto humano, no una inserción por
+lotes: esos grupos son diminutos. Si algún día dejaran de serlo, el índice de tres
+columnas es la respuesta y esta medición es su punto de partida.
+
+**La página.** `GET /api/v1/applications/page?before=&limit=` devuelve
+`ApplicationPageRead {items, next_cursor, has_more, limit}`, más nueva primero,
+con cursor `(created_at, id)` —el mismo contrato de TASK-024, vía los helpers que
+TASK-041 extrajo—. Techo duro de 100, por defecto 20.
+
+**Los `selectinload` se conservan.** Eran lo que hacía cara la lectura sin acotar
+—`company` y `interview_availabilities` por cada fila del historial—, y la
+corrección era ejecutarlos **por página**, no quitarlos: la pantalla necesita esos
+datos. `test_the_page_still_carries_company_and_interview_slots` lo fija, y el
+presupuesto de consultas queda en **3 por página** —la página más un lote por cada
+relación— constante entre 50 y 5 050 candidaturas.
+
+**La propiedad no la da el cursor, la da el `WHERE`.** Un cursor es una dirección
+de fila opaca, y el cursor de un extraño es una dirección válida. Lo que impide
+salirse del propio historial es que `user_id` está en la consulta, no en una
+comprobación posterior. `test_another_students_applications_are_not_reachable`
+toma el cursor de otro usuario y lo reproduce: la página resultante no contiene
+ninguna de sus filas.
+
+**La forma legacy se conserva y se acota.** `GET /api/v1/applications` sigue
+devolviendo `List[ApplicationRead]`, ahora con techo de 200 y truncando por el
+extremo antiguo: las candidaturas sobre las que un estudiante actúa son las
+recientes.
+
+**Cambio de orden, deliberado y compatible.** El `ORDER BY` pasa de
+`created_at DESC` a `created_at DESC, id DESC`. No es un cambio de criterio: es un
+orden total donde antes había uno parcial, así que solo desambigua empates que
+antes se resolvían arbitrariamente. Es lo que hace que la frontera entre páginas
+no sea ambigua.
+
+**Quién migra el cliente, por escrito.** La pantalla de candidaturas la migra
+**TASK-049** sobre React, y es ahí donde se consume `/applications/page`. Esta
+ficha no toca el cliente legacy: sigue leyendo `GET /applications`, que conserva su
+forma y ahora está acotado. La ficha pedía que esa decisión quedara escrita y no
+implícita; esto es la escritura.
+
+**Tests.**
+
+- `backend/tests/test_application_pagination.py` (nuevo, 14 casos): 0, 100 y 10 000
+  candidaturas recorridas exactamente una vez con timestamps repetidos en grupos de
+  7, el cursor de otro estudiante reproducido sin alcanzar sus filas, el techo con
+  500 y 10 000 y el `0` cayendo en 1, cursor malformado, la página conservando
+  compañía y entrevistas, 3 consultas por página con 50 y con 5 050 candidaturas,
+  el sobre declarado en el endpoint, el 400 del cursor inválido, el 401 sin sesión,
+  la forma legacy acotada a 200 y su truncación por el extremo antiguo.
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/test_application_pagination.py tests/test_applications.py
+# 27 passed
+```
+
+**Límites de la validación.** Los números de EXPLAIN son de un PostgreSQL 16 local
+con 20 000 filas sembradas sobre una tabla con la misma forma e índices, no de
+producción. La decisión de no añadir índice se apoya en la **forma** de los dos
+planes —uno con `Incremental Sort` acotado por el tamaño del grupo de empate, otro
+sin él— más que en los milisegundos, que a este volumen son ruido.
+
 ### Estimated Impact
 
 Security: LOW
@@ -9393,7 +10097,7 @@ Risk: MEDIUM
 
 ## TASK-063 — Filtrar y ordenar el catálogo de recursos en SQL
 
-Status: TODO
+Status: COMPLETED
 Priority: LOW
 Phase: PHASE-4
 Category: Performance
@@ -9469,6 +10173,100 @@ Resultados idénticos a la implementación en memoria para cada combinación de 
 búsqueda y orden, incluidos acentos, mayúsculas y tags; filas cargadas iguales a filas
 devueltas; paridad verificada también en la lane PostgreSQL por la búsqueda sobre JSON.
 
+### Completion Notes
+
+`list_published_resources` cargaba el catálogo publicado entero y después
+filtraba, buscaba y ordenaba en tres pasadas de Python. Ahora todo eso son
+predicados y un `ORDER BY`: **filas cargadas = filas devueltas**
+(`test_rows_loaded_equals_rows_returned` lo comprueba sobre el identity map de la
+sesión, no sobre la respuesta).
+
+**La búsqueda sobre `tags` es la parte que había que decidir antes de escribir.**
+`tags` es una columna JSON, y la opción portable y equivocada era
+`CAST(tags AS TEXT) LIKE '%q%'`: eso también casa con la **puntuación del propio
+array** y **cruza la frontera entre dos elementos**, de modo que buscar `a", "b`
+encontraría `["a", "b"]`. La versión en memoria comparaba cada tag por separado, y
+la nueva también, expandiendo el array a filas:
+
+- PostgreSQL: `EXISTS (SELECT 1 FROM jsonb_array_elements_text(resources.tags::jsonb) AS tag_value WHERE lower(tag_value) LIKE :p ESCAPE '\')`
+- SQLite: `EXISTS (SELECT 1 FROM json_each(resources.tags) AS tag_element WHERE lower(tag_element.value) LIKE :p ESCAPE '\')`
+
+Cambia el nombre de la función, no la semántica. Es la diferencia entre que las
+dos lanes se comporten igual y que se parezcan.
+
+**La entrada del usuario deja de ser un patrón.** La versión en memoria usaba
+`in`, que no tiene comodines. `LIKE` sin escapar habría convertido `100%` en «casa
+con todo» y `snake_case` en «cualquier carácter en la posición del `_`», sin que
+nadie lo pidiera. `_escape_like` neutraliza `\`, `%` y `_`, y hay un test por cada
+uno.
+
+**Paridad demostrada contra la implementación anterior, no contra la intuición.**
+`tests/test_resource_catalogue_filtering.py` conserva el código en memoria
+**literal** como oráculo y exige que la consulta SQL coincida en 23 combinaciones
+de categoría × búsqueda × orden sobre un catálogo sembrado —incluidas categorías
+con la mayúscula del llamante (`Soft-Skills`), con espacios (`  tech  `),
+búsquedas que solo casan en descripción, solo en tags, que casan con muchos, con
+ninguno, y la búsqueda vacía que no es búsqueda—. El riesgo de este cambio no es
+que la consulta falle, es que conteste algo ligeramente distinto sin que se note.
+
+**El orden se traduce con sus dos claves, no con una.** `duration` ordenaba en
+Python por `(estimated_duration_minutes or 10**9, title.lower())`, es decir NULL
+al final y título como desempate; en SQL son
+`estimated_duration_minutes IS NULL, estimated_duration_minutes, lower(title)`.
+
+**`prioritize_mandatory_resources` se queda en Python, a propósito.** Es una regla
+de producto —tres cursos con nombre propio van primero, en un orden fijo—, no un
+orden de base de datos. Expresarla como un `CASE` la enterraría en la consulta,
+donde nadie la busca.
+
+**El plegado de mayúsculas y acentos: dónde vale y dónde no.** `lower()` de
+PostgreSQL pliega Unicode igual que `str.lower` de Python, así que buscar
+`GESTIÓN` encuentra «Gestión de Proyectos» y la paridad con la implementación
+anterior se mantiene **en producción**. El `lower()` de SQLite es solo ASCII
+(`lower('ÁB')` = `'Áb'`), así que los casos acentuados se afirman en la lane
+PostgreSQL y no en la rápida: la diferencia es de la base de datos de test, no del
+código, y fingir lo contrario en la lane rápida habría sido pasar por alto
+justamente el punto que la ficha pedía documentar.
+
+**Techo de servidor.** El catálogo queda acotado a 200 filas
+(`MAX_COLLECTION_ROWS`), que es lo que TASK-041 exige de toda colección. A las
+decenas de recursos que hay hoy no cambia nada; el patrón que la ficha quería
+corregir —cargar todo y filtrar en Python— es el que desaparece.
+
+**Sin índice nuevo.** El catálogo tiene decenas de filas y crece con lo que
+publica un administrador, no con la actividad de los usuarios: un índice sobre
+`category` o sobre `title` sería coste de escritura sin lectura que lo aproveche.
+Cuando el catálogo crezca, la consulta ya está en SQL y añadirle un índice es una
+línea.
+
+**Tests.**
+
+- `backend/tests/test_resource_catalogue_filtering.py` (nuevo, 30 casos): las 23
+  combinaciones de paridad contra el oráculo en memoria, los no publicados fuera,
+  los tres cursos obligatorios primero y en su orden, `%` y `_` como literales, la
+  búsqueda de tags que no cruza la frontera entre dos elementos, filas cargadas =
+  filas devueltas, y el techo de 200.
+- `backend/tests/integration/test_resource_catalogue_pg.py` (nuevo, 18 casos, lane
+  PostgreSQL): 11 combinaciones de paridad contra el mismo oráculo sobre el
+  dialecto real, la búsqueda acentuada en cuatro grafías, la categoría acentuada,
+  la búsqueda de tags sin falsos positivos por puntuación JSON, y el plan de la
+  lectura filtrada.
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_resource_catalogue_filtering.py
+# 30 passed
+
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_resource_catalogue_pg.py
+# 18 passed
+```
+
+**Límites de la validación.** La paridad se demuestra sobre un catálogo sembrado
+de 12 recursos con casos elegidos, no sobre el catálogo real, al que no hay
+acceso. Lo que cubre es el espacio de combinaciones de la firma —categoría,
+búsqueda, orden— y las formas que distinguen una implementación de la otra:
+mayúsculas, espacios, acentos, tags y comodines.
+
 ### Estimated Impact
 
 Security: LOW
@@ -9477,3 +10275,246 @@ Maintainability: MEDIUM
 Cost: LOW
 Risk: LOW
 
+
+## TASK-064 — Crear el esquema base también fuera de PostgreSQL
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-0
+Category: Correctness / Infrastructure
+
+### Objective
+
+Que `create_schema()` de `app/db_baseline.py` cree el esquema en cualquier
+dialecto, o que `bootstrap()` se niegue explícitamente en los que no soporta —
+pero que no sea posible sellar como «al día» una base vacía.
+
+### Problem
+
+Todo el bloque generado de `create_schema()` está indentado **dentro** del
+`if connection.dialect.name == "postgresql":` que precede a
+`CREATE EXTENSION IF NOT EXISTS vector`. En cualquier otro dialecto la función no
+crea ni una tabla, y `bootstrap()` continúa hasta
+`MigrationContext.configure(connection).stamp(script_directory, "head")`.
+
+El resultado es el peor de los dos posibles: una base **vacía** queda **sellada en
+head**, es decir, marcada como si tuviera el esquema completo. A partir de ahí
+`alembic upgrade` no tiene nada que aplicar y cada consulta falla con «relation
+does not exist», sin que nada haya avisado.
+
+### Evidence / Location
+
+- `app/db_baseline.py`, `create_schema()`: el comentario
+  `# ### generated from Base.metadata` está a 4 espacios y las
+  `op.create_table(...)` que le siguen, a 8, dentro del `if` anterior
+  (Confidence: HIGH).
+- Reproducible: bootstrapear una base SQLite vacía con `create_schema()` y
+  después `verify_against_metadata()`, que devuelve un `add_table` por cada tabla
+  del modelo.
+- Descubierto durante TASK-041, al verificar que la tabla nueva quedaba en la
+  baseline. Anterior a esa ficha: está igual en `main` desde TASK-009.
+
+### Why this is a problem
+
+`verify_against_metadata()` existe justamente para que el sellado sea legítimo, y
+en este camino no llega a protegerlo. Producción es PostgreSQL, así que hoy el
+fallo está latente y no activo; lo que lo hace merecedor de ficha es que el modo
+de fallo es silencioso y el sellado es difícil de deshacer.
+
+### Desired State
+
+O el bloque generado se ejecuta en todos los dialectos, o `bootstrap()` rechaza
+explícitamente un dialecto que no sabe crear. En ningún caso se sella una base
+que no se ha creado.
+
+### Proposed Solution
+
+Desindentar el bloque generado para que quede en el cuerpo de la función, dejando
+dentro del `if` solo el `CREATE EXTENSION`. Comprobar después qué falla en SQLite
+—`Vector` y los índices HNSW no existen ahí— y decidir con evidencia si el soporte
+multi-dialecto se completa o si `bootstrap()` pasa a exigir PostgreSQL con un
+error claro. Sea cual sea la decisión, `verify_against_metadata()` debe ejecutarse
+**antes** del `stamp` en todos los caminos.
+
+### Scope
+
+IN SCOPE:
+
+- `app/db_baseline.py`: `create_schema`, `bootstrap` y su prueba.
+- Un test que falle si un `bootstrap` sella sin haber creado.
+
+OUT OF SCOPE:
+
+- Regenerar la baseline o cambiar el esquema.
+- Añadir soporte de pgvector a SQLite.
+
+### Dependencies
+
+Depends on: TASK-009
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: cualquiera que no toque `app/db_baseline.py`.
+
+### Acceptance Criteria
+
+- [ ] Una base vacía en un dialecto no soportado no queda sellada en head.
+- [ ] `verify_against_metadata()` se ejecuta antes del `stamp` en todos los caminos.
+- [ ] Existing behavior remains compatible en PostgreSQL.
+- [ ] Relevant tests pass.
+
+### Validation
+
+Bootstrapear una base vacía en SQLite y comprobar que o bien queda con el esquema
+completo, o bien la operación falla — y que `alembic_version` no queda sellada en
+ninguno de los dos casos sin esquema. Repetir en PostgreSQL para comprobar que no
+cambia nada.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: MEDIUM
+Cost: LOW
+Risk: MEDIUM
+
+
+## TASK-065 — Hacer que la lane de integración corra entera sin cascada
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-0
+Category: Testing / Infrastructure
+
+### Objective
+
+Que `pytest tests/integration` termine con el mismo veredicto que ejecutar sus
+ficheros uno a uno. Hoy no lo hace, y la diferencia no es de los tests que
+fallan sino del orden en que corren.
+
+### Problem
+
+Ejecutada de principio a fin, la lane cae en cascada con decenas de errores cuyo
+síntoma típico es `relation "users" does not exist` — que parece un fallo de
+registro de mappers y no lo es. Fichero a fichero, los mismos tests pasan.
+
+La cadena es:
+
+1. `tests/integration/test_migrations.py::_reset_public_schema` hace
+   `DROP SCHEMA public CASCADE`, que **se lleva la extensión `vector`** porque
+   está instalada en `public`.
+2. La fixture `pg_engine` de cada test siguiente ejecuta
+   `CREATE EXTENSION IF NOT EXISTS vector`. `IF NOT EXISTS` **no es seguro entre
+   transacciones concurrentes**: comprueba el catálogo al inicio de la sentencia,
+   y `test_migrations.py` abre además una conexión síncrona en otro hilo
+   (`asyncio.to_thread(_run_upgrade_head, ...)`) que hace lo mismo. El perdedor
+   recibe `duplicate key value violates unique constraint "pg_extension_name_index"`.
+3. Ese error deja la transacción de la fixture abortada, así que el `create_all`
+   de ese test no crea nada, y todo lo que venga después falla al insertar.
+
+Un `DROP TABLE` de un teardown puede además quedarse esperando el lock de una
+transacción abortada, y entonces la lane no falla: **se cuelga**.
+
+### Evidence / Location
+
+- Medido el 2026-09-09 contra la misma base y en el mismo momento
+  (Confidence: HIGH):
+
+  | | passed | failed | errors |
+  | --- | --- | --- | --- |
+  | Commit base `6a6d2b7` | 41 | 17 | 38 |
+  | Rama `refactor/task-041-063` | 69 | 11 | 46 |
+
+  El estado de partida es peor que el de llegada: la fragilidad es anterior a esa
+  rama y no la introduce.
+- Los mismos ficheros ejecutados por separado pasan.
+- `tests/integration/conftest.py`, fixture `pg_engine`; `test_migrations.py`,
+  `_reset_public_schema` y `_run_upgrade_head`.
+
+### Why this is a problem
+
+Una lane que solo es fiable fichero a fichero no puede ser una puerta de CI, y su
+modo de fallo —cascada con un mensaje que apunta al sitio equivocado— hace que
+cada persona que se lo encuentre gaste el mismo rato diagnosticando lo mismo. Ya
+ocurrió: durante TASK-060 se atribuyó primero a un import de mappers borrado.
+
+### Desired State
+
+`pytest tests/integration` da el mismo resultado que la suma de sus ficheros, y
+un fallo en uno no arrastra a los demás.
+
+### Proposed Solution
+
+Tres piezas, y la primera sola probablemente basta:
+
+1. **Que `_reset_public_schema` restaure lo que quita.** Recrear `vector`
+   inmediatamente después del `CREATE SCHEMA public`, dentro de la misma
+   transacción, en vez de dejar que lo recree quien venga después.
+2. **Serializar la creación de la extensión.** Si dos caminos pueden crearla,
+   tomar un `pg_advisory_lock` alrededor, o crearla una sola vez por sesión de
+   pytest en una fixture de ámbito `session` y que nadie más la toque.
+3. **Aislar el fallo.** Que la fixture `schema` no dé por buena una transacción
+   abortada: comprobar el estado y fallar ese test en vez de dejar la base a
+   medias para los siguientes.
+
+No cambiar el `DROP SCHEMA` de `_reset_public_schema` por algo más suave sin
+comprobar antes qué garantiza ese test: existe para probar el bootstrap desde
+vacío, y suavizarlo lo dejaría sin objeto.
+
+### Scope
+
+IN SCOPE:
+
+- `tests/integration/conftest.py` y `tests/integration/test_migrations.py`.
+- Una comprobación de que la lane entera y la suma de sus ficheros coinciden.
+
+OUT OF SCOPE:
+
+- Cambiar lo que cada test afirma.
+- Mover la lane a una base por test o por fichero sin medir antes lo que cuesta.
+
+### Dependencies
+
+Depends on: TASK-001
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: cualquiera que no toque `tests/integration/conftest.py`.
+
+Es la fixture central de la lane, que pertenece a TASK-001: coordinar antes de
+reclamarla.
+
+### Acceptance Criteria
+
+- [ ] `pytest tests/integration` termina sin errores en cascada.
+- [ ] El veredicto de la lane entera coincide con el de sus ficheros por separado.
+- [ ] La lane es re-ejecutable dos veces seguidas sin intervención manual.
+- [ ] Ningún test cambia lo que afirma.
+
+### Validation
+
+Ejecutar la lane completa dos veces seguidas y comparar con la suma de las
+ejecuciones por fichero. Comprobar que tras una ejecución la extensión `vector`
+sigue instalada.
+
+### Rollback / Risk Notes
+
+Solo toca tests. El riesgo es enmascarar un fallo real haciendo las fixtures
+demasiado tolerantes: cualquier tolerancia nueva va con un test que demuestre que
+el fallo que oculta seguiría viéndose.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW

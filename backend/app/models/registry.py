@@ -30,6 +30,7 @@ from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter
 from app.models.emailNotificationLogModel import EmailNotificationLogModel
 from app.models.friendshipModel import FriendRequestModel, FriendshipModel
+from app.models.idempotencyModel import IdempotencyRecordModel
 from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
 from app.models.jobAnalysisModel import JobAnalysisModel
 from app.models.jobPostingModel import JobPosting
@@ -61,6 +62,7 @@ from app.models.roadmapModel import (
     UserTaskProgressModel,
 )
 from app.models.storageDeletionIntentModel import StorageDeletionIntentModel
+from app.models.taskOutboxModel import TaskOutboxModel
 from app.models.skillModel import (
     CourseModel,
     CourseSkillModel,
@@ -93,6 +95,7 @@ ALL_MODELS = (
     EmailNotificationLogModel,
     FriendRequestModel,
     FriendshipModel,
+    IdempotencyRecordModel,
     InterviewAvailabilityModel,
     JobAnalysisModel,
     JobPosting,
@@ -116,6 +119,7 @@ ALL_MODELS = (
     StageProjectModel,
     StageTaskModel,
     StorageDeletionIntentModel,
+    TaskOutboxModel,
     User,
     UserProjectSubmissionModel,
     UserQuestionnaire,

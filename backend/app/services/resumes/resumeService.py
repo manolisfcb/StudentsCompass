@@ -1,3 +1,4 @@
+from app.core.pagination import MAX_COLLECTION_ROWS
 from app.models.resumeModel import ResumeModel
 from sqlalchemy import select
 from app.schemas.resumeSchema import CreateResumeSchema
@@ -136,6 +137,7 @@ class ResumeService:
             select(ResumeModel)
             .where(ResumeModel.user_id == user_id)
             .order_by(ResumeModel.created_at.desc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         return list(result.scalars().all())
 

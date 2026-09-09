@@ -43,6 +43,14 @@ x-backend-env: &backend-env
   AWS_REGION: "${AWS_REGION:-us-east-1}"
   BUCKET_NAME: "${BUCKET_NAME:-}"
   RESOURCES_BUCKET_NAME: "${RESOURCES_BUCKET_NAME:-}"
+  # TASK-054. Locally there is no Cloud Tasks, so the worker delivers the same
+  # outbox rows over plain HTTP to the same internal endpoint, carrying a shared
+  # secret. The endpoint refuses that credential outright when ENV=production —
+  # a string in an env var is not an identity — so this cannot become the
+  # production path by accident.
+  TASK_DISPATCH_TRANSPORT: http
+  INTERNAL_TASKS_BASE_URL: http://api:8080
+  INTERNAL_TASKS_SHARED_SECRET: local-development-task-secret-not-for-deployment
 
 services:
   db:
@@ -118,6 +126,14 @@ services:
     build:
       context: ./backend
     environment: *backend-env
+    # The outbox consumer (TASK-054). It is the local equivalent of Cloud
+    # Tasks: it reads task_outbox and POSTs /internal/tasks/cv-analyses/{id},
+    # which is the same endpoint the queue calls in production and the same
+    # code path the analysis runs through.
+    #
+    # The API replicas no longer run a sweeping loop of their own — a replica
+    # scaled to zero would run none, and N replicas would run N — so this is
+    # the only process that drives queued analyses locally.
     depends_on:
       db:
         condition: service_healthy
@@ -125,33 +141,12 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    # The durable CV-analysis runner as a process of its own, with no HTTP
-    # server attached. Today the API replicas run this same loop inside their
-    # lifespan, so locally two sweepers are live at once; that is safe because
-    # a job is claimed with a single conditional UPDATE, so exactly one of them
-    # ever starts a given analysis (app/services/ai/cvAnalysisRunner.py).
-    #
-    # It is declared here anyway because it is the shape the plan commits to:
-    # TASK-054 replaces this command with an outbox consumer and removes the
-    # loop from the web process, and this service is where that lands. No
-    # backend code changes for this file — it drives the runner's public API.
+      api:
+        condition: service_healthy
     command:
       - python
-      - -c
-      - |
-        import asyncio
-
-        from app.db import async_session
-        from app.services.ai.cvAnalysisRunner import CVAnalysisRunner
-
-
-        async def main() -> None:
-            runner = CVAnalysisRunner(async_session)
-            await runner.start()
-            await asyncio.Event().wait()
-
-
-        asyncio.run(main())
+      - -m
+      - app.workers.taskOutboxWorker
 
   web:
     build:
