@@ -25,8 +25,13 @@ coverage.xml
 .pytest_cache/
 node_modules/
 
-scripts/
-scripts/*
+# `scripts/` is versioned. It was ignored wholesale, so the nine scripts that
+# the project actually depends on — the baseline capture, the OpenAPI export,
+# the route inventory, the seeds, the superuser and the SQLite->Postgres
+# migration — each had to be added with `git add -f`, and the tenth would have
+# been forgotten. Ignore the outputs instead, which is what the rule was for.
+scripts/**/__pycache__/
+scripts/*.out
 
 # Frontend build output (TASK-038). `node_modules/` above already covers
 # frontend/node_modules; the bundle is produced by `npm run build` and by the

@@ -27,7 +27,7 @@ async def test_embedding():
         print("\nGenerating embedding...")
         embedding = await generate_embedding(test_text)
         
-        print(f"✅ Success!")
+        print("✅ Success!")
         print(f"Generated embedding with {len(embedding)} dimensions")
         print(f"Sample values: {embedding[:5]}")
         print(f"Min value: {min(embedding):.4f}")

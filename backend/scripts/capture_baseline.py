@@ -45,7 +45,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 # Dos raíces desde TASK-037: el código Python vive bajo `backend/` y la baseline
 # se archiva en `docs/` en la raíz del repositorio, que es de todo el monorepo.

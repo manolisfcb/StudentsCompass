@@ -49,9 +49,9 @@ class ResourceModel(Base):
         order_by="ResourceModuleModel.position",
     )
 
-    # TODO(progress): Keep this entity read-only for users for now.
-    # Later we can add per-user progress via a ResourceLessonProgress table:
-    # user_id + lesson_id + completed_at + last_opened_at.
+    # Per-user progress lives in ``ResourceLessonProgressModel`` below, keyed on
+    # user_id + lesson_id with completed_at and last_opened_at. A TODO here
+    # proposed building exactly that table long after it existed.
 
 
 class ResourceModuleModel(Base):

@@ -14,7 +14,7 @@ Student Compass es una plataforma de navegación de carrera profesional para est
 - **IA:** Integración con **Google GenAI** (Gemini) y **Sentence Transformers** para embeddings
 - **Almacenamiento:** **AWS S3** (via boto3) como storage principal; **ImageKit** queda como provider opcional para media de posts
 - **Autenticación:** **FastAPI-Users** (JWT)
-- **Scraping:** **Apify** + **BeautifulSoup4**
+- **Scraping:** **BeautifulSoup4** (endpoint público de LinkedIn, sin Apify)
 
 ---
 
@@ -102,7 +102,7 @@ StudentsCompass/backend/
 │   │   └── profileService.py     # Lógica de perfil
 │   │
 │   ├── core/                  # 🧠 Módulos Especializados (IA y Scraping)
-│   │   ├── JobsScraper/           # Scraping de ofertas de empleo (Apify)
+│   │   ├── JobsScraper/           # Scraping de ofertas (endpoint público, sin Apify)
 │   │   └── resume_analyzer/        # Análisis de CVs con IA (Google Gemini)
 │   │
 │   ├── views/                 # 🖼️ Vistas (renderización de templates)
@@ -195,7 +195,7 @@ El journey está estructurado en **7 pasos guiados**, cada uno diseñado para co
 
 ### 5. 💼 Búsqueda y Gestión de Empleos
 
-- **Scraping automatizado** de ofertas de empleo con **Apify** + **BeautifulSoup4**
+- **Scraping automatizado** de ofertas de empleo con **BeautifulSoup4** sobre el endpoint público de LinkedIn
 - Análisis de compatibilidad CV ↔ empleo con IA
 - Gestión de **postulaciones** (applications): crear, seguir estado, actualizar
 - **Análisis de empleos** (jobAnalysis): evaluación detallada de cada oferta
@@ -275,7 +275,6 @@ Todos los endpoints de la API están bajo el prefijo `/api/v1`, excepto las vist
 | **IA Generativa** | Google GenAI (Gemini) | ≥ 1.59.0 |
 | **Embeddings** | Sentence Transformers | ≥ 3.3.1 |
 | **PDF** | PyMuPDF | ≥ 1.26.7 |
-| **Scraping** | Apify Client | ≥ 2.4.0 |
 | **HTML Parsing** | BeautifulSoup4 | ≥ 4.12.3 |
 | **Storage (Cloud)** | boto3 (AWS S3) | ≥ 1.35.0 |
 | **Media opcional** | ImageKit + Pillow | ≥ 5.0.0 / ≥ 12.1.0 |
@@ -312,12 +311,27 @@ Al finalizar el journey, los estudiantes:
 
 ## 🔧 Scripts Disponibles
 
+Todos viven en `backend/scripts/` y se ejecutan desde `backend/`.
+
 | Script | Descripción |
 |--------|-------------|
+| `scripts/capture_baseline.py` | Archiva OpenAPI, fixtures y capturas de las pantallas (TASK-035) |
+| `scripts/create_superuser.py` | Crea una cuenta de administrador |
+| `scripts/evaluate_resume_skill_extraction.py` | Evalúa la extracción de skills sobre CVs de muestra |
+| `scripts/export_openapi.py` | Exporta el schema OpenAPI (TASK-039) |
 | `scripts/migrate_sqlite_to_postgres.py` | Migra datos de SQLite a PostgreSQL |
+| `scripts/route_inventory.py` | Inventaria las rutas y su destino REST (TASK-034) |
+| `scripts/seed_capstone_analytics.py` | Siembra el catálogo analítico mínimo |
 | `scripts/seed_communities.py` | Carga comunidades iniciales en la BD |
 | `scripts/seed_resources.py` | Carga recursos educativos iniciales |
+| `scripts/seed_roadmaps.py` | Carga los roadmaps iniciales |
+| `scripts/sync_capstone_job_skills.py` | Extrae skills de las ofertas abiertas |
 | `scripts/test_embedding.py` | Prueba la generación de embeddings |
+
+> `scripts/` estuvo ignorado entero en `.gitignore` hasta TASK-029, así que los
+> versionados entraron con `git add -f` y tres —`evaluate_resume_skill_extraction`,
+> `seed_capstone_analytics` y `sync_capstone_job_skills`— no estaban versionados
+> en absoluto. Ahora se ignoran las salidas, no el directorio.
 
 ---
 

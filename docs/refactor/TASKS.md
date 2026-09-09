@@ -100,7 +100,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
-| TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
+| TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | COMPLETED | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
@@ -137,6 +137,8 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | TODO | TASK-018, TASK-025 | TASK-061, TASK-062 |
 | TASK-064 | Estabilizar la lane SQLite frente a la afinidad numérica de UUID | MEDIUM | PHASE-0 | TODO | TASK-001 | TASK-065 |
 | TASK-065 | Corregir el test de agregados diarios que compara fecha local con UTC | LOW | PHASE-0 | TODO | TASK-001 | TASK-064 |
+| TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | TODO | TASK-029 | TASK-067 |
+| TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -5003,7 +5005,7 @@ middleware en sí, no el de la aplicación entera.
 
 ## TASK-029 — Consolidar configuración y documentar dependencias activas
 
-Status: TODO
+Status: COMPLETED
 Priority: LOW
 Phase: PHASE-6
 Category: Maintainability
@@ -5103,12 +5105,12 @@ Grupo J; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Consolidar configuración y documentar dependencias activas.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Consolidar configuración y documentar dependencias activas.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -5127,6 +5129,146 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+**Configuración: una fuente, no cuatro.** `app/db.py` tenía copias propias de `_env_flag` y
+`_env_int`; `userService.py` y `companyService.py` tenían el cargador de `SECRET_KEY`
+**duplicado carácter por carácter**, incluida la regla de que en producción su ausencia es un
+error. Eso no es cosmética: arreglar uno habría dejado al otro firmando tokens con el secreto
+de desarrollo. Ahora todo se parsea en `app/config.py` y ambos servicios llaman a
+`load_secret_key(logger)`. **Las dos identidades de auth siguen separadas**, que es lo que la
+ficha exige; lo que se comparte es la regla, no la identidad.
+
+**`load_dotenv()` se movió a `config.py`, y no es un detalle.** En cuanto `db.py` importa
+`config.py`, el cuerpo de `config.py` corre *antes* de cualquier `load_dotenv()` que `db.py`
+hiciera después, y todas las constantes se calcularían contra un entorno sin cargar. Cargarlo
+en el único módulo que lee el entorno hace que «la configuración se parsea después del fichero
+de entorno» sea cierto por construcción. Los tests neutralizan `load_dotenv` antes de importar
+nada de `app` (`tests/isolation.py`) y siguen funcionando: sustituyen la función, no el sitio
+donde se llama.
+
+**Metadatos corregidos:**
+
+- `fastapi-users[sqlalchemy,sqlchemy]` → `fastapi-users[sqlalchemy]`. El extra mal escrito
+  provocaba un warning en cada resolución de `uv`.
+- El `TODO(progress)` de `resourceModel.py` proponía construir «una tabla
+  ResourceLessonProgress con user_id + lesson_id + completed_at + last_opened_at». Esa tabla
+  está **46 líneas más abajo en el mismo fichero**, con esas columnas exactas.
+- `.gitignore` ignoraba `scripts/` entero. Ahora ignora las salidas.
+
+**Lo que el `.gitignore` escondía.** Los nueve scripts versionados entraron con `git add -f`,
+y al levantar la regla aparecieron **tres que no estaban versionados en absoluto**:
+`evaluate_resume_skill_extraction.py`, `seed_capstone_analytics.py` y
+`sync_capstone_job_skills.py`. Son scripts reales del proyecto, con el mismo prólogo y las
+mismas importaciones de servicios que los otros. Ese es exactamente el coste de un ignore
+general: el décimo se habría olvidado.
+
+También los metió en el radar de Ruff por primera vez: **60 hallazgos**. Se separaron en dos
+grupos en vez de exentarlos en bloque:
+
+- **23 eran deuda y se corrigieron**: imports muertos (`typing.Iterable`, `os`, `re`,
+  `sqlalchemy.update`, `engine`, `Base`, `get_user_manager`/`get_user_db` — este último un
+  import local que nunca se usaba porque el manager se construye más abajo) y dos f-strings sin
+  interpolación. `seed_communities.py` mantenía una lista de imports de modelos a mano para
+  registrar mappers; ahora usa `app.models.registry.import_all_models()`, que es la lista única
+  del proyecto — **borrarlos habría roto la configuración del mapper en runtime sin que ningún
+  test lo notara**, que es justo lo que TASK-060 advierte.
+- **37 son E402 y quedan exentos como excepción permanente**, no como deuda: cada script inserta
+  la raíz del proyecto en `sys.path` antes de importar `app`, igual que `app/app.py` y
+  `tests/conftest.py`, que ya tenían esa exención. Dicho en `pyproject.toml` y marcado como
+  **fuera de TASK-060**.
+
+**Dependencias: inventariadas, y una retirada con evidencia.**
+
+`apify-client` **retirada**. No por heurística: **cero `import`** en `app/`, `tests/`,
+`alembic/`, `scripts/` y `main.py` según barrido AST; `APIFY_API_TOKEN` **no se lee en ningún
+sitio** (su única aparición es un valor falso en `tests/isolation.py`); y el scraper que la
+sustituyó dice en su cabecera «no Apify». El lock pierde también sus transitivas `impit` y
+`more-itertools`: 134 → 130 paquetes.
+
+Ocho dependencias sin `import` directo se **inventariaron y se quedan**, cada una con su
+motivo, en `docs/dependencies.md`. Dos merecen mención:
+
+- `pymupdf` **sí se importa**, como `fitz`; el barrido inicial lo dio por no usado porque el
+  nombre del módulo no coincide con el del paquete.
+- `psycopg2-binary` no tiene ningún consumidor en el repositorio —`alembic/env.py` traduce a
+  `psycopg` v3 y `psycopg2` solo aparece dentro de un ejemplo en un comentario— pero **no se
+  retira**: un despliegue puede fijar una URL `postgresql+psycopg2://` por configuración y el
+  mapa de traducción la dejaría pasar tal cual. Retirarlo exige comprobar URLs que no están en
+  el repositorio.
+
+**Ciclos de import: confirmado que no hay.** F-26 decía «parecen ciclos: no se confirmó ciclo de
+ejecución». Solo existen **dos** imports bajo `TYPE_CHECKING`. Importando **los 142 módulos de
+`app/`** uno a uno: 0 fallos. Y forzando cada pareja en las dos direcciones sin la guarda: las
+cuatro combinaciones importan bien. Son guardas de anotación, no de ciclo.
+
+**Lo que esta ficha midió y decidió no hacer.**
+
+`requirements.txt` y `uv.lock` describen entornos distintos: **58 paquetes difieren de versión**
+y 8 pines no existen en el lock. El dato que decide la dirección: de esos 58, el entorno
+realmente instalado coincide con `requirements.txt` en **58** y con `uv.lock` en **0** — el lock
+es el obsoleto. `uv lock` a secas no lo cierra: se ejecutó y cambió **0 versiones**, porque un
+lock conserva deliberadamente lo ya fijado. Cerrarlo exige elegir entre subir el lock o
+**degradar 58 paquetes** en la imagen, y eso no es limpieza. Es **TASK-066**.
+
+Los **74 advisories sobre 10 paquetes** siguen vigentes: se verificó que `requirements.txt` no
+se toca desde `cf6d1ef` (2026-09-08 08:27) y no hay cambios en el árbol, así que la medición de
+TASK-039 con `osv-scanner` v2.5.1 sigue describiendo estos pines. Remediarlos es **TASK-067**,
+como la propia Proposed Solution ordena («si surge CVE abrir tarea con prioridad propia, no
+actualizar todo dentro de cleanup»).
+
+**Sobre el criterio de salida que decía retirar `continue-on-error` de `deps-audit`: no se
+retira, y el motivo es que la ficha se contradice.** Pide quitarlo *y* prohíbe actualizar
+dependencias dentro del cleanup; con 74 advisories abiertos, quitarlo deja CI en rojo el mismo
+día. Las dos cosas no caben en una ficha. Queda separado en TASK-067, que remedia primero y
+quita el flag después, en ese orden. Prefiero decirlo a marcar el criterio como cumplido.
+
+**Documentación:** `docs/dependencies.md` (nuevo) con las tres fuentes de verdad y por qué hoy
+no coinciden, qué importa cada dependencia, las ocho sin import directo con su motivo, la
+retirada de apify con su evidencia, los ciclos confirmados y el porqué del orden de
+`load_dotenv`. `PROJECT_STRUCTURE.md`: Apify retirado de las cuatro menciones (la tabla de
+tecnologías, el árbol, la lista de características y el stack), y la tabla de scripts pasa de
+listar 4 a los 12 que existen.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 589 passed, 94 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 94 passed   (lane completa verde)
+
+uv run --project backend --directory backend ruff check .      # como en CI
+# All checks passed!
+
+uv lock --check --project backend
+# el lock describe pyproject.toml
+
+# smoke de arranque
+python -c "from app.app import app; app.openapi()"
+# 181 rutas, 147 paths OpenAPI, middleware en su sitio
+```
+
+**Un error mío que merece quedar escrito.** Durante la validación la lane PostgreSQL falló en
+cascada (17 fallos, 11 errores) y llegué a concluir dos veces que la causa eran mis cambios. No
+lo era: mi script de reseteo hacía `DROP DATABASE` ocultando la salida, y `DROP DATABASE`
+**falla si queda una sola conexión abierta**, así que el reseteo no reseteaba nada y cada
+corrida heredaba el esquema roto de la anterior. Terminando las conexiones antes, la lane pasa
+entera. La comparación A/B que hice para «demostrar» que era culpa mía estaba viciada porque
+reseteaba la base dentro del mismo comando.
+
+**Límites de la validación.** Los advisories **no se volvieron a medir localmente**:
+`osv-scanner` no está instalado en esta máquina y no se descargó un binario para ello. Lo que
+se verificó es que los pines no han cambiado desde la medición de TASK-039, que es lo que hace
+que esa cifra siga siendo la vigente; CI la vuelve a medir en cada run. No se ejecutaron
+llamadas pagadas ni migraciones de producción. Sin smoke de navegador: esta ficha no cambia
+ningún payload ni ninguna pantalla. `requirements.txt` **no se tocó** —sigue pinando
+`apify-client`— porque reconciliarlo es TASK-066; hasta entonces la imagen sigue instalando lo
+mismo que hoy. `tests/isolation.py` conserva el `APIFY_API_TOKEN` falso: es un fixture central
+y quitarlo no aporta nada.
 
 
 ## TASK-030 — Validar respuestas y respetar versión histórica de cuestionario
@@ -9891,4 +10033,198 @@ Performance: LOW
 Maintainability: MEDIUM
 Cost: LOW
 Risk: LOW
+
+## TASK-066 — Reconciliar requirements.txt y uv.lock en una sola fuente de verdad
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-6
+Category: Maintainability
+
+### Objective
+
+Que `pyproject.toml`, `uv.lock` y `requirements.txt` describan **un** entorno, con una decisión explícita sobre cuál gana.
+
+### Problem
+
+Creada por TASK-029, que midió la divergencia pero no la resolvió porque cerrarla no es
+limpieza: es un cambio de versiones en producción.
+
+Medido el 2026-09-09 sobre `backend/`:
+
+- **58 paquetes difieren de versión** entre `requirements.txt` y `uv.lock`
+  (`fastapi` 0.136.1 vs 0.128.0, `cryptography` 48.0.0 vs 46.0.3, `alembic` 1.18.4 vs 1.18.1,
+  `boto3` 1.43.11 vs 1.42.35, entre otros).
+- **8 pines de `requirements.txt` no existen en el lock**: `async-timeout`, `exceptiongroup`,
+  `markdown-it-py`, `mdurl`, `pytz`, `rich`, `tomli`, `typer`.
+- **30 paquetes del lock no están en `requirements.txt`** (el grupo dev, que no se despliega).
+
+**El dato que decide la dirección:** de los 58 paquetes en conflicto, el entorno realmente
+instalado coincide con `requirements.txt` en **58** y con `uv.lock` en **0**. Es decir,
+`requirements.txt` describe lo que corre y **el lock es el que está obsoleto**.
+
+Importa porque `requirements.txt` es lo que instalan la imagen Docker y las lanes de CI,
+mientras `uv lock --check` —añadido en TASK-039— solo prueba que el lock describe
+`pyproject.toml`. Hoy los tres artefactos describen tres entornos y ninguna comprobación lo
+detecta.
+
+### Evidence / Location
+
+- `backend/requirements.txt`, `backend/uv.lock`, `backend/pyproject.toml` (Confidence: HIGH).
+- `.github/workflows/ci.yml`: `pip install -r requirements.txt` en las lanes de test,
+  `uv sync --frozen --only-group dev` en la de lint.
+- Números y método en las Completion Notes de TASK-029.
+
+### Desired State
+
+Un solo artefacto es la fuente de verdad y el otro se genera de él; una comprobación en CI
+falla si divergen.
+
+### Proposed Solution
+
+**La decisión es de quien opera el despliegue, no de esta ficha**, porque las dos salidas
+tienen consecuencias distintas:
+
+1. **Subir el lock a lo instalado** (`uv lock --upgrade`, o subir los pines de `pyproject.toml`
+   y volver a resolver). No cambia nada de lo que corre hoy; el riesgo es que arrastre también
+   versiones nuevas de paquetes que no estaban en conflicto.
+2. **Bajar `requirements.txt` a lo que dice el lock** (`uv export`). Hace del lock la única
+   fuente, pero **degrada 58 paquetes** en la imagen respecto a lo que corre hoy.
+
+`uv lock` a secas **no** sirve: se ejecutó y cambió 0 versiones, porque un lock conserva
+deliberadamente lo ya fijado mientras siga satisfaciendo las restricciones.
+
+Elegida la dirección, generar el artefacto derivado y añadir a CI una comprobación de que
+`requirements.txt` es exactamente lo que el lock exporta, para que no vuelvan a separarse.
+
+Coordinar con **TASK-067**: si esa ficha sube versiones para remediar advisories, conviene
+hacerlo una sola vez y no dos.
+
+### Scope
+
+IN SCOPE:
+
+- `backend/requirements.txt`, `backend/uv.lock`, `backend/pyproject.toml`;
+  `.github/workflows/ci.yml` (comprobación de coherencia); documentación.
+
+OUT OF SCOPE:
+
+- Remediar advisories: eso es TASK-067.
+
+### Dependencies
+
+Depends on: TASK-029
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+Instalación reproducible desde el artefacto elegido; suite completa verde con las versiones
+resultantes; CI falla si se edita uno de los dos sin el otro; smoke de arranque.
+
+### Estimated Impact
+
+Security: MEDIUM
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: HIGH
+
+
+## TASK-067 — Remediar los advisories vigentes de dependencias y bloquear CI con ellos
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-6
+Category: Security
+
+### Objective
+
+Dejar `deps-audit` en verde sin `continue-on-error`, remediando los advisories que hoy arrastra `requirements.txt`.
+
+### Problem
+
+Creada por TASK-029, cuya Proposed Solution dice literalmente: «si surge CVE abrir tarea con
+prioridad propia, **no actualizar todo dentro de cleanup**». Esto es esa tarea.
+
+**74 advisories vigentes sobre 10 paquetes** de `backend/requirements.txt`, medidos con
+`osv-scanner` v2.5.1 el 2026-09-08 en TASK-039: `starlette`, `python-multipart`, `pyjwt`,
+`cryptography`, `transformers`, `torch`, `pillow`, `pyasn1`, `setuptools`, `soupsieve`. Varios
+con severidad 7.5. `frontend/package-lock.json` sale limpio.
+
+TASK-029 verificó el 2026-09-09 que **los pines no han cambiado** desde esa medición
+—`requirements.txt` no se toca desde `cf6d1ef` (2026-09-08 08:27), y no hay cambios en el árbol
+de trabajo— así que la cifra sigue siendo la vigente. El job `deps-audit` de CI la vuelve a
+medir en cada run y publica el informe.
+
+### Why this is a problem
+
+El job existe, mide y **no bloquea** (`continue-on-error: true`). Un informe que nadie tiene
+que atender es un informe que nadie atiende, y varios de estos advisories están en la ruta de
+petición: `starlette`, `python-multipart` y `pyjwt` procesan entrada no confiable.
+
+**La contradicción que TASK-029 no podía resolver sola:** su propio texto pone «retirar ese
+`continue-on-error`» como criterio de salida *y* prohíbe actualizar dependencias dentro del
+cleanup. Las dos cosas no caben en una ficha: quitar el flag con 74 advisories abiertos deja CI
+en rojo el mismo día. Aquí se separan — primero se remedia, después se quita el flag, en esta
+ficha y en ese orden.
+
+### Evidence / Location
+
+- `.github/workflows/ci.yml`, job `deps-audit`, `continue-on-error: true` con el motivo escrito
+  en el propio workflow (Confidence: HIGH).
+- `backend/requirements.txt` (Confidence: HIGH).
+
+### Desired State
+
+`deps-audit` bloquea y pasa.
+
+### Proposed Solution
+
+1. Volver a medir con `osv-scanner` en el momento de ejecutar: un advisory publicado río arriba
+   cambia la lista, y afirmar un CVE sin evidencia fresca está prohibido por la ficha madre.
+2. Clasificar por si el paquete está en la ruta de petición o solo en build/análisis: no todos
+   los 74 tienen el mismo riesgo real, y decirlo por paquete es parte del trabajo.
+3. Subir versiones **por paquete, con la suite verde entre uno y otro**, no en bloque.
+4. Para lo que no tenga versión corregida, documentar por qué se acepta y con qué mitigación,
+   en vez de silenciarlo.
+5. Solo entonces retirar `continue-on-error`, junto con el comentario que lo justificaba.
+
+Coordinar con **TASK-066**: si esa ficha decide la dirección de la reconciliación, las subidas
+de versión deben ocurrir una sola vez.
+
+### Scope
+
+IN SCOPE:
+
+- `backend/requirements.txt`, `backend/uv.lock`, `backend/pyproject.toml`;
+  `.github/workflows/ci.yml` (`deps-audit`); documentación de excepciones aceptadas.
+
+OUT OF SCOPE:
+
+- Cambiar de proveedor o retirar dependencias por heurística.
+
+### Dependencies
+
+Depends on: TASK-029, TASK-066
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+`osv-scanner` sin hallazgos bloqueantes sobre los dos lockfiles; suite completa verde tras cada
+subida; `deps-audit` sin `continue-on-error` y en verde; excepciones aceptadas documentadas con
+su motivo.
+
+### Estimated Impact
+
+Security: HIGH
+Performance: LOW
+Maintainability: MEDIUM
+Cost: LOW
+Risk: HIGH
 

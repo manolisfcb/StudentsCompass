@@ -1,13 +1,28 @@
 """Centralized environment-driven configuration.
 
-Mirrors the small inline helper style used in ``app/db.py`` so settings stay
-readable and have safe defaults. Importing this module never raises: every
-value falls back to a conservative default when the env var is missing or
-malformed.
+Every setting the application reads from the environment is parsed here, by one
+set of helpers, with safe defaults. Importing this module never raises: a value
+that is missing or malformed falls back rather than failing the import.
+
+``load_dotenv()`` runs **here**, before the first read, and that ordering is the
+point rather than a detail. ``app/db.py`` used to carry its own copies of
+``_env_flag`` and ``_env_int`` and call ``load_dotenv()`` afterwards; the moment
+it imported this module instead, this module's body would run *before* that
+call and every constant below would be computed against an unloaded
+environment. Loading it at the top of the one module that reads the environment
+makes "configuration is parsed after the environment file" true by
+construction. Tests neutralise ``load_dotenv`` before importing anything from
+``app`` (see ``tests/isolation.py``), which still works: they replace the
+function, not the call site.
 """
 from __future__ import annotations
 
+import logging
 import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def env_flag(name: str, default: str = "0") -> bool:
@@ -45,6 +60,41 @@ def env_int_any(names: tuple[str, ...], default: int, *, minimum: int = 0) -> in
 
 ENV = env_str("ENV", "development").lower()
 IS_PRODUCTION = ENV in {"production", "prod"}
+
+# --- Database --------------------------------------------------------------
+DATABASE_URL = env_str("DATABASE_URL")
+# Default to quiet + migration-driven schema management. Opt in locally by
+# setting SQLALCHEMY_ECHO=1 and/or AUTO_CREATE_TABLES=1.
+SQLALCHEMY_ECHO = env_flag("SQLALCHEMY_ECHO", "0")
+AUTO_CREATE_TABLES = env_flag("AUTO_CREATE_TABLES", "0")
+# Opt back into a connection-per-request engine for true serverless targets.
+DB_DISABLE_POOL = env_flag("DB_DISABLE_POOL", "0")
+
+# --- Authentication secret -------------------------------------------------
+#: What a development environment falls back to when ``SECRET_KEY`` is unset.
+#: Never reachable in production: :func:`load_secret_key` raises there.
+DEFAULT_SECRET_FALLBACK = "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION"
+
+
+def load_secret_key(logger: logging.Logger | None = None) -> str:
+    """The token-signing secret, with the same rule for every identity.
+
+    Students and company recruiters are **two separate auth identities** and
+    stay that way; what they must not have is two separate opinions about when
+    a missing ``SECRET_KEY`` is acceptable. This function used to be copied,
+    character for character, into ``userService`` and ``companyService``, so a
+    fix to one would silently leave the other signing tokens with the
+    development fallback.
+    """
+    configured = env_str("SECRET_KEY")
+    if configured:
+        return configured
+    if IS_PRODUCTION:
+        raise RuntimeError("SECRET_KEY must be configured in production.")
+    (logger or logging.getLogger(__name__)).warning(
+        "SECRET_KEY is not set; using development fallback secret."
+    )
+    return DEFAULT_SECRET_FALLBACK
 
 # --- Shared infra ----------------------------------------------------------
 # Empty REDIS_URL keeps a per-process in-memory fallback (fine for dev/tests).

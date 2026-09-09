@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from dotenv import load_dotenv
 load_dotenv()
 
-from sqlalchemy import select, update
-from app.db import async_session, engine, Base
+from sqlalchemy import select
+from app.db import async_session
 from app.models.userModel import User
 
 # Import ALL models so SQLAlchemy can resolve relationships
@@ -41,8 +41,6 @@ from app.models.jobAnalysisModel import *     # noqa: F401,F403
 
 async def create_superuser(email: str, password: str):
     """Register a brand-new user and flag it as superuser."""
-    from app.services.accounts.userService import get_user_manager, get_user_db
-
     async with async_session() as session:
         # Check if already exists
         existing = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
@@ -74,7 +72,7 @@ async def create_superuser(email: str, password: str):
             is_verified=True,
         )
         user = await manager.create(user_create)
-        print(f"✅ Superuser created!")
+        print("✅ Superuser created!")
         print(f"   Email:  {user.email}")
         print(f"   ID:     {user.id}")
 

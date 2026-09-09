@@ -8,7 +8,7 @@ dependencies = [
     "aiosqlite>=0.22.1",
     "alembic>=1.18.1",
     "fastapi>=0.128.0",
-    "fastapi-users[sqlalchemy,sqlchemy]>=14.0.2",
+    "fastapi-users[sqlalchemy]>=14.0.2",
     "imagekitio>=5.0.0",
     "jinja2>=3.1.6",
     "pillow>=12.1.0",
@@ -17,7 +17,6 @@ dependencies = [
     "beautifulsoup4>=4.12.3",
     "asyncpg>=0.29.0",
     "psycopg[binary]>=3.1.0",
-    "apify-client>=2.4.0",
     "google-genai>=1.59.0",
     "pymupdf>=1.26.7",
     "boto3>=1.35.0",
@@ -96,6 +95,16 @@ select = ["E4", "E7", "E9", "F"]
 # muerto en cualquier otro punto del árbol rompe CI. **TASK-060 los retira y
 # vacía estas entradas; no se añaden ficheros nuevos a la lista.**
 [tool.ruff.lint.per-file-ignores]
+# E402 en `scripts/` es **excepción permanente y justificada**, no deuda, y por
+# eso se añade aquí pese a la nota de arriba. Cada script arranca insertando la
+# raíz del proyecto en `sys.path` para poder importar `app`; ese prólogo tiene
+# que ejecutarse antes de los imports, exactamente como en `app/app.py` y
+# `tests/conftest.py`. **No pertenece a TASK-060**, que retira deuda.
+#
+# Los scripts entraron en el radar de Ruff en TASK-029, al dejar de estar
+# ignorados en `.gitignore`. Los 23 hallazgos que sí eran deuda —imports muertos
+# y f-strings sin interpolación— se corrigieron allí mismo en vez de exentarse.
+"scripts/*.py" = ["E402"]
 "alembic/versions/05d0f99636af_add_job_analysis_table_for_async_cv_.py" = ["F401"]
 "alembic/versions/462d490a97a1_update_user_table.py" = ["F401"]
 "app/app.py" = ["E402", "F401"]

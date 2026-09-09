@@ -13,12 +13,14 @@ sys.path.append(str(ROOT))
 from app.db import async_session
 from app.models.userModel import User
 from app.models.communityModel import CommunityModel, CommunityMemberModel
-from app.models.postModel import PostModel
-from app.models.questionnaireModel import UserQuestionnaire
-from app.models.resumeModel import ResumeModel
-from app.models.jobAnalysisModel import JobAnalysisModel
-from app.models.userStatsModel import UserStatsModel
-from app.models.communityPostModel import CommunityPostModel, CommunityPostLikeModel, CommunityPostCommentModel
+# Imported for their side effect, not their names: SQLAlchemy resolves
+# relationships by class name at mapper configuration time, so a model that is
+# never imported makes an unrelated relationship fail at runtime. `registry`
+# is the project's single import list; this script predates it and keeps its
+# own so the seed can run without pulling in every model.
+from app.models.registry import import_all_models
+
+import_all_models()
 
 
 SEED_COMMUNITIES = [

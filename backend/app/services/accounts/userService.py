@@ -12,29 +12,16 @@ from app.models.userModel import User
 import uuid
 import logging
 from app.models.userModel import get_user_db
-import os
+from app.config import IS_PRODUCTION, load_secret_key
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-ENV = os.getenv("ENV", "development").lower()
-IS_PRODUCTION = ENV in {"production", "prod"}
-_DEFAULT_SECRET_FALLBACK = "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION"
-
-
-def _load_secret_key() -> str:
-    configured_secret = os.getenv("SECRET_KEY", "").strip()
-    if configured_secret:
-        return configured_secret
-
-    if IS_PRODUCTION:
-        raise RuntimeError("SECRET_KEY must be configured in production.")
-
-    logger.warning("SECRET_KEY is not set; using development fallback secret.")
-    return _DEFAULT_SECRET_FALLBACK
-
-
-SECRET = _load_secret_key()
+# The two auth identities stay separate; the rule about when a missing
+# SECRET_KEY is acceptable does not. This block used to be copied character for
+# character into both services, so a fix to one would silently leave the other
+# signing tokens with the development fallback.
+SECRET = load_secret_key(logger)
 
 class UserManager(UUIDIDMixin, BaseUserManager[User,uuid.UUID]):
     reset_password_token_secret = SECRET

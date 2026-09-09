@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from typing import Optional
 
@@ -17,28 +16,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.models.companyModel import Company
 from app.models.companyRecruiterModel import CompanyRecruiter, get_company_recruiter_db
+from app.config import IS_PRODUCTION, load_secret_key
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-ENV = os.getenv("ENV", "development").lower()
-IS_PRODUCTION = ENV in {"production", "prod"}
-_DEFAULT_SECRET_FALLBACK = "SECRET_RANDOM_STRING_CHANGE_IN_PRODUCTION"
-
-
-def _load_secret_key() -> str:
-    configured_secret = os.getenv("SECRET_KEY", "").strip()
-    if configured_secret:
-        return configured_secret
-
-    if IS_PRODUCTION:
-        raise RuntimeError("SECRET_KEY must be configured in production.")
-
-    logger.warning("SECRET_KEY is not set; using development fallback secret.")
-    return _DEFAULT_SECRET_FALLBACK
-
-
-SECRET = _load_secret_key()
+# The two auth identities stay separate; the rule about when a missing
+# SECRET_KEY is acceptable does not. This block used to be copied character for
+# character into both services, so a fix to one would silently leave the other
+# signing tokens with the development fallback.
+SECRET = load_secret_key(logger)
 
 
 class CompanyRecruiterManager(UUIDIDMixin, BaseUserManager[CompanyRecruiter, uuid.UUID]):
