@@ -19,6 +19,12 @@ from typing import Dict, List
 from uuid import UUID
 import logging
 from app.services.jobs.interviewService import InterviewService
+from app.core.errors import (
+    CODE_COMPANY_DASHBOARD,
+    CODE_DASHBOARD_STATS,
+    CODE_STUDENT_DASHBOARD,
+    server_failure,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +59,18 @@ async def get_company_dashboard(
         }
         logger.info(f"Company dashboard data fetched successfully for company {company.id}")
         return dashboard_data
-    except Exception as e:
-        logger.error(f"Error fetching company dashboard for company {company.id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error fetching company dashboard data: {str(e)}")
+    except Exception as exc:
+        # The exception text used to go straight into the public body, and the
+        # log line interpolated it unredacted. A driver or storage error carries
+        # the DSN, the SQL and its bound parameters.
+        raise await server_failure(
+            exc,
+            logger=logger,
+            code=CODE_COMPANY_DASHBOARD,
+            message="We could not load the company dashboard right now.",
+            session=session,
+            context=f"company_id={company.id}",
+        )
 
 
 @router.get("/students_dashboard", response_model=Dict)
@@ -77,9 +92,15 @@ async def get_students_dashboard(
         dashboard_data = await DashboardService.get_student_dashboard(user.id, session)
         logger.info(f"Dashboard data fetched successfully for user {user.id}")
         return dashboard_data
-    except Exception as e:
-        logger.error(f"Error fetching dashboard data for user {user.id}: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error fetching dashboard data: {str(e)}")
+    except Exception as exc:
+        raise await server_failure(
+            exc,
+            logger=logger,
+            code=CODE_STUDENT_DASHBOARD,
+            message="We could not load your dashboard right now.",
+            session=session,
+            context=f"user_id={user.id}",
+        )
 
 
 @router.get("/dashboard/stats", response_model=Dict)
@@ -96,8 +117,15 @@ async def get_dashboard_stats(
     try:
         dashboard_data = await DashboardService.get_user_dashboard_data(user.id, session)
         return dashboard_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching dashboard data: {str(e)}")
+    except Exception as exc:
+        raise await server_failure(
+            exc,
+            logger=logger,
+            code=CODE_DASHBOARD_STATS,
+            message="We could not load your dashboard statistics right now.",
+            session=session,
+            context=f"user_id={user.id}",
+        )
 
 
 @router.post("/applications", response_model=ApplicationRead)

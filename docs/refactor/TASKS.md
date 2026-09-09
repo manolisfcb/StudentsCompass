@@ -103,7 +103,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | COMPLETED | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | COMPLETED | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
-| TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
+| TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | COMPLETED | TASK-011 | TASK-030 |
 | TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
 | TASK-035 | Capturar OpenAPI, fixtures y baseline visual de las pantallas actuales | HIGH | PHASE-M0 | COMPLETED | TASK-034 | TASK-036 |
@@ -5692,7 +5692,7 @@ uv run --project backend --directory backend ruff check .
 
 ## TASK-032 — Extender el mapeo de errores públicos a las rutas restantes
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-3
 Category: Security / Bug Fix
@@ -5755,11 +5755,11 @@ Reutilizar el patrón ya integrado en `app/routes/resourceRoute.py` y `app/route
 
 ### Acceptance Criteria
 
-- [ ] Ninguna de las dos rutas compone `detail` con texto de excepción.
-- [ ] Excepción simulada con marcador sensible no aparece en cuerpo ni en log público.
-- [ ] 2xx y 4xx existentes conservan contrato.
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Ninguna de las dos rutas compone `detail` con texto de excepción.
+- [x] Excepción simulada con marcador sensible no aparece en cuerpo ni en log público.
+- [x] 2xx y 4xx existentes conservan contrato.
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -5776,6 +5776,84 @@ Performance: LOW
 Maintainability: MEDIUM
 Cost: LOW
 Risk: LOW
+
+### Completion Notes
+
+**Por qué se hizo aquí y no se dejó a TASK-040.** La nota de reconciliación dice que TASK-040
+absorbe este trabajo «para no normalizar las mismas rutas dos veces», y pide coordinar antes de
+empezar por separado. Se comprobó el estado real: TASK-040 sigue en TODO y nadie la está
+haciendo, y el defecto seguía vivo — cuatro sitios componiendo el cuerpo público con
+`str(e)`. Es un defecto de **seguridad HIGH** y dejarlo abierto a la espera de una ficha que
+nadie ha empezado es peor que corregirlo con el helper que ya existe.
+
+El coste de la coordinación es bajo y está acotado: TASK-040 no tiene que rehacer nada, solo
+añadir `request_id` a la forma de la respuesta. Los cuatro códigos nuevos
+(`company_dashboard_unavailable`, `student_dashboard_unavailable`,
+`dashboard_stats_unavailable`, `job_search_unavailable`) son estables y sobreviven ese cambio.
+
+**Los cuatro sitios, todos Bug Fix declarados:**
+
+| Ruta | Antes | Ahora |
+| --- | --- | --- |
+| `GET /company_dashboard` | `detail=f"...: {str(e)}"` **y** log sin redactar | `server_failure(...)` con `CODE_COMPANY_DASHBOARD` |
+| `GET /students_dashboard` | ídem, log sin redactar | `CODE_STUDENT_DASHBOARD` |
+| `GET /dashboard/stats` | `detail=f"...: {str(e)}"` | `CODE_DASHBOARD_STATS` |
+| `POST /jobs/search` | `detail=f"Job search failed: {str(e)}"` | `CODE_JOB_SEARCH` |
+
+Dos de ellas además **registraban la causa sin redactar**, que es la mitad menos visible del
+defecto: aunque el cuerpo público se hubiera arreglado, el secreto seguía yendo al log en
+claro. `server_failure` lo redacta y lo indexa bajo la misma referencia que ve el llamante.
+
+No se creó ningún helper nuevo ni se tocó la heurística de mensajes, que estaba fuera de Scope.
+Se añadió `session=` en las cuatro para que un fallo a mitad de transacción no deje la sesión
+inválida para lo que venga después.
+
+**Evidencia del antes.** Con las dos rutas anteriores, cuatro de los cinco tests nuevos fallan
+con `KeyError: 'X-Error-Code'`, y el log capturado por el propio test muestra lo que se
+filtraba:
+
+```
+ERROR app.routes.dashboardRoute: Error fetching dashboard data for user 0b0209a4-...:
+(psycopg2.OperationalError) connection to postgresql://app:sup3r-s3cret-marker@10.0.0.4:5432/prod
+failed [SQL: SELECT users.hashed_password FROM users WHERE users.email = $1]
+password=sup3r-s3cret-marker file=/srv/app/secrets/service_account.json
+```
+
+Contraseña, host, base, SQL y ruta del fichero de credenciales — en el log y en el cuerpo de la
+respuesta 500.
+
+**Tests.** `TestDashboardAndSearchDoNotEchoExceptions` en
+`backend/tests/test_error_redaction.py` (5 casos nuevos), reutilizando el
+`SENSITIVE_EXCEPTION_TEXT` y el `assert_no_secret` que TASK-011 dejó: las cuatro rutas
+devuelven 500 con su código estable y sin secreto ni en el cuerpo ni en el log, y la referencia
+del cuerpo aparece en el log para poder unirlos. El quinto fija que **el camino correcto no
+cambia**: `GET /dashboard/stats` sigue devolviendo 200 con sus tres claves, que es el límite
+del Bug Fix.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_error_redaction.py
+# 30 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 598 passed, 98 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 102 passed
+
+uv run --project backend --directory backend ruff check .
+# All checks passed!
+```
+
+**Límites de la validación.** No se ejecutó la lane PostgreSQL por necesidad de esta ficha —no
+toca schema ni migraciones— pero se corrió igualmente. Sin smoke de navegador: solo cambia el
+cuerpo de respuestas 500, y ningún cliente legacy ramifica sobre ese texto (lo que sí hace es
+mostrarlo, que era precisamente el problema). No se hicieron llamadas pagadas. **Queda para
+TASK-040** añadir `request_id` a la forma de la respuesta y extender el modelo a las rutas que
+hoy no fallan con `str(e)` pero tampoco usan el helper.
+
 
 ## TASK-033 — Fijar toolchains y congelar la baseline de la migración
 

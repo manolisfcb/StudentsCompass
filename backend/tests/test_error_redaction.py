@@ -16,6 +16,10 @@ import sqlalchemy as sa
 from httpx import AsyncClient
 
 from app.core.errors import (
+    CODE_COMPANY_DASHBOARD,
+    CODE_DASHBOARD_STATS,
+    CODE_JOB_SEARCH,
+    CODE_STUDENT_DASHBOARD,
     CODE_ADMIN_RESOURCE_INVALID,
     CODE_ADMIN_RESOURCE_UPLOAD,
     CODE_QUESTIONNAIRE_PROFILE,
@@ -366,3 +370,96 @@ class TestAdminErrorMapping:
         assert response.status_code == 500
         assert response.headers["X-Error-Code"] == CODE_ADMIN_RESOURCE_UPLOAD
         assert_no_secret(response, caplog)
+
+
+class TestDashboardAndSearchDoNotEchoExceptions:
+    """The four routes TASK-011 left outside its Scope, closed by TASK-032.
+
+    They answered ``500`` with ``detail=f"...: {str(e)}"``, so a driver or
+    storage exception put the DSN, the SQL and its bound parameters in the
+    public body — the same defect F-09/F-10 describe for the routes TASK-011
+    already fixed. Two of them also logged the cause unredacted.
+    """
+
+    @pytest.mark.asyncio
+    async def test_student_dashboard(self, client: AsyncClient, auth_headers, monkeypatch, caplog):
+        caplog.set_level(logging.ERROR)
+
+        async def boom(user_id, session):
+            raise RuntimeError(SENSITIVE_EXCEPTION_TEXT)
+
+        monkeypatch.setattr(
+            "app.services.applications.dashboardService.DashboardService.get_student_dashboard",
+            boom,
+        )
+
+        response = await client.get("/api/v1/students_dashboard", headers=auth_headers)
+
+        assert response.status_code == 500
+        assert response.headers["X-Error-Code"] == CODE_STUDENT_DASHBOARD
+        assert_no_secret(response, caplog)
+
+    @pytest.mark.asyncio
+    async def test_dashboard_stats(self, client: AsyncClient, auth_headers, monkeypatch, caplog):
+        caplog.set_level(logging.ERROR)
+
+        async def boom(user_id, session):
+            raise RuntimeError(SENSITIVE_EXCEPTION_TEXT)
+
+        monkeypatch.setattr(
+            "app.services.applications.dashboardService.DashboardService.get_user_dashboard_data",
+            boom,
+        )
+
+        response = await client.get("/api/v1/dashboard/stats", headers=auth_headers)
+
+        assert response.status_code == 500
+        assert response.headers["X-Error-Code"] == CODE_DASHBOARD_STATS
+        assert_no_secret(response, caplog)
+
+    @pytest.mark.asyncio
+    async def test_company_dashboard(
+        self, client: AsyncClient, company_auth_headers, monkeypatch, caplog
+    ):
+        caplog.set_level(logging.ERROR)
+
+        async def boom(company_id, session):
+            raise RuntimeError(SENSITIVE_EXCEPTION_TEXT)
+
+        monkeypatch.setattr(
+            "app.services.applications.dashboardService.DashboardService.get_company_dashboard",
+            boom,
+        )
+
+        response = await client.get("/api/v1/company_dashboard", headers=company_auth_headers)
+
+        assert response.status_code == 500
+        assert response.headers["X-Error-Code"] == CODE_COMPANY_DASHBOARD
+        assert_no_secret(response, caplog)
+
+    @pytest.mark.asyncio
+    async def test_job_search(self, client: AsyncClient, auth_headers, monkeypatch, caplog):
+        caplog.set_level(logging.ERROR)
+
+        async def boom(self, query):
+            raise RuntimeError(SENSITIVE_EXCEPTION_TEXT)
+
+        monkeypatch.setattr("app.services.jobs.jobSearchService.JobSearchService.search", boom)
+
+        response = await client.post(
+            "/api/v1/jobs/search",
+            headers=auth_headers,
+            json={"keywords": "python", "location": "Toronto", "limit": 10, "remote": False},
+        )
+
+        assert response.status_code == 500
+        assert response.headers["X-Error-Code"] == CODE_JOB_SEARCH
+        assert_no_secret(response, caplog)
+
+    @pytest.mark.asyncio
+    async def test_a_working_dashboard_is_untouched(self, client: AsyncClient, auth_headers):
+        """The Bug Fix is only the failing path; a 2xx keeps its contract."""
+        response = await client.get("/api/v1/dashboard/stats", headers=auth_headers)
+
+        assert response.status_code == 200
+        assert set(response.json()) == {"stats", "progress", "recent_applications"}

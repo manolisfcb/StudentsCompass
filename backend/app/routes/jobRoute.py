@@ -24,6 +24,7 @@ from app.services.ai.cvAnalysisService import CVAnalysisService, LLM_GENERAL_FAI
 from app.services.jobs.jobSearchService import JobSearchQuery, JobSearchService
 from app.services.ai.aiRequestRateLimitService import ai_analysis_rate_limiter
 from app.models.companyRecruiterModel import CompanyRecruiter
+from app.core.errors import CODE_JOB_SEARCH, server_failure
 
 LOGGER = logging.getLogger(__name__)
 
@@ -128,9 +129,17 @@ async def search_jobs(
                 remote=request.remote,
             )
         )
-    except Exception as e:
-        LOGGER.exception("Job search failed")
-        raise HTTPException(status_code=500, detail=f"Job search failed: {str(e)}")
+    except Exception as exc:
+        # The provider half already degrades to an empty list (TASK-020); this
+        # is for the internal query failing, and it must not describe the
+        # database to the caller.
+        raise await server_failure(
+            exc,
+            logger=LOGGER,
+            code=CODE_JOB_SEARCH,
+            message="We could not run that job search right now.",
+            session=session,
+        )
 
 
 @router.get("/companies/me/job-postings", response_model=List[JobBoardPostingRead])
