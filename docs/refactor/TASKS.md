@@ -102,7 +102,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | COMPLETED | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
-| TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
+| TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | COMPLETED | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
 | TASK-032 | Extender el mapeo de errores públicos a las rutas restantes | HIGH | PHASE-3 | TODO | TASK-011 | TASK-030 |
 | TASK-033 | Fijar toolchains y congelar la baseline de la migración | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-034, TASK-036 |
 | TASK-034 | Inventariar rutas y construir la matriz legacy → REST | HIGH | PHASE-M0 | COMPLETED | NONE | TASK-033, TASK-036 |
@@ -139,6 +139,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-065 | Corregir el test de agregados diarios que compara fecha local con UTC | LOW | PHASE-0 | TODO | TASK-001 | TASK-064 |
 | TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | TODO | TASK-029 | TASK-067 |
 | TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
+| TASK-068 | Retirar el patrón create_all/drop_all por test de la lane PostgreSQL | LOW | PHASE-0 | TODO | TASK-031 | NONE |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -5481,7 +5482,7 @@ asuma que ese campo nunca es nulo tendría que tratarlo, y el campo
 
 ## TASK-031 — Verificar compatibilidad integrada y ensayar rollout/restore
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-6
 Category: Testing
@@ -5554,12 +5555,12 @@ Grupo K; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Verificar compatibilidad integrada y ensayar rollout/restore.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Verificar compatibilidad integrada y ensayar rollout/restore.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -5578,6 +5579,116 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: HIGH
+
+### Completion Notes
+
+**El ensayo.** Cada migración de este bloque se probó por separado en su propia ficha. Lo que
+ninguna probaba es lo que hace un despliegue: coger una base **que ya tiene datos**, recorrer
+la cadena entera hasta head, y seguir teniéndolos — y, si sale mal, poder devolverla a su
+sitio. `backend/tests/integration/test_rollout_rehearsal_pg.py` (nuevo, 8 casos, lane
+PostgreSQL) hace exactamente eso:
+
+| Caso | Qué demuestra |
+| --- | --- |
+| Datos sembrados en la revisión anterior al bloque, upgrade a head | Los conteos de las 6 tablas tocadas no cambian; el mensaje sembrado sigue ahí; las columnas nuevas existen y están a NULL para las filas previas, que es el estado «sin provenance demostrable» documentado en TASK-021 |
+| Esquema tras la cadena vs modelos | `compare_metadata` sin diferencias |
+| Expand-only | Ninguna de las 4 revisiones llama a `drop_column`, `drop_table`, `alter_column` ni `rename_table`. **Leído del fuente, no ejecutado**: lo que importa es que la operación destructiva no esté ahí, porque durante un despliegue la versión anterior de la aplicación corre contra el esquema ya migrado |
+| Cada revisión tiene `downgrade()` | Y no es un `pass` |
+| Downgrade hasta antes del bloque y upgrade otra vez | El esquema vuelve idéntico |
+| **Dump antes, despliegue, borrado, restore** | `pg_dump -Fc` / `pg_restore` contra el contenedor de la lane: se borra `messages` tras el upgrade, se restaura el dump, vuelven los datos, y la base restaurada se puede llevar otra vez a head sin diferencias |
+| Paridad de contrato vs baseline TASK-035 | Ninguna ruta desaparece sin que una ficha lo diga |
+| Métodos de cada ruta superviviente | Ninguna pierde un verbo en silencio |
+
+**Paridad de contratos.** Contra la baseline OpenAPI archivada por TASK-035, antes de que nada
+de esto empezara: 144 → 147 paths, 168 → 171 operaciones.
+
+- **2 rutas retiradas**, ambas de **TASK-042** (no de este bloque): `POST /auth/jwt/login` y
+  `POST /auth/jwt/logout`, sustituidas por los endpoints de sesión por actor.
+- **5 añadidas**: cuatro de TASK-042 y una de **TASK-024**,
+  `/api/v1/conversations/{id}/messages/page`.
+
+De las catorce fichas de este bloque, la superficie de API creció en **una** ruta y no perdió
+ninguna. La comprobación queda como test permanente con las diferencias declaradas escritas:
+una retirada *no declarada* falla.
+
+**El defecto que el ensayo destapó, y que corrigió.** La lane PostgreSQL **era inestable**, y
+lo era de verdad: el mismo fichero dio `18 passed`, luego `4 failed / 8 passed / 6 errors`,
+luego `1 failed / 16 passed / 1 error` en tres ejecuciones idénticas. La causa, diagnosticada:
+once módulos construyen el esquema con `metadata.create_all` y lo destruyen con
+`metadata.drop_all` por test, y varios provocan un `IntegrityError` a propósito. Una
+transacción abortada retiene row locks; `drop_all` necesita un `AccessExclusiveLock` por tabla,
+se bloqueaba contra ellas y **dejaba tablas atrás en silencio**, y el `create_all` del test
+siguiente moría con «relation already exists».
+
+Corregido en un solo sitio: el fixture `pg_engine` de la lane entrega ahora un esquema vacío
+(`reset_public_schema`), así que **un test no puede heredar lo que el anterior no limpió**.
+Resetear en *setup* en vez de confiar en el teardown es lo que lo hace determinista. Dos
+detalles que costaron encontrar y quedan escritos en el código: hay que soltar las conexiones
+del propio pool antes de `DROP SCHEMA` o hace deadlock en vez de esperar, y la extensión
+`vector` hay que comprobarla en el catálogo porque `CREATE EXTENSION IF NOT EXISTS` **sí**
+puede lanzar una violación de unicidad sobre `pg_extension`.
+
+Resultado: **102 de 102, cinco veces seguidas**. Antes: 94 en el mejor caso y resultados
+distintos en cada corrida. La limpieza que queda —quitar los `drop_all` que ya no hacen
+falta— es **TASK-068**, creada aquí en vez de ampliar esta ficha.
+
+**Un error mío en el diagnóstico, escrito porque cambia lo que dicen otras notas.** Llegué a
+concluir dos veces que la inestabilidad la causaban mis cambios de TASK-029. No era así: mi
+script de reseteo hacía `DROP DATABASE` ocultando la salida, y `DROP DATABASE` falla si queda
+una conexión abierta, así que no reseteaba nada. La comparación A/B con la que «demostré» la
+culpa estaba viciada porque reseteaba dentro del mismo comando. Corrijo también lo que escribí
+en TASK-027: allí atribuí `test_concurrent_increments_are_all_counted` al trabajo en vuelo de
+TASK-041; era **TASK-065** (fecha local frente a UTC), y hoy 2026-09-09 pasa porque la fecha
+local ya alcanzó a UTC — que es la confirmación de aquel diagnóstico.
+
+**Findings: todos con cierre verificado o ficha propia.** De este bloque salieron cinco
+hallazgos fuera de Scope y ninguno se corrigió lateralmente:
+
+| Ficha | Hallazgo | Estado |
+| --- | --- | --- |
+| TASK-064 | Afinidad numérica de SQLite sobre UUIDs: la intermitencia que TASK-022 dejó anotada | TODO, diagnosticada y reproducida |
+| TASK-065 | El test de agregados compara fecha local con UTC | TODO; **hoy pasa**, y eso confirma el diagnóstico |
+| TASK-066 | 58 paquetes de divergencia entre `requirements.txt` y `uv.lock` | TODO, medida |
+| TASK-067 | 74 advisories vigentes y el `continue-on-error` de `deps-audit` | TODO |
+| TASK-068 | El `drop_all` por test que ya no hace falta | TODO |
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 593 passed, 98 skipped
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider -m browser tests
+# 20 passed, 671 deselected   (lane de navegador con Chromium real)
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 102 passed   (x5, determinista)
+
+uv run --project backend --directory backend ruff check .
+# All checks passed!
+```
+
+**Límites de la validación, y no son menores.**
+
+- **No se ensayó ningún rollout de producción, y no se afirma ninguno.** El ensayo es sobre la
+  base desechable de la lane, con proveedores falsos. Lo que sostiene es que la cadena de
+  migraciones preserva datos, que es expand-only y que un dump se restaura — no que el
+  despliegue real vaya a comportarse igual, porque no hay acceso a producción ni a sus
+  volúmenes.
+- **El «código viejo contra esquema expandido» se comprueba por propiedad, no ejecutándolo.**
+  Se verifica que ninguna migración del bloque contiene una operación destructiva, que es la
+  condición que hace segura esa ventana. Ejecutar de verdad la versión anterior de la
+  aplicación contra el esquema nuevo exigiría dos árboles y dos entornos; queda para
+  **TASK-058**, que hace este mismo ejercicio sobre la topología de Cloud Run y depende de esta
+  ficha.
+- **Los flujos de producto se verifican por la suite, no por un recorrido manual.** Estudiante,
+  recruiter, admin, recursos, comunidad y career lab están cubiertos por los 593 tests rápidos
+  y los 102 de integración, incluidos los de contrato de Capstone que TASK-023 dejó. No se hizo
+  un paseo manual por la aplicación levantada.
+- Sin llamadas pagadas ni secretos: los dos sitios que hablan con Gemini se instrumentaron en
+  TASK-028 pero no se invocan; el proveedor de embeddings de los tests es `hash`.
+
 
 ## TASK-032 — Extender el mapeo de errores públicos a las rutas restantes
 
@@ -10227,4 +10338,92 @@ Performance: LOW
 Maintainability: MEDIUM
 Cost: LOW
 Risk: HIGH
+
+## TASK-068 — Retirar el patrón create_all/drop_all por test de la lane PostgreSQL
+
+Status: TODO
+Priority: LOW
+Phase: PHASE-0
+Category: Testing
+
+### Objective
+
+Que los once módulos de `tests/integration/` dejen de construir y destruir el esquema entero por test, ahora que `pg_engine` ya lo entrega vacío.
+
+### Problem
+
+Creada por TASK-031, que **ya corrigió la inestabilidad**; esto es la limpieza que queda.
+
+Once módulos construyen el esquema con `metadata.create_all` y lo destruyen con
+`metadata.drop_all` en su propio fixture `schema`. Varios provocan un `IntegrityError` a
+propósito, y una transacción abortada sigue reteniendo row locks: `drop_all`, que necesita un
+`AccessExclusiveLock` por tabla, se bloqueaba contra ellas y dejaba tablas atrás en silencio.
+El `create_all` del test siguiente fallaba entonces con «relation already exists», y la lane
+daba resultados distintos en corridas idénticas — se observaron `18 passed`,
+`4 failed / 8 passed / 6 errors` y `1 failed / 16 passed / 1 error` en tres ejecuciones
+seguidas del mismo fichero.
+
+TASK-031 lo resolvió reseteando el esquema en el fixture `pg_engine` (`reset_public_schema`),
+de modo que ningún test puede heredar lo que el anterior no limpió. La lane pasa
+**102 de 102, cinco veces seguidas**.
+
+Lo que queda es que los `drop_all` de los once módulos ya no hacen falta y siguen costando
+tiempo: cada uno destruye ~40 tablas que el siguiente `pg_engine` iba a destruir igualmente.
+
+### Evidence / Location
+
+- `tests/integration/conftest.py`, `reset_public_schema` y el fixture `pg_engine`
+  (Confidence: HIGH).
+- Los once módulos con `metadata.drop_all`: `test_ai_ledger_pg`,
+  `test_analytics_constraints_pg`, `test_application_transitions_pg`,
+  `test_community_member_count_pg`, `test_cv_analysis_queue_pg`,
+  `test_embedding_fingerprint_pg`, `test_interview_selection_pg`,
+  `test_job_skill_uniqueness_pg`, `test_message_pagination_pg`, `test_pg_schema_and_vector`,
+  `test_resource_file_authorization_pg`.
+
+### Desired State
+
+Cada módulo declara solo lo que necesita crear; la limpieza es responsabilidad de la lane.
+
+### Proposed Solution
+
+Quitar el `drop_all` de cada fixture `schema` y dejar únicamente `create_all`, como ya hace
+`test_analytics_constraints_pg` tras TASK-031. Medir el tiempo de la lane antes y después: si
+no baja de forma apreciable, decirlo y cerrar igualmente, porque el valor es que haya una sola
+definición de «limpiar», no la velocidad.
+
+**No** convertir los fixtures en session-scoped: la lane depende de que cada test empiece
+aislado, y compartir esquema entre tests reintroduciría exactamente el acoplamiento que
+TASK-031 quitó.
+
+### Scope
+
+IN SCOPE:
+
+- Los fixtures `schema` de los once módulos de `tests/integration/`.
+
+OUT OF SCOPE:
+
+- `tests/conftest.py` y la lane SQLite.
+- `test_migrations.py`, que gestiona el esquema a propósito como parte de lo que prueba.
+
+### Dependencies
+
+Depends on: TASK-031
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+La lane pasa entera cinco veces seguidas; tiempo antes y después registrado.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: MEDIUM
+Cost: LOW
+Risk: LOW
 

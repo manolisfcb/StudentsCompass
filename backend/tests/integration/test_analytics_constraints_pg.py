@@ -35,13 +35,13 @@ def _models():
 
 @pytest.fixture
 async def schema(pg_engine, _models):
+    """The mapped schema. ``pg_engine`` hands it over empty (see the lane's
+    ``reset_public_schema``), which matters here: every test in this module
+    provokes an ``IntegrityError`` on purpose, and an aborted transaction used
+    to block the teardown's ``drop_all`` and leave tables behind."""
     async with pg_engine.begin() as conn:
         await conn.run_sync(_models.metadata.create_all)
-    try:
-        yield
-    finally:
-        async with pg_engine.begin() as conn:
-            await conn.run_sync(_models.metadata.drop_all)
+    yield
 
 
 def _migration():

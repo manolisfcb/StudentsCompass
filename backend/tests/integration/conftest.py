@@ -62,15 +62,47 @@ def redis_url() -> str:
     return url
 
 
+async def reset_public_schema(engine) -> None:
+    """Drop and rebuild ``public``, leaving the ``vector`` extension in place.
+
+    Added by TASK-031. Eleven modules in this lane build the schema with
+    ``metadata.create_all`` and tear it down with ``metadata.drop_all``, and
+    several of them provoke an ``IntegrityError`` on purpose. An aborted
+    transaction still holds row locks, so ``drop_all`` — which needs an
+    ``AccessExclusiveLock`` per table — blocked against them and silently left
+    tables behind; the next test's ``create_all`` then failed with "relation
+    already exists". The lane produced different results on identical runs.
+
+    Resetting here means a test cannot inherit what the previous one failed to
+    clean up, whatever that was. ``DROP SCHEMA ... CASCADE`` also ignores table
+    order and any constraint a test dropped deliberately.
+    """
+    # Release this engine's own connections first: dropping the schema while the
+    # pool still holds one deadlocks rather than waiting.
+    await engine.dispose()
+    async with engine.begin() as conn:
+        await conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+    async with engine.begin() as conn:
+        # Checked against the catalogue rather than IF NOT EXISTS: dropping the
+        # schema removes the extension's objects, and IF NOT EXISTS can still
+        # raise a unique violation on pg_extension when another connection
+        # re-registered it in between.
+        present = await conn.scalar(
+            text("SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector'")
+        )
+        if not int(present or 0):
+            await conn.execute(text("CREATE EXTENSION vector"))
+
+
 @pytest_asyncio.fixture
 async def pg_engine(postgres_url: str):
-    """A PostgreSQL engine with pgvector available.
+    """A PostgreSQL engine with pgvector available, over an empty schema.
 
     NullPool because pytest-asyncio gives each test its own event loop.
     """
     engine = create_async_engine(postgres_url, poolclass=NullPool)
-    async with engine.begin() as conn:
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    await reset_public_schema(engine)
     try:
         yield engine
     finally:
