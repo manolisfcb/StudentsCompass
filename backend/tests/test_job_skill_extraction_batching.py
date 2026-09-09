@@ -27,6 +27,7 @@ from app.services.analytics.capstoneAnalyticsSeedService import (
     seed_capstone_analytics_minimum,
 )
 from app.services.analytics.capstoneAnalyticsService import CapstoneAnalyticsService
+from app.services.analytics.jobSkillExtractionService import JobSkillExtractionService
 from tests.harness import count_queries
 
 REQUIREMENTS = "Strong SQL, Python, Excel, Power BI, and communication skills."
@@ -103,7 +104,9 @@ async def test_the_sweep_commits_per_batch_not_per_posting(
     with count_queries(test_engine) as counter, _count_commits(test_engine) as commits:
         summary = await service.extract_job_skills_for_open_postings(limit=posting_count)
 
-    expected_batches = -(-posting_count // service.JOB_SKILL_EXTRACTION_BATCH_SIZE)
+    # The constant belongs to the service that owns the sweep. TASK-023 moved
+    # it there with the code; the facade delegates and holds no copy.
+    expected_batches = -(-posting_count // JobSkillExtractionService.JOB_SKILL_EXTRACTION_BATCH_SIZE)
     assert summary["jobs_scanned"] == posting_count
     assert summary["jobs_with_matches"] == posting_count
 

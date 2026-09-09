@@ -94,7 +94,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-020 | Sacar scraper de LinkedIn del event loop | HIGH | PHASE-4 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-030 |
 | TASK-021 | Evitar regeneración de embeddings idénticos | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009, TASK-019 | TASK-006, TASK-012, TASK-015 |
 | TASK-022 | Ejecutar CP-SAT fuera del loop con concurrencia acotada | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-027 |
-| TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | TODO | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
+| TASK-023 | Dividir Capstone conservando facade y contratos | HIGH | PHASE-5 | COMPLETED | TASK-001, TASK-013, TASK-019, TASK-021, TASK-022, TASK-027 | TASK-011 |
 | TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
 | TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-018 |
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
@@ -135,6 +135,8 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | TODO | TASK-024 | TASK-062 |
 | TASK-062 | Paginar el listado de candidaturas del estudiante | MEDIUM | PHASE-4 | TODO | TASK-024, TASK-025 | TASK-061 |
 | TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | TODO | TASK-018, TASK-025 | TASK-061, TASK-062 |
+| TASK-064 | Estabilizar la lane SQLite frente a la afinidad numérica de UUID | MEDIUM | PHASE-0 | TODO | TASK-001 | TASK-065 |
+| TASK-065 | Corregir el test de agregados diarios que compara fecha local con UTC | LOW | PHASE-0 | TODO | TASK-001 | TASK-064 |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -3803,13 +3805,16 @@ corridas completas consecutivas limpias y 5 corridas aisladas de cada test, toda
 dos apariciones fueron la primera corrida tras editar un fuente. Se descartó que la lane use
 un fichero compartido (`TEST_DATABASE_URL` es `sqlite+aiosqlite:///:memory:` con `StaticPool`)
 y que las funciones SQLite registradas en `conftest` tengan que ver (`btrim` y `char_length`,
-ninguna relacionada con UUID). Queda anotado aquí en vez de darse por cerrado; merece una
-ficha propia si vuelve a aparecer.
+ninguna relacionada con UUID). **Diagnosticado después, durante TASK-023, y con ficha propia: TASK-064.**
+SQLite aplica afinidad NUMERIC a `CHAR(32)`, así que un UUID cuyo hex parsea como número vuelve
+como `int` o `float` y `uuid.UUID(hex=<número>)` revienta. El `'float'` de estas dos apariciones
+es el caso `<dígitos>e<dígitos>`, notación científica. No afecta a producción: PostgreSQL tiene
+tipo `uuid` nativo.
 
 
 ## TASK-023 — Dividir Capstone conservando facade y contratos
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-5
 Category: Architecture
@@ -3879,12 +3884,12 @@ Grupo F; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Dividir Capstone conservando facade y contratos.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Dividir Capstone conservando facade y contratos.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -3903,6 +3908,131 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+`CapstoneAnalyticsService` tenía 1499 líneas y las ocho responsabilidades que F-19 enumera.
+Ahora tiene **176**, y de sus 19 métodos **solo `__init__` tiene cuerpo propio**: los otros 18
+son una sola línea de delegación. Eso está fijado por un test, no confiado a la disciplina:
+`test_the_facade_holds_no_implementation_of_its_own` recorre el AST y falla si alguno crece.
+
+| Módulo | Líneas | Responsabilidad |
+| --- | --- | --- |
+| `capstoneAnalyticsService` (fachada) | 176 | compone y delega |
+| `capstoneCatalogService` | 321 | salud del catálogo, conteos, roles soportados |
+| `resumeSkillReviewService` | 238 | leer y adjudicar las skills de un CV |
+| `resumeSkillExtractionService` | 165 | leer un CV y registrar sus skills |
+| `jobSkillExtractionService` | 253 | leer ofertas y registrar sus skills |
+| `capstoneGapService` | 664 | coordinador de gap y optimización |
+| `jobPostingText` | 23 | el texto de una oferta, como una cadena |
+
+El total sube de 1499 a 1840 líneas: son cabeceras de módulo, imports y docstrings. Ningún
+cuerpo de método se reescribió — se movieron **verbatim**, extraídos por AST y no a mano, y las
+únicas ediciones sobre ellos fueron sustituir `self.x(` por `self.review.x(` donde el
+colaborador cambió de sitio.
+
+**Orden de extracción**, el que pide la ficha: catálogo → revisión → coordinador de
+gap/optimización. Añadí dos que no estaban nombradas:
+
+- **`jobSkillExtractionService`**, porque dejar 200 líneas de implementación dentro de algo
+  llamado «fachada» contradice «facade delegadora», y F-19 nombra la extracción entre las ocho
+  responsabilidades. Queda dicho aquí en vez de pasar inadvertido.
+- **`jobPostingText`**, una función de módulo, porque dos cosas sin relación la necesitan —la
+  extracción de ofertas y el contexto de rol del gap— y así ninguna tiene que importar la otra.
+
+**Sin ciclos, y comprobado.** `test_the_split_modules_form_a_directed_acyclic_graph` construye
+el grafo de imports desde el AST y recorre en profundidad buscando ciclos;
+`test_no_capstone_service_imports_a_route` prohíbe la dependencia router→servicio→router que la
+ficha señala. El grafo resultante:
+
+```
+jobPostingText, catalog, review   →  (nada)
+extraction (CV)                   →  review
+extraction (jobs)                 →  jobPostingText
+gap                               →  review, extraction (CV), jobPostingText
+fachada                           →  todos
+```
+
+Nadie importa la fachada: es una hoja en la dirección contraria, que es lo que la hace
+sustituible.
+
+**Paridad de payloads: idéntica.** Se construyó primero
+`backend/tests/test_capstone_contract_snapshot.py`, un universo Capstone determinista (UUIDs
+fijos, fechas fijas, proveedor de embeddings `hash`, sin LLM) y se capturaron **todos** los
+payloads que las rutas pueden pedir —status, roles, calidad de catálogo, skills de oferta,
+skills de CV, revisión, gap y runs— **antes** de tocar nada. Tras la división completa, los
+13 592 bytes de snapshot son **idénticos carácter a carácter**, 12 630 tras alias de los UUIDs
+generados por el seed, que son lo único que cambia entre corridas. El alias mantiene las
+*relaciones* entre ids en la comparación: si un payload referencia la misma skill dos veces,
+las dos referencias reciben el mismo alias, así que un cambio estructural no se escaparía.
+
+El módulo de snapshot se queda en el repositorio como test de contrato: 9 casos que fijan el
+conjunto **exacto** de claves de cada payload (`==`, no `>=`), los números del gap, y las tres
+propiedades estructurales de arriba.
+
+**Determinismo, con una salvedad honesta.** La comparación empieza en la *segunda* llamada. La
+primera invocación de `analyze_gap` sincroniza el embedding del CV, así que escribe una fila y
+`resume_embeddings_count` pasa de 0 a 1. Es comportamiento preexistente, no algo que esta ficha
+haya introducido, y está documentado en el propio test en vez de disimulado.
+
+**No se tocaron** pesos, heurísticas, thresholds ni los snapshots históricos, que era la
+prohibición explícita. La única edición fuera de un movimiento verbatim está en
+`tests/test_job_skill_extraction_batching.py`, que leía `JOB_SKILL_EXTRACTION_BATCH_SIZE` de la
+fachada; la constante se fue con el código que la usa, así que el test la lee de
+`JobSkillExtractionService`. Ningún import externo cambió: fuera de estos módulos, lo único que
+se importa de `capstoneAnalyticsService` sigue siendo `CapstoneAnalyticsService`.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/test_capstone_contract_snapshot.py tests/test_capstone_analytics_models.py \
+    tests/test_job_skill_extraction_batching.py tests/test_capstone_skill_from_cv_text.py \
+    tests/test_career_lab_view.py
+# 54 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 566 passed, 94 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 93 passed, 1 failed — ver abajo
+
+uv run --project backend ruff check backend/app backend/tests
+# All checks passed!
+```
+
+**El fallo de la lane PostgreSQL no es de esta ficha, y se comprobó.**
+`test_concurrent_increments_are_all_counted` falla con `AttributeError: 'NoneType' object has
+no attribute 'status_change_events_count'`. Se verificó guardando **todo** el trabajo de esta
+ficha en stash y ejecutando el test contra HEAD limpio: **falla igual**. La causa está
+diagnosticada: el servicio escribe `metric_date` en UTC y el test lo lee con `date.today()`,
+que es fecha local, así que el test solo pasa mientras ambas coincidan — a las 20:27 EDT del
+día del hallazgo, `date.today()` era `2026-09-08` y `utcnow().date()` era `2026-09-09`. Queda
+como **TASK-065**. Corregí de paso una atribución equivocada que había escrito en las notas de
+TASK-027: allí di este fallo por ajeno *y* por causado por el trabajo en vuelo de TASK-041;
+lo primero es cierto, lo segundo no.
+
+**Hallazgos fuera de Scope, registrados como fichas en vez de arreglados aquí:**
+
+- **TASK-064** — la intermitencia que TASK-022 dejó anotada sin explicar queda diagnosticada.
+  SQLite aplica afinidad NUMERIC a `CHAR(32)`, así que un UUID cuyo hex parsea como número
+  vuelve como `int` o `float` y `uuid.UUID(hex=<número>)` revienta. Se reprodujo de forma
+  determinista: `uuid.UUID(int=1)` falla siempre, `uuid.UUID(hex="...e12")` falla siempre, un
+  `uuid4()` corriente pasa. El `'float'` de las dos apariciones anteriores es exactamente el
+  caso de la notación científica. Salió a la luz porque el fixture de esta ficha usaba
+  `UUID(int=n)` para ser determinista; se cambió a un prefijo con letra **y se dejó dicho en el
+  código por qué**, en vez de cambiarlo en silencio.
+- **TASK-065** — el fallo de fecha local frente a UTC de arriba.
+
+**Límites de la validación.** Sin smoke de navegador, y esta ficha dice explícitamente «Esta
+tarea solo divide backend Capstone; no edita JS»: `career_lab.js` y `jobs.js` siguen igual y su
+separación es TASK-049 y TASK-052 sobre React. No se ejecutó nada de la lane PostgreSQL por
+necesidad de esta ficha —no toca schema, locks ni migraciones— pero se corrió igualmente. No se
+hicieron llamadas pagadas: la extracción es por reglas y el proveedor de embeddings del fixture
+es `hash`. La paridad se comprueba sobre un universo sintético determinista, no sobre datos
+reales: lo que sostiene es que la división no cambió ninguna decisión del producto para esas
+entradas, no que cubra todas las entradas posibles.
 
 
 ## TASK-024 — Paginar mensajes con cursor estable y migrar inbox
@@ -9473,6 +9603,177 @@ devueltas; paridad verificada también en la lane PostgreSQL por la búsqueda so
 
 Security: LOW
 Performance: MEDIUM
+Maintainability: MEDIUM
+Cost: LOW
+Risk: LOW
+
+## TASK-064 — Estabilizar la lane SQLite frente a la afinidad numérica de UUID
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-0
+Category: Testing
+
+### Objective
+
+Que la lane SQLite deje de fallar de forma intermitente cuando un UUID generado tiene una representación hexadecimal que SQLite interpreta como número.
+
+### Problem
+
+Descubierto durante TASK-023 y diagnosticado por completo. `postgresql.UUID(as_uuid=True)` se
+almacena en SQLite como `CHAR(32)`, y SQLite aplica **afinidad NUMERIC** a ese tipo. Si los 32
+caracteres hexadecimales de un UUID parsean como número, la fila se guarda y se devuelve como
+`int` o `float`; SQLAlchemy llama entonces a `uuid.UUID(hex=<número>)` y revienta con
+`AttributeError: 'int'/'float' object has no attribute 'replace'`.
+
+Reproducción mínima, verificada:
+
+| UUID | Hex | Vuelve como | Resultado |
+| --- | --- | --- | --- |
+| `uuid.UUID(int=1)` | 32 dígitos | `int` | **falla** |
+| `uuid.UUID(hex="12345678901234567890123456789e12")` | dígitos con una `e` | `float` | **falla** |
+| `uuid.uuid4()` corriente | mezcla | `str` | ok |
+
+Con `uuid4()` la probabilidad por UUID es de aproximadamente `32 × (10/16)^31 ≈ 7e-6` (el caso
+`<dígitos>e<dígitos>`, notación científica). Los tests que generan miles de filas —el barrido de
+`test_job_skill_extraction_batching` genera unas 2 500 por corrida— lo tocan cada pocos cientos
+de ejecuciones. **Se observó dos veces en unas quince corridas completas de la suite** durante
+la sesión de TASK-018 a TASK-022, siempre con `'float'`, que es exactamente el caso de la `e`.
+
+**No afecta a producción:** PostgreSQL tiene tipo `uuid` nativo y es inmune. Es un defecto de la
+lane de tests, y su efecto es una suite que falla al azar en un test que no tiene nada que ver.
+
+### Evidence / Location
+
+- `backend/tests/conftest.py` `TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"` (Confidence: HIGH).
+- Cualquier modelo con `sqlalchemy.dialects.postgresql.UUID(as_uuid=True)`, que son todos.
+- Diagnóstico y tabla de reproducción en las Completion Notes de TASK-023.
+
+### Desired State
+
+Un UUID cualquiera sobrevive el round-trip por la lane SQLite, sea cual sea su representación
+hexadecimal.
+
+### Proposed Solution
+
+Decidir entre dos caminos y documentar cuál y por qué:
+
+1. **Un `TypeDecorator` de UUID** que se enlace a `String(36)` (con guiones, que nunca parsea
+   como número) en SQLite y a `UUID` nativo en PostgreSQL. Corrige la causa, toca todos los
+   modelos por igual y no cambia nada en producción.
+2. **Un tipo `TEXT` explícito** para la columna en la lane. Menos invasivo, pero deja el defecto
+   en el tipo.
+
+Sea cual sea, el criterio de aceptación es el mismo: un test que inserta y lee
+`uuid.UUID(int=1)` y `uuid.UUID(hex="...e12")` debe pasar. **No** vale evitar UUIDs numéricos en
+los fixtures: eso oculta el defecto en vez de corregirlo.
+
+### Scope
+
+IN SCOPE:
+
+- Tipo UUID compartido o configuración de la lane; `backend/tests/conftest.py`; test de
+  round-trip propio.
+
+OUT OF SCOPE:
+
+- Cambiar el tipo de columna en PostgreSQL o migrar datos.
+
+### Dependencies
+
+Depends on: TASK-001
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+Round-trip de `UUID(int=1)`, de un hex con `e` y de mil `uuid4()` por la lane SQLite; suite
+completa verde; sin cambios en la lane PostgreSQL.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+
+## TASK-065 — Corregir el test de agregados diarios que compara fecha local con UTC
+
+Status: TODO
+Priority: LOW
+Phase: PHASE-0
+Category: Testing
+
+### Objective
+
+Que `test_concurrent_increments_are_all_counted` deje de depender de la hora del día a la que se ejecute.
+
+### Problem
+
+Descubierto durante TASK-023. `ApplicationService._apply_daily_aggregate_delta` escribe
+`metric_date = occurred_at.date()` con `occurred_at` por defecto `datetime.utcnow()`, es decir
+**fecha UTC**. El test lee la fila con `date.today()`, que es **fecha local**. Mientras las dos
+coinciden el test pasa; en cuanto el reloj local va por detrás de UTC —en `America/New_York`, a
+partir de las 20:00— el `scalar()` devuelve `None` y el test falla con
+`AttributeError: 'NoneType' object has no attribute 'status_change_events_count'`.
+
+Verificado en el momento del hallazgo: hora local `2026-09-08 20:27 EDT`, `date.today()` =
+`2026-09-08`, `datetime.utcnow().date()` = `2026-09-09`.
+
+Es un defecto **del test**, no del servicio: la columna es deliberadamente UTC. Pero merece
+ficha propia porque hace que la lane PostgreSQL falle sola cada noche, y una suite que falla
+por la hora enseña a ignorar sus fallos.
+
+### Evidence / Location
+
+- `backend/tests/integration/test_application_transitions_pg.py:119` (Confidence: HIGH).
+- `backend/app/services/applications/applicationService.py:475` `metric_date = occurred_at.date()`.
+
+### Desired State
+
+El test compara contra la misma fecha que el servicio escribe, a cualquier hora.
+
+### Proposed Solution
+
+Sustituir `date.today()` por la fecha UTC, o —mejor— pasar un `occurred_at` explícito al
+servicio y consultar por esa misma fecha, que elimina la dependencia del reloj por completo.
+Revisar de paso si algún otro test usa `date.today()` contra una columna escrita en UTC.
+
+**No** cambiar el servicio a hora local: qué zona horaria define «un día» para un agregado de
+negocio es una decisión de producto que esta ficha no tiene evidencia para tomar. Si se quiere
+revisar, es otra ficha.
+
+### Scope
+
+IN SCOPE:
+
+- `backend/tests/integration/test_application_transitions_pg.py`; inventario de otros usos de
+  `date.today()` en tests contra columnas UTC.
+
+OUT OF SCOPE:
+
+- Cambiar la zona horaria de los agregados diarios.
+
+### Dependencies
+
+Depends on: TASK-001
+
+### Blocks
+
+Blocks: NONE
+
+### Validation
+
+El test pasa con el reloj del sistema fijado a ambos lados de la medianoche UTC.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
 Maintainability: MEDIUM
 Cost: LOW
 Risk: LOW
