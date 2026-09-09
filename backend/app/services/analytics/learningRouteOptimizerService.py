@@ -7,6 +7,7 @@ from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.observability import external_call
 from app.core.offload import BoundedOffload, OffloadRejected
 from app.services.analytics.courseCatalogQueries import load_active_course_links
 
@@ -529,7 +530,10 @@ class ORToolsLearningRouteOptimizer:
             )
 
         try:
-            return await SOLVER_OFFLOAD.run(solve, timeout=SOLVER_TIMEOUT_SECONDS)
+            # Not a network call, but the same question: how long did the thing
+            # outside the event loop take, and did it answer.
+            with external_call("cp_sat"):
+                return await SOLVER_OFFLOAD.run(solve, timeout=SOLVER_TIMEOUT_SECONDS)
         except OffloadRejected as exc:
             LOGGER.warning("CP-SAT solve shed, solver queue full: %s", exc)
             return self._unanswered_solution()

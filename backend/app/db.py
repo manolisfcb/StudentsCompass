@@ -1,6 +1,8 @@
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+
+from app.core.observability import install_sql_counter
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
 from fastapi import Depends
@@ -63,6 +65,11 @@ def _build_engine():
 
 
 engine = _build_engine()
+
+# Counts every statement into whatever request is in flight, so a request's log
+# line can say how many round trips it made. Attached once, here, at the driver
+# level: installing it twice would count each statement twice.
+install_sql_counter(engine)
 async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 

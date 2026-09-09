@@ -11,6 +11,8 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 
+from app.core.observability import external_call
+
 from app.core.resume_analyzer.llm_errors import is_non_retryable_llm_error
 from app.core.resume_analyzer.prompts.resume_audit_prompt import (
     build_resume_audit_system_prompt,
@@ -108,19 +110,22 @@ class GeminiResumeAuditEvaluator(ResumeAuditEvaluator):
                     await ensure_llm_attempt_allowed()
 
                     system_prompt = build_resume_audit_system_prompt()
-                    response = await asyncio.wait_for(
-                        self.client.aio.models.generate_content(
-                            model=self.model,
-                            contents=user_prompt,
-                            config={
-                                "system_instruction": system_prompt,
-                                "response_mime_type": "application/json",
-                                "response_json_schema": output_schema,
-                                "temperature": 0.2,
-                            },
-                        ),
-                        timeout=self.timeout,
-                    )
+                    # Same boundary rule as the other evaluator: recorded here
+                    # and nowhere else, once per attempt.
+                    with external_call("gemini"):
+                        response = await asyncio.wait_for(
+                            self.client.aio.models.generate_content(
+                                model=self.model,
+                                contents=user_prompt,
+                                config={
+                                    "system_instruction": system_prompt,
+                                    "response_mime_type": "application/json",
+                                    "response_json_schema": output_schema,
+                                    "temperature": 0.2,
+                                },
+                            ),
+                            timeout=self.timeout,
+                        )
                     text = (response.text or "").strip()
                     if not text:
                         raise RuntimeError("Empty response from LLM.")

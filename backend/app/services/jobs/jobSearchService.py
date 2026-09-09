@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.JobsScraper.linkedin_scraper import fetch_linkedin_jobs
+from app.core.observability import external_call
 from app.core.offload import BoundedOffload, OffloadRejected
 from app.models.jobPostingModel import JobPosting
 from app.services.jobs.jobPostingService import JobPostingService
@@ -143,7 +144,11 @@ class JobSearchService:
             )
 
         try:
-            return await LINKEDIN_OFFLOAD.run(work, timeout=SCRAPER_TIMEOUT_SECONDS)
+            # The provider boundary is the whole offloaded call, including the
+            # time spent waiting for a worker: that wait is part of what the
+            # user experiences.
+            with external_call("linkedin"):
+                return await LINKEDIN_OFFLOAD.run(work, timeout=SCRAPER_TIMEOUT_SECONDS)
         except OffloadRejected as exc:
             LOGGER.warning("LinkedIn search shed, provider queue full: %s", exc)
             return []

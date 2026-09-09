@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
@@ -8,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import async_session
 from app.models.roadmapModel import RoadmapModel, RoadmapStageModel, StageProjectModel, StageTaskModel, TaskType
+
+LOGGER = logging.getLogger(__name__)
 
 
 ROADMAP_SEED_DATA: list[dict[str, Any]] = [
@@ -721,7 +724,12 @@ async def _roadmaps_table_exists(session: AsyncSession) -> bool:
     try:
         await session.execute(text("SELECT 1 FROM roadmaps LIMIT 1"))
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 — "the table is not there yet" is a normal state
+        # Debug, not warning: before the first migration this is expected, and a
+        # warning on every startup of a fresh database teaches people to ignore
+        # warnings. It is recorded so that "seeded nothing" can be told apart
+        # from "could not look".
+        LOGGER.debug("roadmaps table is not queryable yet; skipping the seed", exc_info=True)
         return False
 
 
@@ -737,5 +745,10 @@ async def seed_roadmaps_on_startup_if_dev() -> int:
             if not await _roadmaps_table_exists(session):
                 return 0
             return await seed_roadmaps(session)
-    except Exception:
+    except Exception:  # noqa: BLE001 — a failed seed must not stop the app booting
+        # F-24: this returned 0, which is indistinguishable from "there was
+        # nothing to seed". A startup seed that fails is a recoverable failure,
+        # not an empty success, and the difference is the whole reason someone
+        # would look at this log.
+        LOGGER.exception("Roadmap startup seeding failed; the app is starting without it")
         return 0

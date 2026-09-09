@@ -7,6 +7,8 @@ from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 
+from app.core.observability import external_call
+
 from app.core.resume_analyzer.llm_errors import is_non_retryable_llm_error
 from app.core.resume_analyzer.resume_feature import ResumeFeatureRequest
 from app.services.ai.aiBudgetGuard import AIBudgetExhausted, ensure_llm_attempt_allowed
@@ -120,17 +122,22 @@ async def ask_llm_model(
                 # evaluator — callers must not gate it a second time.
                 await ensure_llm_attempt_allowed()
 
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(
-                        model=model,
-                        contents=prompt,
-                        config={
-                            "response_mime_type": "application/json",
-                            "response_json_schema": schema,
-                        },
-                    ),
-                    timeout=timeout,
-                )
+                # One recorded attempt per provider call, at the boundary. A
+                # retry is a second attempt and is counted as one, which is what
+                # makes "slow provider" and "failing provider" distinguishable
+                # in the request's log line.
+                with external_call("gemini"):
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=model,
+                            contents=prompt,
+                            config={
+                                "response_mime_type": "application/json",
+                                "response_json_schema": schema,
+                            },
+                        ),
+                        timeout=timeout,
+                    )
 
                 # Muchas veces esto ya es JSON puro. Pero por seguridad:
                 text = (response.text or "").strip()

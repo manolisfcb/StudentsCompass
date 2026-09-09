@@ -22,6 +22,7 @@ from contextlib import asynccontextmanager
 from app.routes.postRoute import router as post_router
 from app.services.accounts.userService import fastapi_users, current_active_user, auth_backend
 from app.middleware.csrf import CSRFMiddleware
+from app.middleware.request_context import RequestContextMiddleware
 from app.routes.authRoute import router as auth_router
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
 from app.views.views import router as views_router
@@ -183,6 +184,10 @@ app.add_middleware(
 # multipart parser spools it, not after a route handler gets a chance to look.
 # The per-route budgets carry multipart slack on top of the file budget, so the
 # route's own check is the one that decides the exact boundary.
+# Outermost of the three: it has to see the request before anything can reject
+# it, so a 413 or a CSRF refusal is logged with the same id as a 200.
+app.add_middleware(RequestContextMiddleware)
+
 app.add_middleware(
     RequestBodySizeLimitMiddleware,
     default_max_bytes=MAX_REQUEST_BODY_BYTES,

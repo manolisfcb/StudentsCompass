@@ -99,7 +99,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-018 |
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
 | TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
-| TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
+| TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
 | TASK-031 | Verificar compatibilidad integrada y ensayar rollout/restore | HIGH | PHASE-6 | TODO | TASK-003, TASK-005, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-027, TASK-028, TASK-029, TASK-030 | NONE |
@@ -4789,7 +4789,7 @@ ese trabajo en vuelo, no de esta ficha: ambos desaparecen al ejecutar la lane si
 
 ## TASK-028 — Medir flujos críticos y hacer visibles fallos parciales
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-4
 Category: Maintainability
@@ -4861,12 +4861,12 @@ Grupo G; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Medir flujos críticos y hacer visibles fallos parciales.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Medir flujos críticos y hacer visibles fallos parciales.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4885,6 +4885,120 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+F-24 en una frase: **«el análisis de CV va lento» y «el análisis de CV está roto» producían la
+misma evidencia — ninguna.**
+
+**El request id.** `app/core/observability.py` lo lleva en un `ContextVar`, lo estampa en
+todos los registros del proceso y lo devuelve en `X-Request-ID` para que un usuario pueda
+citarlo. Fuera de una petición vale `-`, que se ve distinto de un valor truncado.
+
+Se estampa con `logging.setLogRecordFactory`, **no con un filtro por handler**, y el motivo es
+concreto: un handler añadido después —el `caplog` de pytest, un handler JSON de TASK-045, el de
+una librería— produciría registros sin el atributo y `%(request_id)s` reventaría sobre ellos.
+El factory es el único sitio por el que pasan todos. Lo descubrí porque la primera versión usaba
+un filtro y el test de correlación falló: `caplog` añade su propio handler.
+
+**Un id hostil se reemplaza, no se sanea.** `X-Request-ID: foo\nlevel=CRITICAL` acaba en una
+línea de log, así que cualquier cosa que no case con `^[A-Za-z0-9._:-]{1,64}$` se sustituye por
+uno nuevo. Sanearlo sería peor: el id resultante ya no nombraría la petición que el llamante
+cree. Seis formas hostiles fijadas en tests, incluidas `\r\n` y 200 caracteres.
+
+**Una línea por petición**, al final, con método, plantilla de ruta, status, duración y
+contadores. A INFO, o a **WARNING** si el status es 5xx, para que un endpoint que falla se vea
+sin subir el nivel. `endpoint` es la **plantilla** (`/users/{id}`), no el path: un path lleva
+ids, agregaría mal y metería un id de usuario en cada línea. Hay un test que lee el fuente y
+falla si alguien cambia eso.
+
+**Contado una sola vez, en la frontera.** El bloque `with external_call(...)` es el único sitio
+donde se registra un intento externo; un llamante que además incrementara un contador propio
+contaría doble, que es exactamente lo que la Validation preguntaba. Un **reintento es otro
+intento** y cuenta como tal: es otra petición pagada. `install_sql_counter` es idempotente —
+instalarlo dos veces contaría cada statement dos veces, y hay un test que lo llama tres veces
+seguidas para comprobarlo.
+
+Proveedores instrumentados: `gemini` (los dos evaluadores LLM), `linkedin` (el scraper) y
+`cp_sat` (el solver). En los dos últimos la frontera incluye la espera por un worker del pool,
+porque esa espera es parte de lo que el usuario experimenta.
+
+**Bug Fix declarado:** `seed_roadmaps_on_startup_if_dev` devolvía `0` tanto si no había nada que
+sembrar como si la siembra reventaba — el patrón exacto que F-24 describe. Ahora registra la
+excepción y sigue devolviendo `0`, porque un seed fallido no debe impedir arrancar; la
+diferencia es justo lo que alguien buscaría en ese log. La sonda de tabla acompañante pasa a
+`debug`, no a `warning`: antes de la primera migración «la tabla no está» es normal, y un
+warning en cada arranque de una base nueva enseña a ignorar warnings.
+
+**Los otros `except` vacíos se auditaron y se dejaron.** Un barrido por AST de `app/` encontró
+cinco que devuelven vacío sin registrar; tres son respuestas deliberadas, no fallos tragados:
+una `Content-Length` malformada («longitud desconocida»), una IP malformada («no confiable») y
+una `IntegrityError` de idempotencia («no se aplicó»). Tocarlas habría sido ruido.
+
+**Coste, medido — y una decisión que salió de medirlo.** La primera versión usaba
+`BaseHTTPMiddleware` y costaba **218 µs a p50** sobre un endpoint que no hace nada: dos órdenes
+de magnitud más que los contadores, porque envuelve cada petición en un task group de anyio y
+pasa la respuesta por una cola. Reescrito como **ASGI puro** —el mismo estilo que
+`RequestBodySizeLimitMiddleware`, y por el mismo tipo de motivo— el delta es:
+
+| | p50 | p95 |
+| --- | --- | --- |
+| Sin middleware | 0.075 ms | 0.159 ms |
+| Con middleware | 0.085 ms | 0.212 ms |
+| **Delta** | **9.5 µs** | **52.9 µs** |
+
+Una reducción de 23x sobre la primera versión. Primitivas por separado:
+`record_sql_statement` 0.085 µs, un bloque `external_call` 0.924 µs, un registro de log con el
+factory 0.105 µs.
+
+**Redacción reutilizada, no duplicada.** La línea por petición se construye solo con ids
+generados aquí, una plantilla de ruta, un nombre de proveedor y números — hay un test que
+comprueba que **todos** los valores son numéricos. El texto libre que llega a un log por otras
+vías pasa por `app.core.errors.redact`, que es de TASK-011.
+
+**Documentación operativa:** `docs/observability.md`, con qué campos hay, dónde se incrementan,
+qué no se registra nunca, el coste medido y la frontera con TASK-045 y TASK-057. **Una
+telemetría, no dos**, que es lo que la reconciliación con el plan 08 exige.
+
+**Tests.** `backend/tests/test_request_observability.py` (nuevo, 23 casos): el id en cada
+respuesta, el de un proxy seguido entre saltos, seis ids hostiles reemplazados, una línea fuera
+de petición que sigue formateando, **un fallo inyectado seguido por su correlation id de punta
+a punta**, el 5xx a WARNING, una llamada externa contada una vez con su resultado, un fallo
+contado como intento y como fallo, tres reintentos como tres intentos, proveedores contados por
+separado, el contador SQL instalado tres veces sin contar de más, statements atribuidos a la
+petición que los ejecutó y ninguna fuera de ella, métricas que no se filtran entre peticiones,
+tres peticiones concurrentes con sus propios id y contadores, la línea sin texto libre, ningún
+valor con forma de secreto en el log completo de una petición real, y la plantilla de ruta en
+lugar del path.
+
+Comandos ejecutados:
+
+```
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests/test_request_observability.py
+# 23 passed
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 589 passed, 94 skipped
+
+TEST_DATABASE_URL_PG=... TEST_REDIS_URL=... .venv/bin/python -m pytest -o addopts='' \
+    -p no:cacheprovider tests/integration
+# 93 passed, 1 failed — TASK-065, previo y ajeno (ver abajo)
+
+uv run --project backend ruff check backend/app backend/tests
+# All checks passed!
+```
+
+**Límites de la validación.** El fallo de la lane PostgreSQL es
+`test_concurrent_increments_are_all_counted`, diagnosticado durante TASK-023 y registrado como
+**TASK-065**: el servicio escribe `metric_date` en UTC y el test lo lee con `date.today()`, que
+es fecha local, así que falla cada noche a partir de las 20:00 EDT. No tiene relación con esta
+ficha. No se ejecutó la lane PostgreSQL por necesidad —esta ficha no toca schema, locks ni
+migraciones— pero se corrió igualmente. **No se hicieron llamadas pagadas:** los dos sitios
+`gemini` se instrumentaron pero no se invocaron; lo que los tests ejercitan es el bloque
+`external_call`, con proveedores falsos. Sin smoke de navegador: no cambia ningún payload; lo
+único que ve el cliente es una cabecera nueva. El overhead se midió sobre un endpoint trivial
+para aislar el middleware, no bajo carga de producción — lo que sostiene es el coste del
+middleware en sí, no el de la aplicación entera.
 
 
 ## TASK-029 — Consolidar configuración y documentar dependencias activas
