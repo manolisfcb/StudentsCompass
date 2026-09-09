@@ -287,6 +287,9 @@ def create_schema(connection) -> None:
         op.create_index('ix_conversation_participants_conversation_id', 'conversation_participants', ['conversation_id'], unique=False)
         op.create_index('ix_conversation_participants_user_id', 'conversation_participants', ['user_id'], unique=False)
         op.create_table('courses',
+        sa.CheckConstraint('cost IS NULL OR cost >= 0', name='ck_courses_cost_non_negative'),
+        sa.CheckConstraint('duration_hours IS NULL OR duration_hours >= 0', name='ck_courses_duration_hours_non_negative'),
+        sa.CheckConstraint('rating IS NULL OR (rating >= 0 AND rating <= 5)', name='ck_courses_rating_five_star'),
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('resource_id', sa.UUID(), nullable=True),
         sa.Column('title', sa.String(length=220), nullable=False),
@@ -525,6 +528,7 @@ def create_schema(connection) -> None:
         sa.PrimaryKeyConstraint('id')
         )
         op.create_table('course_skills',
+        sa.CheckConstraint('coverage_score IS NULL OR (coverage_score >= 0 AND coverage_score <= 1)', name='ck_course_skills_coverage_score_fraction'),
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('course_id', sa.UUID(), nullable=False),
         sa.Column('skill_id', sa.UUID(), nullable=False),
@@ -560,6 +564,7 @@ def create_schema(connection) -> None:
         op.create_index('ix_job_analysis_active_lease', 'job_analysis', ['lease_expires_at'], unique=False, postgresql_where=sa.text("status IN ('PENDING', 'PROCESSING')"))
         op.create_index('uq_job_analysis_active_per_resume', 'job_analysis', ['user_id', 'resume_id'], unique=True, postgresql_where=sa.text("status IN ('PENDING', 'PROCESSING')"))
         op.create_table('job_skills',
+        sa.CheckConstraint('importance_score IS NULL OR (importance_score >= 0 AND importance_score <= 1)', name='ck_job_skills_importance_score_fraction'),
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('job_posting_id', sa.UUID(), nullable=True),
         sa.Column('skill_id', sa.UUID(), nullable=False),
@@ -652,6 +657,8 @@ def create_schema(connection) -> None:
         op.create_index(op.f('ix_resume_embeddings_resume_id'), 'resume_embeddings', ['resume_id'], unique=False)
         op.create_index('ix_resume_embeddings_resume_model', 'resume_embeddings', ['resume_id', 'model_name'], unique=True)
         op.create_table('resume_skills',
+        sa.CheckConstraint("status IN ('detected', 'confirmed', 'rejected', 'manual')", name='ck_resume_skills_status'),
+        sa.CheckConstraint('confidence_score IS NULL OR (confidence_score >= 0 AND confidence_score <= 1)', name='ck_resume_skills_confidence_score_fraction'),
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('resume_id', sa.UUID(), nullable=False),
         sa.Column('user_id', sa.UUID(), nullable=True),

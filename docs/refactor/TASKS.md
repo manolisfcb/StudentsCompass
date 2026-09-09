@@ -98,7 +98,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-024 | Paginar mensajes con cursor estable y migrar inbox | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-009 | TASK-005, TASK-010, TASK-014, TASK-017, TASK-019 |
 | TASK-025 | Calcular dashboard en DB y definir transición de listados | MEDIUM | PHASE-4 | COMPLETED | TASK-001, TASK-016 | TASK-018 |
 | TASK-026 | Separar API, estado y render de Jobs y Career Lab | HIGH | PHASE-5 | SUPERSEDED | TASK-001, TASK-004, TASK-013, TASK-016, TASK-018, TASK-020, TASK-023, TASK-024, TASK-025 | NONE |
-| TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | TODO | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
+| TASK-027 | Validar rangos, estados y metadata de datos analíticos | MEDIUM | PHASE-2 | COMPLETED | TASK-001, TASK-009, TASK-015, TASK-019, TASK-021 | TASK-008, TASK-013, TASK-022 |
 | TASK-028 | Medir flujos críticos y hacer visibles fallos parciales | MEDIUM | PHASE-4 | TODO | TASK-001, TASK-011, TASK-013, TASK-015, TASK-020, TASK-022, TASK-023 | TASK-016 |
 | TASK-029 | Consolidar configuración y documentar dependencias activas | LOW | PHASE-6 | TODO | TASK-001, TASK-002, TASK-007, TASK-010, TASK-028, TASK-030 | NONE |
 | TASK-030 | Validar respuestas y respetar versión histórica de cuestionario | MEDIUM | PHASE-3 | COMPLETED | TASK-001 | TASK-003, TASK-004, TASK-007, TASK-009, TASK-020 |
@@ -112,7 +112,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | COMPLETED | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | COMPLETED | TASK-037, TASK-038 | TASK-036 |
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | TODO | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
-| TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | TODO | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
+| TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | IN PROGRESS | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
 | TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | TODO | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
 | TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
@@ -4457,7 +4457,7 @@ Risk: MEDIUM
 
 ## TASK-027 — Validar rangos, estados y metadata de datos analíticos
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-2
 Category: Database
@@ -4528,12 +4528,12 @@ Grupo E; solo cuando sus dependencias estén completas y no haya archivo reserva
 
 ### Acceptance Criteria
 
-- [ ] Se implementó el resultado concreto: Validar rangos, estados y metadata de datos analíticos.
-- [ ] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
-- [ ] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Se implementó el resultado concreto: Validar rangos, estados y metadata de datos analíticos.
+- [x] Todos los casos y métricas específicos de Validation pasan; no quedan errores o validaciones pendientes.
+- [x] La evidencia anterior/posterior y límites de la validación están registrados, sin secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -4552,6 +4552,109 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: HIGH
+
+### Completion Notes
+
+**Lo que ya no hacía falta.** F-23 pedía también unicidad en `job_skills` por
+oferta/skill/método: la resolvió **TASK-019** con `uq_job_skills_posting_skill_method`. Y la
+parte de F-20 sobre metadata que omite índices: `alembic/env.py` ya importa
+`app.models.registry`, y los tests `test_bootstrapped_schema_matches_metadata` y
+`test_autogenerate_after_bootstrap_drops_nothing` de la lane PostgreSQL pasan sin drops
+espurios, antes y después de esta ficha. **Se verificó, no se rehízo.**
+
+**Lo que faltaba: nada declaraba los rangos.** Y el motivo por el que importa no es
+estético. El optimizador de rutas lee cada score a través de `_clamp(value, 0.0, 1.0)` y el
+rating como `rating / 5.0` clampeado igual. Es decir: **hoy un valor fuera de rango no se
+rechaza, se reinterpreta en silencio**. Un 9 y un 5 son las mismas cinco estrellas; un −3 y
+un 0 son el mismo cero. El número sobre el que actúa el producto deja de ser el número que se
+guardó, y nada en ninguna parte lo dice. Un CHECK convierte eso en una escritura rechazada,
+que es el único sitio donde la diferencia todavía es visible.
+
+Constraints añadidas, con la evidencia de cada rango:
+
+| Constraint | Regla | De dónde sale el rango |
+| --- | --- | --- |
+| `ck_resume_skills_status` | `status IN ('detected','confirmed','rejected','manual')` | `capstoneAnalyticsService.RESUME_SKILL_STATUS_*`; la columna era un `String(32)` con default y cualquier valor cabía |
+| `ck_resume_skills_confidence_score_fraction` | `[0, 1]` o NULL | `skillExtractionService.DEFAULT_CONFIDENCE_SCORE = 0.75`; el optimizador clampea a `[0,1]` |
+| `ck_job_skills_importance_score_fraction` | `[0, 1]` o NULL | `_clamp(importance_score, 0.0, 1.0)` en `learningRouteOptimizerService` |
+| `ck_course_skills_coverage_score_fraction` | `[0, 1]` o NULL | `_scale_score` clampea a `[0,1]` antes de entrar a CP-SAT |
+| `ck_courses_cost_non_negative` | `>= 0` o NULL | `LearningRouteConstraintsPayload.budget` ya declara `ge=0`; el catálogo contra el que se compara no tenía regla |
+| `ck_courses_duration_hours_non_negative` | `>= 0` o NULL | ídem con `available_hours` |
+| `ck_courses_rating_five_star` | `[0, 5]` o NULL | `_clamp(rating / 5.0, 0.0, 1.0)` |
+
+`job_skills.importance_score` no está en la línea de Scope, que nombra
+«resume_skills/courses/course_skills». Se incluyó igualmente: es el mismo fichero, el mismo
+hallazgo (F-23) y el mismo defecto, y dejarlo fuera habría significado constreñir tres de
+cuatro scores idénticos. Queda dicho aquí en vez de pasar inadvertido.
+
+**NaN sale gratis.** En PostgreSQL `NaN <= 1` es falso, así que la comprobación de rango lo
+excluye sin necesidad de una regla aparte. Verificado, no supuesto:
+`test_a_score_outside_the_fraction_is_refused` incluye `float("nan")` entre sus parámetros.
+
+**Decisión registrada: `courses.cost` sigue siendo `Float`.** F-23 pedía explícitamente no
+cambiar a `Numeric` sin evidencia y dejar la decisión escrita. La evidencia es que no es un
+libro de pagos: el solver lo convierte a céntimos enteros con `_scale_money` antes de que
+llegue a CP-SAT, y la única aritmética en coma flotante sobre él es un `round(sum(...), 2)`
+para mostrar. No hay pagos, no hay acumulación, y no se encontró error acumulado que
+justifique una migración de tipo. Si algún día se factura sobre esta columna, esa ficha
+tendrá que revisar la decisión; hoy cambiarla sería trabajo sin evidencia.
+
+**La migración inventaría, no repara.** `e7c2d940ab15` (`down_revision = d5b83f1a6c27`) cuenta
+las filas que violarían cada regla, **tabla por tabla y regla por regla**, lo registra en el
+log, y solo entonces crea las constraints — que fallan ruidosamente si quedan filas malas.
+Nada se borra ni se reescribe. Una migración que reparase datos analíticos en silencio estaría
+decidiendo por su cuenta qué debería haber dicho una medición equivocada. `inventory()` se
+devuelve como datos para que un test —y un operador ejecutando la consulta a mano— vea
+exactamente de qué se queja un upgrade fallido. `downgrade()` quita las constraints; como no
+se tocó ningún dato al subir, tampoco hay nada que restaurar al bajar.
+
+**Tests.** `backend/tests/integration/test_analytics_constraints_pg.py` (nuevo, 18 casos, lane
+PostgreSQL — SQLite guarda `status = 'banana'` y `rating = 99` tan contento, y Pydantic nunca
+ve estas escrituras porque los servicios de extracción construyen las filas ellos mismos):
+todos los valores que el producto escribe de verdad siguen aceptándose —los cuatro estados,
+la confianza por defecto, y los bordes 0.0, 1.0, 5.0 y NULL, que deben quedar **dentro**—;
+cuatro estados inválidos rechazados incluyendo `''` y `'DETECTED'`; scores fuera de rango y
+NaN rechazados; dinero y tiempo negativos y ratings imposibles rechazados; el inventario
+contando violaciones **sin tocarlas** (y comprobando después que las filas malas siguen ahí);
+el upgrade negándose a crear una constraint sobre filas malas; y las constraints presentes
+tras `create_all`.
+
+Comandos ejecutados:
+
+```
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_analytics_constraints_pg.py
+# 18 passed
+
+TEST_DATABASE_URL_PG=... .venv/bin/python -m pytest -o addopts='' -p no:cacheprovider \
+    tests/integration/test_migrations.py
+# 13 passed (cadena completa y compare_metadata sin drops espurios)
+
+.venv/bin/python -m pytest -o addopts='' -p no:cacheprovider tests
+# 557 passed, 94 skipped
+
+uv run --project backend ruff check backend/app backend/tests backend/alembic
+# All checks passed!
+```
+
+**Límites de la validación.** El inventario se ejecutó contra bases desechables sembradas a
+propósito con filas inválidas, **no contra producción**: no hay acceso a esos datos, así que
+no se puede afirmar cuántas filas reales violarían las constraints. Eso es precisamente por lo
+que la migración cuenta y registra antes de crear en vez de asumir que no hay ninguna: si las
+hay, el upgrade se detiene con el recuento por regla en el log. Un despliegue debería ejecutar
+`inventory()` contra una copia antes de aplicar. No se ejecutó ninguna migración contra
+producción. Sin smoke de navegador: no cambia ningún payload ni ninguna pantalla.
+
+**Nota de concurrencia.** Durante esta ficha había otra sesión trabajando en **TASK-041**
+sobre el mismo árbol (`app/core/pagination.py`, `app/core/idempotency.py`, la revisión
+`f1a6d3c85e02` y ediciones a `messageService.py`, `communityService.py` y `db_baseline.py`).
+De los ficheros compartidos, solo `db_baseline.py` se solapa; este commit incluye
+**únicamente** las siete líneas de CHECK de esta ficha sobre la versión de HEAD, sin arrastrar
+la tabla `idempotency_records` de la otra ficha. Dos fallos de la lane PostgreSQL observados
+durante la validación —`test_upgrade_head_commits_on_an_existing_database` (`type
+"idempotencystatus" already exists`) y `test_concurrent_increments_are_all_counted`— vienen de
+ese trabajo en vuelo, no de esta ficha: ambos desaparecen al ejecutar la lane sin él, y los
+13 tests de migraciones pasan con las constraints de aquí aplicadas.
 
 
 ## TASK-028 — Medir flujos críticos y hacer visibles fallos parciales
@@ -6660,7 +6763,7 @@ Risk: MEDIUM
 
 ## TASK-041 — Estandarizar paginación, límites de colección e idempotencia
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M2
 Category: API Contract / Performance

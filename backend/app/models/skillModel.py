@@ -3,6 +3,7 @@ import uuid
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -22,6 +23,28 @@ from app.db import Base
 
 
 JSON_VARIANT = JSON().with_variant(JSONB, "postgresql")
+
+#: The statuses ``resume_skills.status`` may hold. The column is a plain string
+#: with a default, so anything at all could be written into it; these four are
+#: what the service defines and what every reader switches on.
+#: See ``capstoneAnalyticsService.RESUME_SKILL_STATUS_*``.
+RESUME_SKILL_STATUSES = ("detected", "confirmed", "rejected", "manual")
+
+#: Scores in this schema are fractions. The learning-route optimiser reads them
+#: through ``_clamp(value, 0.0, 1.0)``, which means an out-of-range value is not
+#: rejected today — it is silently reinterpreted as 0 or 1, and the number the
+#: product acts on stops being the number that was stored. A CHECK turns that
+#: into a refused write, which is the only place the difference is still visible.
+_FRACTION = "{column} IS NULL OR ({column} >= 0 AND {column} <= 1)"
+
+#: ``rating`` is a five-star scale: the optimiser scores it as ``rating / 5.0``
+#: clamped to [0, 1], so a 9 means the same as a 5 and a −1 the same as a 0.
+_FIVE_STAR = "rating IS NULL OR (rating >= 0 AND rating <= 5)"
+
+#: Money and time. ``LearningRouteConstraintsPayload`` already declares
+#: ``budget`` and ``available_hours`` as ``ge=0``; the catalogue they are
+#: compared against had no such rule.
+_NON_NEGATIVE = "{column} IS NULL OR {column} >= 0"
 
 
 class SkillModel(Base):
@@ -81,6 +104,10 @@ class JobSkillModel(Base):
         Index("ix_job_skills_job_posting_id", "job_posting_id"),
         Index("ix_job_skills_skill_id", "skill_id"),
         Index("ix_job_skills_target_role", "target_role"),
+        CheckConstraint(
+            _FRACTION.format(column="importance_score"),
+            name="ck_job_skills_importance_score_fraction",
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -104,6 +131,14 @@ class ResumeSkillModel(Base):
         Index("ix_resume_skills_user_id", "user_id"),
         Index("ix_resume_skills_skill_id", "skill_id"),
         Index("ix_resume_skills_status", "status"),
+        CheckConstraint(
+            "status IN ('" + "', '".join(RESUME_SKILL_STATUSES) + "')",
+            name="ck_resume_skills_status",
+        ),
+        CheckConstraint(
+            _FRACTION.format(column="confidence_score"),
+            name="ck_resume_skills_confidence_score_fraction",
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -132,6 +167,12 @@ class CourseModel(Base):
         Index("ix_courses_provider", "provider"),
         Index("ix_courses_difficulty", "difficulty"),
         Index("ix_courses_is_active", "is_active"),
+        CheckConstraint(_NON_NEGATIVE.format(column="cost"), name="ck_courses_cost_non_negative"),
+        CheckConstraint(
+            _NON_NEGATIVE.format(column="duration_hours"),
+            name="ck_courses_duration_hours_non_negative",
+        ),
+        CheckConstraint(_FIVE_STAR, name="ck_courses_rating_five_star"),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -158,6 +199,10 @@ class CourseSkillModel(Base):
         UniqueConstraint("course_id", "skill_id", name="uq_course_skills_course_skill"),
         Index("ix_course_skills_course_id", "course_id"),
         Index("ix_course_skills_skill_id", "skill_id"),
+        CheckConstraint(
+            _FRACTION.format(column="coverage_score"),
+            name="ck_course_skills_coverage_score_fraction",
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
