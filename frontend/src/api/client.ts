@@ -6,16 +6,23 @@
  * types. What lives here now is only what the same-origin contract requires,
  * so those tasks extend one file instead of unpicking a guess.
  *
- * Three properties are load-bearing:
+ * Five properties are load-bearing:
  *   - every path is relative, so the browser sees one origin and cookies are
  *     first-party, whether the request goes through Vite's dev proxy or Nginx;
  *   - a non-2xx response becomes an `ApiError` carrying the status, so callers
  *     never branch on `res.ok` themselves;
  *   - that `ApiError` carries the *contract's* error shape, not a guess: the
  *     envelope and the code catalogue come from `src/api/types.ts`, which is
- *     generated from the same OpenAPI the API serves.
+ *     generated from the same OpenAPI the API serves;
+ *   - every unsafe method carries `X-CSRF-Token` automatically, so no caller
+ *     can forget it and no caller needs to know the scheme exists (TASK-044);
+ *   - a `401` is retried exactly once, behind a session refresh. Exactly once,
+ *     not "until it works": a genuinely expired session would otherwise turn
+ *     every navigation into an unbounded retry storm against `/auth/session`.
+ *     Callers whose `401` *is* the answer opt out — see `RequestOptions`.
  */
 
+import { CSRF_HEADER_NAME, isSafeMethod, readCsrfToken } from "./csrf";
 import type { ApiErrorDetail, ApiErrorResponse, ErrorCode } from "./types";
 
 /**
@@ -95,23 +102,103 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-/** Performs the request and returns the parsed body, raising on non-2xx. */
-export async function apiRequest<T = unknown>(
-  path: string,
-  init: RequestInit = {},
-): Promise<ApiResponse<T>> {
-  assertRelativePath(path);
+export interface RequestOptions {
+  /**
+   * Whether a `401` should trigger one session refresh and one replay.
+   *
+   * On by default, because for almost every endpoint a `401` means the session
+   * expired mid-session. It is turned off for the few whose `401` is a settled
+   * *answer* rather than a failure — `GET /auth/session` says "anonymous" that
+   * way. Refreshing there would make every anonymous page load cost a second,
+   * guaranteed-failing request.
+   */
+  retryOnUnauthorized?: boolean;
+}
 
-  const response = await fetch(path, {
+/**
+ * Path the client calls to mint a fresh session and CSRF token (TASK-042).
+ *
+ * Refreshing is explicit rather than sliding: the API re-issues the cookie only
+ * when asked, so an idle tab's session still expires on schedule.
+ */
+export const SESSION_REFRESH_PATH = "/api/v1/auth/session/refresh";
+
+/**
+ * Set while a refresh is in flight so N concurrent 401s produce one refresh.
+ *
+ * Without this, a screen that fires six queries on mount would fire six
+ * refreshes, and five of them would race against the token the first one
+ * rotated — turning an expired session into a burst of `csrf_token_invalid`.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= (async () => {
+    try {
+      const response = await fetch(SESSION_REFRESH_PATH, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: withCsrfHeader({ Accept: "application/json" }, "POST"),
+      });
+      return response.ok;
+    } catch {
+      // The network is down, not the session. Reporting `false` lets the
+      // original 401 surface unchanged instead of being masked.
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return await refreshInFlight;
+}
+
+/** Exposed for tests, which must not leak a pending refresh between cases. */
+export function resetSessionRefreshState(): void {
+  refreshInFlight = null;
+}
+
+function withCsrfHeader(headers: HeadersInit, method: string | undefined): HeadersInit {
+  if (isSafeMethod(method)) return headers;
+  const token = readCsrfToken();
+  // No cookie yet means no session yet, so there is nothing to forge. Sending
+  // an empty header would be refused by `tokens_match` anyway; omitting it
+  // keeps the API's own error ("no token") legible.
+  return token === null ? headers : { ...headers, [CSRF_HEADER_NAME]: token };
+}
+
+async function performRequest(path: string, init: RequestInit): Promise<Response> {
+  return await fetch(path, {
     // Session cookies are the authentication mechanism; a same-origin request
     // that forgets this silently authenticates as nobody.
     credentials: "same-origin",
     ...init,
-    headers: {
-      Accept: "application/json",
-      ...init.headers,
-    },
+    headers: withCsrfHeader(
+      {
+        Accept: "application/json",
+        ...init.headers,
+      },
+      init.method,
+    ),
   });
+}
+
+/** Performs the request and returns the parsed body, raising on non-2xx. */
+export async function apiRequest<T = unknown>(
+  path: string,
+  init: RequestInit = {},
+  { retryOnUnauthorized = true }: RequestOptions = {},
+): Promise<ApiResponse<T>> {
+  assertRelativePath(path);
+
+  let response = await performRequest(path, init);
+
+  // The one retry. Refreshing the session is itself a request that can 401, so
+  // it is excluded explicitly rather than by counting depth.
+  if (retryOnUnauthorized && response.status === 401 && path !== SESSION_REFRESH_PATH) {
+    if (await refreshSession()) {
+      response = await performRequest(path, init);
+    }
+  }
 
   const requestId = response.headers.get(REQUEST_ID_HEADER);
   const body = await readBody(response);
@@ -135,7 +222,9 @@ export async function apiProbe(
   path: string,
 ): Promise<{ status: number; requestId: string | null }> {
   try {
-    const { status, requestId } = await apiRequest(path);
+    // No retry: the probe is asking what the API answers *now*, and a refresh
+    // would both change the answer and cost a request that must fail.
+    const { status, requestId } = await apiRequest(path, {}, { retryOnUnauthorized: false });
     return { status, requestId };
   } catch (error) {
     if (error instanceof ApiError) {

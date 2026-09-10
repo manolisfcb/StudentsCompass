@@ -4,6 +4,10 @@
  * Features append their own namespaces as they are migrated.
  */
 export const queryKeys = {
+  session: {
+    /** Read by every shell and guard, so it has exactly one key. */
+    current: ["session"] as const,
+  },
   smoke: {
     origin: ["smoke", "origin"] as const,
   },
