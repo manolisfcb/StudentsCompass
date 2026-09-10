@@ -2,6 +2,10 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { RequireActor, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
+import { LoginPage } from "@/features/auth/LoginPage";
+import { RegisterPage } from "@/features/auth/RegisterPage";
+import { AboutPage } from "@/features/marketing/AboutPage";
+import { HomePage } from "@/features/marketing/HomePage";
 import { SmokePage } from "@/features/smoke/SmokePage";
 
 /**
@@ -22,10 +26,24 @@ export const router = createBrowserRouter([
   {
     element: <PublicShell />,
     children: [
+      { path: "/", element: <HomePage /> },
+      { path: "/about", element: <AboutPage /> },
       { path: "/__smoke", element: <SmokePage /> },
       {
-        element: <RequireAnonymous>{<Navigate to="/dashboard" replace />}</RequireAnonymous>,
         path: "/login",
+        element: (
+          <RequireAnonymous>
+            <LoginPage />
+          </RequireAnonymous>
+        ),
+      },
+      {
+        path: "/register",
+        element: (
+          <RequireAnonymous>
+            <RegisterPage />
+          </RequireAnonymous>
+        ),
       },
     ],
   },

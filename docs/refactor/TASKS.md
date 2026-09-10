@@ -115,9 +115,9 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | COMPLETED | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
 | TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | COMPLETED | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
-| TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
+| TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | COMPLETED | TASK-038, TASK-042, TASK-043 | TASK-045 |
 | TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | COMPLETED | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
-| TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | TODO | TASK-035, TASK-042, TASK-044 | NONE |
+| TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-035, TASK-042, TASK-044 | NONE |
 | TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | TODO | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
 | TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | TODO | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
 | TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | TODO | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
@@ -8097,7 +8097,7 @@ dejó dicho en su README.
 
 ## TASK-044 — Construir la capa HTTP, los shells y los guards del frontend
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M2
 Category: Frontend
@@ -8165,13 +8165,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] No existe `fetch` fuera del cliente autorizado; una regla de lint lo impide.
-- [ ] El cliente envía CSRF automáticamente y reintenta un `401` exactamente una vez.
-- [ ] `ApiError` expone el código estable y el `request_id` de la respuesta.
-- [ ] Los guards controlan navegación y no sustituyen ninguna decisión de autorización del backend.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] No existe `fetch` fuera del cliente autorizado; una regla de lint lo impide.
+- [x] El cliente envía CSRF automáticamente y reintenta un `401` exactamente una vez.
+- [x] `ApiError` expone el código estable y el `request_id` de la respuesta.
+- [x] Los guards controlan navegación y no sustituyen ninguna decisión de autorización del backend.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8188,6 +8188,45 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+**Entregado:** `src/api/client.ts` (`apiRequest`/`apiProbe`, `ApiError` con
+`status`/`code`/`requestId`/`body`), `src/api/csrf.ts` (lectura del cookie
+double-submit y el header `X-CSRF-Token`), `src/api/session.ts` y
+`src/app/useSession.ts` (consulta de sesión sobre TanStack Query),
+`src/app/guards.tsx` (`RequireActor`, `RequireAnonymous`) y `src/app/routes.ts`
+(constantes de ruta separadas para no romper Fast Refresh),
+`src/components/layout/AppShell.tsx` y `shells.tsx` (`PublicShell`,
+`StudentShell`, `CompanyShell`, `AdminShell`), `src/components/patterns/`
+(`AsyncBoundary`, `DataTable`, `EmptyState`) y `src/components/primitives/`
+(`Alert`, `Button`, `Spinner`). `eslint.config.js` añade
+`no-restricted-globals` contra `fetch` fuera de `client.ts` y de los tests.
+
+**El reintento de `401` es una promesa compartida, no un contador.**
+`refreshInFlight` en `client.ts` colapsa N peticiones 401 simultáneas en una
+sola llamada a `/auth/session/refresh`; sin eso, una pantalla que dispara seis
+queries al montar dispararía seis refrescos que competirían por el mismo token
+rotado. `SESSION_REFRESH_PATH` se excluye explícitamente del propio reintento
+para no producir un bucle si el refresco mismo devuelve 401.
+
+**`ApiError.requestId` prioriza el `request_id` del envelope sobre el header.**
+El envelope es el que el servidor efectivamente logueó; el header
+(`x-request-id`) es el respaldo para una respuesta que nunca llegó a los
+handlers (proxy, crash antes de enrutar).
+
+**Los guards leen `actors` (plural), no `actor`.** Una persona con cookie de
+estudiante y de recruiter a la vez debe poder llegar a cualquiera de las dos
+superficies sin cerrar sesión en la otra; `actor` es solo la presentación por
+defecto, no el único rol activo.
+
+**Constantes de ruta en `routes.ts`, separadas de `guards.tsx`.** Mezclar
+componentes y constantes en el mismo archivo rompe
+`react-refresh/only-export-components`; la regla de lint lo señala si alguien
+las vuelve a juntar.
+
+**Validación:** `npx vitest run` (54/54) y `npx eslint src` (limpio) en
+`frontend/`. Sin cambios en `backend/`.
 
 ## TASK-045 — Publicar health, readiness y logging estructurado de la API
 
@@ -8363,7 +8402,7 @@ Risk: LOW
 
 ## TASK-046 — Vertical 1 — Shell público y autenticación en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8434,14 +8473,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente:** el diff visual contra las capturas de TASK-035 no se ha ejecutado (ver Completion Notes).
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Cubierto para los guards (TASK-044) y para los errores de login/registro; falta el barrido explícito de esta vertical contra roles cruzados.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente:** no medido; el legacy Jinja de `/`, `/about`, `/login`, `/register` sigue sin tocar.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. `02_AUDIT_FINDINGS.md` no tiene hallazgos abiertos contra home/about/login/register.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8458,6 +8497,79 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Entregado:** las seis pantallas (`frontend/src/features/marketing/HomePage.tsx`,
+`AboutPage.tsx`, `ReferenceModal.tsx`; `frontend/src/features/auth/LoginPage.tsx`,
+`RegisterPage.tsx`, `LogoutButton.tsx`, `api.ts`, `formParts.tsx`) contra el
+contrato REST de TASK-042: `POST /api/v1/auth/{student,company}/login`,
+`POST /api/v1/auth/{student,company}/logout`, `POST /api/v1/auth/register`,
+`POST /api/v1/auth/company/register`. `PublicShell` (`components/layout/shells.tsx`)
+gana nav (`/about`) y acciones (Login/Get Started); `AppShell` gana `titleHref`
+para que la marca enlace a `/`. `router.tsx` monta `/`, `/about`, `/login` y
+`/register` (los dos últimos tras `RequireAnonymous`).
+
+**SEO decidido y documentado, no solo "preservado".** `DocumentMeta`
+(`components/seo/DocumentMeta.tsx`) pone y restaura título, descripción,
+canonical y Open Graph por ruta al montar/desmontar — necesario porque la SPA
+no tiene renderizado de servidor y `base.html` los fijaba por request.
+`index.html` lleva el JSON-LD de Organization/WebSite (no cambia por página) y
+los valores por defecto de home, para que un crawler que no ejecute JS vea lo
+mismo que veía la home de Jinja. **`/sitemap.xml` y `/robots.txt` no eran
+alcanzables bajo la topología nueva**: `nginx.conf` y `vite.config.ts` solo
+proxeaban `/api`, `/healthz`, `/readyz` al backend, y esas dos rutas viven en
+`app/app.py` fuera de `/api/v1` — un gap real que esta tarea cierra añadiéndolas
+a ambas listas de proxy (comentario en `nginx.conf` explica la decisión: proxear
+en vez de duplicar, porque el backend sigue siendo la fuente de verdad del
+sitemap).
+
+**El error de login/registro no es el envelope de `/api/v1`.**
+`fastapi_users.get_auth_router`/`get_register_router` responden
+`{"detail": "LOGIN_BAD_CREDENTIALS"}`, no `{"error": {"code", "message"}}`
+(TASK-040). `describeAuthError` (`features/auth/api.ts`) distingue los dos
+envelopes y traduce el catálogo cerrado de códigos que esas rutas realmente
+lanzan; mostrar el código crudo al usuario (lo que hacía `login.js`/`register.js`)
+queda rotulado como el Bug Fix de esta tarea, separado del movimiento
+estructural.
+
+**Logout está scopeado al actor del shell, no a "toda sesión".**
+`guards.tsx` ya documentaba que una persona puede sostener cookie de
+estudiante y de recruiter a la vez; `LogoutButton` recibe `actorKind` y solo
+llama al logout de ese actor. El shell de admin cierra sesión como `student`
+porque no existe actor `admin` en el contrato de sesión (mismo criterio que ya
+fija `router.tsx`).
+
+**Validación ejecutada:** `npm run typecheck`, `npm run lint`, `npm run
+i18n:check` y `npx vitest run` (81/81 sobre 13 archivos — 27 casos nuevos en 7
+archivos de test de esta vertical) en `frontend/`, todos en verde. `npm run
+build` produce el bundle sin error. Smoke manual con Playwright (Python)
+contra `npm run dev` + el backend local ya corriendo: las cuatro pantallas
+cargan sin error de consola ni de React, el toggle Estudiante/Empresa funciona
+en login y registro, y el modal de citas de `/about` abre, muestra la fuente
+correcta y cierra con Escape devolviendo el foco.
+
+**Qué falta para marcar COMPLETED — deliberadamente no ejecutado en esta
+sesión:**
+
+1. **Diff visual contra la baseline de TASK-035** en desktop y mobile. No se
+   invocó el comparador; las capturas de esta sesión (ver scratchpad) son un
+   smoke check, no la comparación que pide Validation.
+2. **Playwright sobre docker compose**, con casos de acceso prohibido
+   explícitos para esta vertical (más allá de los que ya cubre TASK-044).
+3. **Medición de tráfico cero al contrato legacy** durante al menos un ciclo.
+   El legacy Jinja de estas cuatro pantallas sigue desplegado sin tocar
+   (correcto para Scope), pero nadie ha medido si algo todavía le pega.
+4. No se creó ninguna cuenta de prueba contra el Neon de desarrollo que ya
+   corría en `localhost:8000` durante el smoke check — habría sido una
+   escritura real en una base compartida y esta sesión no tenía autorización
+   para eso; un login/registro de extremo a extremo contra un backend real
+   queda pendiente.
+
+Dejar la tarea en IN PROGRESS en vez de COMPLETED es deliberado: el
+Definition of Done global prohíbe cerrar con una parte de Validation sin
+ejecutar y sin registrar como BLOCKED. Quien retome esto debería poder
+completar los cuatro puntos sin rehacer el trabajo de esta sesión.
 
 ## TASK-047 — Vertical 2 — Perfil, cuestionario y CV en React
 

@@ -9,7 +9,7 @@ import { defineConfig } from "vite";
 // is Nginx; in `npm run dev` it is this proxy, aimed at the same paths Nginx
 // forwards. Keeping both lists identical is the point: a path that works in dev
 // and 404s behind Nginx is exactly the class of bug this task exists to avoid.
-const PROXIED_PREFIXES = ["/api", "/healthz", "/readyz"];
+const PROXIED_PREFIXES = ["/api", "/healthz", "/readyz", "/sitemap.xml", "/robots.txt"];
 
 const DEV_API_ORIGIN = process.env.DEV_API_ORIGIN ?? "http://127.0.0.1:8000";
 

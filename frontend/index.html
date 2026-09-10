@@ -2,8 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StudentsCompass</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <!--
+      This default head matches home.html's values (TASK-046, plan 08 §13): a
+      crawler or a link preview that reads this document before React mounts
+      sees the same title, description and Open Graph tags the Jinja homepage
+      served. `DocumentMeta` (src/components/seo/DocumentMeta.tsx) overwrites
+      these per route once the SPA renders; the two JSON-LD blocks below do not
+      vary per page, so they stay here instead of being recreated on every
+      route.
+    -->
+    <title>Students Compass | Career Platform in Canada</title>
+    <meta
+      name="description"
+      content="Student Compass helps students in Canada with AI resume analysis, job search, roadmaps, resources, and a supportive career community to become job-ready faster."
+    />
+    <link rel="canonical" href="https://studentscompass.ca/" />
+    <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/images/Logo_Ready_to_Use.png" />
+    <meta name="theme-color" content="#0F766E" />
+    <meta property="og:site_name" content="Students Compass" />
+    <meta property="og:title" content="Students Compass | Career Platform in Canada" />
+    <meta
+      property="og:description"
+      content="Student Compass helps students in Canada with AI resume analysis, job search, roadmaps, resources, and a supportive career community to become job-ready faster."
+    />
+    <meta property="og:url" content="https://studentscompass.ca/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://studentscompass.ca/images/Logo_Ready_to_Use.png" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"Organization","name":"Students Compass","url":"https://studentscompass.ca","logo":"https://studentscompass.ca/images/Logo_Ready_to_Use.png"}
+    </script>
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"WebSite","name":"Students Compass","url":"https://studentscompass.ca/","alternateName":"studentscompass.ca"}
+    </script>
   </head>
   <body>
     <div id="root"></div>
