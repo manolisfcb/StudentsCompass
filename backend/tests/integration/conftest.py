@@ -62,6 +62,11 @@ def redis_url() -> str:
     return url
 
 
+#: Any 64-bit key works; it only has to be the same one everywhere. Named so a
+#: `pg_locks` row during a wedged run says what is holding it.
+SCHEMA_RESET_LOCK = 0x5C_7E_57_00  # "SC TEST"
+
+
 async def reset_public_schema(engine) -> None:
     """Drop and rebuild ``public``, leaving the ``vector`` extension in place.
 
@@ -76,23 +81,56 @@ async def reset_public_schema(engine) -> None:
     Resetting here means a test cannot inherit what the previous one failed to
     clean up, whatever that was. ``DROP SCHEMA ... CASCADE`` also ignores table
     order and any constraint a test dropped deliberately.
+
+    **This is the lane's only definition of "reset".** ``test_migrations.py`` used
+    to carry a second one that dropped the schema without putting ``vector`` back;
+    since the extension lives in ``public``, ``DROP SCHEMA public CASCADE`` takes it
+    with it, and the next module's ``create_all`` then failed on the ``Vector``
+    column of ``resume_embeddings``. That aborts its transaction, so nothing after
+    it could insert either — the "relation \"users\" does not exist" cascade that
+    made this lane reliable only file by file (TASK-070).
+
+    The whole reset is serialised on an advisory lock. ``app/db_baseline.py``
+    issues ``CREATE EXTENSION IF NOT EXISTS vector`` on the bootstrap path, and
+    ``test_migrations.py`` drives that path from another thread; ``IF NOT EXISTS``
+    reads the catalogue at statement start, so two creators can still collide on
+    ``pg_extension_name_index``. The loser's transaction aborts and the cascade
+    starts again from a different place.
     """
     # Release this engine's own connections first: dropping the schema while the
     # pool still holds one deadlocks rather than waiting.
     await engine.dispose()
     async with engine.begin() as conn:
+        # Session-level, and this connection is closed at the end of the block,
+        # which releases it. A transaction-level lock would be released by the
+        # COMMIT between the two statements below.
+        await conn.execute(text("SELECT pg_advisory_lock(:key)"), {"key": SCHEMA_RESET_LOCK})
         await conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
         await conn.execute(text("CREATE SCHEMA public"))
-    async with engine.begin() as conn:
-        # Checked against the catalogue rather than IF NOT EXISTS: dropping the
-        # schema removes the extension's objects, and IF NOT EXISTS can still
-        # raise a unique violation on pg_extension when another connection
-        # re-registered it in between.
+        # Recreated here, inside the lock and before anyone else can look: the
+        # drop removed it, so putting it back is part of resetting, not a
+        # separate step someone else might do first. Checked against the
+        # catalogue rather than IF NOT EXISTS, which is not safe against a
+        # concurrent creator outside this lock.
         present = await conn.scalar(
             text("SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector'")
         )
         if not int(present or 0):
             await conn.execute(text("CREATE EXTENSION vector"))
+        await conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": SCHEMA_RESET_LOCK})
+
+    # The reset must leave the lane usable, not merely not raise. Asserting it
+    # here turns "the extension went missing" into a failure at the place that
+    # caused it, instead of a create_all failure in whichever module runs next.
+    async with engine.begin() as conn:
+        present = await conn.scalar(
+            text("SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector'")
+        )
+        if not int(present or 0):
+            raise RuntimeError(
+                "the schema reset left the lane without the 'vector' extension; "
+                "every module that maps a Vector column would fail from here on"
+            )
 
 
 @pytest_asyncio.fixture

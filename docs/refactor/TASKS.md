@@ -141,7 +141,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
 | TASK-068 | Retirar el patrón create_all/drop_all por test de la lane PostgreSQL | LOW | PHASE-0 | TODO | TASK-031 | NONE |
 | TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | COMPLETED | TASK-009 | NONE |
-| TASK-070 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | TODO | TASK-001 | NONE |
+| TASK-070 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | COMPLETED | TASK-001 | NONE |
 | TASK-071 | Aislar el bucle de eventos que rompe el transporte por defecto del outbox | LOW | PHASE-0 | TODO | TASK-054 | TASK-064, TASK-070 |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
@@ -11894,7 +11894,7 @@ Risk: MEDIUM
 
 ## TASK-070 — Hacer que la lane de integración corra entera sin cascada
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-0
 Category: Testing / Infrastructure
@@ -12010,10 +12010,10 @@ reclamarla.
 
 ### Acceptance Criteria
 
-- [ ] `pytest tests/integration` termina sin errores en cascada.
-- [ ] El veredicto de la lane entera coincide con el de sus ficheros por separado.
-- [ ] La lane es re-ejecutable dos veces seguidas sin intervención manual.
-- [ ] Ningún test cambia lo que afirma.
+- [x] `pytest tests/integration` termina sin errores en cascada.
+- [x] El veredicto de la lane entera coincide con el de sus ficheros por separado.
+- [x] La lane es re-ejecutable dos veces seguidas sin intervención manual.
+- [x] Ningún test cambia lo que afirma.
 
 ### Validation
 
@@ -12026,6 +12026,62 @@ sigue instalada.
 Solo toca tests. El riesgo es enmascarar un fallo real haciendo las fixtures
 demasiado tolerantes: cualquier tolerancia nueva va con un test que demuestre que
 el fallo que oculta seguiría viéndose.
+
+### Completion Notes
+
+**La cascada que describe la ficha ya no reproduce, y decirlo es parte del resultado.**
+Medida antes de tocar nada, con la lane apuntando a `pgvector/pgvector:pg16` y Redis
+desechables: `pytest tests/integration` termina **133 passed en 212 s**, sin un solo error.
+La ficha medía 41/17/38 en `6a6d2b7` y 69/11/46 en `refactor/task-041-063` el 2026-09-09.
+Lo que cerró la cascada fue **TASK-031**, que puso `reset_public_schema` en el fixture
+`pg_engine` de `tests/integration/conftest.py`: como ese reset recrea `vector` y corre
+antes de cada test, ningún módulo puede ya heredar una base sin la extensión.
+
+**Pero el defecto que la causaba seguía en el árbol, y es lo que esta ficha retira.**
+`test_migrations.py` conservaba su **propia** `_reset_public_schema`, que hacía
+`DROP SCHEMA public CASCADE` y `CREATE SCHEMA public` y **no devolvía `vector`**. Como la
+extensión vive en `public`, el CASCADE se la llevaba. Que hoy no se note es un accidente
+de scoping —el `pg_engine` del test siguiente la recrea— y no una propiedad del diseño:
+dos definiciones de «resetear», una de ellas incompleta, es exactamente la forma que tenía
+el fallo. La segunda definición se borra y el módulo importa la de conftest.
+
+**La carrera del `CREATE EXTENSION` sí seguía viva y se cierra.** `IF NOT EXISTS` consulta
+el catálogo al inicio de la sentencia, así que no protege contra otro creador concurrente:
+`app/db_baseline.create_schema` emite esa sentencia en el camino de bootstrap y
+`test_migrations.py` conduce ese camino desde otro hilo (`asyncio.to_thread`). El perdedor
+recibe `duplicate key value violates unique constraint "pg_extension_name_index"`, su
+transacción queda abortada y la cascada arranca desde otro sitio. Ahora todo el reset
+—drop, create schema y recreación de `vector`— va dentro de un `pg_advisory_lock` de nivel
+sesión, y la recreación se hace **dentro** del lock, no la deja para quien venga después.
+
+**Tercera pieza: el reset afirma su propio resultado.** Después del lock se comprueba en
+`pg_extension` que `vector` está, y si no está se levanta `RuntimeError` con el motivo. Sin
+eso, perder la extensión se manifestaba como un `create_all` fallido en el módulo
+*siguiente*, con el mensaje «relation "users" does not exist» apuntando al sitio
+equivocado: durante TASK-060 se atribuyó primero a un import de mappers borrado. La
+comprobación convierte ese síntoma en un fallo en el lugar que lo causa.
+
+**No se suavizó el `DROP SCHEMA`**, que es lo que la ficha advierte de no hacer: existe
+para probar el bootstrap desde vacío y suavizarlo lo dejaría sin objeto.
+
+**Comprobación de coherencia, en `scripts/check_integration_lane_consistency.sh`.** El
+modo de fallo de esta ficha no es un test rojo sino una lane verde fichero a fichero y roja
+entera, y esa diferencia es invisible para `pytest tests/integration` a secas. El script
+corre la lane completa, luego cada fichero por separado, y compara los tres contadores.
+Queda versionado en vez de ser un procedimiento oral porque el próximo que se encuentre la
+cascada necesita la misma comparación.
+
+**Validación.** Lane completa dos veces seguidas, sin intervención manual entre una y otra:
+133 passed en 165 s y 133 passed en 141 s, cero failed y cero errors en ambas. Suma de los
+22 ficheros ejecutados por separado: 133 passed, 0 failed, 0 errors. Los tres veredictos
+coinciden, que es el criterio de la ficha, y el script lo afirma por sí mismo:
+`OK: the lane's verdict does not depend on file order.` Ningún test cambia lo que afirma: el diff es un borrado de
+función, un import y el cuerpo de `reset_public_schema`.
+
+**Relación con TASK-068.** Sigue vigente y no la absorbe esta: aquella retira el
+`create_all`/`drop_all` por test de los once módulos, que es el **coste** del patrón. Al
+haber ahora una sola definición de «limpiar» y estar serializada, su superficie es menor,
+pero el trabajo que describe no está hecho aquí.
 
 ### Estimated Impact
 

@@ -23,6 +23,14 @@ from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import inspect, text
 
+# The lane's single definition of "reset". This module used to carry its own,
+# which dropped ``public`` without putting ``vector`` back — and since the
+# extension lives in ``public``, the CASCADE took it along. Every later module
+# then failed to create ``resume_embeddings``, and that aborted transaction took
+# the rest of the lane down with it. Two definitions of one operation was the
+# defect; deleting the second one is the fix (TASK-070).
+from tests.integration.conftest import reset_public_schema
+
 pytestmark = [pytest.mark.integration, pytest.mark.postgres]
 
 
@@ -32,12 +40,6 @@ def metadata():
 
     import_all_models()
     return Base.metadata
-
-
-async def _reset_public_schema(engine) -> None:
-    async with engine.begin() as conn:
-        await conn.execute(text("DROP SCHEMA public CASCADE"))
-        await conn.execute(text("CREATE SCHEMA public"))
 
 
 def _bootstrap(sync_conn, metadata) -> None:
@@ -60,7 +62,7 @@ def _bootstrap(sync_conn, metadata) -> None:
 async def test_empty_database_is_detected_as_empty(pg_engine):
     from app.db_baseline import database_is_empty
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
     async with pg_engine.connect() as conn:
         assert await conn.run_sync(database_is_empty) is True
 
@@ -70,7 +72,7 @@ async def test_a_database_with_tables_is_never_treated_as_empty(pg_engine):
     """The expensive mistake would be running the baseline over live data."""
     from app.db_baseline import database_is_empty
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
     async with pg_engine.begin() as conn:
         await conn.execute(text("CREATE TABLE alembic_version (version_num varchar(32))"))
     async with pg_engine.connect() as conn:
@@ -82,7 +84,7 @@ async def test_bootstrap_creates_the_schema_and_stamps_head(pg_engine, metadata)
     from alembic.config import Config
     from alembic.script import ScriptDirectory
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
 
     async with pg_engine.connect() as conn:
         await conn.run_sync(_bootstrap, metadata)
@@ -102,7 +104,7 @@ async def test_bootstrap_creates_the_schema_and_stamps_head(pg_engine, metadata)
 @pytest.mark.asyncio
 async def test_bootstrapped_schema_matches_metadata(pg_engine, metadata):
     """No diff at all — this is the check that licenses the stamp."""
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
 
     async with pg_engine.connect() as conn:
         await conn.run_sync(_bootstrap, metadata)
@@ -119,7 +121,7 @@ async def test_bootstrapped_schema_matches_metadata(pg_engine, metadata):
 @pytest.mark.asyncio
 async def test_autogenerate_after_bootstrap_drops_nothing(pg_engine, metadata):
     """The regression that removed a batch of live indexes must not recur."""
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
 
     async with pg_engine.connect() as conn:
         await conn.run_sync(_bootstrap, metadata)
@@ -146,7 +148,7 @@ async def test_baseline_refuses_to_stamp_a_schema_that_does_not_match(pg_engine,
 
     from app.db_baseline import BaselineVerificationError
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
 
     extended = MetaData()
     for table in metadata.tables.values():
@@ -221,7 +223,7 @@ def _run_convergence(sync_conn) -> None:
 
 async def _seed_shape(pg_engine, metadata, create_sql: str) -> dict:
     """Build a database in one of the two historical shapes, with one row."""
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
 
     async with pg_engine.connect() as conn:
         await conn.run_sync(_bootstrap, metadata)
@@ -403,7 +405,7 @@ async def test_existing_installation_upgrades_forward_to_the_new_head(pg_engine,
     from alembic.config import Config
     from alembic.script import ScriptDirectory
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
 
     async with pg_engine.connect() as conn:
         await conn.run_sync(_bootstrap, metadata)
@@ -470,7 +472,7 @@ async def test_upgrade_head_bootstraps_an_empty_database(pg_engine, postgres_url
     """End to end through env.py, not just the bootstrap helper."""
     from alembic.script import ScriptDirectory
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
     sync_url = postgres_url.replace("+asyncpg", "+psycopg")
 
     await asyncio.to_thread(_run_upgrade_head, sync_url)
@@ -491,7 +493,7 @@ async def test_upgrade_head_commits_on_an_existing_database(pg_engine, postgres_
     chain then ran and rolled straight back without stamping anything."""
     from alembic.script import ScriptDirectory
 
-    await _reset_public_schema(pg_engine)
+    await reset_public_schema(pg_engine)
     sync_url = postgres_url.replace("+asyncpg", "+psycopg")
     await asyncio.to_thread(_run_upgrade_head, sync_url)
 
