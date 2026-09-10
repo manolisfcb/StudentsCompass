@@ -111,7 +111,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-037 | Mover el backend a backend/ sin cambiar comportamiento | HIGH | PHASE-M1 | COMPLETED | TASK-033, TASK-035 | TASK-036 |
 | TASK-038 | Crear el scaffold React y el compose local con proxy same-origin | HIGH | PHASE-M1 | COMPLETED | TASK-037 | TASK-036 |
 | TASK-039 | Separar CI en lanes de backend y frontend | HIGH | PHASE-M1 | COMPLETED | TASK-037, TASK-038 | TASK-036 |
-| TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | IN PROGRESS | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
+| TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | COMPLETED | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
 | TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | COMPLETED | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
 | TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | TODO | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
@@ -7245,7 +7245,7 @@ Risk: LOW
 
 ## TASK-040 — Implantar el error model único y el request id en toda la API
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M2
 Category: API Contract / Security
@@ -7314,13 +7314,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Toda respuesta de error de `/api/v1` tiene la forma única, con código estable y `request_id`.
-- [ ] Ninguna respuesta contiene `str(exception)` ni detalle de infraestructura.
-- [ ] El `request_id` de la respuesta aparece en el log estructurado de esa misma petición.
-- [ ] TASK-032 queda cubierta: no quedan rutas con el mapeo anterior sin adapter declarado.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Toda respuesta de error de `/api/v1` tiene la forma única, con código estable y `request_id`.
+- [x] Ninguna respuesta contiene `str(exception)` ni detalle de infraestructura.
+- [x] El `request_id` de la respuesta aparece en el log estructurado de esa misma petición.
+- [x] TASK-032 queda cubierta: no quedan rutas con el mapeo anterior sin adapter declarado.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -7329,6 +7329,69 @@ Test de contrato por cada familia de status (400/401/403/404/409/422/429/5xx) co
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+**Qué se implantó.** `app/core/error_handlers.py` (nuevo) registra cuatro
+handlers —`AppError`, `RequestValidationError`, `HTTPException` y `Exception`—
+acotados a `/api/v1`. `app/core/errors.py` gana `ErrorCode` (`StrEnum`
+versionado con `ERROR_CATALOG_VERSION`), `AppError`, `error_envelope()` y
+`code_for_status()`. Documentado en [docs/error_model.md](../error_model.md).
+
+**Se normaliza en el borde, no en cada `raise`.** Había **119**
+`HTTPException(...)` crudos en 15 routers frente a 20 usos de los helpers de
+TASK-011. Reescribirlos uno a uno habría cambiado *qué* falla y *con qué
+status*, que esta ficha pone OUT OF SCOPE. Los handlers cambian los bytes de la
+respuesta, no cuándo se produce. Los 20 sitios con helper conservan su código
+preciso sin tocarse: el helper ya lo ponía en `X-Error-Code` y el handler lo lee
+de vuelta.
+
+**Tres cosas que el trabajo destapó y que no estaban en la ficha.**
+
+1. *El id del cuerpo y el del log no correlacionaban en un 500.* Starlette
+   invoca el handler de una excepción no capturada desde `ServerErrorMiddleware`,
+   que está **por fuera** de `RequestContextMiddleware`; para entonces su
+   `finally` ya reseteó el `ContextVar` y valía `-`. El 500 citaba un id que no
+   aparecía en ninguna línea de log — justo la correlación que la ficha pide. Se
+   lee de `scope["state"]`, que no se desenrolla. Lo encontró el test, no la
+   revisión.
+2. *Seis códigos públicos eran strings sueltos* en cuatro módulos (`csrf.py`,
+   `idempotency.py` ×3, `internalAuth.py`, `authRoute.py`). Se adoptan en el
+   catálogo **con su valor de cable**, no renombrados: son públicos y un cliente
+   puede estar ramificando por ellos. Por eso `UNAUTHENTICATED` vale
+   `not_authenticated` y no `unauthenticated`.
+3. *El catálogo se cierra de verdad.* Un código que no es miembro no llega al
+   cliente: WARNING al log y se responde con el de la familia. Sin esto el enum
+   habría sido decorativo — el código viaja como cabecera desde el sitio que
+   lanza, así que una errata publicaba un código nuevo y permanente.
+
+**El adapter legacy se reproduce, no se sintetiza.** Las pantallas Jinja siguen
+vivas y leen `errorData.detail` (`questionnaire.js`, `register.js`,
+`company-dashboard.js`, y más). El primer intento añadía `(ref: ...)` a todos los
+mensajes; los helpers de TASK-011 ya lo llevaban pero los 119 raise crudos no, y
+eso habría puesto un id de correlación dentro de frases que el usuario lee en
+pantalla. Se conserva el string exacto por sitio. Lo retira TASK-059.
+
+**Fuera de `/api/v1` no cambia nada.** `views_router` (Jinja) e
+`internal_tasks_router` no cuelgan del prefijo y se delega en los handlers de
+FastAPI. Un `raise` desde dentro de un handler **no** cae al de por defecto —
+Starlette ya está en su maquinaria de excepciones—, así que se llaman
+explícitamente.
+
+**TASK-032 queda cubierta:** ya no hay ruta con el mapeo anterior; las que no
+usaban helper pasan por el handler central y responden con el código de su
+familia.
+
+**Validación.** Lane rápida de backend: **897 tests, exit 0**, en orden fijo y en
+el orden aleatorio del proyecto. `tests/test_error_contract.py` aporta **27**
+nuevos, uno por familia de status (400/401/403/404/409/413/422/429/503) más
+5xx no capturado, inyección de fallo de infraestructura, correlación log↔cuerpo,
+adapter legacy y código fuera de catálogo. `ruff check app/ tests/` limpio.
+
+**No verificado.** No se ejecutó la lane de integración PostgreSQL en esta
+sesión; los `tests/integration/*_pg.py` no entran en la lane rápida. No se tocó
+la generación de OpenAPI: describir el envelope como schema del contrato es
+TASK-043, que depende de esta.
 
 ### Estimated Impact
 
