@@ -6,6 +6,8 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { AboutPage } from "@/features/marketing/AboutPage";
 import { HomePage } from "@/features/marketing/HomePage";
+import { ProfilePage } from "@/features/profile-resumes/ProfilePage";
+import { QuestionnairePage } from "@/features/questionnaire/QuestionnairePage";
 import { SmokePage } from "@/features/smoke/SmokePage";
 
 /**
@@ -53,7 +55,11 @@ export const router = createBrowserRouter([
         <StudentShell />
       </RequireActor>
     ),
-    children: [{ path: "/dashboard", element: <Navigate to="/__smoke" replace /> }],
+    children: [
+      { path: "/dashboard", element: <Navigate to="/__smoke" replace /> },
+      { path: "/profile", element: <ProfilePage /> },
+      { path: "/questionnaire", element: <QuestionnairePage /> },
+    ],
   },
   {
     element: (

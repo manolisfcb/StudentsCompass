@@ -460,7 +460,7 @@
       "Body_admin_upload_resource_file": {
         "properties": {
           "file": {
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "File",
             "type": "string"
           }
@@ -714,7 +714,7 @@
             "type": "string"
           },
           "file": {
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "File",
             "type": "string"
           }
@@ -729,7 +729,7 @@
       "Body_resume_upload_resume": {
         "properties": {
           "cv": {
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "Cv",
             "type": "string"
           }
@@ -743,7 +743,7 @@
       "Body_resume_upload_resume_for_course_audit": {
         "properties": {
           "cv": {
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "Cv",
             "type": "string"
           }
@@ -6137,6 +6137,71 @@
         "title": "QuestionRead",
         "type": "object"
       },
+      "QuestionnaireProfileRead": {
+        "description": "`GET /questionnaire/profile` (TASK-047): typed so the profile screen\ndoes not read this shape out of `unknown`. Not part of the §5.2 path\nrename — the path is unchanged, only the response gets a model.",
+        "properties": {
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerCreate"
+            },
+            "title": "Answers",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "questionnaire": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuestionnaireRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "questionnaire_definition_available": {
+            "title": "Questionnaire Definition Available",
+            "type": "boolean"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/CareerScore"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "user_email": {
+            "title": "User Email",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "user_name": {
+            "title": "User Name",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_name",
+          "user_email",
+          "created_at",
+          "version",
+          "answers",
+          "results",
+          "questionnaire_definition_available"
+        ],
+        "title": "QuestionnaireProfileRead",
+        "type": "object"
+      },
       "QuestionnaireRead": {
         "properties": {
           "questions": {
@@ -6981,6 +7046,21 @@
         "title": "ResumeCourseAuditRead",
         "type": "object"
       },
+      "ResumeDeleteRead": {
+        "description": "Typed response for `DELETE /resumes/{resume_id}` (TASK-047).",
+        "properties": {
+          "status": {
+            "const": "deleted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ResumeDeleteRead",
+        "type": "object"
+      },
       "ResumeReadSchema": {
         "properties": {
           "ai_summary": {
@@ -7052,6 +7132,26 @@
           "folder_id"
         ],
         "title": "ResumeReadSchema",
+        "type": "object"
+      },
+      "ResumeUploadRead": {
+        "description": "Typed response for `POST /resumes` (TASK-047); the legacy\n`/profile/cv/upload` keeps returning the same two keys untyped.",
+        "properties": {
+          "file_url": {
+            "title": "File Url",
+            "type": "string"
+          },
+          "resume_id": {
+            "format": "uuid",
+            "title": "Resume Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_url",
+          "resume_id"
+        ],
+        "title": "ResumeUploadRead",
         "type": "object"
       },
       "RoadmapDetailRead": {
@@ -7985,13 +8085,6 @@
       },
       "ValidationError": {
         "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
           "loc": {
             "items": {
               "anyOf": [
@@ -10620,7 +10713,7 @@
                     }
                   },
                   "VERIFY_USER_BAD_TOKEN": {
-                    "summary": "Bad token, not existing user or not the e-mail currently set for the user.",
+                    "summary": "Bad token, not existing user ornot the e-mail currently set for the user.",
                     "value": {
                       "detail": "VERIFY_USER_BAD_TOKEN"
                     }
@@ -11167,7 +11260,7 @@
                     }
                   },
                   "VERIFY_USER_BAD_TOKEN": {
-                    "summary": "Bad token, not existing user or not the e-mail currently set for the user.",
+                    "summary": "Bad token, not existing user ornot the e-mail currently set for the user.",
                     "value": {
                       "detail": "VERIFY_USER_BAD_TOKEN"
                     }
@@ -15534,248 +15627,6 @@
         ]
       }
     },
-    "/api/v1/profile/cv": {
-      "get": {
-        "operationId": "resume_list_resumes",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ResumeReadSchema"
-                  },
-                  "title": "Response Resume List Resumes",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "List Resumes",
-        "tags": [
-          "resume"
-        ]
-      }
-    },
-    "/api/v1/profile/cv/course-audit-attempts": {
-      "get": {
-        "operationId": "resume_get_course_audit_attempts",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResumeCourseAuditAttemptsRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Get Course Audit Attempts",
-        "tags": [
-          "resume"
-        ]
-      }
-    },
-    "/api/v1/profile/cv/course-audit-upload": {
-      "post": {
-        "operationId": "resume_upload_resume_for_course_audit",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_resume_upload_resume_for_course_audit"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResumeCourseAuditRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Upload Resume For Course Audit",
-        "tags": [
-          "resume"
-        ]
-      }
-    },
-    "/api/v1/profile/cv/upload": {
-      "post": {
-        "operationId": "resume_upload_resume",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_resume_upload_resume"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Upload Resume",
-        "tags": [
-          "resume"
-        ]
-      }
-    },
-    "/api/v1/profile/cv/{resume_id}": {
-      "delete": {
-        "operationId": "resume_delete_resume",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "resume_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Resume Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Delete Resume",
-        "tags": [
-          "resume"
-        ]
-      }
-    },
     "/api/v1/profile/cv/{resume_id}/similar": {
       "get": {
         "description": "Return resumes whose stored embedding is closest to this resume's.\n\nDemonstrable consumer of the pgvector ``<=>`` engine. It only verifies that\nthe caller owns the source resume and returns opaque resume IDs + scores;\nthe product decision on whether/how to surface other users' resumes (and the\nassociated PII/authorization policy) is intentionally left to the owner.\nRequires a PostgreSQL backend with the ``vector`` extension.",
@@ -16009,7 +15860,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionnaireProfileRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -16422,6 +16275,250 @@
         "summary": "Get Resource Progress",
         "tags": [
           "resources"
+        ]
+      }
+    },
+    "/api/v1/resume-course-audits": {
+      "post": {
+        "operationId": "resume_upload_resume_for_course_audit",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_resume_upload_resume_for_course_audit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeCourseAuditRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Upload Resume For Course Audit",
+        "tags": [
+          "resume"
+        ]
+      }
+    },
+    "/api/v1/resume-course-audits/attempts": {
+      "get": {
+        "operationId": "resume_get_course_audit_attempts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeCourseAuditAttemptsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Get Course Audit Attempts",
+        "tags": [
+          "resume"
+        ]
+      }
+    },
+    "/api/v1/resumes": {
+      "get": {
+        "operationId": "resume_list_resumes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResumeReadSchema"
+                  },
+                  "title": "Response Resume List Resumes",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "List Resumes",
+        "tags": [
+          "resume"
+        ]
+      },
+      "post": {
+        "operationId": "resume_upload_resume",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_resume_upload_resume"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeUploadRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Upload Resume",
+        "tags": [
+          "resume"
+        ]
+      }
+    },
+    "/api/v1/resumes/{resume_id}": {
+      "delete": {
+        "operationId": "resume_delete_resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resume_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Resume Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDeleteRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Delete Resume",
+        "tags": [
+          "resume"
         ]
       }
     },

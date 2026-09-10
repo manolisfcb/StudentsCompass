@@ -11,4 +11,15 @@ export const queryKeys = {
   smoke: {
     origin: ["smoke", "origin"] as const,
   },
+  profile: {
+    current: ["profile"] as const,
+  },
+  resumes: {
+    list: ["resumes"] as const,
+    courseAuditAttempts: ["resumes", "course-audit-attempts"] as const,
+  },
+  questionnaire: {
+    current: ["questionnaire"] as const,
+    profile: ["questionnaire", "profile"] as const,
+  },
 } as const;

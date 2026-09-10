@@ -43,3 +43,22 @@ class QuestionnaireResult(BaseModel):
     top_careers: List[CareerScore]
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class QuestionnaireProfileRead(BaseModel):
+    """`GET /questionnaire/profile` (TASK-047): typed so the profile screen
+    does not read this shape out of `unknown`. Not part of the §5.2 path
+    rename — the path is unchanged, only the response gets a model."""
+
+    user_id: str
+    user_name: str
+    user_email: str
+    created_at: str
+    version: str
+    answers: List[AnswerCreate]
+    results: List[CareerScore]
+    #: `None` when the definition that produced `results` is no longer on
+    #: disk (a retired questionnaire version); `results`/`answers` are still
+    #: the user's own record even then.
+    questionnaire: Optional[QuestionnaireRead] = None
+    questionnaire_definition_available: bool

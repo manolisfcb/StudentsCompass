@@ -6,7 +6,12 @@ from app.core.errors import CODE_QUESTIONNAIRE_PROFILE, server_failure
 from app.db import get_session
 from app.services.accounts.userService import current_active_user
 from app.models.userModel import User
-from app.schemas.questionnaireSchema import QuestionnaireRead, QuestionnaireSubmit, QuestionnaireResult
+from app.schemas.questionnaireSchema import (
+    QuestionnaireProfileRead,
+    QuestionnaireRead,
+    QuestionnaireResult,
+    QuestionnaireSubmit,
+)
 from app.services.accounts.questionnaireService import QuestionnaireService
 
 router = APIRouter()
@@ -29,7 +34,7 @@ async def submit_questionnaire(
     service = QuestionnaireService(session)
     return await service.submit_questionnaire(user.id, submit)
 
-@router.get("/questionnaire/profile")
+@router.get("/questionnaire/profile", response_model=QuestionnaireProfileRead)
 async def get_user_profile(
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user)

@@ -14,7 +14,9 @@ from app.services.analytics.embeddingService import ResumeEmbeddingService
 from app.schemas.resumeSchema import (
     ResumeCourseAuditAttemptsRead,
     ResumeCourseAuditRead,
+    ResumeDeleteRead,
     ResumeReadSchema,
+    ResumeUploadRead,
 )
 from app.db import get_session
 from app.services.accounts.userService import current_active_user, current_ai_user
@@ -36,6 +38,15 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 router = APIRouter()
+# TASK-047 (plan 08 §5.2): `/resumes` and `/resume-course-audits` are the
+# renamed contract React consumes. `legacy_router` keeps the `/profile/cv/*`
+# paths the Jinja pages and their JS still call, mounted with
+# `include_in_schema=False` — the same two-mounts-of-one-router pattern the
+# auth routes already use in `app.py`, so a stable `operationId` (`{tag}_{name}`,
+# `app/core/openapi.py`) never has two paths fighting for it. The route
+# functions below are registered on `legacy_router` again at the bottom of this
+# file, unmodified: same dependencies, same behaviour, same response shape.
+legacy_router = APIRouter()
 
 
 async def _read_upload_within_limit(cv: UploadFile, request: Request) -> bytes:
@@ -68,7 +79,7 @@ def _require_resume_storage_location_id() -> str:
     return storage_location_id
 
 
-@router.post("/profile/cv/upload")
+@router.post("/resumes", response_model=ResumeUploadRead)
 async def upload_resume(
     request: Request,
     cv: UploadFile = File(..., alias="cv"),
@@ -115,7 +126,7 @@ async def upload_resume(
         )
 
 
-@router.post("/profile/cv/course-audit-upload", response_model=ResumeCourseAuditRead)
+@router.post("/resume-course-audits", response_model=ResumeCourseAuditRead)
 async def upload_resume_for_course_audit(
     request: Request,
     cv: UploadFile = File(..., alias="cv"),
@@ -145,7 +156,7 @@ async def upload_resume_for_course_audit(
         session,
         request=request,
         actor=actor_key("user", user.id),
-        endpoint="POST /profile/cv/course-audit-upload",
+        endpoint="POST /resume-course-audits",
         payload=file_bytes,
     )
     if guard.is_replay:
@@ -169,7 +180,7 @@ async def upload_resume_for_course_audit(
     return await guard.store(ResumeCourseAuditRead(**payload))
 
 
-@router.get("/profile/cv/course-audit-attempts", response_model=ResumeCourseAuditAttemptsRead)
+@router.get("/resume-course-audits/attempts", response_model=ResumeCourseAuditAttemptsRead)
 async def get_course_audit_attempts(
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
@@ -184,7 +195,7 @@ async def get_course_audit_attempts(
     )
 
 
-@router.get("/profile/cv", response_model=list[ResumeReadSchema])
+@router.get("/resumes", response_model=list[ResumeReadSchema])
 async def list_resumes(
     response: Response,
     session: AsyncSession = Depends(get_session),
@@ -223,7 +234,7 @@ async def find_similar_resumes(
     return {"resume_id": resume_id, "results": results}
 
 
-@router.delete("/profile/cv/{resume_id}")
+@router.delete("/resumes/{resume_id}", response_model=ResumeDeleteRead)
 async def delete_resume(
     resume_id: UUID,
     session: AsyncSession = Depends(get_session),
@@ -234,3 +245,37 @@ async def delete_resume(
     if not deleted:
         raise HTTPException(status_code=404, detail="Resume not found")
     return {"status": "deleted"}
+
+
+# --- Legacy adapter (TASK-047, plan 08 §13) -----------------------------------
+#
+# Same functions, old paths, hidden from the OpenAPI document. The Jinja CV
+# screen and its JS (`userProfile.js`, `resource_detail.js`) keep calling these
+# until TASK-059 confirms zero traffic and retires them; nothing here may change
+# behaviour, so no `response_model` is added where the original route did not
+# have one.
+legacy_router.add_api_route("/profile/cv/upload", upload_resume, methods=["POST"], include_in_schema=False)
+legacy_router.add_api_route(
+    "/profile/cv/course-audit-upload",
+    upload_resume_for_course_audit,
+    methods=["POST"],
+    response_model=ResumeCourseAuditRead,
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/profile/cv/course-audit-attempts",
+    get_course_audit_attempts,
+    methods=["GET"],
+    response_model=ResumeCourseAuditAttemptsRead,
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/profile/cv",
+    list_resumes,
+    methods=["GET"],
+    response_model=list[ResumeReadSchema],
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/profile/cv/{resume_id}", delete_resume, methods=["DELETE"], include_in_schema=False
+)

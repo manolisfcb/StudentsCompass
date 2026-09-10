@@ -56,6 +56,7 @@ export function StudentShell() {
     { to: "/resources", label: t("layout.nav.resources") },
     { to: "/jobs", label: t("layout.nav.jobs") },
     { to: "/community", label: t("layout.nav.community") },
+    { to: "/profile", label: t("layout.nav.profile") },
   ];
   return (
     <AppShell title={app} nav={nav} skipLabel={skip} actions={<LogoutButton actorKind="student" />}>

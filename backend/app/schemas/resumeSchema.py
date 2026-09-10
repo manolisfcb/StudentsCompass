@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 if TYPE_CHECKING:
     from app.models.resumeModel import ResumeModel
@@ -66,3 +66,17 @@ class ResumeCourseAuditAttemptsRead(BaseModel):
     attempts_today: int
     daily_limit: int
     attempts_remaining: int
+
+
+class ResumeUploadRead(BaseModel):
+    """Typed response for `POST /resumes` (TASK-047); the legacy
+    `/profile/cv/upload` keeps returning the same two keys untyped."""
+
+    file_url: str
+    resume_id: uuid.UUID
+
+
+class ResumeDeleteRead(BaseModel):
+    """Typed response for `DELETE /resumes/{resume_id}` (TASK-047)."""
+
+    status: Literal["deleted"]

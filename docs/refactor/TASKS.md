@@ -118,7 +118,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | COMPLETED | TASK-038, TASK-042, TASK-043 | TASK-045 |
 | TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | COMPLETED | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
 | TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-035, TASK-042, TASK-044 | NONE |
-| TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | TODO | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
+| TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
 | TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | TODO | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
 | TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | TODO | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
 | TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | TODO | TASK-046 | TASK-047, TASK-048, TASK-049 |
@@ -8573,7 +8573,7 @@ completar los cuatro puntos sin rehacer el trabajo de esta sesión.
 
 ## TASK-047 — Vertical 2 — Perfil, cuestionario y CV en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8644,14 +8644,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en TASK-046: sin diff visual ejecutado.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Cubierto por los guards de TASK-044 (redirección anónima verificada en `/profile` y `/questionnaire`); falta un barrido explícito de esta vertical con un usuario autenticado real.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-03 (nombre de archivo como texto) verificado con test explícito; F-04 y F-05 viven en `resumeService`/`app/core/uploads.py`, sin tocar por esta tarea, y sus rutas siguen siendo las mismas funciones tras el rename.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8668,6 +8668,82 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: MEDIUM
 Risk: HIGH
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Backend renombrado, con adapter legacy — el primer rename real de la migración.**
+`backend/app/routes/resumeRoute.py` ahora expone `POST/GET /api/v1/resumes`,
+`DELETE /api/v1/resumes/{resume_id}`, `POST /api/v1/resume-course-audits` y
+`GET /api/v1/resume-course-audits/attempts`, respondiendo con las mismas
+funciones que ya existían (`upload_resume`, `list_resumes`, `delete_resume`,
+`upload_resume_for_course_audit`, `get_course_audit_attempts`) — nada de lógica
+se copió. `legacy_router` registra esas mismas funciones otra vez bajo
+`/profile/cv/*` con `include_in_schema=False`, siguiendo exactamente el patrón
+que TASK-042 ya había fijado para `/auth/jwt` en `app/app.py` (dos mounts de un
+router, uno oculto del OpenAPI). `stable_operation_id` es `{tag}_{handler}` y no
+depende del path, así que el operationId no cambió — los dos mounts no
+colisionan (lo comprueba `tests/test_openapi_contract.py`, que pasa). `/api/v1/profile`
+(perfil) no se tocó: ya existía `/api/v1/users/me` con los mismos esquemas
+`UserRead`/`UserUpdate` vía `fastapi_users.get_users_router`, así que React
+apunta ahí directamente y no hubo nada que renombrar.
+
+**Dos schemas nuevos, cero campos nuevos.** `ResumeUploadRead` y
+`ResumeDeleteRead` (`app/schemas/resumeSchema.py`) tipan lo que las rutas
+legacy ya devolvían sin `response_model`; `QuestionnaireProfileRead`
+(`app/schemas/questionnaireSchema.py`) hace lo mismo para
+`GET /questionnaire/profile`, que seguía siendo `unknown` en el contrato. El
+contrato (`contract/openapi.json`) y los tipos generados
+(`frontend/src/api/generated/openapi.ts`) están regenerados y
+`test_openapi_contract.py` (21/21) confirma que coinciden con lo que sirve la
+app.
+
+**La auditoría de CV se movió de "dentro de una lección" a esta vertical.**
+En producción hoy vive incrustada en una lección de recursos
+(`resource_detail.js`), que es TASK-048 y aún no existe en React. El endpoint
+no depende de ningún `lesson_id`, así que se construyó como su propia sección
+en `/profile` (`ResumeAuditWidget.tsx`) en vez de esperar a que TASK-048 exista
+— moverla de vuelta a un contexto de lección, si se decide que debe vivir ahí,
+es trabajo de esa tarea, no una regresión de esta.
+
+**El cliente legacy nunca mandó `Idempotency-Key`; el nuevo lo hace siempre.**
+`resource_detail.js` llama a `course-audit-upload` sin la cabecera —
+confirmado leyendo el archivo, y es la razón por la que el comentario de
+`app/core/idempotency.py` distingue "legacy clients" de "the React client".
+`uploadResumeForCourseAudit` (`features/profile-resumes/api.ts`) genera un
+`crypto.randomUUID()` por intento y lo manda en `Idempotency-Key`; un test
+verifica que la cabecera viaja con forma de UUID.
+
+**El nombre de archivo nunca pasa por `innerHTML`.** `DataTable` (TASK-044)
+ya obliga a que cada celda sea un nodo de React, no una cadena; `ResumeList.test.tsx`
+prueba F-03 directamente inyectando `<img src=x onerror=alert(1)>.pdf` como
+`original_filename` y comprobando que no aparece ningún `<img>` en el DOM.
+
+**El umbral de aprobación (8.0) sigue siendo copia estática, como en el JS
+legacy.** No hay endpoint que lo exponga (`RESUME_APPROVAL_MIN_SCORE` vive solo
+en `app/services/learning/resumeApproval.py`), así que `profile.audit.result.failed`
+lo nombra como texto descriptivo en vez de leerlo de algún sitio — nada nuevo
+que inventar, nada que recalcular.
+
+**Validación ejecutada:** backend — `pytest tests/ --ignore=tests/integration`
+(todo verde, 1 skip) y `ruff check` sobre los archivos tocados. Frontend —
+`npm run typecheck`, `npm run lint`, `npm run i18n:check` (351 keys) y
+`npx vitest run` (104/104 sobre 20 archivos) y `npm run build`, todos en verde.
+Smoke manual con Playwright (Python) contra `npm run dev` + el backend local:
+`/profile` y `/questionnaire` anónimos redirigen a `/login` sin error de
+consola ni de React.
+
+**Qué falta para marcar COMPLETED — igual que TASK-046, deliberadamente no
+ejecutado en esta sesión:**
+
+1. Diff visual contra la baseline de TASK-035.
+2. Playwright sobre docker compose con un actor autenticado real (no se creó
+   ninguna cuenta de prueba contra el Neon de desarrollo que corre en
+   `localhost:8000`; habría sido una escritura real en una base compartida sin
+   autorización explícita para ello).
+3. Medición de tráfico cero al contrato legacy (`/profile/cv/*`).
+4. `GET /api/v1/profile/cv/{resume_id}/similar` no se renombró — no aparece
+   en la lista de rutas de §5.2 y ninguna pantalla de este vertical lo
+   consume; queda como estaba, sin adapter porque no hubo rename que adaptar.
 
 ## TASK-048 — Vertical 3 — Dashboard, recursos y roadmaps en React
 
