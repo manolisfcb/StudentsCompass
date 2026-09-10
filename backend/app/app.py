@@ -23,6 +23,11 @@ from app.routes.postRoute import router as post_router
 from app.services.accounts.userService import fastapi_users, auth_backend
 from app.middleware.csrf import CSRFMiddleware
 from app.core.error_handlers import install_error_handlers
+from app.core.openapi import (
+    assert_unique_operation_ids,
+    document_error_contract,
+    stable_operation_id,
+)
 from app.middleware.request_context import RequestContextMiddleware
 from app.routes.authRoute import router as auth_router
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
@@ -161,6 +166,9 @@ app = FastAPI(
     docs_url=None if IS_PRODUCTION else "/docs",
     redoc_url=None if IS_PRODUCTION else "/redoc",
     openapi_url=None if IS_PRODUCTION else "/openapi.json",
+    # TASK-043: el `operationId` es el nombre del tipo TypeScript generado, no
+    # un detalle interno del documento. Ver app/core/openapi.py.
+    generate_unique_id_function=stable_operation_id,
 )
 rate_limiter = RequestRateLimiter.from_env()
 
@@ -256,7 +264,7 @@ async def favicon():
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = configure_template_helpers(Jinja2Templates(directory="app/templates"))
 
-app.include_router(post_router, prefix="/api/v1")
+app.include_router(post_router, prefix="/api/v1", tags=["posts"])
 # Two mounts of the same router, on purpose. ``/api/v1/auth/student`` is the
 # contract: it matches ``/api/v1/auth/company`` so a client addresses either
 # actor the same way. ``/auth/jwt`` is the path the Jinja pages have always
@@ -291,3 +299,11 @@ app.include_router(capstone_analytics_router, prefix="/api/v1", tags=["capstone"
 # Deliberately *not* under /api/v1: these are not part of the public contract
 # and are reachable only with a task credential (app/core/internalAuth.py).
 app.include_router(internal_tasks_router, tags=["internal"])
+
+# Se comprueba al montar, no al exportar: una colisión de `operationId` haría que
+# dos operaciones compartieran tipo generado, y eso tiene que fallar en el
+# arranque de quien la introduce, no dos jobs más tarde.
+assert_unique_operation_ids(app)
+# Después de montar todos los routers: envuelve `app.openapi()` y añade a cada
+# operación de `/api/v1` la respuesta de error de TASK-040 (plan 08 §5.1).
+document_error_contract(app)

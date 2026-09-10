@@ -29,6 +29,12 @@ no limpieza.
 `cryptography`, `transformers`, `torch`, `pillow`, `pyasn1`, `setuptools`,
 `soupsieve`. `frontend/package-lock.json` limpio.
 
+TASK-043 añadió una dependencia de desarrollo al frontend, `openapi-typescript`
+(pin exacto `7.13.0`), que genera `frontend/src/api/generated/` desde
+`contract/openapi.json`. No entra en el bundle —los tipos se borran al compilar—
+ni en la imagen: solo corre en `npm run api:types`. La cifra de arriba es de
+antes de añadirla; `deps-audit` vuelve a medir el lock en cada run.
+
 Los pines no han cambiado desde esa medición —`requirements.txt` no se toca
 desde `cf6d1ef`— así que la cifra sigue vigente. El job `deps-audit` la vuelve a
 medir en cada run de CI y **no bloquea**, deliberadamente. Remediarlos y quitar

@@ -57,6 +57,8 @@ npm run lint        # eslint
 npm run typecheck   # tsc -b --noEmit (strict + noUncheckedIndexedAccess)
 npm test            # vitest
 npm run i18n:check  # catálogo completo, sin claves vacías ni huérfanas
+npm run api:types   # regenera src/api/generated/ desde contract/openapi.json
+npm run api:check   # lo mismo, pero falla en vez de escribir si algo difiere
 npm run build       # bundle de producción en dist/
 ```
 
@@ -67,6 +69,10 @@ TASK-039 los conecta a la lane de CI.
 - **Una sola capa HTTP.** Ningún componente llama `fetch`; lo hace
   `src/api/client.ts`. Hay una regla de ESLint que lo impide, no solo una
   convención.
+- **Los tipos de la API no se escriben.** `src/api/generated/` sale de
+  `contract/openapi.json` (TASK-043) y `npm run api:check` rompe CI si alguien
+  lo edita a mano o si el contrato cambió sin regenerarlos. Se importa desde
+  `src/api/types.ts`, que es el que da nombre a lo que se usa.
 - **Rutas relativas siempre.** `apiRequest` rechaza una URL absoluta: daría al
   navegador un segundo origen y las cookies dejarían de ser first-party.
 - **Sin secretos en el bundle.** `API_ORIGIN` se inyecta en Nginx al arrancar el
@@ -84,7 +90,7 @@ TASK-039 los conecta a la lane de CI.
 ```text
 src/
 ├── app/          # providers, router, guards (los guards llegan con TASK-044)
-├── api/          # client.ts, queryKeys.ts, generated/ (tipos de TASK-043)
+├── api/          # client.ts, types.ts, queryKeys.ts, generated/ (TASK-043)
 ├── components/   # primitives/, patterns/, layout/
 ├── features/     # una carpeta por vertical del plan §8
 ├── i18n/

@@ -25,12 +25,26 @@ El comando reescribe la carpeta entera. Nada de aquí se edita a mano.
 
 | Ruta | Versionado | Contenido |
 | --- | --- | --- |
-| `openapi.json` | sí | Schema OpenAPI actual, 144 paths. |
+| `openapi.json` | sí | Schema OpenAPI actual, 144 paths. **No es el contrato vigente**: ver la nota de abajo. |
 | `fixtures/<actor>/*.json` | sí | Payload real de cada endpoint GET relevante, por actor. |
 | `manifest.json` | sí | Qué se capturó, con sha256 de lo versionado. |
 | `MANIFEST.md` | sí | Lo mismo, legible, con la pantalla y el endpoint atados a su vertical. |
 | `screens/*.png` | **no** | 44 capturas (22 pantallas × desktop/mobile). |
 | `screens/index.json` | **no** | sha256 y tamaño de cada PNG; viaja con ellos. |
+
+## Nota (TASK-043): este `openapi.json` no es el contrato vigente
+
+El contrato que consume el frontend vive desde TASK-043 en
+[`contract/openapi.json`](../../../contract/README.md), se regenera en cada
+cambio y CI comprueba que es el de su commit. El de aquí es otra cosa: la
+fotografía del estado **anterior** a la migración, que es la referencia contra la
+que se demuestra la paridad de cada vertical.
+
+Por eso no se ha regenerado al cambiar los `operationId` ni al publicar el error
+model en el documento: reescribirlo borraría la evidencia que justifica su
+existencia. Volver a correr `capture_baseline.py` lo reescribirá —el script
+reescribe la carpeta entera— y ese diff **no se commitea** salvo que se esté
+recapturando la baseline a propósito.
 
 ## Decisión: los PNG no se versionan
 

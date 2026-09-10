@@ -26,9 +26,12 @@ Student Compass es una plataforma de navegación de carrera profesional para est
 > §4: el código Python vive en `backend/` y, desde TASK-038, la SPA React vive
 > en `frontend/` (su propio [README](frontend/README.md); estilos e i18n
 > decididos en [ADR-002](docs/refactor/ADR-002-frontend-styling-and-i18n.md)).
-> En la raíz quedan `docs/`, `.github/`, `.nvmrc` y `docker-compose.yml`, que
+> En la raíz quedan `docs/`, `.github/`, `.nvmrc`, `docker-compose.yml` —que
 > levanta `db`, `redis`, `migrate`, `api`, `worker` y `web` con el navegador
-> viendo un solo origen.
+> viendo un solo origen— y, desde TASK-043, `contract/openapi.json`: el
+> documento OpenAPI que sirve la API de cada commit, del que se generan los
+> tipos TypeScript del frontend y contra el que CI compara el de la rama base
+> (ver [contract/README.md](contract/README.md)).
 > El movimiento fue mecánico —`git mv` y ajustes de ruta— y no cambió ningún
 > módulo, así que el árbol y las descripciones siguen siendo exactos: solo hay
 > que leer cada ruta con `backend/` delante. Este documento se reescribirá por

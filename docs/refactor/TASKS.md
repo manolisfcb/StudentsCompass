@@ -114,7 +114,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-040 | Implantar el error model único y el request id en toda la API | HIGH | PHASE-M2 | COMPLETED | TASK-032, TASK-037 | TASK-041, TASK-042, TASK-045 |
 | TASK-041 | Estandarizar paginación, límites de colección e idempotencia | HIGH | PHASE-M2 | COMPLETED | TASK-024, TASK-037 | TASK-040, TASK-042, TASK-045 |
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
-| TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | IN PROGRESS | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
+| TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | COMPLETED | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
 | TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
 | TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | TODO | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
 | TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | TODO | TASK-035, TASK-042, TASK-044 | NONE |
@@ -142,6 +142,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-068 | Retirar el patrón create_all/drop_all por test de la lane PostgreSQL | LOW | PHASE-0 | TODO | TASK-031 | NONE |
 | TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | TODO | TASK-009 | NONE |
 | TASK-070 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | TODO | TASK-001 | NONE |
+| TASK-071 | Aislar el bucle de eventos que rompe el transporte por defecto del outbox | LOW | PHASE-0 | TODO | TASK-054 | TASK-064, TASK-070 |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -7833,7 +7834,7 @@ Risk: MEDIUM
 
 ## TASK-043 — Fijar OpenAPI como contrato y generar tipos TypeScript en CI
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M2
 Category: API Contract / Infrastructure
@@ -7901,12 +7902,12 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Los tipos del frontend se generan desde el OpenAPI del mismo SHA y no se editan a mano.
-- [ ] Un cambio incompatible de contrato rompe CI; uno aditivo, no.
-- [ ] Los `operationId` son estables entre builds sin cambios de código.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Los tipos del frontend se generan desde el OpenAPI del mismo SHA y no se editan a mano.
+- [x] Un cambio incompatible de contrato rompe CI; uno aditivo, no.
+- [x] Los `operationId` son estables entre builds sin cambios de código.
+- [x] Existing behavior remains compatible. Bug Fix explícito de esta tarea: el error model de TASK-040 pasa a estar documentado en el contrato.
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -7923,6 +7924,176 @@ Performance: LOW
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes
+
+El contrato ya no es una frase del plan: es un fichero versionado
+(`contract/openapi.json`), unos tipos generados de él y tres comprobaciones que
+responden a preguntas distintas.
+
+| Pregunta | Quién la responde | Dónde corre |
+| --- | --- | --- |
+| ¿El contrato versionado es el de este commit? | `backend/tests/test_openapi_contract.py` | lane `backend-fast` |
+| ¿Los tipos del frontend salen de ese contrato? | `npm run api:check` | lane `frontend` |
+| ¿Lo que cambió rompe a un cliente? | `backend/scripts/check_openapi_compat.py` | job nuevo `contrato` |
+
+Están separadas a propósito. Las dos primeras son propiedades **de este commit**
+y viven en la lane que ya tiene el intérprete y las dependencias correspondientes.
+La tercera es una propiedad **de la diferencia con la base**: necesita la historia
+de git y no necesita ni instalar la aplicación ni Node, así que es un job propio
+que corre en segundos. Colgarla de una lane existente habría vuelto a mezclar lo
+que TASK-039 separó.
+
+**El `operationId` se estabilizó antes de generar nada, que es el orden que pedía
+la ficha.** El default de FastAPI es `{handler}{path}_{método}` —
+`list_applications_api_v1_admin_applications_get`—: determinista, pero con la URL
+dentro del nombre. Y §5.2 renombra URLs vertical por vertical siguiendo la matriz
+de TASK-034: con el default, mover `/students_dashboard` a `/dashboard/student`
+habría renombrado el tipo del frontend sin que el contrato de esa operación
+cambiara en nada, y el check de compatibilidad lo habría leído como «operación
+retirada + operación nueva». Ahora el nombre es `{tag}_{handler}`
+(`app/core/openapi.py`), construido con lo que no cambia al renombrar una URL.
+`test_renaming_a_path_does_not_rename_the_operation` fija la propiedad; el
+contraste con `fastapi.utils.generate_unique_id` demuestra que el default sí
+habría cambiado.
+
+**Los 175 `operationId` cambian en este commit, y este era el momento de que
+cambiaran.** Nadie los consumía todavía: `frontend/src/api/generated/` no tenía
+más que un README, y TASK-044 en adelante son los primeros consumidores. Hacerlo
+después habría sido un renombre masivo de tipos con verticales encima. El check
+de compatibilidad no lo señala porque en la base no hay `contract/openapi.json`
+contra el que comparar —el job lo dice y sale 0—, y a partir del commit siguiente
+sí lo habría señalado, que es lo correcto.
+
+**Colisión de `operationId` = fallo al arrancar, no dos jobs después.**
+`assert_unique_operation_ids(app)` corre al final del montaje de routers. Dos
+operaciones con el mismo id colapsarían en un solo tipo generado, en silencio.
+Solo mira las rutas que entran en el schema: el segundo montaje de
+`/auth/jwt` es `include_in_schema=False` y aporta una sola operación al contrato,
+así que no es una colisión.
+
+**`post_router` recibió `tags=["posts"]`.** Era el único router montado sin tag, y
+el tag es el namespace del nombre. Es metadato de agrupación en el documento, no
+un cambio de ruta ni de comportamiento.
+
+**Bug Fix — el error model de TASK-040 no estaba en el contrato.** Los handlers de
+`app/core/error_handlers.py` responden por fuera de los `response_model` de las
+rutas, así que FastAPI no documentaba **ni una sola** de sus respuestas: el
+cliente veía `unknown` donde §5.1 define una forma fija. TASK-040 dejó el encargo
+escrito en su propio `ErrorCode` —«the catalogue can be enumerated for the OpenAPI
+contract that TASK-043 pins»—. `document_error_contract` envuelve `app.openapi()`
+y añade a cada operación de `/api/v1` una respuesta `default` con el envelope. Se
+hace en un sitio y no en 175 decoradores: una ruta nueva la hereda sin acordarse
+de nada. Las páginas Jinja no la reciben, porque devuelven HTML.
+
+Tiene un segundo efecto, buscado: **el catálogo de códigos entra en el documento
+como enum**, así que retirar un código pasa a ser un diff incompatible que el
+check detiene. Antes era una línea borrada en un `StrEnum` que no dejaba rastro en
+ningún contrato. `test_the_published_catalogue_is_the_whole_catalogue` impide que
+un código se quede sin publicar.
+
+**Qué considera incompatible el comparador, y por qué esa lista.** La regla es de
+quién es el problema, y depende de la dirección del dato:
+
+- **Respuestas** (el servidor da, el cliente lee): quitar una operación, un código
+  de estado, una propiedad, o dejar de garantizar una que era `required`, deja al
+  cliente leyendo `undefined`. Reducir un enum le entrega un valor que su `switch`
+  no cubre.
+- **Peticiones** (el cliente da, el servidor valida): exigir una propiedad o un
+  parámetro nuevo —o volver `required` uno opcional— rompe a todo cliente que hoy
+  no lo manda. Reducir un enum rechaza valores que antes se aceptaban. Quitar una
+  propiedad opcional **no** rompe: el servidor la ignora, y marcarlo como rotura
+  habría enseñado a ignorar el check.
+
+No se mira `description`, `summary`, `example`, `title` ni el orden de claves.
+Cambiar la prosa de un contrato no rompe a nadie.
+
+**La vía de escape es §5.3, no un flag.** Una operación marcada `deprecated: true`
+en el documento base puede retirarse sin que el check falle: son los pasos 6 y 7
+de §5.3 —marcar, medir un ciclo de release, retirar—. La alternativa habitual, un
+fichero de excepciones, deja constancia donde nadie mira; el `deprecated` deja
+constancia en el propio contrato y además lo ve el cliente. Un cambio versionado
+(`/api/v2`) aparece como paths nuevos, que son aditivos por definición.
+
+**El contrato se versiona además de publicarse como artefacto.** `backend-fast`
+sigue subiendo el OpenAPI del SHA. Versionarlo añade tres cosas que el artefacto
+no da: el diff del contrato se revisa en el PR junto al código que lo cambió; el
+check tiene una referencia estable de la base sin instalar y arrancar la
+aplicación de la base; y la lane de frontend genera sus tipos sin Python ni base
+de datos, que es justo lo que TASK-039 separó.
+
+**Los tipos generados se commitean.** `npm run api:check` los regenera y falla si
+difieren, lo que cubre las dos formas de desincronización —edición a mano y
+contrato cambiado sin regenerar— con un solo paso. Va **antes** de `typecheck`
+para que el fallo diga «los tipos están viejos» en vez de aparecer como cien
+errores de TypeScript.
+
+**`src/api/types.ts` es la frontera.** Es el único fichero que importa de
+`generated/`; el resto de la aplicación importa de él. Expone `Schemas`,
+`OperationId`, `ResponseOf`, `RequestOf`, `QueryOf` y el envelope de error. Si
+algún día se cambia de generador, cambia ese fichero y no las ocho verticales.
+
+**El cliente HTTP ya consume el contrato.** `ApiError` deja de llevar un `body:
+unknown` a secas: lee el envelope y expone `code` (del catálogo, tipado) y
+`detail`. El `request_id` del cuerpo gana al de la cabecera, porque es el que el
+servidor escribió en su log; cuando el fallo no viene de los handlers —un 502 de
+Nginx, el proxy de dev— `code` es `null` y solo el status significa algo. La capa
+HTTP completa, con guards y shells, sigue siendo TASK-044.
+
+**Validation ejecutada, no razonada.** Sobre el contrato real, mutado a propósito:
+
+```
+# (1) campo requerido eliminado de una respuesta
+!  POST /api/v1/auth/register 201.email: desapareció de la respuesta      -> exit 1
+# (2) enum reducido (se quita "rate_limited" del catálogo)
+!  ... default.error.code: el enum ya no admite "rate_limited"            -> exit 1
+# (3) aditivo: campo opcional nuevo + código nuevo + operación nueva
+   Contrato compatible: ningún cambio rompe a los clientes actuales       -> exit 0
+# (4) retirada de una operación que ya estaba deprecated (§5.3)           -> exit 0
+# (5) la misma retirada sin deprecated                                    -> exit 1
+```
+
+Regeneración idempotente: `export_openapi.py` dos veces da ficheros idénticos
+(`cmp`), `npm run api:types` tres veces da el mismo sha256, y el contrato
+versionado coincide byte a byte con el export de este SHA.
+
+**Tests.**
+
+- `backend/tests/test_openapi_contract.py` (nuevo, 21 casos): el contrato
+  versionado contra el que sirve la app, el export byte a byte reproducible, los
+  `operationId` únicos y sin URL dentro, la independencia del path frente al
+  default de FastAPI, la colisión rechazada, el envelope en las 151 operaciones de
+  `/api/v1` y en ninguna vista, el catálogo completo publicado, y once casos del
+  comparador —incluida una recursión de schema que no debe colgarlo—.
+- `frontend/src/api/types.test.ts` (nuevo, 3 casos): aserciones de tipo. Las juzga
+  `tsc`, no vitest; `ResponseOf` colapsando a `never` type-checkearía en todas
+  partes, así que algo tenía que fijarlo. Comprobado con un control negativo: al
+  cambiar `UserRead` por `UserUpdate`, `npm run typecheck` falla con TS2344.
+- `frontend/src/api/client.test.ts` (+3 casos): el `code` y el `request_id`
+  leídos del envelope, el 502 de HTML que deja `code` en `null`, y `errorDetail`
+  rechazando lo que no es el envelope.
+
+```
+cd backend && python -m pytest -p no:cacheprovider tests/test_openapi_contract.py
+# 21 passed
+
+cd frontend && npm run lint && npm run api:check && npm run typecheck && npm test && npm run build
+# eslint ok · types up to date · tsc ok · 13 passed · built
+```
+
+**Fallo ajeno, no causado aquí.**
+`tests/test_task_outbox.py::TestTransports::test_the_default_transport_refuses_instead_of_guessing`
+falla en la lane rápida completa y pasa en aislamiento. Se comprobó en un worktree
+limpio del commit de reclamación (613becd, antes de tocar nada): **ya fallaba
+igual**. No lo toca esta ficha; queda abierto como **TASK-071**.
+
+**Fuera de Scope, deliberadamente.** No se renombró ningún endpoint —eso es de
+cada vertical, siguiendo la matriz de TASK-034—; no se publicó el OpenAPI en
+producción, que sigue apagado con `IS_PRODUCTION` y es decisión de §6.4; y
+`docs/refactor/baseline/openapi.json` **no** se regeneró: es la fotografía del
+estado anterior a la migración que TASK-035 congeló, y reescribirla habría
+borrado la evidencia contra la que se demuestra la paridad de cada vertical. Se
+dejó dicho en su README.
 
 ## TASK-044 — Construir la capa HTTP, los shells y los guards del frontend
 
@@ -11612,5 +11783,120 @@ el fallo que oculta seguiría viéndose.
 Security: LOW
 Performance: LOW
 Maintainability: HIGH
+Cost: LOW
+Risk: LOW
+
+## TASK-071 — Aislar el bucle de eventos que rompe el transporte por defecto del outbox
+
+Status: TODO
+Priority: LOW
+Phase: PHASE-0
+Category: Testing
+
+### Objective
+
+Que `test_the_default_transport_refuses_instead_of_guessing` dé el mismo veredicto
+solo y dentro de la suite completa.
+
+### Problem
+
+`backend/tests/test_task_outbox.py::TestTransports::test_the_default_transport_refuses_instead_of_guessing`
+pasa ejecutado en aislamiento y falla en la lane rápida completa con
+`RuntimeError: There is no current event loop in thread 'MainThread'`. Es
+contaminación entre tests: algo anterior cierra o deja sin fijar el bucle de
+eventos del hilo principal, y este caso lo lee por un camino —`asyncio.get_event_loop()`,
+directamente o a través de una llamada del transporte— que ya no tolera no
+encontrarlo.
+
+### Evidence / Location
+
+- `backend/tests/test_task_outbox.py` `TestTransports` (Confidence: HIGH). Con el
+  fichero entero: `1 failed, 31 passed`; con `-k default_transport`: `1 passed`.
+- Reproducido en un worktree limpio del commit `613becd`, o sea **antes** de
+  cualquier cambio de TASK-043: el fallo no lo introduce esa ficha.
+- Traza en `asyncio/events.py:702`, el punto donde `get_event_loop` deja de
+  fabricar uno y pasa a levantar.
+
+### Why this is a problem
+
+Un test que depende de qué corrió antes que él no dice nada sobre el código. Su
+rojo se aprende a ignorar, y con él se ignora el rojo del test de al lado que sí
+significa algo. Además tiñe la lane rápida entera, que es la que da veredicto en
+cada PR.
+
+### Desired State
+
+El caso pasa en las dos formas de ejecución, sin `xfail`, sin marcarlo `skip` y
+sin reordenar la suite para esquivarlo.
+
+### Proposed Solution
+
+Localizar quién deja el hilo principal sin bucle —lo más probable es un test que
+llama `asyncio.run` o cierra un loop que fabricó— y arreglarlo en el origen: cada
+test que necesite un bucle propio lo crea y lo restituye, en vez de dejar el
+estado global peor de como lo encontró. Si el que lo lee es el transporte por
+defecto, que el test le dé un bucle explícito en vez de heredar el del hilo.
+
+### Scope
+
+IN SCOPE:
+
+- El aislamiento del bucle de eventos entre casos de `tests/`.
+- El caso citado y cualquier otro que se descubra dependiendo del mismo estado.
+
+OUT OF SCOPE:
+
+- Cambiar el transporte del outbox o su comportamiento en producción: el defecto
+  está en cómo lo ejercitan los tests, no en lo que hace.
+- Reescribir el fixture central de pytest, que es de TASK-001.
+- Los otros dos defectos conocidos de la lane, que son TASK-064 y TASK-065.
+
+### Files / Components Likely Affected
+
+- `backend/tests/test_task_outbox.py` y el test anterior que deja el estado sucio.
+
+### Dependencies
+
+Depends on: TASK-054
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: TASK-064, TASK-070
+
+### Implementation Notes
+
+Encontrar al culpable antes de tocar la víctima: `-p no:randomly` y bisección por
+ficheros dicen cuál es en pocas ejecuciones. Un arreglo que solo haga verde el
+caso citado sin explicar quién ensució el estado deja el mismo defecto esperando
+al siguiente test que lea el bucle.
+
+### Acceptance Criteria
+
+- [ ] El caso pasa en la lane rápida completa y en aislamiento.
+- [ ] Se nombra en las Completion Notes qué test dejaba el hilo sin bucle.
+- [ ] Existing behavior remains compatible.
+- [ ] Relevant tests pass.
+- [ ] No unrelated refactor was introduced.
+
+### Validation
+
+Lane rápida completa dos veces seguidas, y el fichero solo. Los tres veredictos
+verdes.
+
+### Rollback / Risk Notes
+
+Solo toca tests. El riesgo es enmascararlo con un `try/except` alrededor de la
+lectura del bucle: eso lo pondría verde sin arreglar la contaminación, que
+seguiría rompiendo al siguiente.
+
+### Estimated Impact
+
+Security: LOW
+Performance: LOW
+Maintainability: MEDIUM
 Cost: LOW
 Risk: LOW

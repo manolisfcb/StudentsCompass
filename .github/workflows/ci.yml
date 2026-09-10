@@ -90,6 +90,46 @@ jobs:
             --lockfile=backend/requirements.txt \
             --lockfile=frontend/package-lock.json
 
+  # El contrato como contrato (plan 08 §5.1: «un diff incompatible falla salvo
+  # cambio versionado»). Job aparte y no un paso de las lanes de arriba porque no
+  # es una propiedad de este commit sino de la *diferencia* con la base: necesita
+  # la historia, y no necesita ni instalar la aplicación ni Node. Con eso corre en
+  # segundos y su veredicto se lee solo.
+  #
+  # La frescura del contrato dentro del commit es otra cosa y la comprueban las
+  # lanes: `backend-fast` compara `contract/openapi.json` con lo que sirve la app
+  # y `frontend` regenera los tipos desde él.
+  contract:
+    name: contrato (OpenAPI, compatibilidad con la base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # La historia entera: hay que resolver el commit base del PR, que no
+          # está en un checkout superficial.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          # El comparador es solo stdlib, pero el intérprete lo fija el mismo
+          # fichero que el del resto de jobs y no «el que traiga el runner».
+          python-version-file: backend/.python-version
+      - name: Comparar el contrato con el de la rama base
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_SHA:-}" ] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "No hay commit base comparable (rama nueva o push forzado): nada que comparar."
+            exit 0
+          fi
+          if ! git cat-file -e "${BASE_SHA}:contract/openapi.json" 2>/dev/null; then
+            echo "La base todavía no versiona el contrato: no hay referencia contra la que comparar."
+            exit 0
+          fi
+          git show "${BASE_SHA}:contract/openapi.json" > "$RUNNER_TEMP/base-openapi.json"
+          python backend/scripts/check_openapi_compat.py \
+            "$RUNNER_TEMP/base-openapi.json" contract/openapi.json
+
   backend-lint:
     name: backend — lock y Ruff
     runs-on: ubuntu-latest
@@ -148,8 +188,14 @@ jobs:
       # El contrato del SHA (plan 08 §10). Va en esta lane y no en la de
       # baseline porque solo necesita que la aplicación sea importable, que es
       # lo que esta lane ya demostró: colgarlo de la lane de baseline dejaría al
-      # SHA sin contrato cada vez que fallara Chromium. TASK-043 lo convierte en
-      # la fuente de los tipos TypeScript del frontend.
+      # SHA sin contrato cada vez que fallara Chromium.
+      #
+      # Desde TASK-043 el contrato además se versiona en `contract/openapi.json`,
+      # y de ahí salen los tipos TypeScript del frontend. Que ese fichero sea el
+      # de *este* commit lo comprueba `tests/test_openapi_contract.py`, o sea el
+      # paso anterior: si alguien cambia una ruta y no lo regenera, la lane ya
+      # está roja antes de llegar aquí. Este artefacto sigue existiendo para
+      # quien quiera el documento de un SHA sin sacar el repositorio.
       - name: Exportar el OpenAPI del SHA
         run: python scripts/export_openapi.py -o "$RUNNER_TEMP/openapi.json"
       - name: Publicar el OpenAPI
@@ -299,10 +345,18 @@ jobs:
       # distintos.
       - name: ESLint
         run: npm run lint
-      - name: TypeScript
-        run: npm run typecheck
       - name: Claves de i18n
         run: npm run i18n:check
+      # TASK-043: `src/api/generated/` es un artefacto, no código. `--check`
+      # regenera contra `contract/openapi.json` y falla si el resultado difiere,
+      # lo que cubre las dos formas de que se desincronice: alguien editó los
+      # tipos a mano, o cambió el contrato y no los regeneró. Va antes de
+      # `typecheck` para que el fallo diga «los tipos están viejos» en vez de
+      # dejar que el error salga como cien errores de TypeScript.
+      - name: Tipos generados desde el contrato
+        run: npm run api:check
+      - name: TypeScript
+        run: npm run typecheck
       - name: Vitest
         run: npm test
       - name: Build
