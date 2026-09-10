@@ -135,7 +135,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | COMPLETED | TASK-024 | TASK-062 |
 | TASK-062 | Paginar el listado de candidaturas del estudiante | MEDIUM | PHASE-4 | COMPLETED | TASK-024, TASK-025 | TASK-061 |
 | TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | COMPLETED | TASK-018, TASK-025 | TASK-061, TASK-062 |
-| TASK-064 | Estabilizar la lane SQLite frente a la afinidad numérica de UUID | MEDIUM | PHASE-0 | TODO | TASK-001 | TASK-065 |
+| TASK-064 | Estabilizar la lane SQLite frente a la afinidad numérica de UUID | MEDIUM | PHASE-0 | COMPLETED | TASK-001 | TASK-065 |
 | TASK-065 | Corregir el test de agregados diarios que compara fecha local con UTC | LOW | PHASE-0 | TODO | TASK-001 | TASK-064 |
 | TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | TODO | TASK-029 | TASK-067 |
 | TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
@@ -11163,7 +11163,7 @@ Risk: LOW
 
 ## TASK-064 — Estabilizar la lane SQLite frente a la afinidad numérica de UUID
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-0
 Category: Testing
@@ -11245,6 +11245,64 @@ Blocks: NONE
 
 Round-trip de `UUID(int=1)`, de un hex con `e` y de mil `uuid4()` por la lane SQLite; suite
 completa verde; sin cambios en la lane PostgreSQL.
+
+### Completion Notes
+
+**Camino elegido: la opción 1 de la ficha**, un `TypeDecorator` compartido en
+`backend/app/db_types.py` que enlaza a `String(36)` fuera de PostgreSQL y delega en el
+tipo nativo dentro. La opción 2 —un `TEXT` explícito por columna en la lane— se descartó
+por lo que la propia ficha dice de ella: deja el defecto en el tipo, y aquí el tipo lo usan
+131 columnas en 25 modelos.
+
+**La afinidad, medida y no supuesta.** El DDL que emite `postgresql.UUID` es el literal
+`UUID`, no `CHAR(32)` como decía la ficha. La consecuencia es la misma pero por una razón
+más directa: `UUID` no contiene "INT", ni "CHAR"/"CLOB"/"TEXT", ni "BLOB", ni
+"REAL"/"FLOA"/"DOUB", así que SQLite le aplica la regla de descarte, **afinidad NUMERIC**.
+Reproducido antes de tocar nada:
+
+| Valor | `typeof(id)` en SQLite | Vuelve como |
+| --- | --- | --- |
+| `uuid.UUID(int=1)` | `integer` | `AttributeError: 'int' ... 'replace'` |
+| `uuid.UUID(hex="...e12")` | `real` | `AttributeError: 'float' ...` |
+| `uuid.uuid4()` corriente | `text` | correcto |
+
+En el caso `real` el valor guardado era `1.2345678901234568e+40`: no es solo que el tipo
+esté mal, es que **el dato ya se había perdido** por la precisión del flotante.
+`VARCHAR(36)` contiene "CHAR", luego tiene afinidad TEXT, y ningún valor se reinterpreta.
+
+**Se eligió la forma con guiones, y eso corrige un segundo defecto de la misma raíz.**
+`users.id` no usa este tipo: viene de `SQLAlchemyBaseUserTableUUID`, cuyo `GUID` guarda
+`CHAR(36)` con guiones. Mientras las FK usaban `postgresql.UUID` guardaban 32 caracteres
+sin guiones, así que en la lane SQLite **cualquier join entre `users.id` y un `user_id`
+no podía casar nunca**, hubiera filas o no. Verificado antes del cambio: el join devolvía
+cero filas con la fila insertada delante. Alinear las dos representaciones lo cierra, y
+`test_foreign_keys_share_the_representation_of_users_id` lo fija.
+
+**Un arreglo adjunto, obligatorio y etiquetado: `app/core/pagination.py`.** `keyset_before`
+construía `literal(cursor_id)` **sin tipo**. Una comparación solo significa algo si los dos
+lados se codifican igual, y esa coincidencia era accidental: un `literal(UUID(...))` sin
+tipo se renderiza como 32 hex pelados, que era justo lo que producía `postgresql.UUID`
+fuera de PostgreSQL. Al cambiar la codificación de la columna, el desempate del cursor pasó
+a comparar dos grafías distintas del mismo id y **una página se repetía**:
+`test_the_history_is_walked_exactly_once[10000]` veía 10 100 filas donde había 10 000.
+Se corrige tipando cada mitad del literal con la columna contra la que se compara, que
+convierte el acuerdo en un hecho en vez de una casualidad. No es cleanup lateral: es lo
+mínimo para que este cambio no rompa un contrato existente.
+
+**Lo que no se hizo.** No se tocó el tipo en PostgreSQL ni se migró ningún dato: el
+decorador devuelve el valor intacto en ese dialecto y ni el bind ni el result processor
+intervienen. Las migraciones de `alembic/versions/` siguen usando `postgresql.UUID`, que es
+correcto porque corren contra PostgreSQL. Tampoco se evitaron UUIDs numéricos en los
+fixtures, que es lo que la ficha prohíbe expresamente.
+
+**Validación.** `tests/test_uuid_sqlite_roundtrip.py`, 6 casos: los tres UUID con forma
+numérica de la ficha, la afinidad declarada comprobada contra `pragma_table_info`, mil
+`uuid4()` de ida y vuelta, y el join contra `users.id`. Retirando el decorador **5 de los 6
+fallan**; el que sigue pasando es el de los mil `uuid4()`, que es exactamente la razón de
+que el defecto fuera intermitente y no permanente. Lane rápida completa: 817 tests, un solo
+fallo, `test_the_default_transport_refuses_instead_of_guessing`, que es **TASK-071** —
+ficha TODO propia, reproducida en un worktree limpio antes de estos cambios. Lane
+PostgreSQL: 133 de 133, sin cambios.
 
 ### Estimated Impact
 

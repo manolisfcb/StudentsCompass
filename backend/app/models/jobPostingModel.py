@@ -12,7 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from app.db import Base
 import uuid
-from sqlalchemy.dialects.postgresql import UUID
+from app.db_types import UUID
 from datetime import datetime
 
 

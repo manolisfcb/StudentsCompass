@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from sqlalchemy import Column, DateTime, ForeignKey, Index, String
-from sqlalchemy.dialects.postgresql import UUID
+from app.db_types import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship
 

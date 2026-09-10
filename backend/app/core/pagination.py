@@ -111,10 +111,23 @@ def keyset_before(
     A row value rather than ``created_at < x OR (created_at = x AND id < y)``:
     the tie-break becomes part of the index scan instead of a filter applied
     after it, which is what lets a composite index answer the page.
+
+    Each half of the cursor is bound **with the type of the column it is
+    compared against**. An untyped ``literal()`` is rendered by whatever type
+    SQLAlchemy infers from the Python value, and a comparison is only meaningful
+    when both sides are encoded the same way. That agreement used to be a
+    coincidence: an untyped ``literal(UUID(...))`` happens to render as 32 bare
+    hex digits, which is also what ``postgresql.UUID`` produced outside
+    PostgreSQL. The moment the column's encoding changed — ``app/db_types.py``
+    now stores the canonical dashed form off PostgreSQL — the two sides stopped
+    lining up and the tie-break silently compared two different spellings of the
+    same id, so a page could repeat. Naming the type makes the agreement a fact
+    instead of a coincidence.
     """
     cursor_created_at, cursor_id = decode_cursor(cursor)
     return tuple_(created_at_column, id_column) < tuple_(
-        literal(cursor_created_at), literal(cursor_id)
+        literal(cursor_created_at, created_at_column.type),
+        literal(cursor_id, id_column.type),
     )
 
 

@@ -2,7 +2,8 @@ from datetime import datetime
 import uuid
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func, select
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
+from app.db_types import UUID
 from sqlalchemy.orm import column_property, relationship
 
 from app.db import Base

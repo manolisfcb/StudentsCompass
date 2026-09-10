@@ -18,7 +18,7 @@ from sqlalchemy.orm import relationship
 from app.models.jobPostingModel import JobPosting  # noqa: F401
 from app.models.interviewAvailabilityModel import InterviewAvailabilityStatus
 from app.db import Base
-from sqlalchemy.dialects.postgresql import UUID
+from app.db_types import UUID
 import uuid
 from datetime import datetime
 import enum

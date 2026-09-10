@@ -19,7 +19,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from app.db_types import UUID
 
 from app.db import Base
 
