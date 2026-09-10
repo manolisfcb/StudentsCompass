@@ -140,7 +140,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | TODO | TASK-029 | TASK-067 |
 | TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
 | TASK-068 | Retirar el patrón create_all/drop_all por test de la lane PostgreSQL | LOW | PHASE-0 | TODO | TASK-031 | NONE |
-| TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | TODO | TASK-009 | NONE |
+| TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | COMPLETED | TASK-009 | NONE |
 | TASK-070 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | TODO | TASK-001 | NONE |
 | TASK-071 | Aislar el bucle de eventos que rompe el transporte por defecto del outbox | LOW | PHASE-0 | TODO | TASK-054 | TASK-064, TASK-070 |
 
@@ -11674,7 +11674,7 @@ Risk: LOW
 
 ## TASK-069 — Crear el esquema base también fuera de PostgreSQL
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-0
 Category: Correctness / Infrastructure
@@ -11758,10 +11758,10 @@ Can run in parallel with: cualquiera que no toque `app/db_baseline.py`.
 
 ### Acceptance Criteria
 
-- [ ] Una base vacía en un dialecto no soportado no queda sellada en head.
-- [ ] `verify_against_metadata()` se ejecuta antes del `stamp` en todos los caminos.
-- [ ] Existing behavior remains compatible en PostgreSQL.
-- [ ] Relevant tests pass.
+- [x] Una base vacía en un dialecto no soportado no queda sellada en head.
+- [x] `verify_against_metadata()` se ejecuta antes del `stamp` en todos los caminos.
+- [x] Existing behavior remains compatible en PostgreSQL.
+- [x] Relevant tests pass.
 
 ### Validation
 
@@ -11769,6 +11769,56 @@ Bootstrapear una base vacía en SQLite y comprobar que o bien queda con el esque
 completo, o bien la operación falla — y que `alembic_version` no queda sellada en
 ninguno de los dos casos sin esquema. Repetir en PostgreSQL para comprobar que no
 cambia nada.
+
+### Completion Notes
+
+**Resuelto por la segunda salida que ofrece la ficha**, y con la evidencia que pedía para
+elegir entre las dos.
+
+**Lo primero fue desindentar**, que es lo que la Proposed Solution manda hacer antes de
+decidir: las 828 líneas del bloque generado estaban a 8 espacios, dentro del
+`if connection.dialect.name == "postgresql":` que precede al `CREATE EXTENSION`. Ahora
+están en el cuerpo de la función, donde siempre debieron estar.
+
+**Después se midió qué falla realmente en SQLite, y no es lo que la ficha suponía.**
+Ejecutado el bloque ya desindentado contra una base SQLite vacía:
+
+```
+FALLA: OperationalError — (sqlite3.OperationalError) no such function: btrim
+tablas creadas: 28
+```
+
+No llega ni a `Vector` ni al índice HNSW. Muere antes, en el `CHECK
+(char_length(btrim(job_title)) > 0)` de `applications`, porque `btrim` y `char_length` son
+funciones de PostgreSQL. Y deja **28 tablas creadas**: un esquema a medias, que es peor que
+ninguno.
+
+**Con eso, completar el soporte multi-dialecto no era una opción disponible.** Habría que
+sustituir esas funciones, `JSONB`, los índices parciales y el HNSW; lo último es
+literalmente "añadir soporte de pgvector a SQLite", que la ficha pone OUT OF SCOPE. Así que
+`bootstrap()` pasa a **rechazar explícitamente** el dialecto que no sabe construir.
+
+**El rechazo va antes de tocar nada, no a mitad del DDL.** `require_supported_dialect()` se
+llama como primera sentencia de `create_schema()` y de `bootstrap()`. Dejar que el DDL
+fallara solo produciría el mismo esquema parcial de 28 tablas por otro camino, y una base a
+medias es más difícil de razonar que una intacta.
+
+**En PostgreSQL no cambia nada.** El `CREATE EXTENSION IF NOT EXISTS vector` deja de
+necesitar su propio `if` porque la función entera ya exige ese dialecto. Una instalación
+existente sigue tomando la cadena forward-only por `alembic upgrade head` sin pasar por
+aquí, y `verify_against_metadata()` sigue ejecutándose antes del `stamp` — ahora en el
+único camino que existe, que es lo que el criterio pedía.
+
+**Validación.** `tests/test_db_baseline_dialect_guard.py`, 5 casos, en la lane rápida (sin
+PostgreSQL), porque el camino que fijan es justamente el de no-PostgreSQL: que
+`create_schema` rechace, que el rechazo deje la base con **cero** tablas, que `bootstrap` no
+deje `alembic_version` ni ninguna otra tabla, que PostgreSQL siga aceptándose, y —el que
+impide la regresión de verdad— que el bloque generado siga a 4 espacios y no a 8. Ese
+último hace falta porque un test de comportamiento en SQLite ya no distingue "el bloque
+está fuera del `if`" de "la guarda lo rechazó antes": las dos cosas levantan la misma
+excepción. Sin él, regenerar la baseline podría volver a anidar el bloque sin que nada
+avisara. Lane PostgreSQL: 133 de 133, incluidos los 13 casos de `test_migrations.py` que
+bootstrapean de verdad.
 
 ### Estimated Impact
 
