@@ -1342,6 +1342,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/me/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Company Dashboard
+         * @description Get complete dashboard data for companies.
+         */
+        get: operations["dashboard_get_company_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/me/job-postings": {
         parameters: {
             query?: never;
@@ -1430,26 +1450,6 @@ export interface paths {
         };
         /** Get Current Company Recruiter Profile */
         get: operations["companies_get_current_company_recruiter_profile"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/company_dashboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Company Dashboard
-         * @description Get complete dashboard data for companies.
-         */
-        get: operations["dashboard_get_company_dashboard"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3958,6 +3958,77 @@ export interface components {
             recruiter_last_name?: string | null;
             /** Website */
             website?: string | null;
+        };
+        /** CompanyDashboardCompanyRead */
+        CompanyDashboardCompanyRead: {
+            /** Company Name */
+            company_name?: string | null;
+            /** Id */
+            id: string;
+            /** Industry */
+            industry?: string | null;
+            /** Location */
+            location?: string | null;
+        };
+        /** CompanyDashboardCurrentRecruiterRead */
+        CompanyDashboardCurrentRecruiterRead: {
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name?: string | null;
+            /** Id */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Last Name */
+            last_name?: string | null;
+            /** Role */
+            role: string;
+        };
+        /** CompanyDashboardJobPostingRead */
+        CompanyDashboardJobPostingRead: {
+            /** Application Count */
+            application_count: number;
+            /** Created At */
+            created_at?: string | null;
+            /** Id */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Job Type */
+            job_type?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Status */
+            status: string;
+            /** Status Label */
+            status_label: string;
+            /** Title */
+            title: string;
+        };
+        /**
+         * CompanyDashboardRead
+         * @description Typed response for `GET /companies/me/dashboard` (TASK-050, plan 08
+         *     §5.2). Same shape `DashboardService.get_company_dashboard` has always
+         *     returned under `response_model=Dict` on the legacy `/company_dashboard`.
+         */
+        CompanyDashboardRead: {
+            company: components["schemas"]["CompanyDashboardCompanyRead"];
+            current_recruiter: components["schemas"]["CompanyDashboardCurrentRecruiterRead"];
+            /** Recent Job Postings */
+            recent_job_postings: components["schemas"]["CompanyDashboardJobPostingRead"][];
+            stats: components["schemas"]["CompanyDashboardStatsRead"];
+        };
+        /** CompanyDashboardStatsRead */
+        CompanyDashboardStatsRead: {
+            /** Active Job Postings */
+            active_job_postings: number;
+            /** Scheduled Interviews */
+            scheduled_interviews: number;
+            /** Shortlisted */
+            shortlisted: number;
+            /** Total Applications */
+            total_applications: number;
         };
         /** CompanyJobPostingCreate */
         CompanyJobPostingCreate: {
@@ -9206,6 +9277,35 @@ export interface operations {
             };
         };
     };
+    dashboard_get_company_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDashboardRead"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     jobs_list_current_company_job_postings: {
         parameters: {
             query?: never;
@@ -9528,37 +9628,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyRecruiterManagementRead"];
-                };
-            };
-            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponse"];
-                };
-            };
-        };
-    };
-    dashboard_get_company_dashboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
             /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */

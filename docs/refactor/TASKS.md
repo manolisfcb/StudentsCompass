@@ -121,7 +121,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
 | TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
 | TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
-| TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | TODO | TASK-046 | TASK-047, TASK-048, TASK-049 |
+| TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | IN PROGRESS | TASK-046 | TASK-047, TASK-048, TASK-049 |
 | TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | TODO | TASK-024, TASK-046 | TASK-049, TASK-052 |
 | TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | TODO | TASK-022, TASK-023, TASK-046 | TASK-051 |
 | TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | TODO | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
@@ -9090,7 +9090,7 @@ consola ni de React.
 
 ## TASK-050 — Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9161,14 +9161,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en las verticales anteriores.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en las cuatro pantallas; el mecanismo de acceso cruzado entre actores (`RequireActor` con `session.actors` en plural) ya tiene test propio desde TASK-044 (`guards.test.tsx`) y esta vertical no añadió lógica de guard nueva. `RecruitersPage` tiene un test explícito del 403 que un recruiter no-owner recibiría. Falta el barrido con un actor autenticado real.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-09 (TASK-010), F-11 (TASK-014) y F-12 (TASK-015) ya estaban resueltos antes de esta tarea, verificado leyendo el código actual de `interviewService.py`. Ningún hallazgo abierto toca recruiters, applicants o job postings específicamente.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -9185,6 +9185,72 @@ Performance: MEDIUM
 Maintainability: HIGH
 Cost: LOW
 Risk: HIGH
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Backend, el único rename que esta vertical necesitaba.** `GET /company_dashboard`
+→ `GET /companies/me/dashboard`, con `CompanyDashboardRead` nuevo
+(`app/schemas/dashboardSchema.py`, junto a los schemas del dashboard de
+estudiante de TASK-048) tipando lo que era `response_model=Dict`. Mismo patrón
+de `legacy_router` + `include_in_schema=False`. Todo lo demás —
+`/companies/me`, `/companies/me/job-postings`, `/companies/me/applicants`,
+`/companies/me/applicants/{id}/interview-availabilities`,
+`/companies/me/recruiters` — ya tenía la forma y el naming que la matriz de
+TASK-034 pedía, así que React los consume tal cual: esta es la primera
+vertical desde TASK-046 que no tuvo que tocar más de un endpoint.
+`contract/openapi.json` y los tipos generados están regenerados y verificados
+(`tests/test_openapi_contract.py`, 21/21); suite completa de backend en verde
+(1 skip preexistente).
+
+**El campo `shortlisted` sigue significando "en revisión", no una etapa
+nueva.** `DashboardService.get_company_dashboard` cuenta
+`ApplicationStatus.IN_REVIEW` bajo esa clave — el nombre es del servicio, no
+un error de esta tarea. `CompanyDashboardStatsRead.shortlisted` documenta la
+discrepancia en un comentario en vez de renombrar el campo en la respuesta,
+que habría sido un cambio de contrato fuera de alcance de un rename.
+
+**Los permisos por rol no se reimplementan en React.** `owner` / `admin` /
+`recruiter` / `viewer` son cuatro strings en la tabla, no un enum ni una
+jerarquía que el frontend conozca; `ApplicantsPage`, `JobPostingsPage` y
+`RecruitersPage` no comprueban qué rol tiene el recruiter actual antes de
+mostrar un botón — si un `viewer` llega a `/company/recruiters` (owner-only
+incluso para el `GET` de lista), recibe el mismo 403 que un intento por URL
+directa, y `AsyncBoundary` ya sabe pintar ese error sin caerse. Un test lo
+fija explícitamente en `RecruitersPage.test.tsx`.
+
+**La reserva de entrevista no se reimplementa tampoco.** Publicar
+disponibilidad (`POST .../interview-availabilities`) cancela cualquier slot
+abierto anterior y crea los nuevos — la decisión de qué pasa con slots viejos
+es enteramente de `InterviewService.publish_company_availabilities`; React
+solo manda la lista de horarios que el recruiter eligió.
+
+**Alcance recortado, documentado:** la vista previa de currículum
+embebida (`GET .../resume/preview`, HTML/binario sin `response_model`) y la
+descarga (`.../resume/download`) se enlazan directamente
+(`<a href>`/`target="_blank"`) en vez de construir un visor en React — son
+respuestas binarias/HTML que no encajan en el patrón tipado del resto de la
+vertical, y un enlace directo preserva el comportamiento exacto que
+`company-candidates.js` ya tenía (abrir en pestaña nueva).
+
+**Validación ejecutada:** backend — `pytest tests/ --ignore=tests/integration`
+(verde, 1 skip preexistente) y `ruff check` sobre los archivos tocados.
+Frontend — `npm run typecheck`, `npm run lint`, `npm run i18n:check` (527
+keys), `npx vitest run` (152/152 sobre 36 archivos — 15 casos nuevos en 6
+archivos de test de esta vertical, incluido el 403 de un recruiter sin
+permiso de owner) y `npm run build`, todos en verde. Smoke manual con
+Playwright (Python) contra `npm run dev` + el backend local: las cuatro
+pantallas (`/company`, `/company/postings`, `/company/applicants`,
+`/company/recruiters`) anónimas redirigen a `/login` sin error de consola ni
+de React.
+
+**Qué falta para marcar COMPLETED — igual que las verticales anteriores:**
+
+1. Diff visual contra la baseline de TASK-035.
+2. Playwright sobre docker compose con un recruiter autenticado real,
+   incluido un flujo cruzado (una sesión de estudiante intentando `/company`,
+   y viceversa) — no se creó ninguna cuenta de prueba contra el Neon de
+   desarrollo sin autorización explícita.
+3. Medición de tráfico cero al contrato legacy (`/company_dashboard`).
 
 ## TASK-051 — Vertical 6 — Community, friendships y messages en React
 

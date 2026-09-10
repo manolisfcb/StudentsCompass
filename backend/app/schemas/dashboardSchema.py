@@ -71,3 +71,54 @@ class StudentDashboardRead(BaseModel):
     resource_navigation: dict[str, str]
     recent_applications: list[DashboardRecentApplicationRead]
     resources: list[DashboardResourceLinkRead]
+
+
+class CompanyDashboardCompanyRead(BaseModel):
+    id: str
+    company_name: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+
+
+class CompanyDashboardStatsRead(BaseModel):
+    active_job_postings: int
+    total_applications: int
+    scheduled_interviews: int
+    #: The name is the service's, not a typo carried over here: it counts
+    #: `ApplicationStatus.IN_REVIEW`, not a distinct "shortlisted" stage — the
+    #: model has no such status. Renaming the wire field would be a product
+    #: decision (a new stage, or relabelling an existing one), out of scope
+    #: for a rename-only migration task.
+    shortlisted: int
+
+
+class CompanyDashboardJobPostingRead(BaseModel):
+    id: str
+    title: str
+    location: Optional[str] = None
+    job_type: Optional[str] = None
+    is_active: bool
+    status: str
+    status_label: str
+    created_at: Optional[str] = None
+    application_count: int
+
+
+class CompanyDashboardCurrentRecruiterRead(BaseModel):
+    id: str
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: str
+    is_active: bool
+
+
+class CompanyDashboardRead(BaseModel):
+    """Typed response for `GET /companies/me/dashboard` (TASK-050, plan 08
+    §5.2). Same shape `DashboardService.get_company_dashboard` has always
+    returned under `response_model=Dict` on the legacy `/company_dashboard`."""
+
+    company: CompanyDashboardCompanyRead
+    stats: CompanyDashboardStatsRead
+    recent_job_postings: list[CompanyDashboardJobPostingRead]
+    current_recruiter: CompanyDashboardCurrentRecruiterRead

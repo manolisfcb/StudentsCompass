@@ -3667,6 +3667,230 @@
         "title": "CompanyCreate",
         "type": "object"
       },
+      "CompanyDashboardCompanyRead": {
+        "properties": {
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "CompanyDashboardCompanyRead",
+        "type": "object"
+      },
+      "CompanyDashboardCurrentRecruiterRead": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "is_active"
+        ],
+        "title": "CompanyDashboardCurrentRecruiterRead",
+        "type": "object"
+      },
+      "CompanyDashboardJobPostingRead": {
+        "properties": {
+          "application_count": {
+            "title": "Application Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "job_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Type"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_label": {
+            "title": "Status Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "is_active",
+          "status",
+          "status_label",
+          "application_count"
+        ],
+        "title": "CompanyDashboardJobPostingRead",
+        "type": "object"
+      },
+      "CompanyDashboardRead": {
+        "description": "Typed response for `GET /companies/me/dashboard` (TASK-050, plan 08\n§5.2). Same shape `DashboardService.get_company_dashboard` has always\nreturned under `response_model=Dict` on the legacy `/company_dashboard`.",
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyDashboardCompanyRead"
+          },
+          "current_recruiter": {
+            "$ref": "#/components/schemas/CompanyDashboardCurrentRecruiterRead"
+          },
+          "recent_job_postings": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyDashboardJobPostingRead"
+            },
+            "title": "Recent Job Postings",
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/CompanyDashboardStatsRead"
+          }
+        },
+        "required": [
+          "company",
+          "stats",
+          "recent_job_postings",
+          "current_recruiter"
+        ],
+        "title": "CompanyDashboardRead",
+        "type": "object"
+      },
+      "CompanyDashboardStatsRead": {
+        "properties": {
+          "active_job_postings": {
+            "title": "Active Job Postings",
+            "type": "integer"
+          },
+          "scheduled_interviews": {
+            "title": "Scheduled Interviews",
+            "type": "integer"
+          },
+          "shortlisted": {
+            "title": "Shortlisted",
+            "type": "integer"
+          },
+          "total_applications": {
+            "title": "Total Applications",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "active_job_postings",
+          "total_applications",
+          "scheduled_interviews",
+          "shortlisted"
+        ],
+        "title": "CompanyDashboardStatsRead",
+        "type": "object"
+      },
       "CompanyJobPostingCreate": {
         "properties": {
           "application_url": {
@@ -13824,6 +14048,43 @@
         ]
       }
     },
+    "/api/v1/companies/me/dashboard": {
+      "get": {
+        "description": "Get complete dashboard data for companies.",
+        "operationId": "dashboard_get_company_dashboard",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDashboardRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Get Company Dashboard",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
     "/api/v1/companies/me/job-postings": {
       "get": {
         "operationId": "jobs_list_current_company_job_postings",
@@ -14280,45 +14541,6 @@
         "summary": "Update Company Recruiter",
         "tags": [
           "companies"
-        ]
-      }
-    },
-    "/api/v1/company_dashboard": {
-      "get": {
-        "description": "Get complete dashboard data for companies.",
-        "operationId": "dashboard_get_company_dashboard",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Dashboard Get Company Dashboard",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Get Company Dashboard",
-        "tags": [
-          "dashboard"
         ]
       }
     },

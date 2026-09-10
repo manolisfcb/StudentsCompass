@@ -4,6 +4,10 @@ import { RequireActor, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { ApplicantsPage } from "@/features/company/ApplicantsPage";
+import { CompanyDashboardPage } from "@/features/company/CompanyDashboardPage";
+import { JobPostingsPage } from "@/features/company/JobPostingsPage";
+import { RecruitersPage } from "@/features/company/RecruitersPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { ApplicationsPage } from "@/features/jobs-applications/ApplicationsPage";
 import { JobsPage } from "@/features/jobs-applications/JobsPage";
@@ -80,7 +84,12 @@ export const router = createBrowserRouter([
         <CompanyShell />
       </RequireActor>
     ),
-    children: [{ path: "/company", element: <Navigate to="/__smoke" replace /> }],
+    children: [
+      { path: "/company", element: <CompanyDashboardPage /> },
+      { path: "/company/postings", element: <JobPostingsPage /> },
+      { path: "/company/applicants", element: <ApplicantsPage /> },
+      { path: "/company/recruiters", element: <RecruitersPage /> },
+    ],
   },
   {
     element: (

@@ -73,6 +73,7 @@ export function CompanyShell() {
     { to: "/company", label: t("layout.nav.companyDashboard") },
     { to: "/company/postings", label: t("layout.nav.postings") },
     { to: "/company/applicants", label: t("layout.nav.applicants") },
+    { to: "/company/recruiters", label: t("layout.nav.recruiters") },
   ];
   return (
     <AppShell title={app} nav={nav} skipLabel={skip} actions={<LogoutButton actorKind="company" />}>

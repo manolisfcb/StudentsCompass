@@ -30,7 +30,7 @@ from app.core.errors import (
     CODE_STUDENT_DASHBOARD,
     server_failure,
 )
-from app.schemas.dashboardSchema import StudentDashboardRead
+from app.schemas.dashboardSchema import CompanyDashboardRead, StudentDashboardRead
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ router = APIRouter()
 legacy_router = APIRouter()
 
 
-@router.get("/company_dashboard", response_model=Dict)
+@router.get("/companies/me/dashboard", response_model=CompanyDashboardRead)
 async def get_company_dashboard(
     company: Company = Depends(current_active_company),
     recruiter: CompanyRecruiter = Depends(current_active_company_recruiter),
@@ -292,12 +292,13 @@ async def delete_application(
     return {"message": "Application deleted successfully"}
 
 
-# --- Legacy adapter (TASK-048/049, plan 08 §13) -------------------------------
+# --- Legacy adapter (TASK-048/049/050, plan 08 §13) ---------------------------
 #
 # Same functions, old paths, hidden from the OpenAPI document. `dashboard.js`
-# keeps calling `/students_dashboard`, and `jobs.js` keeps calling
-# `POST /applications/{id}/interview-selection`, until TASK-059 confirms zero
-# traffic on each.
+# keeps calling `/students_dashboard`, `jobs.js` keeps calling
+# `POST /applications/{id}/interview-selection`, and `company-dashboard.js`
+# keeps calling `/company_dashboard`, until TASK-059 confirms zero traffic on
+# each.
 legacy_router.add_api_route(
     "/applications/{application_id}/interview-selection",
     select_interview_availability,
@@ -308,6 +309,13 @@ legacy_router.add_api_route(
 legacy_router.add_api_route(
     "/students_dashboard",
     get_students_dashboard,
+    methods=["GET"],
+    response_model=Dict,
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/company_dashboard",
+    get_company_dashboard,
     methods=["GET"],
     response_model=Dict,
     include_in_schema=False,
