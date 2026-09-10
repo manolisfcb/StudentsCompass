@@ -123,12 +123,12 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
 | TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | IN PROGRESS | TASK-046 | TASK-047, TASK-048, TASK-049 |
 | TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-024, TASK-046 | TASK-049, TASK-052 |
-| TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | TODO | TASK-022, TASK-023, TASK-046 | TASK-051 |
+| TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-022, TASK-023, TASK-046 | TASK-051 |
 | TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | TODO | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
 | TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | COMPLETED | TASK-013, TASK-037 | TASK-055 |
 | TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | BLOCKED | TASK-002, TASK-036, TASK-039 | TASK-054 |
-| TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | TODO | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
-| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | TODO | TASK-028, TASK-056 | NONE |
+| TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | BLOCKED | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
+| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | BLOCKED | TASK-028, TASK-056 | NONE |
 | TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | TODO | TASK-031, TASK-053, TASK-057 | NONE |
 | TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
 | TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | COMPLETED | TASK-039 | NONE |
@@ -9428,7 +9428,7 @@ redirigen a `/login` sin error de consola ni de React.
 
 ## TASK-052 — Vertical 7 — Career Lab / Capstone en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9515,6 +9515,82 @@ Playwright sobre compose para los flujos de la vertical, incluidos casos de acce
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Sin rename de path: `career_lab.js` ya hablaba el contrato `/capstone/*` que
+usa esta pantalla.** A diferencia de TASK-047/049/050/051, ninguno de los 16
+endpoints de `capstoneAnalyticsRoute.py` cambió de path ni de verbo — no hizo
+falta `legacy_router`. El único cambio de comportamiento backend es aditivo:
+`Idempotency-Key` en `POST /capstone/learning-route/optimize` y `POST
+/capstone/learning-route/evaluate-baselines`, siguiendo el mismo patrón que
+`/cv-analyses` (TASK-049) y `/applications` (TASK-041) — ambos disparan un
+solve CP-SAT acotado (`app/core/offload.py`), así que un reintento que nunca
+vio la primera respuesta debe recibir la misma, no encolar un segundo solve.
+Un 404 por `resume_not_found` libera la clave (`guard.release()`) en vez de
+guardarla: no es un éxito que merezca cachearse, y el cliente debe poder
+reintentar con la misma clave tras corregir el `resume_id`. Cobertura nueva en
+`tests/test_capstone_analytics_models.py`: replay byte-a-byte con la misma
+clave en ambos endpoints, y liberación de clave en el 404. Contrato y tipos
+regenerados (`tests/test_openapi_contract.py` en verde).
+
+**Alcance recortado del lado del producto, documentado en vez de omitido en
+silencio.** `career_lab.html`/`.js` es un dashboard de una sola página con 16
+paneles; `CareerLabPage.tsx` cubre el flujo central — selección de CV/rol,
+sync + review de skills detectadas (confirmar/rechazar/manual/borrar),
+gap-analysis con métricas y comparación de skills, insights, señales de
+mercado, cursos recomendados, optimización de ruta + comparación de
+baselines + historial — y deja fuera tres piezas explícitamente:
+
+1. El widget de subida de CV dentro de esta pantalla: `/profile` ya tiene el
+   suyo (TASK-047, `ResumeAuditWidget`); duplicar el flujo de subida en dos
+   pantallas no es paridad, es una segunda fuente de verdad para el mismo
+   dato.
+2. El radar chart (`<canvas>`): la comparación "current vs required" se
+   muestra como lista con barras, sin recalcular ningún número — el chart es
+   presentación, no lógica de negocio.
+3. Los dos paneles de diagnóstico admin-facing (`Catalog Readiness`,
+   `Embedding Status`) — señal para quien cura el catálogo, no parte del
+   flujo del estudiante. Si alguna vez se exponen en React, encajan mejor en
+   TASK-053 (Admin) que aquí.
+
+Nada de esto toca reglas de negocio: cada número que se muestra —
+`match_score`, `overall_readiness_score`, `skill_gap_score`, el ganador de
+baselines — es el que devuelve el backend, sin recálculo ni redondeo con
+significado nuevo en el cliente.
+
+**Validación ejecutada:** backend — `pytest tests/test_capstone_analytics_models.py
+tests/test_capstone_skill_from_cv_text.py tests/test_capstone_contract_snapshot.py`
+(verde, incluidos los 2 tests nuevos de idempotencia) y la suite completa
+(`pytest -q`): 3 fallos preexistentes y ajenos a esta tarea, confirmados
+reproduciéndolos contra el commit `10f94d4` (TASK-051, antes de tocar nada de
+TASK-052) con `git stash` — `test_rollout_rehearsal_pg.py::test_no_endpoint_disappeared_without_a_task_saying_so`
+y `::test_the_methods_of_every_surviving_endpoint_are_unchanged` (el
+allowlist `DECLARED_REMOVED_PATHS` de ese test quedó desactualizado por los
+renames de TASK-047/049/050/051, ninguno de TASK-052) y
+`test_task_outbox.py::TestTransports::test_the_default_transport_refuses_instead_of_guessing`
+(un `asyncio.get_event_loop()` deprecado, sin relación con Capstone). Ninguno
+se tocó: no es el dominio de esta ficha. Frontend — `npm run typecheck`,
+`npm run lint`, `npm run i18n:check` (658 keys), `npx vitest run` (176/176
+sobre 42 archivos — 12 casos nuevos en 2 archivos de esta vertical, incluida
+la comprobación de que `optimize` y `evaluate-baselines` llevan una
+`Idempotency-Key` fresca) y `npm run build`, todos en verde. Smoke manual con
+Playwright (Python) contra `npm run dev` + el backend local: `/career-lab`
+anónimo redirige a `/login` sin error de React (el único mensaje de consola
+es el 401 esperado de la comprobación de sesión del guard, igual que en las
+verticales anteriores).
+
+**Qué falta para marcar COMPLETED — igual que las verticales anteriores:**
+
+1. Diff visual contra la baseline de TASK-035.
+2. Playwright sobre docker compose con un actor autenticado real (subir CV,
+   revisar skills, correr gap-analysis, generar y comparar una ruta) — no se
+   creó ninguna cuenta de prueba contra el Neon de desarrollo sin
+   autorización explícita.
+3. Medición de tráfico cero al contrato legacy — no aplica en el mismo
+   sentido que en verticales anteriores (no hubo rename de path), pero sigue
+   pendiente confirmar que `career_lab.js` deja de recibir tráfico una vez
+   el SPA sea el consumidor real.
 
 ### Estimated Impact
 
@@ -9973,17 +10049,47 @@ Revertir solo los archivos de la tarea. Las correcciones de seguridad y los back
 
 ### Completion Notes
 
-**Estado: BLOCKED, y el bloqueo es exactamente el que la ficha anticipa.** «Si el
-acceso a la consola de Google Cloud no está disponible, registrar BLOCKED con la
-evidencia pendiente en vez de declarar la tarea completa.» No hay proyecto de
-Google Cloud accesible desde este entorno, así que los scripts **no se han
-ejecutado** y ninguno de los cuatro criterios que hablan de la nube puede darse
-por verificado. Lo que sí está hecho es todo lo que no requiere ese acceso.
+**Actualización 2026-09-10 (segunda vuelta).** La nota original de esta sección
+decía que no había proyecto de Google Cloud accesible. Eso dejó de ser cierto el
+mismo día: `00`, `10`, `20`, `30` y `50-cloud-tasks.sh` (nuevo, ver abajo) se
+ejecutaron contra el proyecto real `gen-lang-client-0908704200` (nombre interno
+`teko`). El detalle completo, con tabla de estado por script, vive en
+`infra/gcp/README.md` ("Estado de la verificación") en vez de duplicarse aquí,
+para que solo haya un sitio que se desactualice cuando algo cambie. Sigue
+**BLOCKED**: `40-secrets.sh` no se ha corrido — cargar los ocho valores es un
+acto humano deliberado (`--data-file=-`) y no se ha hecho — y sin él ninguno de
+los cuatro criterios de aceptación que hablan de la nube puede marcarse.
 
-**Entregado:** `infra/gcp/` con seis scripts idempotentes (`00-enable-apis`,
-`10-artifact-registry`, `20-service-accounts`, `30-workload-identity`,
-`40-secrets`, `99-verify`), su `cleanup-policy.json`, un `config.env.example` sin
-credenciales y un runbook.
+**Hallazgo durante la verificación: el proyecto ya tenía un despliegue hecho a
+mano, y es inseguro.** `studentscompass-api` lleva sirviendo desde el commit
+`f9ca382` (2026-09-06) vía `gcloud run deploy --source`, con los ocho secretos
+como env vars **literales** (legibles en claro por cualquiera con `run.viewer`)
+y la service account por defecto de Compute, que trae `roles/editor` sobre todo
+el proyecto. No se ha tocado ese servicio desde aquí — corregirlo es lo que
+TASK-056 hace al desplegar por el pipeline con `sc-api` y `--set-secrets`, no
+un parche aparte — pero queda registrado porque es una exposición real y activa,
+no hipotética. Ver `infra/gcp/README.md` para el detalle.
+
+**Bug fix en esta vuelta:** `30-workload-identity.sh` prometía en su propio
+comentario acotar la identidad federada "a la rama por defecto", pero la
+condición de atributo solo comprobaba `assertion.repository`, nunca
+`assertion.ref`. El binding de impersonación tampoco lo hace. Eso significa que
+cualquier rama del repositorio — no solo `main` — podía intercambiar su token
+OIDC por credenciales del deployer; lo único que lo impedía era que ningún
+`deploy.yml` existía todavía para invocarlo. Corregido: la condición ahora es
+`assertion.repository == '<repo>' && assertion.ref == 'refs/heads/main'`, y el
+script reconcilia (`providers update-oidc`) si el provider ya existe con la
+condición vieja — que es el caso en `gen-lang-client-0908704200` ahora mismo,
+así que hace falta re-ejecutar `./30-workload-identity.sh` para que el cambio
+tome efecto en el proyecto real.
+
+**Entregado, sobre lo que ya había:** dos scripts nuevos (`50-cloud-tasks.sh`
+para TASK-054, `60-domain-mapping.sh` y `70-observability.sh` para TASK-057) y
+la corrección de arriba en `30-workload-identity.sh`. La base sigue siendo los
+seis scripts idempotentes originales (`00-enable-apis`, `10-artifact-registry`,
+`20-service-accounts`, `30-workload-identity`, `40-secrets`, `99-verify`), su
+`cleanup-policy.json`, `config.env.example` sin credenciales y el runbook en
+`infra/gcp/README.md`.
 
 **Por qué scripts y no Terraform.** Terraform sería mejor si su estado tuviera
 dónde vivir y su `plan` pudiera compararse contra un proyecto real. Ninguna de las
@@ -10053,10 +10159,11 @@ guardaría nada; estos corren siempre.
 Nada de esto puede hacerse sin acceso a la consola, y ninguna de las cuatro cosas
 se declara hecha.
 
-**Nota de coordinación.** `deploy.yml` es de **TASK-056** y no se ha creado aquí;
-el runbook deja escrito el bloque `google-github-actions/auth@v2` y la forma
-`--set-secrets` que debe usar, con los nombres de las dos variables de Actions que
-`30-workload-identity.sh` imprime. Esta ficha implementa la opción A de la
+**Nota de coordinación.** `deploy.yml` es de **TASK-056**; existe ahora en
+`.github/workflows/deploy.yml`, usa `google-github-actions/auth@v2` y las dos
+variables de Actions que `30-workload-identity.sh` imprime, y cablea los ocho
+secretos por referencia (`--set-secrets`), nunca por valor. No se ha ejecutado
+ni una vez: ver TASK-056. Esta ficha implementa la opción A de la
 [ADR-001](ADR-001-cloud-run-ingress.md) y **no la re-decide**.
 
 ### Estimated Impact
@@ -10069,7 +10176,7 @@ Risk: HIGH
 
 ## TASK-056 — Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA
 
-Status: TODO
+Status: BLOCKED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure
@@ -10155,6 +10262,61 @@ Desplegar a staging desde CI y comprobar la secuencia completa. Forzar un fallo 
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
 
+### Completion Notes
+
+**BLOCKED, por la misma razón que TASK-055: nada de esto se ha ejecutado contra
+el proyecto real**, por decisión explícita — el coste, el dominio público y los
+secretos de producción que esta ficha toca no son algo para correr sin que la
+persona dueña del proyecto lo revise primero. Lo entregado es el pipeline en sí,
+no su ejecución.
+
+**Entregado:** `.github/workflows/deploy.yml`. Sigue exactamente la secuencia de
+§10 en un solo job (`build → migrate → API sin tráfico → smoke → promoción →
+frontend → smoke público`) más un job `rollback` separado que solo se dispara
+si algo falla después de que el job principal ya movió tráfico.
+
+**Disparo por `workflow_run`, no por `push`.** `ci.yml` corre en push y en pull
+request; enganchar `deploy.yml` a `push` directamente desplegaría el mismo SHA
+dos veces en paralelo con dos veredictos de CI independientes, o desplegaría
+antes de que CI hubiera terminado. `workflow_run` sobre `ci` con
+`conclusion == success` deja que sea exactamente el commit que CI acaba de
+marcar verde. La condición que de verdad importa vive un nivel más abajo: la
+`--attribute-condition` de WIF corregida en TASK-055, no el `if` de este
+workflow, que cualquiera con permiso de push puede editar.
+
+**La URL de la API se calcula, no se consulta.** Cloud Run v2 asigna
+`https://SERVICE-PROJECTNUMBER.REGION.run.app` — determinista a partir del
+número de proyecto, sin componente aleatorio. Eso evita el problema circular de
+`INTERNAL_TASKS_BASE_URL`/`INTERNAL_TASKS_AUDIENCE` (la API necesita conocer su
+propia URL pública para verificar el OIDC de Cloud Tasks contra sí misma,
+TASK-054): se calcula antes del primer despliegue y se usa en el mismo, sin una
+revisión intermedia con esas variables vacías.
+
+**Presupuesto de conexiones, deliberadamente conservador y sin verificar.**
+`--max-instances=3` con `DB_POOL_SIZE=5` + `DB_MAX_OVERFLOW=10` por defecto pone
+el techo teórico en 45 conexiones. No se ha contrastado contra el límite real
+del pooler de Neon porque eso exige tráfico real contra el proyecto real —
+exactamente lo que esta vuelta no hace. El criterio de aceptación
+correspondiente queda sin marcar a propósito.
+
+**Rollback simétrico por revisión nombrada, no por `--to-latest`.** La
+promoción apunta a la revisión nueva por nombre; si algo falla después, el job
+`rollback` apunta de vuelta a la revisión que estaba sirviendo antes,
+capturada como output justo antes de promover. `--to-latest` habría hecho que
+"la revisión anterior" cambiara de significado según cuándo se leyera.
+
+**Evidencia pendiente para pasar a COMPLETED**, en este orden:
+
+1. `40-secrets.sh` (TASK-055) con los ocho valores cargados — sin eso,
+   `--set-secrets` en el primer paso de despliegue de la API falla.
+2. Un run completo en verde contra el proyecto real, con el smoke
+   pre-promoción pasando de verdad.
+3. Un fallo de smoke forzado, verificando que no promueve.
+4. Un rollback real disparado y medido, no solo el código que lo haría.
+5. Carga real o simulada para contrastar el presupuesto de conexiones contra el
+   límite del pooler de Neon, y ajustar `--max-instances` con ese dato, no con
+   una suposición.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -10165,7 +10327,7 @@ Risk: HIGH
 
 ## TASK-057 — Configurar dominio, TLS, alertas, budgets y rollback por revisión
 
-Status: TODO
+Status: BLOCKED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure / Observability
@@ -10246,6 +10408,72 @@ Provocar cada condición de alerta en staging y comprobar que dispara y que el r
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+**BLOCKED, y por la misma razón deliberada que TASK-056**: esta ficha configura
+un dominio público real y un budget de facturación real; no se ha ejecutado
+nada contra el proyecto, y además depende de TASK-056 (tampoco ejecutado) para
+tener un servicio al que mapear el dominio.
+
+**Entregado:** `infra/gcp/60-domain-mapping.sh` (mapeo de dominio, TLS
+gestionado por Cloud Run sin Load Balancer — ADR-001 opción A ya decidió no
+pagar por uno), `infra/gcp/70-observability.sh` (canal de notificación, cuatro
+métricas basadas en logs, seis políticas de alerta con runbook inline, budget
+de facturación) y un runbook de rollback por revisión en
+`infra/gcp/README.md`.
+
+**Dos fuentes de métrica, no una inventada.** 5xx y p95 son nativas de Cloud
+Run (`run.googleapis.com/request_count` y `request_latencies`); ninguna de las
+dos necesita tocar la aplicación. 429, fallos de proveedor externo, jobs de CV
+fallidos tras gastar y techo de gasto de IA alcanzado son métricas basadas en
+logs sobre campos que `backend/app/logging.py` ya escribe. Solo uno de esos
+campos no existía todavía: `stale_job_recovery`/`failed_after_spend`, ahora
+emitido por `cvAnalysisRunner.sweep_once()` (ver debajo) porque el resultado de
+`recover_stale_jobs()` se calculaba y se descartaba sin dejar rastro en ningún
+log.
+
+**Bug fix pequeño, en el dominio de esta ficha porque la alerta lo necesitaba:**
+`app/services/ai/cvAnalysisRunner.py::sweep_once` llamaba a
+`recover_stale_jobs()`, que ya distingue "job fallido después de haber gastado
+en el proveedor" de limpieza rutinaria (`INTERRUPTED_AFTER_SPEND_MESSAGE`), y
+tiraba el resultado. Sin un log, no hay campo que una métrica pueda filtrar, y
+sin métrica no hay alerta de "jobs vencidos" — uno de los seis grupos que §6.4
+pide explícitamente. Se añadió una línea `LOGGER.info` con los tres contadores
+como campos estructurados, emitida solo cuando el barrido encuentra algo (no en
+cada sweep de 5 segundos). `tests/test_cv_analysis_queue.py` sigue en verde.
+
+**Lo que no se cubre, documentado en vez de fingido.** No hay métrica real de
+pool de conexiones de base de datos: SQLAlchemy no la expone y Neon no es Cloud
+SQL, así que tampoco hay una métrica nativa de GCP que leer. Su síntoma —
+agotamiento del pool— se manifiesta como 5xx o timeouts, ya cubiertos
+indirectamente por la alerta de 5xx. Instrumentar `app/db.py` para emitir el
+tamaño de pool en uso sería la forma correcta de cerrar esto, pero está fuera
+de esta vuelta: sería tocar código de aplicación por una ficha de
+infraestructura, y el criterio de aceptación de "pool DB" queda sin marcar en
+vez de marcarse contra una aproximación.
+
+**Gasto de IA, alertado por presión sobre el guard, no por una cifra.** No
+existe una línea de log con un monto: el ledger de TASK-012
+(`ai_usage_event`) vive en la base, no en logs. La alerta usa en cambio los
+`LOGGER.warning` que `aiBudgetGuard` (TASK-007) ya emite cuando rechaza una
+llamada por techo de tasa o de cuota diaria — un proxy razonable de "el gasto
+está presionando el límite", que es lo que TASK-057 pide "apoyado en el guard
+de TASK-007", sin inventar una segunda fuente de telemetría para el monto
+exacto.
+
+**Evidencia pendiente para pasar a COMPLETED**, en este orden:
+
+1. TASK-056 desplegado al menos una vez, para tener un servicio al que mapear
+   el dominio.
+2. `DOMAIN` y `ALERT_EMAIL` reales en `config.env`, `60-domain-mapping.sh` y
+   `70-observability.sh` ejecutados, y el certificado gestionado emitido
+   (verificable con `domain-mappings describe`).
+3. Cada condición de alerta provocada de verdad en staging, confirmando que
+   dispara y que el runbook adjunto resuelve el caso.
+4. Un rollback real ejecutado y con el tiempo hasta servicio restablecido
+   medido, no solo el comando documentado.
+5. TLS y same-origin verificados desde un navegador real contra el dominio.
 
 ### Estimated Impact
 

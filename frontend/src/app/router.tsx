@@ -4,6 +4,7 @@ import { RequireActor, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { CareerLabPage } from "@/features/career-lab/CareerLabPage";
 import { ApplicantsPage } from "@/features/company/ApplicantsPage";
 import { CompanyDashboardPage } from "@/features/company/CompanyDashboardPage";
 import { JobPostingsPage } from "@/features/company/JobPostingsPage";
@@ -79,6 +80,7 @@ export const router = createBrowserRouter([
       { path: "/roadmaps/:slug", element: <RoadmapDetailPage /> },
       { path: "/jobs", element: <JobsPage /> },
       { path: "/jobs/applications", element: <ApplicationsPage /> },
+      { path: "/career-lab", element: <CareerLabPage /> },
       { path: "/community", element: <CommunitiesListPage /> },
       { path: "/community/:communityId", element: <CommunityFeedPage /> },
       { path: "/messages", element: <MessagesPage /> },

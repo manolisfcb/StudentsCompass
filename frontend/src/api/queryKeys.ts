@@ -35,4 +35,9 @@ export const queryKeys = {
     saved: ["roadmaps", "saved"] as const,
     detail: (slug: string) => ["roadmaps", slug] as const,
   },
+  careerLab: {
+    targetRoles: ["career-lab", "target-roles"] as const,
+    skillReview: (resumeId: string) => ["career-lab", "skill-review", resumeId] as const,
+    routeRuns: ["career-lab", "route-runs"] as const,
+  },
 } as const;

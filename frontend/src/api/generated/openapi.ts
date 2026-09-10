@@ -920,7 +920,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Evaluate Capstone Learning Route Baselines */
+        /**
+         * Evaluate Capstone Learning Route Baselines
+         * @description Run the baseline solves. Retry-safe under ``Idempotency-Key``, same reason
+         *     as ``optimize`` above: this also spends bounded solver capacity.
+         */
         post: operations["capstone_evaluate_capstone_learning_route_baselines"];
         delete?: never;
         options?: never;
@@ -937,7 +941,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Optimize Capstone Learning Route */
+        /**
+         * Optimize Capstone Learning Route
+         * @description Run the CP-SAT solve. Retry-safe under ``Idempotency-Key``.
+         *
+         *     This spends bounded solver capacity (``app/core/offload.py``), so a client
+         *     retry that never saw the first response should replay it rather than queue
+         *     a second solve for the same request.
+         */
         post: operations["capstone_optimize_capstone_learning_route"];
         delete?: never;
         options?: never;
@@ -2852,10 +2863,7 @@ export interface components {
         };
         /** Body_admin_upload_resource_file */
         Body_admin_upload_resource_file: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
         };
         /** Body_auth_jwt_login */
@@ -2966,26 +2974,17 @@ export interface components {
         Body_posts_upload_file: {
             /** Caption */
             caption: string;
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
         };
         /** Body_resume_upload_resume */
         Body_resume_upload_resume: {
-            /**
-             * Cv
-             * Format: binary
-             */
+            /** Cv */
             cv: string;
         };
         /** Body_resume_upload_resume_for_course_audit */
         Body_resume_upload_resume_for_course_audit: {
-            /**
-             * Cv
-             * Format: binary
-             */
+            /** Cv */
             cv: string;
         };
         /** CapstoneAnalyticsRoleRead */
@@ -5736,6 +5735,10 @@ export interface components {
         };
         /** ValidationError */
         ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
             /** Location */
             loc: (string | number)[];
             /** Message */

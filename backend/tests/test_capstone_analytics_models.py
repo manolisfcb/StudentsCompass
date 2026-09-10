@@ -780,6 +780,98 @@ async def test_phase_7_baseline_evaluation_endpoint_compares_all_methods(
         assert methods["cp_sat_route_v1"]["solver_status"] in {"OPTIMAL", "FEASIBLE", "NO_CANDIDATES"}
 
 
+@pytest.mark.asyncio
+async def test_optimize_and_evaluate_baselines_replay_under_the_same_idempotency_key(
+    client,
+    db_session,
+    test_user,
+    auth_headers,
+):
+    """TASK-052: both solves spend bounded CP-SAT capacity, so a retried POST
+    that never saw the first response must replay it rather than solve again.
+    """
+    from app.core.idempotency import IDEMPOTENCY_HEADER
+
+    await seed_capstone_analytics_minimum(db_session)
+    resume = ResumeModel(
+        view_url="https://storage.example/resume.pdf",
+        user_id=test_user.id,
+        storage_file_id="resumes/idempotency.pdf",
+        original_filename="resume.pdf",
+        folder_id="resumes",
+        ai_summary="Experienced with Python and SQL.",
+    )
+    db_session.add(resume)
+    await db_session.commit()
+    await db_session.refresh(resume)
+
+    body = {
+        "resume_id": str(resume.id),
+        "target_role": "Data Analyst",
+        "budget": 100,
+        "available_hours": 30,
+        "max_courses": 2,
+    }
+
+    optimize_headers = {**auth_headers, IDEMPOTENCY_HEADER: "optimize-once"}
+    first_optimize = await client.post(
+        "/api/v1/capstone/learning-route/optimize", headers=optimize_headers, json=body
+    )
+    second_optimize = await client.post(
+        "/api/v1/capstone/learning-route/optimize", headers=optimize_headers, json=body
+    )
+
+    assert first_optimize.status_code == 200
+    assert second_optimize.status_code == 200
+    assert second_optimize.json() == first_optimize.json()
+    assert second_optimize.headers.get("Idempotent-Replay") == "true"
+
+    runs_response = await client.get(
+        "/api/v1/capstone/learning-route/runs", headers=auth_headers
+    )
+    assert len(runs_response.json()["runs"]) == 1
+
+    evaluate_headers = {**auth_headers, IDEMPOTENCY_HEADER: "evaluate-once"}
+    first_evaluate = await client.post(
+        "/api/v1/capstone/learning-route/evaluate-baselines", headers=evaluate_headers, json=body
+    )
+    second_evaluate = await client.post(
+        "/api/v1/capstone/learning-route/evaluate-baselines", headers=evaluate_headers, json=body
+    )
+
+    assert first_evaluate.status_code == 200
+    assert second_evaluate.status_code == 200
+    assert second_evaluate.json() == first_evaluate.json()
+    assert second_evaluate.headers.get("Idempotent-Replay") == "true"
+
+
+@pytest.mark.asyncio
+async def test_optimize_releases_its_key_when_the_resume_is_not_found(
+    client,
+    auth_headers,
+):
+    """A 404 is not a success worth caching; the client must be able to retry
+    with the same key once it sends a resume id that actually exists.
+    """
+    from app.core.idempotency import IDEMPOTENCY_HEADER
+
+    headers = {**auth_headers, IDEMPOTENCY_HEADER: "missing-resume"}
+    body = {
+        "resume_id": str(uuid.uuid4()),
+        "target_role": "Data Analyst",
+        "budget": 100,
+        "available_hours": 30,
+        "max_courses": 2,
+    }
+
+    response = await client.post(
+        "/api/v1/capstone/learning-route/optimize", headers=headers, json=body
+    )
+
+    assert response.status_code == 404
+    assert response.headers.get("Idempotent-Replay") is None
+
+
 @pytest.mark.skipif(
     not ORToolsLearningRouteOptimizer.is_available(),
     reason="OR-Tools is not installed in this environment.",

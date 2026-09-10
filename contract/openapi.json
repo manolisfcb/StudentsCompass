@@ -460,7 +460,7 @@
       "Body_admin_upload_resource_file": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -714,7 +714,7 @@
             "type": "string"
           },
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -729,7 +729,7 @@
       "Body_resume_upload_resume": {
         "properties": {
           "cv": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "Cv",
             "type": "string"
           }
@@ -743,7 +743,7 @@
       "Body_resume_upload_resume_for_course_audit": {
         "properties": {
           "cv": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "Cv",
             "type": "string"
           }
@@ -8611,6 +8611,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -11239,7 +11246,7 @@
                     }
                   },
                   "VERIFY_USER_BAD_TOKEN": {
-                    "summary": "Bad token, not existing user ornot the e-mail currently set for the user.",
+                    "summary": "Bad token, not existing user or not the e-mail currently set for the user.",
                     "value": {
                       "detail": "VERIFY_USER_BAD_TOKEN"
                     }
@@ -11786,7 +11793,7 @@
                     }
                   },
                   "VERIFY_USER_BAD_TOKEN": {
-                    "summary": "Bad token, not existing user ornot the e-mail currently set for the user.",
+                    "summary": "Bad token, not existing user or not the e-mail currently set for the user.",
                     "value": {
                       "detail": "VERIFY_USER_BAD_TOKEN"
                     }
@@ -12159,6 +12166,7 @@
     },
     "/api/v1/capstone/learning-route/evaluate-baselines": {
       "post": {
+        "description": "Run the baseline solves. Retry-safe under ``Idempotency-Key``, same reason\nas ``optimize`` above: this also spends bounded solver capacity.",
         "operationId": "capstone_evaluate_capstone_learning_route_baselines",
         "requestBody": {
           "content": {
@@ -12215,6 +12223,7 @@
     },
     "/api/v1/capstone/learning-route/optimize": {
       "post": {
+        "description": "Run the CP-SAT solve. Retry-safe under ``Idempotency-Key``.\n\nThis spends bounded solver capacity (``app/core/offload.py``), so a client\nretry that never saw the first response should replay it rather than queue\na second solve for the same request.",
         "operationId": "capstone_optimize_capstone_learning_route",
         "requestBody": {
           "content": {

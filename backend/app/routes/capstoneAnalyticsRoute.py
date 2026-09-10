@@ -1,9 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.idempotency import actor_key, begin_idempotent_request
 from app.db import get_session
 from app.models.userModel import User
 from app.schemas.capstoneAnalyticsSchema import (
@@ -310,24 +311,46 @@ async def get_capstone_gap_analysis(
 
 @router.post("/capstone/learning-route/optimize", response_model=CapstoneLearningRouteOptimizationRead)
 async def optimize_capstone_learning_route(
+    request: Request,
     payload: CapstoneLearningRouteOptimizeRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    service = CapstoneAnalyticsService(session)
-    optimization_payload = await _run_capstone_operation(
-        lambda: service.optimize_learning_route(
-            resume_id=payload.resume_id,
-            user_id=user.id,
-            target_role=payload.target_role,
-            budget=payload.budget,
-            available_hours=payload.available_hours,
-            max_courses=payload.max_courses,
-        )
+    """Run the CP-SAT solve. Retry-safe under ``Idempotency-Key``.
+
+    This spends bounded solver capacity (``app/core/offload.py``), so a client
+    retry that never saw the first response should replay it rather than queue
+    a second solve for the same request.
+    """
+    guard = await begin_idempotent_request(
+        session,
+        request=request,
+        actor=actor_key("user", user.id),
+        endpoint="POST /capstone/learning-route/optimize",
+        payload=payload,
     )
+    if guard.is_replay:
+        return guard.replay
+
+    service = CapstoneAnalyticsService(session)
+    try:
+        optimization_payload = await _run_capstone_operation(
+            lambda: service.optimize_learning_route(
+                resume_id=payload.resume_id,
+                user_id=user.id,
+                target_role=payload.target_role,
+                budget=payload.budget,
+                available_hours=payload.available_hours,
+                max_courses=payload.max_courses,
+            )
+        )
+    except Exception:
+        await guard.release()
+        raise
     if optimization_payload["status"] == "resume_not_found":
+        await guard.release()
         raise HTTPException(status_code=404, detail="Resume not found")
-    return optimization_payload
+    return await guard.store(CapstoneLearningRouteOptimizationRead(**optimization_payload))
 
 
 @router.post(
@@ -335,24 +358,43 @@ async def optimize_capstone_learning_route(
     response_model=CapstoneLearningRouteBaselineEvaluationRead,
 )
 async def evaluate_capstone_learning_route_baselines(
+    request: Request,
     payload: CapstoneLearningRouteOptimizeRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    service = CapstoneAnalyticsService(session)
-    evaluation_payload = await _run_capstone_operation(
-        lambda: service.evaluate_learning_route_baselines(
-            resume_id=payload.resume_id,
-            user_id=user.id,
-            target_role=payload.target_role,
-            budget=payload.budget,
-            available_hours=payload.available_hours,
-            max_courses=payload.max_courses,
-        )
+    """Run the baseline solves. Retry-safe under ``Idempotency-Key``, same reason
+    as ``optimize`` above: this also spends bounded solver capacity.
+    """
+    guard = await begin_idempotent_request(
+        session,
+        request=request,
+        actor=actor_key("user", user.id),
+        endpoint="POST /capstone/learning-route/evaluate-baselines",
+        payload=payload,
     )
+    if guard.is_replay:
+        return guard.replay
+
+    service = CapstoneAnalyticsService(session)
+    try:
+        evaluation_payload = await _run_capstone_operation(
+            lambda: service.evaluate_learning_route_baselines(
+                resume_id=payload.resume_id,
+                user_id=user.id,
+                target_role=payload.target_role,
+                budget=payload.budget,
+                available_hours=payload.available_hours,
+                max_courses=payload.max_courses,
+            )
+        )
+    except Exception:
+        await guard.release()
+        raise
     if evaluation_payload["status"] == "resume_not_found":
+        await guard.release()
         raise HTTPException(status_code=404, detail="Resume not found")
-    return evaluation_payload
+    return await guard.store(CapstoneLearningRouteBaselineEvaluationRead(**evaluation_payload))
 
 
 @router.get("/capstone/learning-route/runs", response_model=CapstoneLearningRouteRunsRead)
