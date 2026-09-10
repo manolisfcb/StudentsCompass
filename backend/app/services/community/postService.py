@@ -1,10 +1,29 @@
+from app.core.pagination import (
+    MAX_COLLECTION_ROWS,
+    InvalidCursor,
+    clamp_page_size,
+    encode_cursor,
+    fetch_probe_limit,
+    keyset_before,
+    split_probe,
+)
 from app.models.postModel import PostModel
 from sqlalchemy import select
-from app.schemas.postSchema import PostCreate, PostRead
+from app.schemas.postSchema import PostCreate, PostPageRead, PostRead
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+
+class InvalidPostCursor(InvalidCursor):
+    """The feed cursor did not come from :meth:`PostService.encode_post_cursor`."""
+
+
 class PostService:
+    #: Posts returned when the caller does not say. One screenful of feed.
+    DEFAULT_POST_PAGE_SIZE = 20
+    #: The most any single feed request may return, whatever it asks for.
+    MAX_POST_PAGE_SIZE = 100
+
     def __init__(self, session: AsyncSession):
         self.session = session
         
@@ -26,11 +45,80 @@ class PostService:
         return PostRead.model_validate(result) if result else None
 
     async def get_all_posts(self) -> list[PostRead]:
-        result = await self.session.execute(select(PostModel).order_by(PostModel.created_at.desc()))
+        """Legacy shape: a bare list, newest first, now capped at one window.
+
+        This was the one listing in F-22 not scoped to a user — the global feed
+        — so its cost grew with the whole platform's activity and every reader
+        paid it. The shape is unchanged while callers move to
+        :meth:`list_post_page`; what changed is that it is finite.
+
+        Truncating at the **newest** end is the correct direction for a feed: a
+        client that renders what it is given shows the current conversation.
+        Keeping the oldest rows instead would silently pin the feed to the day
+        the platform launched.
+        """
+        result = await self.session.execute(
+            select(PostModel)
+            .order_by(PostModel.created_at.desc(), PostModel.id.desc())
+            .limit(MAX_COLLECTION_ROWS)
+        )
         posts = result.scalars().all()
         return [post for post in posts]
-    
-    
+
+    @staticmethod
+    def encode_post_cursor(post: PostModel) -> str:
+        """An opaque cursor addressing one post by ``(created_at, id)``.
+
+        The same contract TASK-024 established for messages, not a second one:
+        the id is in the cursor because posts created in the same instant — a
+        seeded batch, two people posting at once — would otherwise leave the
+        page boundary ambiguous and drop or repeat a post.
+        """
+        return encode_cursor(post.created_at, post.id)
+
+    async def list_post_page(
+        self,
+        *,
+        before: str | None = None,
+        limit: int | None = None,
+    ) -> PostPageRead:
+        """One bounded page of the feed, newest first.
+
+        Newest first and *not* reversed, unlike the message page: a feed is read
+        from the top, so the natural order of the query is already the order of
+        the payload. Walking ``next_cursor`` moves backwards in time.
+        """
+        page_size = clamp_page_size(
+            limit,
+            default=self.DEFAULT_POST_PAGE_SIZE,
+            maximum=self.MAX_POST_PAGE_SIZE,
+        )
+
+        conditions = []
+        if before:
+            try:
+                conditions.append(keyset_before(PostModel.created_at, PostModel.id, before))
+            except InvalidCursor as exc:
+                raise InvalidPostCursor(before) from exc
+
+        result = await self.session.execute(
+            select(PostModel)
+            .where(*conditions)
+            .order_by(PostModel.created_at.desc(), PostModel.id.desc())
+            # One extra row: whether a further page exists is a fact about the
+            # data, not something to infer from a full page.
+            .limit(fetch_probe_limit(page_size))
+        )
+        rows, has_more = split_probe(list(result.scalars().all()), page_size)
+
+        return PostPageRead(
+            items=[PostRead.model_validate(post) for post in rows],
+            # The last item on this page is where the next one starts.
+            next_cursor=self.encode_post_cursor(rows[-1]) if rows and has_more else None,
+            has_more=has_more,
+            limit=page_size,
+        )
+
     async def delete_post(self, post_id: UUID, *, user_id: UUID) -> bool:
         """Delete a post the caller owns. Returns False if there is none.
 

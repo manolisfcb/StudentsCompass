@@ -1,11 +1,21 @@
 from __future__ import annotations
 
-import base64
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, func, literal, or_, select, tuple_
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.pagination import (
+    MAX_COLLECTION_ROWS,
+    InvalidCursor,
+    clamp_page_size,
+    decode_cursor,
+    encode_cursor,
+    fetch_probe_limit,
+    keyset_before,
+    split_probe,
+)
 
 from app.models.messageModel import ConversationModel, ConversationParticipantModel, MessageModel
 from app.models.userModel import User
@@ -19,12 +29,13 @@ from app.services.community.friendshipService import are_friends
 from app.services.community.userDisplay import build_display_name_from_user, build_user_summary
 
 
-class InvalidMessageCursor(ValueError):
-    """The cursor did not come from :meth:`MessageService.encode_message_cursor`."""
+class InvalidMessageCursor(InvalidCursor):
+    """The cursor did not come from :meth:`MessageService.encode_message_cursor`.
 
-    def __init__(self, cursor: str):
-        super().__init__("The pagination cursor is not valid.")
-        self.cursor = cursor
+    Kept as its own name because the message route catches it by name; it is now
+    a :class:`InvalidCursor`, so a caller that catches the shared type — every
+    other paged collection — catches this one too.
+    """
 
 
 def _build_direct_key(first_user_id: UUID, second_user_id: UUID) -> str:
@@ -111,6 +122,10 @@ class MessageService:
             .join(ConversationModel, ConversationParticipantModel.conversation_id == ConversationModel.id)
             .where(ConversationParticipantModel.user_id == user_id)
             .order_by(ConversationModel.updated_at.desc())
+            # The inbox had no bound at all: every conversation a user had ever
+            # opened, each one then costing a batched lookup for its other
+            # participant, its latest message and its unread count.
+            .limit(MAX_COLLECTION_ROWS)
         )
         rows = result.all()
         if not rows:
@@ -192,28 +207,18 @@ class MessageService:
     def encode_message_cursor(message: MessageModel) -> str:
         """An opaque cursor addressing one message by ``(created_at, id)``.
 
-        Not an offset: rows inserted while a client pages would shift every
-        offset after them, so a conversation being actively written to would
-        skip and repeat messages. And not ``created_at`` alone — two messages
-        sent in the same millisecond would make the boundary ambiguous, which
-        is exactly the case the 10 000-message test exercises.
+        The format lives in :mod:`app.core.pagination` now; this stays as the
+        message-shaped entry point, and the bytes it produces are unchanged, so
+        cursors already held by clients keep working.
         """
-        raw = f"{message.created_at.isoformat()}|{message.id}"
-        return base64.urlsafe_b64encode(raw.encode("utf-8")).decode("ascii")
+        return encode_cursor(message.created_at, message.id)
 
     @staticmethod
     def decode_message_cursor(cursor: str) -> tuple[datetime, UUID]:
-        """Parse a cursor, or refuse it.
-
-        A cursor is client-supplied input; a malformed one is a 400, never a
-        500 and never a silently ignored filter that would quietly return the
-        wrong page.
-        """
+        """Parse a cursor, or refuse it as :class:`InvalidMessageCursor`."""
         try:
-            raw = base64.urlsafe_b64decode(cursor.encode("ascii")).decode("utf-8")
-            timestamp, _, identifier = raw.partition("|")
-            return datetime.fromisoformat(timestamp), UUID(identifier)
-        except Exception as exc:  # noqa: BLE001 — every malformed shape is one answer
+            return decode_cursor(cursor)
+        except InvalidCursor as exc:
             raise InvalidMessageCursor(cursor) from exc
 
     async def list_message_page(
@@ -230,18 +235,22 @@ class MessageService:
         is what a chat opens on — and the page is reversed before it is
         returned, so the payload reads in conversation order either way.
         """
-        page_size = self.DEFAULT_MESSAGE_PAGE_SIZE if limit is None else limit
-        page_size = max(1, min(page_size, self.MAX_MESSAGE_PAGE_SIZE))
+        page_size = clamp_page_size(
+            limit,
+            default=self.DEFAULT_MESSAGE_PAGE_SIZE,
+            maximum=self.MAX_MESSAGE_PAGE_SIZE,
+        )
 
         conditions = [MessageModel.conversation_id == conversation_id]
         if before:
-            cursor_created_at, cursor_id = self.decode_message_cursor(before)
-            # Row-value comparison, so the tie-break on identical timestamps is
-            # part of the index scan rather than a filter applied afterwards.
-            conditions.append(
-                tuple_(MessageModel.created_at, MessageModel.id)
-                < tuple_(literal(cursor_created_at), literal(cursor_id))
-            )
+            try:
+                # Row-value comparison, so the tie-break on identical timestamps
+                # is part of the index scan rather than a filter after it.
+                conditions.append(
+                    keyset_before(MessageModel.created_at, MessageModel.id, before)
+                )
+            except InvalidCursor as exc:
+                raise InvalidMessageCursor(before) from exc
 
         result = await self.session.execute(
             select(MessageModel)
@@ -249,11 +258,9 @@ class MessageService:
             .order_by(MessageModel.created_at.desc(), MessageModel.id.desc())
             # One extra row: whether a further page exists is a fact about the
             # data, not something to infer from a full page.
-            .limit(page_size + 1)
+            .limit(fetch_probe_limit(page_size))
         )
-        rows = list(result.scalars().all())
-        has_more = len(rows) > page_size
-        rows = rows[:page_size]
+        rows, has_more = split_probe(list(result.scalars().all()), page_size)
         rows.reverse()
 
         senders = await self._get_users_by_ids({message.sender_id for message in rows})

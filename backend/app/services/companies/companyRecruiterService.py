@@ -8,6 +8,7 @@ from fastapi_users.password import PasswordHelper
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.pagination import MAX_COLLECTION_ROWS
 from app.models.companyRecruiterModel import CompanyRecruiter
 from app.schemas.companyRecruiterSchema import (
     CompanyRecruiterCreate,
@@ -54,6 +55,7 @@ class CompanyRecruiterService:
             select(CompanyRecruiter)
             .where(CompanyRecruiter.company_id == company_id)
             .order_by(role_rank, CompanyRecruiter.created_at.asc(), CompanyRecruiter.email.asc())
+            .limit(MAX_COLLECTION_ROWS)
         )
         return result.scalars().all()
 

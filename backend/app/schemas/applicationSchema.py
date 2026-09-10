@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, UUID4
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from app.models.applicationModel import ApplicationMatchStrength, ApplicationStatus
+from app.schemas.paginationSchema import CursorPage
 from app.schemas.interviewSchema import InterviewAvailabilityRead
 
 if TYPE_CHECKING:
@@ -53,6 +54,14 @@ class ApplicationRead(ApplicationBase):
     
     class Config:
         from_attributes = True
+
+
+class ApplicationPageRead(CursorPage[ApplicationRead]):
+    """One bounded page of a student's applications, newest first.
+
+    ``next_cursor`` addresses the application the following page starts from;
+    ``None`` means the end of the history has been reached.
+    """
 
 
 class ApplicationEligibleResumeRead(BaseModel):

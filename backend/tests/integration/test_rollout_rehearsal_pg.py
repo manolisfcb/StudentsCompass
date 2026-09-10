@@ -389,6 +389,17 @@ DECLARED_ADDED_PATHS = {
     "/api/v1/auth/student/logout",
     # TASK-024: the paged read; the legacy list endpoint is untouched beside it.
     "/api/v1/conversations/{conversation_id}/messages/page",
+    # TASK-061 and TASK-062: the same shape for the community feed and for a
+    # student's applications. In both cases the legacy list endpoint stays
+    # exactly as it was beside the new one — bounded now, but unchanged in shape.
+    "/api/v1/posts/page",
+    "/api/v1/applications/page",
+    # TASK-054: the endpoints a task queue calls, deliberately outside /api/v1
+    # because they are not part of the public contract. Reachable from the
+    # internet under ADR-001, and therefore authenticated by OIDC rather than by
+    # being hard to find (app/core/internalAuth.py).
+    "/internal/tasks/cv-analyses/{job_id}",
+    "/internal/tasks/cv-analyses-reconcile",
 }
 
 

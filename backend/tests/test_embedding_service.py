@@ -17,7 +17,6 @@ import uuid
 import pytest
 
 from app.models.resumeModel import ResumeModel
-from app.models.resumeEmbeddingsModel import ResumeEmbedding
 from app.services.analytics.embeddingService import (
     EMBEDDING_DIMS,
     ResumeEmbeddingService,

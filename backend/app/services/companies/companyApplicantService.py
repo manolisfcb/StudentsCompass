@@ -6,6 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.pagination import MAX_COLLECTION_ROWS
+
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.userModel import User
 
@@ -37,7 +39,9 @@ class CompanyApplicantService:
         if statuses:
             query = query.where(ApplicationModel.status.in_(tuple(statuses)))
 
-        result = await self.session.execute(query)
+        # Bounded: an applicant list is read by a recruiter on one screen, and
+        # each row here carries three eager-loaded relations.
+        result = await self.session.execute(query.limit(MAX_COLLECTION_ROWS))
         applications = list(result.scalars().all())
         user_map = await self._get_users_for_applications(applications)
         for application in applications:

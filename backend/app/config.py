@@ -209,3 +209,50 @@ RECOVERY_RATE_LIMIT_MAX = env_int("RECOVERY_RATE_LIMIT_MAX", 5, minimum=1)
 RECOVERY_RATE_LIMIT_WINDOW_SECONDS = env_int(
     "RECOVERY_RATE_LIMIT_WINDOW_SECONDS", 3600, minimum=1
 )
+
+
+# --- Asynchronous task dispatch (TASK-054) ---------------------------------
+# Plan 08 §6.3: the durable CV-analysis runner must not be a loop inside every
+# web replica. A replica scaled to zero runs no loop at all, so queued work
+# would simply not happen; N replicas run N loops competing for the same rows.
+#
+# The web process therefore does **not** start the runner by default. This flag
+# exists for the one case where that is still the right answer — a single-process
+# deployment with no task queue in front of it — and it is off unless a
+# deployment says otherwise, so the default is the safe topology rather than the
+# convenient one.
+CV_ANALYSIS_INLINE_RUNNER = env_flag("CV_ANALYSIS_INLINE_RUNNER", "0")
+
+# How the outbox delivers a dispatch:
+#   "cloud_tasks" - create a Cloud Tasks HTTP task with an OIDC token (prod)
+#   "http"        - POST the internal endpoint directly (compose worker, dev)
+#   "disabled"    - do not deliver; rows accumulate and are visible
+# Default "disabled": a deployment that has not been configured must not
+# silently invent a delivery mechanism, and tests must not reach the network.
+TASK_DISPATCH_TRANSPORT = env_str("TASK_DISPATCH_TRANSPORT", "disabled").lower()
+
+# Where the task is delivered. For Cloud Tasks this is the *public* URL of the
+# API service; for the HTTP transport it is whatever the worker can reach.
+INTERNAL_TASKS_BASE_URL = env_str("INTERNAL_TASKS_BASE_URL")
+
+# Cloud Tasks queue, fully qualified:
+#   projects/<project>/locations/<region>/queues/<queue>
+CLOUD_TASKS_QUEUE = env_str("CLOUD_TASKS_QUEUE")
+# The service account Cloud Tasks mints the OIDC token for. The internal
+# endpoint accepts tokens from this identity and no other.
+CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL = env_str("CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL")
+# The audience the token must carry, and the one the endpoint checks. Distinct
+# from the base URL so an audience can be pinned even behind a redirect.
+INTERNAL_TASKS_AUDIENCE = env_str("INTERNAL_TASKS_AUDIENCE")
+
+# Local/dev alternative to OIDC. A deployment with ENV=production that sets
+# only this is refused by the endpoint: a shared secret is not an identity.
+INTERNAL_TASKS_SHARED_SECRET = env_str("INTERNAL_TASKS_SHARED_SECRET")
+
+# A dispatch that keeps failing must stop, or it becomes an infinite retry paid
+# for by the queue. The row stays FAILED and visible rather than disappearing.
+TASK_OUTBOX_MAX_ATTEMPTS = env_int("TASK_OUTBOX_MAX_ATTEMPTS", 8, minimum=1)
+# Base for the exponential backoff between delivery attempts, in seconds.
+TASK_OUTBOX_RETRY_BASE_SECONDS = env_int("TASK_OUTBOX_RETRY_BASE_SECONDS", 5, minimum=1)
+# How long the local worker waits between sweeps of the outbox.
+TASK_OUTBOX_POLL_SECONDS = env_int("TASK_OUTBOX_POLL_SECONDS", 5, minimum=1)

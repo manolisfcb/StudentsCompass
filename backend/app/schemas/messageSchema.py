@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.friendshipSchema import FriendUserSummary
+from app.schemas.paginationSchema import CursorPage
 
 
 ConversationKind = Literal["direct"]
@@ -41,19 +42,18 @@ class MessageRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MessagePageRead(BaseModel):
+class MessagePageRead(CursorPage[MessageRead]):
     """One bounded page of a conversation, oldest first.
 
     ``next_cursor`` addresses the message *before* the first item on this page,
     so following it walks backwards through history. It is ``None`` when the
     beginning of the conversation has been reached — the only reliable "no more"
     signal, since a full page does not by itself mean there is another.
-    """
 
-    items: list[MessageRead]
-    next_cursor: str | None = None
-    has_more: bool = False
-    limit: int
+    The fields come from :class:`CursorPage`, which TASK-041 generalised out of
+    this schema: this was the first cursor-paged collection, and the rest of the
+    API now uses the same envelope rather than a second one that looks like it.
+    """
 
 
 class ConversationReadReceipt(BaseModel):

@@ -302,8 +302,6 @@ async def test_counters_can_be_rebuilt_from_the_event_log(
 
     Only from the cut-off onwards, which is why the rebuild takes a ``since``.
     """
-    from app.models.applicationAnalyticsModel import ApplicationDailyAggregateModel
-
     service = ApplicationService(db_session)
     for status in (ApplicationStatus.IN_REVIEW, ApplicationStatus.INTERVIEW, ApplicationStatus.OFFER):
         await service.transition_status(

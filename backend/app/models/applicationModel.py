@@ -10,7 +10,12 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.orm import relationship
-from app.models.jobPostingModel import JobPosting
+# Imported for its side effect: `relationship("JobPosting")` below resolves the
+# class by name, so the module must have been imported by the time the mapper is
+# configured. Removing this breaks the mapping at runtime, and not necessarily in
+# any unit test — app/models/registry.py is imported by Alembic and the tests, but
+# not by the running application.
+from app.models.jobPostingModel import JobPosting  # noqa: F401
 from app.models.interviewAvailabilityModel import InterviewAvailabilityStatus
 from app.db import Base
 from sqlalchemy.dialects.postgresql import UUID

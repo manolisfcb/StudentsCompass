@@ -105,6 +105,22 @@ def create_schema(connection) -> None:
         sa.UniqueConstraint('direct_key')
         )
         op.create_index('ix_conversations_updated_at', 'conversations', ['updated_at'], unique=False)
+        op.create_table('idempotency_records',
+        sa.Column('id', sa.UUID(), nullable=False),
+        sa.Column('actor_key', sa.String(length=128), nullable=False),
+        sa.Column('endpoint', sa.String(length=200), nullable=False),
+        sa.Column('idempotency_key', sa.String(length=255), nullable=False),
+        sa.Column('request_fingerprint', sa.String(length=64), nullable=False),
+        sa.Column('status', sa.Enum('IN_PROGRESS', 'COMPLETED', name='idempotencystatus'), nullable=False),
+        sa.Column('response_status_code', sa.Integer(), nullable=True),
+        sa.Column('response_body', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False),
+        sa.Column('completed_at', sa.DateTime(), nullable=True),
+        sa.Column('expires_at', sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('actor_key', 'endpoint', 'idempotency_key', name='uq_idempotency_actor_endpoint_key')
+        )
+        op.create_index('ix_idempotency_records_expires_at', 'idempotency_records', ['expires_at'], unique=False)
         op.create_table('resources',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('title', sa.String(length=180), nullable=False),
@@ -390,6 +406,23 @@ def create_schema(connection) -> None:
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
         )
+        op.create_index('ix_posts_created_at_id', 'posts', ['created_at', 'id'], unique=False)
+        op.create_table('task_outbox',
+        sa.Column('id', sa.UUID(), nullable=False),
+        sa.Column('task_type', sa.String(length=64), nullable=False),
+        sa.Column('payload', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
+        sa.Column('dedupe_key', sa.String(length=200), nullable=False),
+        sa.Column('status', sa.Enum('PENDING', 'DISPATCHED', 'FAILED', name='outboxstatus'), nullable=False),
+        sa.Column('attempts', sa.Integer(), server_default=sa.text('0'), nullable=False),
+        sa.Column('available_at', sa.DateTime(), nullable=False),
+        sa.Column('dispatched_at', sa.DateTime(), nullable=True),
+        sa.Column('last_error', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=False),
+        sa.Column('updated_at', sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('dedupe_key', name='uq_task_outbox_dedupe_key')
+        )
+        op.create_index('ix_task_outbox_status_available_at', 'task_outbox', ['status', 'available_at'], unique=False)
         op.create_table('resource_modules',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('resource_id', sa.UUID(), nullable=False),

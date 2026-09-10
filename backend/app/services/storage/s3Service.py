@@ -2,7 +2,6 @@ import boto3
 import os
 import logging
 from botocore.exceptions import ClientError
-from io import BytesIO
 import asyncio
 from typing import Optional
 

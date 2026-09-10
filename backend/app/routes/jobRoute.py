@@ -2,13 +2,13 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request,
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.idempotency import actor_key, begin_idempotent_request
 from app.db import get_session
 from app.services.accounts.userService import current_active_user, current_ai_user
 from app.models.userModel import User
 import logging
 from uuid import UUID
 from app.models.companyModel import Company
-from app.models.jobPostingModel import JobPosting
 from app.schemas.jobPostingSchema import (
     CompanyJobPostingCreate,
     JobBoardPostingRead,
@@ -187,15 +187,38 @@ async def list_current_company_job_postings(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_current_company_job_posting(
+    request: Request,
     payload: CompanyJobPostingCreate,
     company: Company = Depends(current_active_company),
     recruiter: CompanyRecruiter = Depends(current_company_job_manager_recruiter),
     session: AsyncSession = Depends(get_session),
 ):
+    """Create one posting. Retry-safe under ``Idempotency-Key``.
+
+    A retried POST here publishes the same vacancy twice, which recruiters then
+    have to notice and delete, and which splits the applicants between two
+    postings in the meantime.
+    """
     del recruiter
+    guard = await begin_idempotent_request(
+        session,
+        request=request,
+        actor=actor_key("company", company.id),
+        endpoint="POST /companies/me/job-postings",
+        payload=payload,
+    )
+    if guard.is_replay:
+        return guard.replay
+
     service = JobPostingService(session)
-    job = await service.create_for_company(company.id, payload)
-    return JobPostingRead.model_validate(job)
+    try:
+        job = await service.create_for_company(company.id, payload)
+    except Exception:
+        await guard.release()
+        raise
+    return await guard.store(
+        JobPostingRead.model_validate(job), status_code=status.HTTP_201_CREATED
+    )
 
 
 @router.patch("/companies/me/job-postings/{job_posting_id}", response_model=JobPostingRead)
@@ -271,29 +294,49 @@ async def start_cv_analysis(
     user: User = Depends(current_ai_user),
 
 ):
-    """Start CV analysis job - returns immediately with job_id"""
+    """Start CV analysis job - returns immediately with job_id
+
+    This endpoint spends AI credit, so it is one of the three plan 08 §5.1 names
+    for ``Idempotency-Key``. The existing per-resume defences — the cached job,
+    the running job and the unique active index — already stop a *second
+    analysis*; the key adds the piece they cannot give, which is returning the
+    **same answer** to a client that never saw the first one. The key is scoped
+    to the CV it was sent for, so reusing it after uploading a different CV is a
+    409 rather than a stale job id.
+    """
+    guard = None
     try:
         analysis_service = CVAnalysisService(session)
         resume = await analysis_service.get_latest_resume(user.id)
         
         if not resume:
             raise HTTPException(status_code=404, detail="No CV found. Please upload your CV first.")
-        
+
+        guard = await begin_idempotent_request(
+            session,
+            request=request,
+            actor=actor_key("user", user.id),
+            endpoint="POST /jobs/keywords/analyze",
+            payload={"resume_id": str(resume.id)},
+        )
+        if guard.is_replay:
+            return guard.replay
+
         cached_job = await analysis_service.get_cached_analysis(user_id=user.id, resume_id=resume.id)
         if cached_job and cached_job.keywords:
-            return JobInitResponse(
+            return await guard.store(JobInitResponse(
                 job_id=str(cached_job.id),
                 status=cached_job.status.value,
                 message="CV already analyzed. Using cached keywords."
-            )
+            ))
 
         running_job = await analysis_service.get_running_analysis(user_id=user.id, resume_id=resume.id)
         if running_job:
-            return JobInitResponse(
+            return await guard.store(JobInitResponse(
                 job_id=str(running_job.id),
                 status=running_job.status.value,
                 message="CV analysis already in progress for this resume."
-            )
+            ))
 
         ai_analysis_rate_limiter.check_request(request)
         # Atomically claim a daily slot *before* dispatching any LLM work so
@@ -311,11 +354,11 @@ async def start_cv_analysis(
             # under way, so its slot goes back — the winner reserved its own.
             await reservation.release()
             LOGGER.info(f"Joined running job {job.id} for user {user.id}")
-            return JobInitResponse(
+            return await guard.store(JobInitResponse(
                 job_id=str(job.id),
                 status=job.status.value,
                 message="CV analysis already in progress for this resume.",
-            )
+            ))
 
         LOGGER.info(f"Created job {job.id} for user {user.id}")
 
@@ -328,15 +371,21 @@ async def start_cv_analysis(
         )
         wake_runner()
         
-        return JobInitResponse(
+        return await guard.store(JobInitResponse(
             job_id=str(job.id),
             status=job.status.value,
             message="CV analysis started. Use the job_id to check status."
-        )
+        ))
         
-    except HTTPException:
+    except HTTPException as exc:
+        # A 409 raised *by* the guard must not release the key it is defending;
+        # every other failure releases, so the client may retry with the same key.
+        if guard is not None and exc.status_code != 409:
+            await guard.release()
         raise
     except Exception:
+        if guard is not None:
+            await guard.release()
         LOGGER.exception("Failed to start CV analysis")
         raise HTTPException(status_code=500, detail=LLM_GENERAL_FAILURE_MESSAGE)
 
@@ -386,6 +435,6 @@ async def get_job_keywords(
             )
         )
         
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Failed to check CV status")
         return KeywordsResponse(keywords="developer", has_cv=False)

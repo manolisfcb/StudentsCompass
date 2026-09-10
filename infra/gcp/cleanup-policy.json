@@ -1,0 +1,12 @@
+[
+  {
+    "name": "keep-recent-releases",
+    "action": {"type": "Keep"},
+    "mostRecentVersions": {"keepCount": 30}
+  },
+  {
+    "name": "delete-untagged-after-a-week",
+    "action": {"type": "Delete"},
+    "condition": {"tagState": "untagged", "olderThan": "168h"}
+  }
+]

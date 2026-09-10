@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from app.core.observability import install_sql_counter
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
-from fastapi import Depends
 # Parsed in app/config.py, which also loads the .env file — so importing this
 # module cannot read the environment before that file has been applied. These
 # names are re-exported because callers and tests already import them from here.
