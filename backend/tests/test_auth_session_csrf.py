@@ -77,7 +77,17 @@ class TestSessionContract:
         known = await client.get(SESSION, headers={"X-Probe": test_user.email})
 
         assert unknown.status_code == known.status_code == 401
-        assert unknown.json() == known.json()
+        # Everything but the request id, which is per-request by design and
+        # is the one field that must differ. The oracle would be a difference
+        # in code, message or status.
+        def _comparable(payload: dict) -> dict:
+            body = {k: v for k, v in payload.items() if k != "detail"}
+            body["error"] = {
+                k: v for k, v in body["error"].items() if k != "request_id"
+            }
+            return body
+
+        assert _comparable(unknown.json()) == _comparable(known.json())
         assert test_user.email not in unknown.text
 
     @pytest.mark.asyncio

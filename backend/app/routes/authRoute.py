@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from app.core.errors import ErrorCode
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.core.csrf import new_csrf_token, set_csrf_cookie
@@ -70,7 +71,7 @@ def _unauthenticated() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
-        headers={"X-Error-Code": "not_authenticated"},
+        headers={"X-Error-Code": ErrorCode.UNAUTHENTICATED},
     )
 
 

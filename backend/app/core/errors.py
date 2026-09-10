@@ -17,26 +17,115 @@ from __future__ import annotations
 import re
 import traceback
 import uuid
+from enum import StrEnum
 from logging import Logger
+from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Stable machine-readable codes. Clients may branch on these; the human message
-# beside them may be reworded at any time.
-CODE_INTERNAL = "internal_error"
-CODE_QUESTIONNAIRE_PROFILE = "questionnaire_profile_unavailable"
-CODE_RESOURCE_FILE = "resource_file_unavailable"
-CODE_RESOURCE_STORAGE_UNCONFIGURED = "resource_storage_unavailable"
-CODE_RESUME_UPLOAD = "resume_upload_failed"
-CODE_RESUME_STORAGE_UNCONFIGURED = "resume_storage_unavailable"
-CODE_ADMIN_RESOURCE_INVALID = "admin_resource_invalid"
-CODE_ADMIN_RESOURCE_UPLOAD = "admin_resource_upload_failed"
-CODE_INVALID_INPUT = "invalid_input"
-CODE_COMPANY_DASHBOARD = "company_dashboard_unavailable"
-CODE_STUDENT_DASHBOARD = "student_dashboard_unavailable"
-CODE_DASHBOARD_STATS = "dashboard_stats_unavailable"
-CODE_JOB_SEARCH = "job_search_unavailable"
+from app.core.observability import NO_REQUEST, current_request_id
+
+#: Bumped only when a code is *removed* or its meaning changes. Adding a member
+#: is backward compatible: a client that does not know a code falls back to the
+#: status family, which is why every code below stays pinned to one status.
+ERROR_CATALOG_VERSION = "1"
+
+
+class ErrorCode(StrEnum):
+    """The closed set of codes ``/api/v1`` may answer with.
+
+    An enum rather than loose strings because these are a **contract**: the
+    React client branches on them, so a typo in a route used to invent a new
+    public code silently. Membership is now checkable, and the catalogue can be
+    enumerated for the OpenAPI contract that TASK-043 pins.
+
+    The human message beside a code may be reworded or translated at any time;
+    the code may not.
+    """
+
+    # --- generic, one per status family the API answers with ---------------
+    INTERNAL = "internal_error"
+    INVALID_INPUT = "invalid_input"
+    VALIDATION_FAILED = "validation_failed"
+    #: The wire value TASK-042 already publishes from ``authRoute``. Kept as
+    #: it is rather than renamed to "unauthenticated": it is public, a client
+    #: may already branch on it, and this task changes shape, not contract.
+    UNAUTHENTICATED = "not_authenticated"
+    FORBIDDEN = "forbidden"
+    NOT_FOUND = "not_found"
+    METHOD_NOT_ALLOWED = "method_not_allowed"
+    CONFLICT = "conflict"
+    PAYLOAD_TOO_LARGE = "payload_too_large"
+    RATE_LIMITED = "rate_limited"
+    UNAVAILABLE = "service_unavailable"
+
+    # --- domain specific, kept from TASK-011 / TASK-032 --------------------
+    QUESTIONNAIRE_PROFILE = "questionnaire_profile_unavailable"
+    RESOURCE_FILE = "resource_file_unavailable"
+    RESOURCE_STORAGE_UNCONFIGURED = "resource_storage_unavailable"
+    RESUME_UPLOAD = "resume_upload_failed"
+    RESUME_STORAGE_UNCONFIGURED = "resume_storage_unavailable"
+    ADMIN_RESOURCE_INVALID = "admin_resource_invalid"
+    ADMIN_RESOURCE_UPLOAD = "admin_resource_upload_failed"
+    COMPANY_DASHBOARD = "company_dashboard_unavailable"
+    STUDENT_DASHBOARD = "student_dashboard_unavailable"
+    DASHBOARD_STATS = "dashboard_stats_unavailable"
+    JOB_SEARCH = "job_search_unavailable"
+
+    # --- cross-cutting guards, published before the catalogue existed -------
+    # Same rule as UNAUTHENTICATED: the wire value is what TASK-041, TASK-042
+    # and TASK-054 already answer with, so it is adopted verbatim rather than
+    # renamed. Folding them in is what makes the catalogue the single source of
+    # truth the Definition of Done asks for — before this they were five loose
+    # strings in three modules.
+    CSRF_TOKEN_INVALID = "csrf_token_invalid"
+    IDEMPOTENCY_KEY_INVALID = "idempotency_key_invalid"
+    IDEMPOTENCY_KEY_REUSE = "idempotency_key_reuse"
+    IDEMPOTENCY_IN_PROGRESS = "idempotency_request_in_progress"
+    INTERNAL_TASK_UNAUTHORIZED = "internal_task_unauthorized"
+
+
+# The pre-existing names stay bound to the enum members, so the routes that
+# TASK-011 and TASK-032 already migrated keep working unchanged. ``StrEnum``
+# means they compare equal to the wire string they always had.
+CODE_INTERNAL = ErrorCode.INTERNAL
+CODE_QUESTIONNAIRE_PROFILE = ErrorCode.QUESTIONNAIRE_PROFILE
+CODE_RESOURCE_FILE = ErrorCode.RESOURCE_FILE
+CODE_RESOURCE_STORAGE_UNCONFIGURED = ErrorCode.RESOURCE_STORAGE_UNCONFIGURED
+CODE_RESUME_UPLOAD = ErrorCode.RESUME_UPLOAD
+CODE_RESUME_STORAGE_UNCONFIGURED = ErrorCode.RESUME_STORAGE_UNCONFIGURED
+CODE_ADMIN_RESOURCE_INVALID = ErrorCode.ADMIN_RESOURCE_INVALID
+CODE_ADMIN_RESOURCE_UPLOAD = ErrorCode.ADMIN_RESOURCE_UPLOAD
+CODE_INVALID_INPUT = ErrorCode.INVALID_INPUT
+CODE_COMPANY_DASHBOARD = ErrorCode.COMPANY_DASHBOARD
+CODE_STUDENT_DASHBOARD = ErrorCode.STUDENT_DASHBOARD
+CODE_DASHBOARD_STATS = ErrorCode.DASHBOARD_STATS
+CODE_JOB_SEARCH = ErrorCode.JOB_SEARCH
+
+#: What a bare ``HTTPException(status_code=...)`` becomes. The 119 raise sites
+#: that predate the catalogue answer with the family code for their status
+#: rather than being rewritten one by one: rewriting them would change which
+#: operations fail, and this task is explicitly only about the *shape*.
+_STATUS_CODES: dict[int, ErrorCode] = {
+    400: ErrorCode.INVALID_INPUT,
+    401: ErrorCode.UNAUTHENTICATED,
+    403: ErrorCode.FORBIDDEN,
+    404: ErrorCode.NOT_FOUND,
+    405: ErrorCode.METHOD_NOT_ALLOWED,
+    409: ErrorCode.CONFLICT,
+    413: ErrorCode.PAYLOAD_TOO_LARGE,
+    422: ErrorCode.VALIDATION_FAILED,
+    429: ErrorCode.RATE_LIMITED,
+    503: ErrorCode.UNAVAILABLE,
+}
+
+
+def code_for_status(status_code: int) -> ErrorCode:
+    """The catalogue code a status maps to when no route named one."""
+    if status_code in _STATUS_CODES:
+        return _STATUS_CODES[status_code]
+    return ErrorCode.INVALID_INPUT if status_code < 500 else ErrorCode.INTERNAL
 
 GENERIC_CLIENT_MESSAGE = "The request could not be processed."
 GENERIC_SERVER_MESSAGE = "Something went wrong on our side. Please try again."
@@ -87,8 +176,17 @@ MAX_LOGGED_CAUSE_CHARS = 4000
 
 
 def new_error_reference() -> str:
-    """Short id shared by the response and the log entry."""
-    return uuid.uuid4().hex[:12]
+    """The id shared by the response and the log entry.
+
+    It is the **request** id whenever a request is in flight. Before TASK-040
+    this minted a fresh id per error, so a caller quoting "ref: 9f3c..." sent
+    support to the error line but not to the request line that carried the
+    method, route, status and duration — two ids for one event, joinable only
+    by timestamp. Outside a request (a worker, a startup hook, a test) there is
+    no request id, so one is still minted here.
+    """
+    request_id = current_request_id()
+    return request_id if request_id != NO_REQUEST else uuid.uuid4().hex[:12]
 
 
 def redact(text: str) -> str:
@@ -197,3 +295,58 @@ async def client_failure(
         log_cause(logger, exc, code=code, reference=reference, context="unsafe client message")
     await _rollback(session, logger, reference)
     return _http_error(status_code, code, raw.strip() if safe else fallback_message, reference)
+
+
+# --- The single public error shape -----------------------------------------
+#
+# §5.1 of the plan fixes one body for every failing ``/api/v1`` request:
+#
+#     {"error": {"code", "message", "details", "request_id"}}
+#
+# ``details`` is for machine-readable specifics — which field failed validation
+# and why — never for a second prose message and never for a cause. It is
+# ``None`` when there is nothing structured to say, rather than ``{}``, so
+# "no details" and "empty details" cannot be confused by a client.
+
+
+class AppError(Exception):
+    """A failure whose public shape the raiser has already decided.
+
+    Raising this is preferred over ``HTTPException`` for new code: the code is
+    drawn from the catalogue instead of being inferred from the status, and
+    ``details`` survives to the client. The central handler renders it.
+    """
+
+    def __init__(
+        self,
+        code: ErrorCode,
+        message: str,
+        *,
+        status_code: int = 400,
+        details: Any | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.status_code = status_code
+        self.details = details
+
+
+def error_envelope(
+    code: ErrorCode | str,
+    message: str,
+    *,
+    request_id: str | None = None,
+    details: Any | None = None,
+) -> dict[str, Any]:
+    """Build the one body shape. The only place that spells these keys."""
+    if request_id is None or request_id == NO_REQUEST:
+        request_id = new_error_reference()
+    return {
+        "error": {
+            "code": str(code),
+            "message": message,
+            "details": details,
+            "request_id": request_id,
+        }
+    }

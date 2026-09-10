@@ -29,9 +29,9 @@ from app.core.csrf import (
     set_csrf_cookie,
     tokens_match,
 )
-from app.core.errors import new_error_reference
+from app.core.errors import ErrorCode, new_error_reference
 
-CODE_CSRF = "csrf_token_invalid"
+CODE_CSRF = ErrorCode.CSRF_TOKEN_INVALID
 
 # One message for a missing token, a stale token and a foreign origin alike. The
 # client cannot act differently on the three, and distinguishing them would tell

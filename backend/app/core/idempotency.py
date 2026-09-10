@@ -32,6 +32,7 @@ it on every one of these endpoints.
 """
 from __future__ import annotations
 
+from app.core.errors import ErrorCode
 import hashlib
 import json
 from datetime import datetime, timedelta
@@ -64,9 +65,9 @@ IN_PROGRESS_LEASE = timedelta(minutes=15)
 #: storage, and non-empty so a blank header is a mistake rather than a key.
 MAX_KEY_LENGTH = 255
 
-CODE_IDEMPOTENCY_KEY_REUSE = "idempotency_key_reuse"
-CODE_IDEMPOTENCY_IN_PROGRESS = "idempotency_request_in_progress"
-CODE_IDEMPOTENCY_KEY_INVALID = "idempotency_key_invalid"
+CODE_IDEMPOTENCY_KEY_REUSE = ErrorCode.IDEMPOTENCY_KEY_REUSE
+CODE_IDEMPOTENCY_IN_PROGRESS = ErrorCode.IDEMPOTENCY_IN_PROGRESS
+CODE_IDEMPOTENCY_KEY_INVALID = ErrorCode.IDEMPOTENCY_KEY_INVALID
 
 
 def read_idempotency_key(request: Request) -> str | None:

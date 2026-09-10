@@ -21,6 +21,7 @@ fallback, because the failure mode of one would be silent.
 """
 from __future__ import annotations
 
+from app.core.errors import ErrorCode
 import hmac
 import logging
 
@@ -38,7 +39,7 @@ LOGGER = logging.getLogger(__name__)
 SHARED_SECRET_HEADER = "X-Internal-Task-Secret"
 GOOGLE_ISSUERS = frozenset({"https://accounts.google.com", "accounts.google.com"})
 
-CODE_INTERNAL_TASK_UNAUTHORIZED = "internal_task_unauthorized"
+CODE_INTERNAL_TASK_UNAUTHORIZED = ErrorCode.INTERNAL_TASK_UNAUTHORIZED
 
 
 class InternalTaskAuthError(Exception):

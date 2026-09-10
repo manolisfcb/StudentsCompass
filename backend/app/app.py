@@ -22,6 +22,7 @@ from contextlib import asynccontextmanager
 from app.routes.postRoute import router as post_router
 from app.services.accounts.userService import fastapi_users, auth_backend
 from app.middleware.csrf import CSRFMiddleware
+from app.core.error_handlers import install_error_handlers
 from app.middleware.request_context import RequestContextMiddleware
 from app.routes.authRoute import router as auth_router
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
@@ -207,6 +208,11 @@ app.add_middleware(
 # Outermost of the three: it has to see the request before anything can reject
 # it, so a 413 or a CSRF refusal is logged with the same id as a 200.
 app.add_middleware(RequestContextMiddleware)
+
+# Registered after the middleware that mints the request id, because every
+# envelope these handlers write quotes it. Scoped to /api/v1 inside; the Jinja
+# views keep the framework's HTML error pages.
+install_error_handlers(app)
 
 app.add_middleware(
     RequestBodySizeLimitMiddleware,
