@@ -47,6 +47,56 @@ request method=GET endpoint=/api/v1/questionnaire/profile status=404 \
   falla se vea sin subir el nivel de log.
 - Nada se registra por fila ni por statement: los contadores se suman en el
   contexto de la petición y se reportan una vez.
+- `actor` (TASK-045) identifica **quién**, sin decir quién: es un HMAC del id
+  con la clave de firma de la app, truncado, con el tipo en claro
+  (`student:a5db2211854c1dca`, `recruiter:…`, o `-` si nadie se autenticó). Un
+  hash sin clave no valdría: el espacio de ids de usuario es pequeño y
+  enumerable, así que cualquiera con la tabla de usuarios —que es justo quien
+  lee estos logs— podría revertirlo. Lo estampan las dependencias de
+  autenticación, que son el único sitio por el que pasan todas las rutas.
+- `job_id` aparece solo cuando la petición trata de un job concreto.
+
+### El formato: texto en desarrollo, JSON en producción
+
+`JSON_LOGS` (por defecto: activo si `ENV=production`) cambia el render a un
+objeto JSON por línea, que es lo que Cloud Logging parsea en una entrada
+estructurada: `severity` pasa a ser el nivel por el que se filtra y cada campo
+extra pasa a ser un campo consultable.
+
+```json
+{"severity": "INFO", "message": "request method=GET …", "logger": "app.request",
+ "request_id": "ec4823…", "method": "GET", "endpoint": "/api/v1/jobs",
+ "status": 200, "actor": "student:a5db2211854c1dca", "duration_ms": 0.03}
+```
+
+La diferencia práctica es entre poder preguntar «enséñame los 5xx de este actor
+en la última hora» y tener que hacer grep. En texto la misma información va en
+el `message`, porque a ese tamaño el JSON no hay quien lo lea en un terminal.
+
+### `/healthz` y `/readyz`
+
+No son la misma pregunta, y confundirlas rompe cosas distintas:
+
+| | Pregunta | Toca la base | Si falla |
+| --- | --- | --- | --- |
+| `/healthz` | ¿el proceso vive? | **no** | la plataforma reinicia el contenedor |
+| `/readyz` | ¿debe entrar tráfico **ahora**? | sí, con timeout de 2 s | la revisión sale del balanceador |
+
+Un `/healthz` que tocara la base convertiría una caída de base en un bucle de
+reinicios: la plataforma mata un contenedor que funcionaba, el siguiente falla
+igual, y una caída recuperable pasa a ser una en la que no queda nada vivo con
+lo que recuperarse. Un `/readyz` que no la tocara dejaría entrar tráfico a una
+réplica que va a fallar cada petición.
+
+`/readyz` comprueba con la **misma sesión** que usa una petición, no abriendo su
+propia conexión: una sonda con conexión propia puede informar de una base
+perfectamente alcanzable mientras cada petición real falla por un pool agotado.
+Devuelve 503 —no 500— y el motivo va al log, nunca al cuerpo: la sonda es
+alcanzable desde internet y un error de driver nombra el host, el puerto y a
+menudo el usuario.
+
+Ninguna de las dos está en el OpenAPI: las llama la plataforma, no un cliente, y
+el contrato es de lo que consume el frontend (TASK-043).
 
 ### Los contadores
 

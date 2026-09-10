@@ -48,6 +48,7 @@ import logging
 
 from app.routes.capstoneAnalyticsRoute import router as capstone_analytics_router
 from app.routes.internalTasksRoute import router as internal_tasks_router
+from app.routes.healthRoute import router as health_router
 from app.core.resume_analyzer.resume_text_extractor import shutdown_resume_text_extractors
 from app.services.ai.cvAnalysisRunner import start_runner, stop_runner
 from app.services.roadmaps.roadmapSeedService import seed_roadmaps_on_startup_if_dev
@@ -299,6 +300,9 @@ app.include_router(capstone_analytics_router, prefix="/api/v1", tags=["capstone"
 # Deliberately *not* under /api/v1: these are not part of the public contract
 # and are reachable only with a task credential (app/core/internalAuth.py).
 app.include_router(internal_tasks_router, tags=["internal"])
+# Same reasoning, different reader: /healthz and /readyz are addressed by Cloud
+# Run, not by a client, so they stay off the contract (TASK-045).
+app.include_router(health_router, tags=["health"])
 
 # Se comprueba al montar, no al exportar: una colisión de `operationId` haría que
 # dos operaciones compartieran tipo generado, y eso tiene que fallar en el

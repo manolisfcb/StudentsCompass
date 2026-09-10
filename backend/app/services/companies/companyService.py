@@ -3,6 +3,7 @@ import uuid
 from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, status
+from app.core.observability import stamp_actor
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -72,8 +73,30 @@ fastapi_company_recruiters = FastAPIUsers[CompanyRecruiter, uuid.UUID](
 )
 fastapi_companies = fastapi_company_recruiters
 
-current_active_company_recruiter = fastapi_company_recruiters.current_user(active=True)
-current_active_company_recruiter_optional = fastapi_company_recruiters.current_user(active=True, optional=True)
+_authenticated_recruiter = fastapi_company_recruiters.current_user(active=True)
+_authenticated_recruiter_optional = fastapi_company_recruiters.current_user(active=True, optional=True)
+
+
+async def current_active_company_recruiter(
+    request: Request, recruiter: CompanyRecruiter = Depends(_authenticated_recruiter)
+) -> CompanyRecruiter:
+    """The authenticated recruiter, and where the request records who it was.
+
+    Recruiters are a separate auth identity from students and stay that way, so
+    the actor is stamped separately too — with its own kind, which is why a log
+    line can say "a recruiter did this" without saying who (TASK-045).
+    """
+    stamp_actor(request, "recruiter", recruiter.id)
+    return recruiter
+
+
+async def current_active_company_recruiter_optional(
+    request: Request,
+    recruiter: Optional[CompanyRecruiter] = Depends(_authenticated_recruiter_optional),
+) -> Optional[CompanyRecruiter]:
+    if recruiter is not None:
+        stamp_actor(request, "recruiter", recruiter.id)
+    return recruiter
 
 
 async def current_company_owner_recruiter(

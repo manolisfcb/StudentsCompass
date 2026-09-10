@@ -26,6 +26,8 @@ redaction.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import re
 import time
@@ -89,6 +91,59 @@ class RequestMetrics:
 
 
 _metrics: ContextVar[RequestMetrics | None] = ContextVar("request_metrics", default=None)
+
+
+#: What the request log line says when nobody is authenticated. Named rather
+#: than blank for the same reason as ``NO_REQUEST``.
+NO_ACTOR = "-"
+
+#: Long enough that two actors colliding in one log is not a practical concern,
+#: short enough that the value is useless as an identifier on its own.
+_ACTOR_DIGEST_CHARS = 16
+
+
+def anonymize_actor(kind: str, identifier: object) -> str:
+    """A stable pseudonym for one actor: ``student:9f3c1a2b...``.
+
+    Keyed with the app's signing secret and truncated, so the same user is the
+    same string across requests — which is the whole point, a support report and
+    a log line have to join — while the log itself carries nothing that
+    identifies a person. Unkeyed hashing would not do: the space of user ids is
+    small and enumerable, so a plain digest is reversible by anyone holding the
+    user table, which is precisely who reads these logs.
+
+    The kind stays in clear because "a company recruiter did this" is not
+    personal data and is the first thing anyone reading the line wants to know.
+    """
+    from app.config import load_secret_key
+
+    digest = hmac.new(
+        load_secret_key().encode("utf-8"),
+        f"{kind}:{identifier}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()[:_ACTOR_DIGEST_CHARS]
+    return f"{kind}:{digest}"
+
+
+def stamp_actor(scope_or_request, kind: str, identifier: object) -> None:
+    """Record who this request turned out to be, for its one log line.
+
+    Written into ``scope["state"]`` rather than into a ``ContextVar`` on
+    purpose. The actor is resolved *inside* the request, by a dependency, and
+    has to travel back *out* to the middleware that writes the line — and
+    ``BaseHTTPMiddleware`` (which ``apply_rate_limits`` uses) runs the rest of
+    the stack in its own anyio task, so a context variable set below it is gone
+    by the time the outer middleware reads it. The scope dict is one object
+    shared by reference the whole way down, so it survives that boundary.
+    """
+    scope = getattr(scope_or_request, "scope", scope_or_request)
+    scope.setdefault("state", {})["actor"] = anonymize_actor(kind, identifier)
+
+
+def stamp_job(scope_or_request, job_id: object) -> None:
+    """Attach the job this request is about, when it is about one."""
+    scope = getattr(scope_or_request, "scope", scope_or_request)
+    scope.setdefault("state", {})["job_id"] = str(job_id)
 
 
 def new_request_id() -> str:

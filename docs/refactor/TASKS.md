@@ -116,7 +116,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-042 | Exponer sesión, login y logout por actor con CSRF double-submit | CRITICAL | PHASE-M2 | COMPLETED | TASK-010, TASK-037 | TASK-040, TASK-041, TASK-045 |
 | TASK-043 | Fijar OpenAPI como contrato y generar tipos TypeScript en CI | HIGH | PHASE-M2 | COMPLETED | TASK-039, TASK-040, TASK-041 | TASK-042, TASK-045 |
 | TASK-044 | Construir la capa HTTP, los shells y los guards del frontend | HIGH | PHASE-M2 | TODO | TASK-038, TASK-042, TASK-043 | TASK-045 |
-| TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | IN PROGRESS | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
+| TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | COMPLETED | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
 | TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | TODO | TASK-035, TASK-042, TASK-044 | NONE |
 | TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | TODO | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
 | TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | TODO | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
@@ -8191,7 +8191,7 @@ Risk: MEDIUM
 
 ## TASK-045 — Publicar health, readiness y logging estructurado de la API
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M2
 Category: Observability / Infrastructure
@@ -8260,13 +8260,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] `/healthz` responde sin tocar DB ni proveedores externos.
-- [ ] `/readyz` falla con timeout corto cuando la DB no está disponible, y lo dice sin filtrar detalle de infraestructura.
-- [ ] Los logs son JSON con `request_id`, actor anonimizado, ruta, status, latencia y job id cuando aplica.
-- [ ] Ningún log contiene PII ni secretos.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] `/healthz` responde sin tocar DB ni proveedores externos.
+- [x] `/readyz` falla con timeout corto cuando la DB no está disponible, y lo dice sin filtrar detalle de infraestructura.
+- [x] Los logs son JSON con `request_id`, actor anonimizado, ruta, status, latencia y job id cuando aplica.
+- [x] Ningún log contiene PII ni secretos.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8275,6 +8275,83 @@ Bajar la DB en la lane de integración y comprobar que `/readyz` falla mientras 
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+### Completion Notes
+
+**Entregado:** `/healthz` y `/readyz` (`app/routes/healthRoute.py`), la sonda de
+base (`app/core/health.py`), el formatter JSON que Cloud Logging parsea
+(`app/logging.py`), el actor seudónimo y el job id (`app/core/observability.py`),
+y 17 casos en `backend/tests/test_health_and_readiness.py`.
+
+**La separación de las dos sondas es la decisión, no un detalle.** Un `/healthz`
+que tocara la base convierte una caída de base en un bucle de reinicios: la
+plataforma mata un contenedor que funcionaba, el siguiente falla idéntico y una
+caída recuperable pasa a ser una en la que no queda nada vivo con lo que
+recuperarse. Hay un test que lo fija: con la base caída, `/healthz` sigue
+devolviendo 200.
+
+**`/readyz` comprueba con la misma sesión que usa una petición.** La primera
+versión abría su propia conexión desde el engine, y el test de camino feliz la
+tumbó: comprobaba un engine distinto del que sirve las peticiones. Eso no era un
+problema del test. Una sonda con conexión propia puede informar de una base
+perfectamente alcanzable mientras cada petición real falla por un pool agotado o
+una factoría de sesiones sustituida — respondería a una pregunta que nadie hizo.
+Ahora pasa por `Depends(get_session)`, que es el mismo camino, y de paso respeta
+los overrides de los tests en vez de necesitar parchear el engine.
+
+**503 y una palabra, no el error.** La sonda es alcanzable desde internet y un
+error de driver nombra el host, el puerto y a menudo el usuario. El motivo va al
+log con traceback, que es donde el operador lo necesita; al llamante le llega
+`{"status": "not_ready", "checks": {"database": "unavailable"}}`. Un test inyecta
+un error con forma real (`ep-broad-mud….neon.tech:5432 user=sc_prod`) y afirma
+que ninguno de esos fragmentos aparece en el cuerpo.
+
+**El actor es un HMAC con la clave de firma, no un hash.** Un digest sin clave
+sería reversible: el espacio de ids de usuario es pequeño y enumerable, y quien
+lee estos logs es exactamente quien tiene la tabla de usuarios. Con clave, el
+mismo usuario es la misma cadena entre peticiones —que es el punto, un reporte de
+soporte y una línea de log tienen que unirse— y la línea no identifica a nadie.
+El tipo (`student:` / `recruiter:`) queda en claro porque no es dato personal y
+es lo primero que quiere saber quien lee.
+
+**Dónde se estampa el actor, y por qué ahí.** En las dos raíces de
+autenticación (`current_active_user` y `current_active_company_recruiter`, más
+sus variantes opcionales), envolviendo la dependencia de fastapi-users en vez de
+tocar rutas. Son el único sitio por el que pasan todas las rutas de cada actor,
+así que un endpoint añadido mañana trae el campo sin que nadie se acuerde.
+
+**Va en `scope["state"]`, no en un `ContextVar`, y la razón es medida.** El actor
+se resuelve *dentro* de la petición y tiene que viajar *hacia fuera*, al
+middleware que escribe la línea. `apply_rate_limits` es un `BaseHTTPMiddleware`,
+que corre el resto de la pila en su propia task de anyio, así que un
+`ContextVar` puesto por debajo ya no existe cuando el middleware exterior lo
+lee. El dict del scope es un solo objeto compartido por referencia y sí cruza esa
+frontera.
+
+**JSON solo en producción.** `JSON_LOGS` por defecto sigue a `ENV=production`.
+Cloud Logging convierte `severity` en el nivel filtrable y cada extra en un campo
+consultable; en un terminal, a ese tamaño, el JSON no hay quien lo lea. La línea
+lleva los mismos hechos dos veces a propósito —`extra` para el formatter, el
+`message` para quien lee texto— porque renderizar solo uno inutiliza el otro
+formato.
+
+**Fuera del contrato.** Ninguna de las dos rutas entra en el OpenAPI
+(`include_in_schema=False`), por lo mismo que las rutas internas de tasks: el
+documento es el contrato del que se generan los tipos del frontend (TASK-043), y
+estos endpoints los llama la plataforma. Comprobado: el export del SHA es
+idéntico byte a byte a `contract/openapi.json`.
+
+**Validación.** Lane rápida: **805 pasan, 129 skipped, 1 falla**. El fallo es
+`test_task_outbox.py::test_the_default_transport_refuses_instead_of_guessing`
+(«There is no current event loop»), y es **TASK-071**, ya inventariada como TODO.
+Comprobado que es ajeno: con los cambios en stash falla idéntico. Ruff limpio
+sobre `app` y `tests`. El render JSON se verificó de extremo a extremo con una
+petición real a través del middleware, no solo en el test del formatter.
+
+**Lo que no se hizo, por Scope:** dashboards y alertas son TASK-057; las métricas
+de negocio siguen siendo TASK-028. Tampoco se añadió correlación de traza de
+Cloud Run (`logging.googleapis.com/trace`): es útil pero no está en los criterios
+y arrastra el parsing de una cabecera más.
 
 ### Estimated Impact
 

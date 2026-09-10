@@ -22,6 +22,7 @@ from __future__ import annotations
 import logging
 
 from app.core.observability import (
+    NO_ACTOR,
     accept_inbound_request_id,
     reset_metrics,
     reset_request_id,
@@ -83,13 +84,29 @@ class RequestContextMiddleware:
             route = scope.get("route")
             endpoint = getattr(route, "path", None) or "unmatched"
             status = status_holder["status"]
+            state = scope.get("state") or {}
+
+            fields = {
+                "method": scope.get("method", "-"),
+                "endpoint": endpoint,
+                "status": status,
+                # Both are stamped from inside the request — the actor by the
+                # auth dependency that resolved it, the job id by the handler
+                # that knows one. Absent is the normal case for both.
+                "actor": state.get("actor", NO_ACTOR),
+                **({"job_id": state["job_id"]} if state.get("job_id") else {}),
+                **metrics.as_log_fields(),
+            }
+
+            # The same facts twice, on purpose, and only one of them is read at
+            # a time: ``extra`` is what the JSON formatter turns into queryable
+            # fields, and the message is what a developer reads when logs are
+            # text. Rendering only one would make the other format useless.
             LOGGER.log(
                 logging.WARNING if status >= 500 else logging.INFO,
-                "request method=%s endpoint=%s status=%s %s",
-                scope.get("method", "-"),
-                endpoint,
-                status,
-                " ".join(f"{key}={value}" for key, value in metrics.as_log_fields().items()),
+                "request %s",
+                " ".join(f"{key}={value}" for key, value in fields.items()),
+                extra=fields,
             )
             reset_metrics(metrics_token)
             reset_request_id(id_token)

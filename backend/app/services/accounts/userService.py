@@ -6,6 +6,7 @@ from fastapi_users.authentication import (
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
 from fastapi import Depends, Request
+from app.core.observability import stamp_actor
 from typing import Optional
 from app.models.userModel import User
 import uuid
@@ -61,8 +62,30 @@ auth_backend = AuthenticationBackend(
 )
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager=get_user_manager, auth_backends=[auth_backend])
-current_active_user = fastapi_users.current_user(active=True)
-current_active_user_optional = fastapi_users.current_user(active=True, optional=True)
+_authenticated_user = fastapi_users.current_user(active=True)
+_authenticated_user_optional = fastapi_users.current_user(active=True, optional=True)
+
+
+async def current_active_user(
+    request: Request, user: User = Depends(_authenticated_user)
+) -> User:
+    """The authenticated student, and the one place that records *which* one.
+
+    Wrapped here rather than stamped in each route because this is the single
+    dependency every student endpoint already goes through: an endpoint added
+    later gets the log field without anybody remembering to add it. The value is
+    a keyed pseudonym, never the user id — see ``anonymize_actor`` (TASK-045).
+    """
+    stamp_actor(request, "student", user.id)
+    return user
+
+
+async def current_active_user_optional(
+    request: Request, user: Optional[User] = Depends(_authenticated_user_optional)
+) -> Optional[User]:
+    if user is not None:
+        stamp_actor(request, "student", user.id)
+    return user
 
 
 async def current_ai_user(user: User = Depends(current_active_user)) -> User:
