@@ -151,6 +151,22 @@ jobs:
       # proyecto y el job falla antes de instalar nada.
       - name: Verificar que uv.lock está al día
         run: uv lock --check
+      # `uv lock --check` solo prueba que el lock describe `pyproject.toml`. No
+      # dice nada de `requirements.txt`, que es lo que instalan la imagen Docker
+      # y las tres lanes de test — y por esa rendija los dos artefactos llegaron
+      # a describir entornos distintos en 55 paquetes (TASK-029 lo midió,
+      # TASK-066 lo cerró). Desde TASK-066 el lock es la única fuente de verdad
+      # y `requirements.txt` se genera de él, así que basta con regenerarlo y
+      # comprobar que no cambia nada.
+      - name: Verificar que requirements.txt es lo que el lock exporta
+        run: |
+          uv export --no-dev --no-hashes --no-emit-project --frozen -o requirements.txt
+          if ! git diff --exit-code -- requirements.txt; then
+            echo "::error::requirements.txt no coincide con uv.lock. Se genera del lock: corre" \
+                 "'uv export --no-dev --no-hashes --no-emit-project --frozen -o requirements.txt'" \
+                 "y commitea el resultado. No lo edites a mano."
+            exit 1
+          fi
       # Ruff no necesita la aplicación instalada, así que este job no instala
       # `requirements.txt`: solo el grupo dev del lock, que son trece paquetes.
       # La versión de Ruff sale del lock, no de una línea suelta de este fichero,

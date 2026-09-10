@@ -137,7 +137,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-063 | Filtrar y ordenar el catálogo de recursos en SQL | LOW | PHASE-4 | COMPLETED | TASK-018, TASK-025 | TASK-061, TASK-062 |
 | TASK-064 | Estabilizar la lane SQLite frente a la afinidad numérica de UUID | MEDIUM | PHASE-0 | COMPLETED | TASK-001 | TASK-065 |
 | TASK-065 | Corregir el test de agregados diarios que compara fecha local con UTC | LOW | PHASE-0 | TODO | TASK-001 | TASK-064 |
-| TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | TODO | TASK-029 | TASK-067 |
+| TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | COMPLETED | TASK-029 | TASK-067 |
 | TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
 | TASK-068 | Retirar el patrón create_all/drop_all por test de la lane PostgreSQL | LOW | PHASE-0 | TODO | TASK-031 | NONE |
 | TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | COMPLETED | TASK-009 | NONE |
@@ -11392,7 +11392,7 @@ Risk: LOW
 
 ## TASK-066 — Reconciliar requirements.txt y uv.lock en una sola fuente de verdad
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-6
 Category: Maintainability
@@ -11479,6 +11479,70 @@ Blocks: NONE
 
 Instalación reproducible desde el artefacto elegido; suite completa verde con las versiones
 resultantes; CI falla si se edita uno de los dos sin el otro; smoke de arranque.
+
+### Completion Notes
+
+**Dirección elegida por quien opera el despliegue, como la ficha exige: subir el lock a lo
+instalado.** La otra salida degradaba 55 paquetes en la imagen respecto a lo que corre hoy,
+incluidos `fastapi` y `cryptography`, y eso es un cambio de producción disfrazado de
+limpieza.
+
+**La medición actualizada, sobre `backend/` el 2026-09-10:** 55 paquetes con versión
+distinta (la ficha decía 58 el 2026-09-09; la diferencia es deriva de esos días, no un
+método distinto), 12 pines de `requirements.txt` ausentes del lock —los 8 de la ficha más
+`apify-client`, `apify-shared`, `impit` y `more-itertools`— y 30 paquetes del lock ausentes
+de `requirements.txt`, que son el grupo dev. Y el dato que fija la dirección se confirma
+más fuerte de lo que la ficha lo dejó: `requirements.txt` describe el entorno instalado en
+**112 de 112** paquetes, exactamente y sin excepciones.
+
+**La causa raíz es más precisa que "se separaron".** La primera línea de
+`requirements.txt` decía `uv pip compile pyproject.toml -o requirements.txt`, y el fichero
+listaba `apify-client` con el comentario `# via studentscompass (pyproject.toml)`. Pero el
+`pyproject.toml` actual **no declara apify-client**, y nada del árbol lo importa: el
+scraper vigente se anuncia como «Lightweight LinkedIn Jobs scraper (no Apify)». O sea que
+`requirements.txt` no estaba desincronizado del lock por deriva de versiones, sino que era
+un artefacto **generado desde un `pyproject.toml` anterior** y nunca regenerado. Los dos
+artefactos divergieron por dos razones independientes: `uv pip compile` resuelve a lo más
+nuevo permitido cada vez que se ejecuta, y `uv lock` conserva deliberadamente lo ya fijado.
+
+**`uv lock --upgrade` se probó y se descartó.** Sube 65 paquetes a lo más nuevo publicado
+hoy, incluidos `starlette` 0.50→1.6, `torch` 2.10→2.14, `transformers` 5.0→5.17 y
+`sentence-transformers` 5.2→6.0. Eso no es «el lock describe lo que corre»; es una
+actualización mayor que merecería su propia ficha. En su lugar el lock se fijó paquete a
+paquete a la versión instalada (`uv lock --upgrade-package nombre==versión` para los 100
+que están en ambos), y el grupo dev se alineó igual.
+
+**Resultado, contado contra lo que corre hoy:**
+
+| | |
+| --- | --- |
+| Paquetes degradados | **0** |
+| Versiones que cambian en la imagen | **2**, ambas transitivas: `pytz` 2026.2→2026.3.post1, `typer` 0.25.1→0.27.2 |
+| Paquetes que salen de la imagen | **7**: `apify-client`, `apify-shared`, `impit`, `more-itertools`, `async-timeout`, `exceptiongroup`, `tomli`. Ninguno se importa en el árbol y ninguno lo declara `pyproject.toml` |
+| Paquetes que aparecen pineados | **19** de CUDA/NVIDIA más `triton`, todos con marcador `sys_platform == 'linux'` |
+
+Los 19 últimos **no son dependencias nuevas**: son las que `torch` ya arrastraba en la
+imagen —`python:3.12-slim` es Linux— sin quedar fijadas, porque `requirements.txt` se
+compiló en macOS y la resolución excluyó esa rama. Pinearlas no añade nada al `pip install`;
+lo hace reproducible.
+
+**Desde aquí el lock es la única fuente y `requirements.txt` se genera de él** con
+`uv export --no-dev --no-hashes --no-emit-project --frozen -o requirements.txt`. La lane de
+lint de CI lo regenera y falla si el resultado difiere del fichero commiteado, con el
+comando exacto en el mensaje de error. `uv lock --check` seguía pasando durante toda la
+divergencia porque solo prueba que el lock describe `pyproject.toml`; esa era la rendija.
+
+**Coordinación con TASK-067.** Esa ficha sube versiones para remediar advisories y ahora
+tiene un solo sitio donde hacerlo. Los 7 paquetes retirados salen además de su superficie
+de análisis sin necesidad de decidir nada sobre ellos.
+
+**Validación.** Lane rápida completa con las versiones resultantes: 817 tests, un solo
+fallo, `test_the_default_transport_refuses_instead_of_guessing`, que es **TASK-071** —
+ficha TODO propia, reproducida en un worktree limpio antes de estos cambios. Lane
+PostgreSQL: 133 de 133. `uv lock --check` en verde y `uv export` idempotente contra el
+fichero commiteado. **Pendiente y no declarado hecho:** el `pip install -r requirements.txt`
+real sobre la imagen Linux no se ha ejecutado aquí; la lane de CI lo hace en cada run y es
+donde se confirma.
 
 ### Estimated Impact
 
