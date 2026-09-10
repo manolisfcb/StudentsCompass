@@ -15,19 +15,10 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source ./config.env
 
-API_SA="sc-api@${PROJECT_ID}.iam.gserviceaccount.com"
-MIGRATE_SA="sc-migrate@${PROJECT_ID}.iam.gserviceaccount.com"
-
-# secret name : which runtime identities may read it
-declare -a SECRETS=(
-  "DATABASE_URL:${API_SA},${MIGRATE_SA}"
-  "REDIS_URL:${API_SA}"
-  "SECRET_KEY:${API_SA}"
-  "GENAI_API_KEY:${API_SA}"
-  "AWS_ACCESS_KEY_ID:${API_SA}"
-  "AWS_SECRET_ACCESS_KEY:${API_SA}"
-  "APIFY_API_TOKEN:${API_SA}"
-)
+# The list of secrets and their readers lives in _secrets.sh, which 99-verify.sh
+# also sources. Two copies of this list is how the old one grew a secret nobody
+# reads and lost one the app needs on every upload.
+source ./_secrets.sh
 
 for entry in "${SECRETS[@]}"; do
   name="${entry%%:*}"

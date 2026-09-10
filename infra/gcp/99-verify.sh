@@ -7,6 +7,9 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 source ./config.env
+# Same list 40-secrets.sh creates from, so this asserts the secrets the code
+# needs rather than a copy that can quietly fall behind it.
+source ./_secrets.sh
 
 FAILURES=0
 check() {
@@ -59,14 +62,27 @@ fi
 
 echo
 echo "--- Secrets ---"
-for name in DATABASE_URL REDIS_URL SECRET_KEY GENAI_API_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY APIFY_API_TOKEN; do
+for name in "${SECRET_NAMES[@]}"; do
   check "secret $name exists" gcloud secrets describe "$name" --project "$PROJECT_ID"
+done
+
+# A container with no version is a deploy that fails at start, not at wiring:
+# --set-secrets resolves at container start, so an empty secret takes the
+# revision down rather than the pipeline.
+for name in "${SECRET_NAMES[@]}"; do
+  count="$(gcloud secrets versions list "$name" --project "$PROJECT_ID" --format='value(name)' 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$count" = "0" ]; then
+    echo "FAIL  secret $name has no version — a revision wired to it will not start"
+    FAILURES=$((FAILURES + 1))
+  else
+    echo "PASS  secret $name has $count version(s)"
+  fi
 done
 
 # The frontend runtime must not be able to read any of them.
 front="sc-front@${PROJECT_ID}.iam.gserviceaccount.com"
 leaked=0
-for name in DATABASE_URL REDIS_URL SECRET_KEY GENAI_API_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY APIFY_API_TOKEN; do
+for name in "${SECRET_NAMES[@]}"; do
   if gcloud secrets get-iam-policy "$name" --project "$PROJECT_ID" --format=json 2>/dev/null \
       | grep -q "$front"; then
     echo "FAIL  $name is readable by the frontend service account"
@@ -77,6 +93,24 @@ if [ "$leaked" = "0" ]; then
   echo "PASS  the frontend identity can read no secret"
 else
   FAILURES=$((FAILURES + leaked))
+fi
+
+echo
+echo "--- Cloud Tasks ---"
+check "queue $TASKS_QUEUE exists" \
+  gcloud tasks queues describe "$TASKS_QUEUE" --location "$REGION" --project "$PROJECT_ID"
+
+# The queue signs its OIDC token as this identity and the internal endpoint
+# accepts that email and no other (app/core/internalAuth.py). If the Cloud Tasks
+# service agent cannot impersonate it, every dispatch arrives unauthenticated.
+tasks_sa="sc-tasks@${PROJECT_ID}.iam.gserviceaccount.com"
+agent="service-$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)' 2>/dev/null)@gcp-sa-cloudtasks.iam.gserviceaccount.com"
+if gcloud iam service-accounts get-iam-policy "$tasks_sa" --project "$PROJECT_ID" --format=json 2>/dev/null \
+    | grep -q "$agent"; then
+  echo "PASS  Cloud Tasks may mint tokens as sc-tasks"
+else
+  echo "FAIL  the Cloud Tasks service agent cannot impersonate sc-tasks"
+  FAILURES=$((FAILURES + 1))
 fi
 
 echo

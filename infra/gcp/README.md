@@ -30,11 +30,37 @@ cp config.env.example config.env   # y rellenar
 ./20-service-accounts.sh
 ./30-workload-identity.sh
 ./40-secrets.sh
+./50-cloud-tasks.sh
 ./99-verify.sh
 ```
 
 Todos son idempotentes: re-ejecutarlos no duplica nada y es la forma de
 reconciliar un proyecto que alguien tocó a mano.
+
+## La base es Neon, y eso decide dos cosas
+
+`DATABASE_URL` apunta a un Postgres serverless de Neon, no a Cloud SQL. De ahí
+salen dos consecuencias que no son cosméticas:
+
+1. **Ningún rol `cloudsql.client`.** Concederlo daría acceso a un servicio que
+   este proyecto no usa, y le diría a quien audite esto mañana que sí lo usa.
+2. **`ALEMBIC_DATABASE_URL` es obligatorio, no opcional.** El endpoint
+   `-pooler` de Neon es PgBouncer en modo transacción, que no puede sostener los
+   locks de sesión que toma Alembic. La app va por el pooler; el Job de
+   migraciones va por el endpoint directo. Que `app/db.py` ya fije
+   `statement_cache_size=0` es la otra mitad de la misma restricción.
+
+## Qué secretos existen, y por qué esa lista
+
+`_secrets.sh` es la única fuente: la crean `40-secrets.sh` y la comprueba
+`99-verify.sh`. Antes había dos copias y divergieron — ambas nombraban
+`APIFY_API_TOKEN`, que no lee ningún código, y a ninguna le constaba
+`IMAGEKIT_PRIVATE_KEY`, que el servicio de media lee en cada subida. Un
+despliegue cableado desde esa lista arranca limpio y falla en el primer avatar.
+
+La lista sale de lo que el código **lee** (barrido de `os.getenv` / `env_str`
+sobre `backend/app`), no de lo que el servicio vivo tiene puesto. Las dos cosas
+no coinciden, y la que decide si una revisión funciona es el código.
 
 ## Los valores de los secretos no están aquí
 
@@ -58,9 +84,9 @@ una rotación que rompe el arranque debe poder deshacerse.
 
 | Service account | Rol | Por qué exactamente eso |
 | --- | --- | --- |
-| `sc-api` | `cloudsql.client`, `cloudtasks.enqueuer`, y `secretAccessor` **por secreto** | Habla con la base, encola el análisis de CV y lee los seis valores que necesita. No tiene `secretAccessor` a nivel de proyecto: un secreto nuevo no queda legible por el hecho de existir. |
+| `sc-api` | `cloudtasks.enqueuer` y `secretAccessor` **por secreto** | Encola el análisis de CV y lee los valores que necesita. No tiene `secretAccessor` a nivel de proyecto: un secreto nuevo no queda legible por el hecho de existir. **No** tiene `cloudsql.client`: la base es Neon, alcanzada por internet con una cadena de conexión, no Cloud SQL por el conector. |
 | `sc-front` | ninguno | Sirve un bundle compilado y proxea. No lee ningún secreto, no llama a ninguna API de Google. La lista vacía es el diseño. |
-| `sc-migrate` | `cloudsql.client`, `secretAccessor` sobre `DATABASE_URL` | Solo necesita llegar a la base con su URL. No publica imágenes ni despliega. |
+| `sc-migrate` | ninguno de proyecto; `secretAccessor` sobre `DATABASE_URL` y `ALEMBIC_DATABASE_URL` | Llega a Neon con su URL y no necesita nada de ninguna API de Google. No publica imágenes ni despliega. |
 | `sc-tasks` | ninguno de proyecto | Es la identidad que Cloud Tasks firma en el token OIDC. La API verifica este email exacto (`app/core/internalAuth.py`). Su poder es ser suplantada por la cola, no tener permisos. |
 | `sc-deployer` | `artifactregistry.writer`, `run.developer`, `iam.serviceAccountUser` | Publica imágenes y despliega revisiones. **No** tiene `secretAccessor`: CI cablea referencias y nunca lee un valor, así que sus logs no pueden filtrar uno. |
 
@@ -126,8 +152,51 @@ comprueba `99-verify.sh` contra el proyecto.
 
 ## Estado de la verificación
 
-Los scripts **no se han ejecutado**: no hay acceso a la consola ni a un proyecto
-de Google Cloud desde este entorno. Lo que está comprobado es lo comprobable sin
-él (ver arriba). Lo que queda pendiente, y por eso TASK-055 no se declara
-COMPLETED, es la ejecución de `00`–`40` contra el proyecto real y la salida de
-`99-verify.sh` en verde.
+Ejecutados el **2026-09-10** contra `gen-lang-client-0908704200` (nombre: `teko`,
+región `us-central1`), con `mmedinac26@gmail.com`:
+
+| Script | Estado |
+| --- | --- |
+| `00-enable-apis.sh` | ✅ ejecutado |
+| `10-artifact-registry.sh` | ✅ ejecutado |
+| `20-service-accounts.sh` | ✅ ejecutado — cinco identidades creadas |
+| `30-workload-identity.sh` | ✅ ejecutado — pool y provider acotados al repo |
+| `40-secrets.sh` | ⛔ **pendiente** |
+| `50-cloud-tasks.sh` | ✅ ejecutado — cola creada |
+| `99-verify.sh` | ⚠️ todo en verde salvo los secretos |
+
+`99-verify.sh` pasa Artifact Registry, la ausencia de claves JSON en las cinco
+cuentas, el pool y la condición de repositorio de WIF, la cola y el binding de
+impersonación de Cloud Tasks. Falla, y debe fallar, en los ocho secretos: no
+existen todavía.
+
+### El proyecto ya tenía un despliegue, hecho a mano
+
+Esto no es un proyecto vacío. `studentscompass-api` lleva sirviendo desde el
+commit `f9ca382` (2026-09-06) con `gcloud run deploy --source`, y su
+configuración es lo contrario de lo que este directorio construye:
+
+- los ocho valores están como **env vars literales**, no como referencias a
+  Secret Manager, de modo que cualquiera con `run.viewer` los lee en claro y para
+  siempre;
+- corre como la **service account por defecto de Compute**, que trae
+  `roles/editor` sobre todo el proyecto;
+- no tiene `REDIS_URL` y sí `max-instances=20`, así que los rate limits por IP
+  cuentan por proceso y no son los límites que dicen ser.
+
+Los valores actuales **no deben copiarse** a Secret Manager: ya estuvieron
+expuestos. La carga es también la rotación.
+
+### Evidencia pendiente para que TASK-055 pase a COMPLETED
+
+1. `40-secrets.sh` ejecutado y los ocho valores cargados, rotados, con
+   `gcloud secrets versions add … --data-file=-`.
+2. Un run del workflow que publique una imagen autenticándose por WIF, sin
+   credencial estática almacenada. Necesita `deploy.yml`, que es TASK-056.
+3. Los permisos efectivos de cada service account revisados contra la tabla de
+   arriba (`gcloud projects get-iam-policy`).
+4. Inspección de las dos imágenes construidas buscando secretos
+   (`docker history` y `docker run --rm <img> env`).
+
+Los puntos 2 a 4 dependen de que exista el pipeline; el 1 solo depende de tener
+los valores rotados a mano.

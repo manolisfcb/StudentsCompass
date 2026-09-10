@@ -43,12 +43,16 @@ grant() {
 echo "Granting project-level roles:"
 
 # --- API runtime -----------------------------------------------------------
-# cloudsql.client       reaches the managed database over the connector
 # cloudtasks.enqueuer   creates the CV-analysis task (TASK-054)
+#
+# NOT cloudsql.client: the database is Neon, reached over the public internet
+# with a connection string, not Cloud SQL reached through the connector. The
+# role would grant access to a service this project does not use — and would
+# read, to anyone auditing it later, as if it did.
+#
 # NOT secretmanager.secretAccessor at project level: access is granted per
-# secret in 40-secrets.sh, so the API can read the six values it needs and
-# not every secret the project will ever hold.
-grant "$API_SA" roles/cloudsql.client
+# secret in 40-secrets.sh, so the API can read the values it needs and not
+# every secret the project will ever hold.
 grant "$API_SA" roles/cloudtasks.enqueuer
 
 # --- Frontend runtime ------------------------------------------------------
@@ -57,7 +61,10 @@ grant "$API_SA" roles/cloudtasks.enqueuer
 # the point, not an omission.
 
 # --- Migration job ---------------------------------------------------------
-grant "$MIGRATE_SA" roles/cloudsql.client
+# No project role at all. It reaches Neon with ALEMBIC_DATABASE_URL, which it
+# reads through a per-secret binding in 40-secrets.sh, and it needs nothing from
+# any Google API to do its one job. As with sc-front, the empty list is the
+# design.
 
 # --- Cloud Tasks dispatcher -------------------------------------------------
 # The identity Cloud Tasks mints the OIDC token for. It needs no project role:
