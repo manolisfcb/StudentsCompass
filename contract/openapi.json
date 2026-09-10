@@ -2862,6 +2862,20 @@
         "title": "CommunityMemberRead",
         "type": "object"
       },
+      "CommunityMembershipRead": {
+        "description": "Typed response for `GET /communities/{id}/membership` (TASK-051);\nwas `response_model`-less, so the field showed as `unknown`.",
+        "properties": {
+          "is_member": {
+            "title": "Is Member",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_member"
+        ],
+        "title": "CommunityMembershipRead",
+        "type": "object"
+      },
       "CommunityPostCommentCreate": {
         "properties": {
           "content": {
@@ -4936,6 +4950,21 @@
           "receiver"
         ],
         "title": "FriendRequestRead",
+        "type": "object"
+      },
+      "FriendRequestStatusUpdate": {
+        "description": "Body of `PATCH /friend-requests/{id}` (TASK-051, plan 08 §5.2).\n\nOnly `\"accepted\"` is accepted: the plan renames *accepting* a request to\nthis verb, not the full lifecycle. Reject and cancel keep their existing\n`POST .../reject` and `.../cancel` actions — the plan does not name them,\nand turning every transition into a `status` value on one endpoint is a\nbigger contract decision than a rename should make on its own.",
+        "properties": {
+          "status": {
+            "const": "accepted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FriendRequestStatusUpdate",
         "type": "object"
       },
       "FriendUserSummary": {
@@ -12962,8 +12991,57 @@
         ]
       }
     },
-    "/api/v1/communities/{community_id}/join": {
-      "post": {
+    "/api/v1/communities/{community_id}/members/me": {
+      "delete": {
+        "operationId": "communities_leave_community",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "community_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Community Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Leave Community",
+        "tags": [
+          "communities"
+        ]
+      },
+      "put": {
         "operationId": "communities_join_community",
         "parameters": [
           {
@@ -13020,62 +13098,6 @@
         ]
       }
     },
-    "/api/v1/communities/{community_id}/leave": {
-      "delete": {
-        "operationId": "communities_leave_community",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "community_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Community Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Leave Community",
-        "tags": [
-          "communities"
-        ]
-      }
-    },
     "/api/v1/communities/{community_id}/membership": {
       "get": {
         "operationId": "communities_check_membership",
@@ -13095,7 +13117,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityMembershipRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -15143,6 +15167,74 @@
         ]
       }
     },
+    "/api/v1/friend-requests/{request_id}": {
+      "patch": {
+        "operationId": "friendships_update_friend_request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FriendRequestStatusUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Update Friend Request",
+        "tags": [
+          "friendships"
+        ]
+      }
+    },
     "/api/v1/friends": {
       "get": {
         "operationId": "friendships_list_friends",
@@ -15314,64 +15406,6 @@
           }
         ],
         "summary": "List Outgoing Friend Requests",
-        "tags": [
-          "friendships"
-        ]
-      }
-    },
-    "/api/v1/friends/requests/{request_id}/accept": {
-      "post": {
-        "operationId": "friendships_accept_friend_request",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "request_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Request Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FriendRequestRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Accept Friend Request",
         "tags": [
           "friendships"
         ]

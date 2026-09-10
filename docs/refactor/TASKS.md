@@ -122,7 +122,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
 | TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
 | TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | IN PROGRESS | TASK-046 | TASK-047, TASK-048, TASK-049 |
-| TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | TODO | TASK-024, TASK-046 | TASK-049, TASK-052 |
+| TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-024, TASK-046 | TASK-049, TASK-052 |
 | TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | TODO | TASK-022, TASK-023, TASK-046 | TASK-051 |
 | TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | TODO | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
 | TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | COMPLETED | TASK-013, TASK-037 | TASK-055 |
@@ -9254,7 +9254,7 @@ de React.
 
 ## TASK-051 — Vertical 6 — Community, friendships y messages en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9325,14 +9325,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en las verticales anteriores. Messages no tiene pantalla legacy con la que comparar (ver Completion Notes).
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en `/community`, `/community/:id`, `/messages` y `/messages/:id`. Falta el barrido con un actor autenticado real.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente** para communities y friend-requests; no aplica a messages (nunca tuvo tráfico legacy que medir).
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-16 (TASK-017) ya estaba resuelto; F-02 no toca esta vertical (no existe endpoint de borrado de post de comunidad); F-22 queda parcialmente abierto para los listados de comunidad/amistades sin paginar, documentado abajo como alcance recortado, no como hallazgo ignorado.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -9349,6 +9349,82 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Backend: el primer rename que exigió cambiar comportamiento, no solo
+verbo/path.** `POST /communities/{id}/join` → `PUT /communities/{id}/members/me`
+y `DELETE .../leave` → `DELETE .../members/me` no son alias directos de las
+funciones viejas: el plan pide explícitamente que la relación sea idempotente
+("un doble clic deja de ser un 409 sorpresa"), y las funciones legacy
+respondían 409 al unirse dos veces y 400 al abandonar sin ser miembro. Las
+rutas nuevas son funciones propias (`join_community`/`leave_community`
+reescritas) que devuelven la membresía existente o un no-op en vez de
+error; las funciones legacy originales, con su comportamiento exacto de
+antes, se movieron intactas a `legacy_router` bajo nuevos nombres
+(`join_community_legacy`/`leave_community_legacy`). Se añadió
+`CommunityService.get_membership()` (reutilizado por `is_member()`) porque
+la ruta idempotente necesita la fila de membresía completa, no solo un
+booleano. `POST /friends/requests/{id}/accept` → `PATCH /friend-requests/{id}`
+con `{status: "accepted"}` sí reutiliza la lógica sin cambios
+(`_accept_friend_request`); reject/cancel no se tocan, el plan no los nombra.
+`CommunityMembershipRead` y `CompanyDashboardRead`-style typing cierran los
+dos `unknown` de membership check y las respuestas de leave.
+`contract/openapi.json` y los tipos generados están regenerados y verificados
+(`tests/test_openapi_contract.py`, 21/21); suite completa de backend en verde
+(1 skip preexistente).
+
+**El estado optimista está acotado a las dos operaciones idempotentes,
+como pide el plan.** `CommunityFeedPage`'s join/leave usan
+`onMutate`/`onError`/`onSettled` de TanStack Query: el botón cambia antes de
+que el servidor responda, pero `member_count` nunca se incrementa
+localmente — se relee de `GET /communities/{id}` en `onSettled`, exactamente
+como ya hacía `community_feed.js`. Nada más en esta vertical es optimista:
+aceptar/rechazar solicitudes de amistad invalida y vuelve a pedir las tres
+listas (igual que `loadFriendNetwork()` en `userProfile.js`), porque no son
+operaciones idempotentes.
+
+**Messages no tiene pantalla legacy que migrar — es la primera vez que
+alguien construye esta UI.** La pestaña "Messages" de `jobs.html` era un
+stub estático sin una sola llamada a `/api/v1/conversations*`; el backend
+de TASK-024 no tenía consumidor. `MessagesPage.tsx` usa
+`useInfiniteQuery` de TanStack Query para acumular páginas del cursor
+estable en vez de un `useEffect` sincronizando estado manualmente — el
+linter de reglas de React (parte del mismo paquete que detectó los
+problemas de pureza en TASK-049) rechaza `setState` síncrono dentro de un
+efecto, y `useInfiniteQuery` es la herramienta que existe precisamente para
+este patrón. Sin polling: plan 08 §8 pide tiempo real solo bajo demanda
+explícita, no por defecto.
+
+**Alcance recortado, documentado (F-22 residual):** `GET
+/communities/{id}/posts/enriched`, `/friends`, `/friends/requests/incoming`
+y `/friends/requests/outgoing` siguen sin paginar — acotados solo por
+`MAX_COLLECTION_ROWS` en el backend. Ninguna de las cuatro pantallas de esta
+vertical construye scroll infinito sobre ellas; se consumen tal cual porque
+ninguna decisión de producto pedía resolver ese residuo de F-22 dentro de
+esta ficha, y no es lo que TASK-051 fue a corregir.
+
+**Validación ejecutada:** backend — `pytest tests/ --ignore=tests/integration`
+(verde, 1 skip preexistente) y `ruff check` sobre los archivos tocados.
+Frontend — `npm run typecheck`, `npm run lint`, `npm run i18n:check` (581
+keys), `npx vitest run` (164/164 sobre 40 archivos — 12 casos nuevos en 5
+archivos de test de esta vertical, incluido el mensaje de rechazo del
+backend cuando el creador intenta abandonar y el orden cronológico correcto
+tras cargar una página más antigua) y `npm run build`, todos en verde. Smoke
+manual con Playwright (Python) contra `npm run dev` + el backend local:
+`/community`, `/community/:id`, `/messages` y `/messages/:id` anónimos
+redirigen a `/login` sin error de consola ni de React.
+
+**Qué falta para marcar COMPLETED — igual que las verticales anteriores:**
+
+1. Diff visual contra la baseline de TASK-035 (no aplica a Messages, que no
+   tiene baseline por no haber existido antes).
+2. Playwright sobre docker compose con dos actores autenticados reales
+   (para probar join/leave, solicitudes de amistad y una conversación de
+   extremo a extremo) — no se creó ninguna cuenta de prueba contra el Neon
+   de desarrollo sin autorización explícita.
+3. Medición de tráfico cero al contrato legacy (`/communities/{id}/join`,
+   `/communities/{id}/leave`, `/friends/requests/{id}/accept`).
 
 ## TASK-052 — Vertical 7 — Career Lab / Capstone en React
 

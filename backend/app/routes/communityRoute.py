@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
@@ -10,6 +10,7 @@ from app.schemas.communitySchema import (
     CommunityCreate,
     CommunityRead,
     CommunityMemberRead,
+    CommunityMembershipRead,
     CommunityPostCreate,
     CommunityPostRead,
     CommunityPostEnriched,
@@ -19,6 +20,13 @@ from app.schemas.communitySchema import (
 )
 
 router = APIRouter()
+# TASK-051 (plan 08 §5.2): `PUT/DELETE /communities/{id}/members/me` replace
+# `POST .../join` and `DELETE .../leave` with an idempotent relation — a
+# second `PUT` from a person already a member answers 200 with their existing
+# membership instead of the 409 the legacy verb gave "un doble clic". The old
+# verbs keep their original (non-idempotent) behaviour unchanged for
+# `community_feed.js`, moved to `legacy_router` with `include_in_schema=False`.
+legacy_router = APIRouter()
 
 
 def _parse_tags_param(tags: str | None) -> list[str]:
@@ -76,7 +84,7 @@ async def get_community(
 
 
 # ── Membership check ─────────────────────────────────────────────
-@router.get("/communities/{community_id}/membership")
+@router.get("/communities/{community_id}/membership", response_model=CommunityMembershipRead)
 async def check_membership(
     community_id: UUID,
     session: AsyncSession = Depends(get_session),
@@ -84,11 +92,53 @@ async def check_membership(
 ):
     service = CommunityService(session)
     is_member = await service.is_member(community_id, user.id)
-    return {"is_member": is_member}
+    return CommunityMembershipRead(is_member=is_member)
 
 
-@router.post("/communities/{community_id}/join", response_model=CommunityMemberRead)
+@router.put("/communities/{community_id}/members/me", response_model=CommunityMemberRead)
 async def join_community(
+    community_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = CommunityService(session)
+    community = await service.get_community_by_id(community_id)
+    if not community:
+        raise HTTPException(status_code=404, detail="Community not found")
+
+    existing = await service.get_membership(community_id, user.id)
+    if existing:
+        return existing
+    try:
+        return await service.join_community(community_id, user.id)
+    except AlreadyMemberError:
+        # Lost a race against a concurrent join between the check above and
+        # the insert; the row exists now, so the idempotent answer is that row.
+        membership = await service.get_membership(community_id, user.id)
+        if membership is not None:
+            return membership
+        raise
+
+
+@router.delete("/communities/{community_id}/members/me", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_community(
+    community_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user),
+):
+    service = CommunityService(session)
+    community = await service.get_community_by_id(community_id)
+    if not community:
+        raise HTTPException(status_code=404, detail="Community not found")
+    if community.created_by == user.id:
+        raise HTTPException(status_code=403, detail="El creador no puede abandonar la comunidad")
+    if not await service.is_member(community_id, user.id):
+        # Already not a member: idempotent no-op, not the 400 the legacy verb gave.
+        return
+    await service.leave_community(community_id, user.id)
+
+
+async def join_community_legacy(
     community_id: UUID,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
@@ -105,8 +155,7 @@ async def join_community(
         raise HTTPException(status_code=409, detail="Already a member")
 
 
-@router.delete("/communities/{community_id}/leave")
-async def leave_community(
+async def leave_community_legacy(
     community_id: UUID,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(current_active_user),
@@ -250,3 +299,19 @@ async def list_comments_enriched(
     if not await service.is_member(post.community_id, user.id):
         raise HTTPException(status_code=403, detail="You must join the community to view comments")
     return await service.list_comments_enriched(post_id)
+
+
+# --- Legacy adapter (TASK-051, plan 08 §13) -----------------------------------
+legacy_router.add_api_route(
+    "/communities/{community_id}/join",
+    join_community_legacy,
+    methods=["POST"],
+    response_model=CommunityMemberRead,
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/communities/{community_id}/leave",
+    leave_community_legacy,
+    methods=["DELETE"],
+    include_in_schema=False,
+)

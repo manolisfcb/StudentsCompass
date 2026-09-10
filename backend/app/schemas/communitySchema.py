@@ -47,6 +47,13 @@ class CommunityMemberRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CommunityMembershipRead(BaseModel):
+    """Typed response for `GET /communities/{id}/membership` (TASK-051);
+    was `response_model`-less, so the field showed as `unknown`."""
+
+    is_member: bool
+
+
 class CommunityPostCreate(BaseModel):
     title: Optional[str] = None
     content: str

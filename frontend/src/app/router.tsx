@@ -8,6 +8,9 @@ import { ApplicantsPage } from "@/features/company/ApplicantsPage";
 import { CompanyDashboardPage } from "@/features/company/CompanyDashboardPage";
 import { JobPostingsPage } from "@/features/company/JobPostingsPage";
 import { RecruitersPage } from "@/features/company/RecruitersPage";
+import { CommunitiesListPage } from "@/features/community-messages/CommunitiesListPage";
+import { CommunityFeedPage } from "@/features/community-messages/CommunityFeedPage";
+import { MessagesPage } from "@/features/community-messages/MessagesPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { ApplicationsPage } from "@/features/jobs-applications/ApplicationsPage";
 import { JobsPage } from "@/features/jobs-applications/JobsPage";
@@ -76,6 +79,10 @@ export const router = createBrowserRouter([
       { path: "/roadmaps/:slug", element: <RoadmapDetailPage /> },
       { path: "/jobs", element: <JobsPage /> },
       { path: "/jobs/applications", element: <ApplicationsPage /> },
+      { path: "/community", element: <CommunitiesListPage /> },
+      { path: "/community/:communityId", element: <CommunityFeedPage /> },
+      { path: "/messages", element: <MessagesPage /> },
+      { path: "/messages/:conversationId", element: <MessagesPage /> },
     ],
   },
   {

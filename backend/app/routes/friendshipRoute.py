@@ -8,6 +8,7 @@ from app.models.userModel import User
 from app.schemas.friendshipSchema import (
     FriendRequestCreate,
     FriendRequestRead,
+    FriendRequestStatusUpdate,
     FriendshipRead,
     FriendshipStatusRead,
 )
@@ -15,6 +16,11 @@ from app.services.community.friendshipService import FriendshipService
 from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
+# TASK-051 (plan 08 §5.2): `PATCH /friend-requests/{id}` is the renamed
+# contract for accepting a request; `legacy_router` keeps
+# `POST /friends/requests/{id}/accept` alive for `userProfile.js`, mounted
+# with `include_in_schema=False` — same pattern as the other verticals.
+legacy_router = APIRouter()
 
 
 @router.post("/friends/requests", response_model=FriendRequestRead, status_code=status.HTTP_201_CREATED)
@@ -63,12 +69,11 @@ async def list_outgoing_friend_requests(
     return await service.list_outgoing_requests(current_user.id)
 
 
-@router.post("/friends/requests/{request_id}/accept", response_model=FriendRequestRead)
-async def accept_friend_request(
+async def _accept_friend_request(
     request_id: UUID,
-    session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(current_active_user),
-):
+    session: AsyncSession,
+    current_user: User,
+) -> FriendRequestRead:
     service = FriendshipService(session)
     request = await service.get_request_for_receiver(request_id=request_id, receiver_id=current_user.id)
     if not request:
@@ -79,6 +84,27 @@ async def accept_friend_request(
     sender = await service.get_user(request.sender_id)
     accepted = await service.accept_request(request)
     return service.build_request_read(request=accepted, sender=sender, receiver=current_user)
+
+
+@router.patch("/friend-requests/{request_id}", response_model=FriendRequestRead)
+async def update_friend_request(
+    request_id: UUID,
+    payload: FriendRequestStatusUpdate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(current_active_user),
+):
+    # `FriendRequestStatusUpdate.status` is `Literal["accepted"]` — the schema
+    # itself is the validation, there is no other branch to dispatch on yet.
+    del payload
+    return await _accept_friend_request(request_id, session, current_user)
+
+
+async def accept_friend_request(
+    request_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(current_active_user),
+):
+    return await _accept_friend_request(request_id, session, current_user)
 
 
 @router.post("/friends/requests/{request_id}/reject", response_model=FriendRequestRead)
@@ -159,3 +185,13 @@ async def get_friendship_statuses(
         current_user_id=current_user.id,
         target_user_ids=parsed_user_ids,
     )
+
+
+# --- Legacy adapter (TASK-051, plan 08 §13) -----------------------------------
+legacy_router.add_api_route(
+    "/friends/requests/{request_id}/accept",
+    accept_friend_request,
+    methods=["POST"],
+    response_model=FriendRequestRead,
+    include_in_schema=False,
+)

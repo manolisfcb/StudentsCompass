@@ -1083,7 +1083,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/communities/{community_id}/join": {
+    "/api/v1/communities/{community_id}/members/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -1091,24 +1091,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
         /** Join Community */
-        post: operations["communities_join_community"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/communities/{community_id}/leave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
+        put: operations["communities_join_community"];
         post?: never;
         /** Leave Community */
         delete: operations["communities_leave_community"];
@@ -1647,6 +1631,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/friend-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Friend Request */
+        patch: operations["friendships_update_friend_request"];
+        trace?: never;
+    };
     "/api/v1/friends": {
         parameters: {
             query?: never;
@@ -1692,23 +1693,6 @@ export interface paths {
         put?: never;
         /** Send Friend Request */
         post: operations["friendships_send_friend_request"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/friends/requests/{request_id}/accept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Accept Friend Request */
-        post: operations["friendships_accept_friend_request"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3642,6 +3626,15 @@ export interface components {
              */
             user_id: string;
         };
+        /**
+         * CommunityMembershipRead
+         * @description Typed response for `GET /communities/{id}/membership` (TASK-051);
+         *     was `response_model`-less, so the field showed as `unknown`.
+         */
+        CommunityMembershipRead: {
+            /** Is Member */
+            is_member: boolean;
+        };
         /** CommunityPostCommentCreate */
         CommunityPostCommentCreate: {
             /** Content */
@@ -4398,6 +4391,23 @@ export interface components {
              * @enum {string}
              */
             status: "pending" | "accepted" | "rejected" | "cancelled";
+        };
+        /**
+         * FriendRequestStatusUpdate
+         * @description Body of `PATCH /friend-requests/{id}` (TASK-051, plan 08 §5.2).
+         *
+         *     Only `"accepted"` is accepted: the plan renames *accepting* a request to
+         *     this verb, not the full lifecycle. Reject and cancel keep their existing
+         *     `POST .../reject` and `.../cancel` actions — the plan does not name them,
+         *     and turning every transition into a `status` value on one endpoint is a
+         *     bigger contract decision than a rename should make on its own.
+         */
+        FriendRequestStatusUpdate: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "accepted";
         };
         /** FriendshipRead */
         FriendshipRead: {
@@ -8558,13 +8568,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -8603,7 +8611,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CommunityMembershipRead"];
                 };
             };
             /** @description Validation Error */
@@ -10049,6 +10057,50 @@ export interface operations {
             };
         };
     };
+    friendships_update_friend_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FriendRequestStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FriendRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     friendships_list_friends: {
         parameters: {
             query?: never;
@@ -10131,46 +10183,6 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FriendRequestRead"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponse"];
-                };
-            };
-        };
-    };
-    friendships_accept_friend_request: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                request_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
                 headers: {
                     [name: string]: unknown;
                 };

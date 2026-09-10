@@ -57,6 +57,7 @@ export function StudentShell() {
     { to: "/roadmaps", label: t("layout.nav.roadmaps") },
     { to: "/jobs", label: t("layout.nav.jobs") },
     { to: "/community", label: t("layout.nav.community") },
+    { to: "/messages", label: t("layout.nav.messages") },
     { to: "/profile", label: t("layout.nav.profile") },
   ];
   return (

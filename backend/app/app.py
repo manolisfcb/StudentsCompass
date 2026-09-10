@@ -37,8 +37,8 @@ from app.routes.resumeRoute import legacy_router as resume_legacy_router, router
 from app.routes.jobRoute import legacy_router as job_legacy_router, router as job_router
 from app.routes.companyRoute import router as company_router
 from app.routes.dashboardRoute import legacy_router as dashboard_legacy_router, router as dashboard_router
-from app.routes.communityRoute import router as community_router
-from app.routes.friendshipRoute import router as friendship_router
+from app.routes.communityRoute import legacy_router as community_legacy_router, router as community_router
+from app.routes.friendshipRoute import legacy_router as friendship_legacy_router, router as friendship_router
 from app.routes.profileRoute import router as profile_router
 from app.routes.messageRoute import router as message_router
 from app.routes.resourceRoute import router as resource_router
@@ -293,7 +293,9 @@ app.include_router(job_legacy_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(dashboard_legacy_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(community_router, prefix="/api/v1", tags=["communities"])
+app.include_router(community_legacy_router, prefix="/api/v1", tags=["communities"])
 app.include_router(friendship_router, prefix="/api/v1", tags=["friendships"])
+app.include_router(friendship_legacy_router, prefix="/api/v1", tags=["friendships"])
 app.include_router(message_router, prefix="/api/v1", tags=["messages"])
 app.include_router(profile_router, prefix="/api/v1", tags=["profile"])
 app.include_router(resource_router, prefix="/api/v1", tags=["resources"])

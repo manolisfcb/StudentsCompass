@@ -117,14 +117,17 @@ class CommunityService:
         await self.session.refresh(community)
         return community
 
-    async def is_member(self, community_id: UUID, user_id: UUID) -> bool:
+    async def get_membership(self, community_id: UUID, user_id: UUID) -> CommunityMemberModel | None:
         result = await self.session.execute(
             select(CommunityMemberModel).where(
                 CommunityMemberModel.community_id == community_id,
                 CommunityMemberModel.user_id == user_id,
             )
         )
-        return result.scalar_one_or_none() is not None
+        return result.scalar_one_or_none()
+
+    async def is_member(self, community_id: UUID, user_id: UUID) -> bool:
+        return await self.get_membership(community_id, user_id) is not None
 
     async def join_community(self, community_id: UUID, user_id: UUID) -> CommunityMemberModel:
         community = await self.get_community_by_id(community_id)

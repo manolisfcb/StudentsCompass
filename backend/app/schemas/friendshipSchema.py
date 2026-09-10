@@ -40,3 +40,16 @@ class FriendshipStatusRead(BaseModel):
     status: FriendshipStatus
     request_id: UUID | None = None
 
+
+class FriendRequestStatusUpdate(BaseModel):
+    """Body of `PATCH /friend-requests/{id}` (TASK-051, plan 08 §5.2).
+
+    Only `"accepted"` is accepted: the plan renames *accepting* a request to
+    this verb, not the full lifecycle. Reject and cancel keep their existing
+    `POST .../reject` and `.../cancel` actions — the plan does not name them,
+    and turning every transition into a `status` value on one endpoint is a
+    bigger contract decision than a rename should make on its own.
+    """
+
+    status: Literal["accepted"]
+
