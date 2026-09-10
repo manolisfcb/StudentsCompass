@@ -1573,6 +1573,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard/student": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Students Dashboard
+         * @description Get complete dashboard data for students
+         */
+        get: operations["dashboard_get_students_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/delete_post/{post_id}": {
         parameters: {
             query?: never;
@@ -2229,7 +2249,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/roadmaps/{slug}/save": {
+    "/api/v1/roadmaps/{slug}/saves/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -2237,31 +2257,11 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
         /** Save Roadmap */
-        post: operations["roadmaps_save_roadmap"];
+        put: operations["roadmaps_save_roadmap"];
+        post?: never;
         /** Unsave Roadmap */
         delete: operations["roadmaps_unsave_roadmap"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/students_dashboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Students Dashboard
-         * @description Get complete dashboard data for students
-         */
-        get: operations["dashboard_get_students_dashboard"];
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4210,6 +4210,84 @@ export interface components {
              */
             updated_at: string;
         };
+        /** DashboardApplicationBreakdownRead */
+        DashboardApplicationBreakdownRead: {
+            /** Applied */
+            applied: number;
+            /** In Review */
+            in_review: number;
+            /** Interviews */
+            interviews: number;
+            /** Offers */
+            offers: number;
+        };
+        /**
+         * DashboardProgressRead
+         * @description Percent complete per core course, projected by `CourseProgressProjector`
+         *     (TASK-016) — never recomputed here or on the client (F-15).
+         */
+        DashboardProgressRead: {
+            /** Interview Prep */
+            interview_prep: number;
+            /** Linkedin */
+            linkedin: number;
+            /** Portfolio */
+            portfolio: number;
+            /** Resume */
+            resume: number;
+        };
+        /** DashboardRecentApplicationRead */
+        DashboardRecentApplicationRead: {
+            /** Application Date */
+            application_date?: string | null;
+            /** Company Id */
+            company_id: string;
+            /** Id */
+            id: string;
+            /** Job Title */
+            job_title: string;
+            /** Notes */
+            notes?: string | null;
+            /** Status */
+            status: string;
+        };
+        /** DashboardResourceLinkRead */
+        DashboardResourceLinkRead: {
+            /** Icon */
+            icon: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        };
+        /** DashboardStatsRead */
+        DashboardStatsRead: {
+            /** Applied */
+            applied: number;
+            /** In Review */
+            in_review: number;
+            /** Interviews Scheduled */
+            interviews_scheduled: number;
+            /** Offers Received */
+            offers_received: number;
+            /** Overall Progress */
+            overall_progress: number;
+            /** Total Applications */
+            total_applications: number;
+        };
+        /** DashboardUserRead */
+        DashboardUserRead: {
+            /** Email */
+            email?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Id */
+            id: string;
+            /** Last Name */
+            last_name?: string | null;
+            /** Nickname */
+            nickname?: string | null;
+        };
         /** DirectConversationCreate */
         DirectConversationCreate: {
             /**
@@ -5423,6 +5501,21 @@ export interface components {
             task_type: components["schemas"]["TaskType"];
             /** Title */
             title: string;
+        };
+        /** StudentDashboardRead */
+        StudentDashboardRead: {
+            application_breakdown: components["schemas"]["DashboardApplicationBreakdownRead"];
+            progress: components["schemas"]["DashboardProgressRead"];
+            /** Recent Applications */
+            recent_applications: components["schemas"]["DashboardRecentApplicationRead"][];
+            /** Resource Navigation */
+            resource_navigation: {
+                [key: string]: string;
+            };
+            /** Resources */
+            resources: components["schemas"]["DashboardResourceLinkRead"][];
+            stats: components["schemas"]["DashboardStatsRead"];
+            user: components["schemas"]["DashboardUserRead"];
         };
         /**
          * TaskProgressStatus
@@ -9760,6 +9853,35 @@ export interface operations {
             };
         };
     };
+    dashboard_get_students_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDashboardRead"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     posts_delete_post: {
         parameters: {
             query?: never;
@@ -11325,37 +11447,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponse"];
-                };
-            };
-        };
-    };
-    dashboard_get_students_dashboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
             /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */

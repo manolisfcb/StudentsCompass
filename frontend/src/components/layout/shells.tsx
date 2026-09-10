@@ -54,6 +54,7 @@ export function StudentShell() {
   const nav: NavItem[] = [
     { to: "/dashboard", label: t("layout.nav.dashboard") },
     { to: "/resources", label: t("layout.nav.resources") },
+    { to: "/roadmaps", label: t("layout.nav.roadmaps") },
     { to: "/jobs", label: t("layout.nav.jobs") },
     { to: "/community", label: t("layout.nav.community") },
     { to: "/profile", label: t("layout.nav.profile") },

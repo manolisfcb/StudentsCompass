@@ -4,10 +4,15 @@ import { RequireActor, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { AboutPage } from "@/features/marketing/AboutPage";
 import { HomePage } from "@/features/marketing/HomePage";
 import { ProfilePage } from "@/features/profile-resumes/ProfilePage";
 import { QuestionnairePage } from "@/features/questionnaire/QuestionnairePage";
+import { ResourceDetailPage } from "@/features/resources-roadmaps/ResourceDetailPage";
+import { ResourcesListPage } from "@/features/resources-roadmaps/ResourcesListPage";
+import { RoadmapDetailPage } from "@/features/resources-roadmaps/RoadmapDetailPage";
+import { RoadmapsListPage } from "@/features/resources-roadmaps/RoadmapsListPage";
 import { SmokePage } from "@/features/smoke/SmokePage";
 
 /**
@@ -56,9 +61,13 @@ export const router = createBrowserRouter([
       </RequireActor>
     ),
     children: [
-      { path: "/dashboard", element: <Navigate to="/__smoke" replace /> },
+      { path: "/dashboard", element: <DashboardPage /> },
       { path: "/profile", element: <ProfilePage /> },
       { path: "/questionnaire", element: <QuestionnairePage /> },
+      { path: "/resources", element: <ResourcesListPage /> },
+      { path: "/resources/:resourceId", element: <ResourceDetailPage /> },
+      { path: "/roadmaps", element: <RoadmapsListPage /> },
+      { path: "/roadmaps/:slug", element: <RoadmapDetailPage /> },
     ],
   },
   {

@@ -22,4 +22,17 @@ export const queryKeys = {
     current: ["questionnaire"] as const,
     profile: ["questionnaire", "profile"] as const,
   },
+  dashboard: {
+    student: ["dashboard", "student"] as const,
+  },
+  resources: {
+    list: ["resources"] as const,
+    detail: (resourceId: string) => ["resources", resourceId] as const,
+    progress: (resourceId: string) => ["resources", resourceId, "progress"] as const,
+  },
+  roadmaps: {
+    list: ["roadmaps"] as const,
+    saved: ["roadmaps", "saved"] as const,
+    detail: (slug: string) => ["roadmaps", slug] as const,
+  },
 } as const;

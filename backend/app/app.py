@@ -36,13 +36,13 @@ from app.routes.questionnaireRoute import router as questionnaire_router
 from app.routes.resumeRoute import legacy_router as resume_legacy_router, router as resume_router
 from app.routes.jobRoute import router as job_router
 from app.routes.companyRoute import router as company_router
-from app.routes.dashboardRoute import router as dashboard_router
+from app.routes.dashboardRoute import legacy_router as dashboard_legacy_router, router as dashboard_router
 from app.routes.communityRoute import router as community_router
 from app.routes.friendshipRoute import router as friendship_router
 from app.routes.profileRoute import router as profile_router
 from app.routes.messageRoute import router as message_router
 from app.routes.resourceRoute import router as resource_router
-from app.routes.roadmapRoute import router as roadmap_router
+from app.routes.roadmapRoute import legacy_router as roadmap_legacy_router, router as roadmap_router
 from app.routes.adminRoute import router as admin_router
 import logging
 
@@ -290,12 +290,14 @@ app.include_router(resume_router, prefix="/api/v1", tags=["resume"])
 app.include_router(resume_legacy_router, prefix="/api/v1", tags=["resume"])
 app.include_router(job_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
+app.include_router(dashboard_legacy_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(community_router, prefix="/api/v1", tags=["communities"])
 app.include_router(friendship_router, prefix="/api/v1", tags=["friendships"])
 app.include_router(message_router, prefix="/api/v1", tags=["messages"])
 app.include_router(profile_router, prefix="/api/v1", tags=["profile"])
 app.include_router(resource_router, prefix="/api/v1", tags=["resources"])
 app.include_router(roadmap_router, prefix="/api/v1", tags=["roadmaps"])
+app.include_router(roadmap_legacy_router, prefix="/api/v1", tags=["roadmaps"])
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(capstone_analytics_router, prefix="/api/v1", tags=["capstone"])
 # Deliberately *not* under /api/v1: these are not part of the public contract

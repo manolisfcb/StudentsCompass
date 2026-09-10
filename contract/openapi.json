@@ -4353,6 +4353,231 @@
         "title": "ConversationSummaryRead",
         "type": "object"
       },
+      "DashboardApplicationBreakdownRead": {
+        "properties": {
+          "applied": {
+            "title": "Applied",
+            "type": "integer"
+          },
+          "in_review": {
+            "title": "In Review",
+            "type": "integer"
+          },
+          "interviews": {
+            "title": "Interviews",
+            "type": "integer"
+          },
+          "offers": {
+            "title": "Offers",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "applied",
+          "in_review",
+          "interviews",
+          "offers"
+        ],
+        "title": "DashboardApplicationBreakdownRead",
+        "type": "object"
+      },
+      "DashboardProgressRead": {
+        "description": "Percent complete per core course, projected by `CourseProgressProjector`\n(TASK-016) — never recomputed here or on the client (F-15).",
+        "properties": {
+          "interview_prep": {
+            "title": "Interview Prep",
+            "type": "number"
+          },
+          "linkedin": {
+            "title": "Linkedin",
+            "type": "number"
+          },
+          "portfolio": {
+            "title": "Portfolio",
+            "type": "number"
+          },
+          "resume": {
+            "title": "Resume",
+            "type": "number"
+          }
+        },
+        "required": [
+          "resume",
+          "linkedin",
+          "interview_prep",
+          "portfolio"
+        ],
+        "title": "DashboardProgressRead",
+        "type": "object"
+      },
+      "DashboardRecentApplicationRead": {
+        "properties": {
+          "application_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Date"
+          },
+          "company_id": {
+            "title": "Company Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "job_title",
+          "company_id",
+          "status"
+        ],
+        "title": "DashboardRecentApplicationRead",
+        "type": "object"
+      },
+      "DashboardResourceLinkRead": {
+        "properties": {
+          "icon": {
+            "title": "Icon",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "icon"
+        ],
+        "title": "DashboardResourceLinkRead",
+        "type": "object"
+      },
+      "DashboardStatsRead": {
+        "properties": {
+          "applied": {
+            "title": "Applied",
+            "type": "integer"
+          },
+          "in_review": {
+            "title": "In Review",
+            "type": "integer"
+          },
+          "interviews_scheduled": {
+            "title": "Interviews Scheduled",
+            "type": "integer"
+          },
+          "offers_received": {
+            "title": "Offers Received",
+            "type": "integer"
+          },
+          "overall_progress": {
+            "title": "Overall Progress",
+            "type": "number"
+          },
+          "total_applications": {
+            "title": "Total Applications",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "overall_progress",
+          "total_applications",
+          "in_review",
+          "interviews_scheduled",
+          "offers_received",
+          "applied"
+        ],
+        "title": "DashboardStatsRead",
+        "type": "object"
+      },
+      "DashboardUserRead": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "DashboardUserRead",
+        "type": "object"
+      },
       "DirectConversationCreate": {
         "properties": {
           "friend_id": {
@@ -7617,6 +7842,54 @@
           "task_type"
         ],
         "title": "StageTaskRead",
+        "type": "object"
+      },
+      "StudentDashboardRead": {
+        "properties": {
+          "application_breakdown": {
+            "$ref": "#/components/schemas/DashboardApplicationBreakdownRead"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/DashboardProgressRead"
+          },
+          "recent_applications": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardRecentApplicationRead"
+            },
+            "title": "Recent Applications",
+            "type": "array"
+          },
+          "resource_navigation": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Resource Navigation",
+            "type": "object"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardResourceLinkRead"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/DashboardStatsRead"
+          },
+          "user": {
+            "$ref": "#/components/schemas/DashboardUserRead"
+          }
+        },
+        "required": [
+          "user",
+          "stats",
+          "progress",
+          "application_breakdown",
+          "resource_navigation",
+          "recent_applications",
+          "resources"
+        ],
+        "title": "StudentDashboardRead",
         "type": "object"
       },
       "TaskProgressStatus": {
@@ -14460,6 +14733,43 @@
         ]
       }
     },
+    "/api/v1/dashboard/student": {
+      "get": {
+        "description": "Get complete dashboard data for students",
+        "operationId": "dashboard_get_students_dashboard",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentDashboardRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Get Students Dashboard",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
     "/api/v1/delete_post/{post_id}": {
       "delete": {
         "operationId": "posts_delete_post",
@@ -16657,7 +16967,7 @@
         ]
       }
     },
-    "/api/v1/roadmaps/{slug}/save": {
+    "/api/v1/roadmaps/{slug}/saves/me": {
       "delete": {
         "operationId": "roadmaps_unsave_roadmap",
         "parameters": [
@@ -16713,7 +17023,7 @@
           "roadmaps"
         ]
       },
-      "post": {
+      "put": {
         "operationId": "roadmaps_save_roadmap",
         "parameters": [
           {
@@ -16766,45 +17076,6 @@
         "summary": "Save Roadmap",
         "tags": [
           "roadmaps"
-        ]
-      }
-    },
-    "/api/v1/students_dashboard": {
-      "get": {
-        "description": "Get complete dashboard data for students",
-        "operationId": "dashboard_get_students_dashboard",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Dashboard Get Students Dashboard",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Get Students Dashboard",
-        "tags": [
-          "dashboard"
         ]
       }
     },

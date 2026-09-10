@@ -24,6 +24,14 @@ from app.services.roadmaps.roadmapService import RoadmapService
 from app.services.accounts.userService import current_active_user
 
 router = APIRouter()
+# TASK-048 (plan 08 §5.2): `PUT/DELETE /roadmaps/{slug}/saves/me` is the
+# renamed, idempotent contract React consumes — `save_roadmap`/`unsave_roadmap`
+# already check existence before insert/delete (`roadmap_repository.py`), so a
+# double `PUT` was already safe; only the verb and path were wrong for it.
+# `legacy_router` keeps the old `POST/DELETE /roadmaps/{slug}/save` alive for
+# `roadmap_detail.js`, mounted with `include_in_schema=False` (same pattern as
+# TASK-047's `/resumes` and TASK-048's own `/dashboard/student` above).
+legacy_router = APIRouter()
 
 T = TypeVar("T")
 
@@ -98,7 +106,7 @@ async def get_roadmap(
     return roadmap
 
 
-@router.post("/roadmaps/{slug}/save", response_model=SaveRoadmapResponse)
+@router.put("/roadmaps/{slug}/saves/me", response_model=SaveRoadmapResponse)
 async def save_roadmap(
     slug: str,
     session: AsyncSession = Depends(get_session),
@@ -111,7 +119,7 @@ async def save_roadmap(
     return result
 
 
-@router.delete("/roadmaps/{slug}/save", response_model=SaveRoadmapResponse)
+@router.delete("/roadmaps/{slug}/saves/me", response_model=SaveRoadmapResponse)
 async def unsave_roadmap(
     slug: str,
     session: AsyncSession = Depends(get_session),
@@ -166,3 +174,22 @@ async def submit_project(
     if not result:
         raise HTTPException(status_code=404, detail="Project not found")
     return result
+
+
+# --- Legacy adapter (TASK-048, plan 08 §13) -----------------------------------
+#
+# Same functions, old verbs and path, hidden from the OpenAPI document.
+legacy_router.add_api_route(
+    "/roadmaps/{slug}/save",
+    save_roadmap,
+    methods=["POST"],
+    response_model=SaveRoadmapResponse,
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/roadmaps/{slug}/save",
+    unsave_roadmap,
+    methods=["DELETE"],
+    response_model=SaveRoadmapResponse,
+    include_in_schema=False,
+)

@@ -30,10 +30,16 @@ from app.core.errors import (
     CODE_STUDENT_DASHBOARD,
     server_failure,
 )
+from app.schemas.dashboardSchema import StudentDashboardRead
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+# TASK-048 (plan 08 §5.2): `/dashboard/student` is the renamed contract React
+# consumes; `legacy_router` keeps `/students_dashboard` alive for the Jinja
+# dashboard, mounted with `include_in_schema=False` — the same pattern
+# TASK-047 used for `/resumes` and TASK-042 used for `/auth/jwt`.
+legacy_router = APIRouter()
 
 
 @router.get("/company_dashboard", response_model=Dict)
@@ -78,7 +84,7 @@ async def get_company_dashboard(
         )
 
 
-@router.get("/students_dashboard", response_model=Dict)
+@router.get("/dashboard/student", response_model=StudentDashboardRead)
 async def get_students_dashboard(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session)
@@ -284,3 +290,16 @@ async def delete_application(
     if not deleted:
         raise HTTPException(status_code=404, detail="Application not found")
     return {"message": "Application deleted successfully"}
+
+
+# --- Legacy adapter (TASK-048, plan 08 §13) -----------------------------------
+#
+# Same function, old path, hidden from the OpenAPI document. `dashboard.js`
+# keeps calling `/students_dashboard` until TASK-059 confirms zero traffic.
+legacy_router.add_api_route(
+    "/students_dashboard",
+    get_students_dashboard,
+    methods=["GET"],
+    response_model=Dict,
+    include_in_schema=False,
+)

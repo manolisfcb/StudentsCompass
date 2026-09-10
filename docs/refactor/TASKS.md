@@ -119,7 +119,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-045 | Publicar health, readiness y logging estructurado de la API | HIGH | PHASE-M2 | COMPLETED | TASK-028, TASK-037 | TASK-040, TASK-041, TASK-042, TASK-043, TASK-044 |
 | TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-035, TASK-042, TASK-044 | NONE |
 | TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
-| TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | TODO | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
+| TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
 | TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | TODO | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
 | TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | TODO | TASK-046 | TASK-047, TASK-048, TASK-049 |
 | TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | TODO | TASK-024, TASK-046 | TASK-049, TASK-052 |
@@ -8747,7 +8747,7 @@ ejecutado en esta sesión:**
 
 ## TASK-048 — Vertical 3 — Dashboard, recursos y roadmaps en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8818,14 +8818,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en TASK-046/047.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en `/dashboard`, `/resources` y `/roadmaps`; falta el barrido con un actor autenticado real.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-07 ya estaba corregido en el backend (verificado leyendo `resolve_authorized_file_key`, no se tocó); F-15 es exactamente lo que esta vertical evita reintroducir en React (ver Completion Notes); F-17 y F-22 son de rendimiento de backend, fuera del alcance de esta ficha.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -8842,6 +8842,77 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Backend, segundo rename de la migración.** `GET /students_dashboard` →
+`GET /dashboard/student`, con `StudentDashboardRead` nuevo
+(`app/schemas/dashboardSchema.py`) tipando lo que antes era `response_model=Dict`
+— siete sub-schemas (`DashboardUserRead`, `DashboardStatsRead`,
+`DashboardProgressRead`, …) para que `progress.resume` etc. lleguen tipados al
+cliente en vez de como `unknown`. `POST/DELETE /roadmaps/{slug}/save` →
+`PUT/DELETE /roadmaps/{slug}/saves/me`: solo cambian verbo y path, la lógica
+(`RoadmapService.save_roadmap`/`unsave_roadmap`) ya comprobaba existencia antes
+de insertar/borrar, así que ya era idempotente y no hizo falta tocarla. Ambos
+renames siguen el patrón de `legacy_router` + `include_in_schema=False` que
+TASK-047 fijó para `/resumes`; `contract/openapi.json` y los tipos generados
+están regenerados y verificados (`tests/test_openapi_contract.py`, 21/21;
+suite completa de backend, todo verde salvo 1 skip preexistente).
+
+**Resources no se renombró.** `/resources`, `/resources/{id}`,
+`/resources/{id}/progress` y `PATCH /resources/lessons/{id}/progress` ya
+tenían la forma que la matriz de TASK-034 pide; React los consume tal cual.
+
+**F-07 (autorización de `/resources/file` por prefijo) ya estaba corregido** —
+se verificó leyendo `ResourceService.resolve_authorized_file_key`, que
+confirma publicación/lock antes de servir cualquier key. No se tocó nada ahí;
+se documenta la verificación porque el criterio de aceptación lo pide, no
+porque hiciera falta una corrección.
+
+**F-15 es la razón de ser de esta vertical, no una nota al margen.** El JS
+legacy de `resource_detail.js` recalculaba porcentajes en el cliente contando
+`completed_lesson_ids.length` contra el total; `ResourceDetailPage.tsx` lee
+`progress_percent` (del recurso y de cada módulo) y `roadmap_progress_percent`
+/`stage_progress_percent` (de `TaskProgressUpdateResponse`) directamente de la
+respuesta del backend, y los tests lo fijan: `RoadmapDetailPage.test.tsx`
+verifica que tras un PATCH de tarea la UI muestra exactamente los números que
+el backend devolvió, no un recuento local.
+
+**El widget de auditoría de CV se reutiliza, no se reconstruye.** La lección
+`resume_upload` embebe el `ResumeAuditWidget` de TASK-047
+(`features/profile-resumes/ResumeAuditWidget.tsx`) en vez de duplicar la
+llamada a `/resume-course-audits`; un test cubre que ese tipo de lección
+esconde el botón genérico de "Mark as complete" (la auditoría decide su propio
+estado de completitud).
+
+**Las lecciones `html` se renderizan como texto, no como `innerHTML`.** El JS
+legacy sanitiza antes de inyectar (`sanitizeHtml`); esta app no tiene ningún
+sanitizador de HTML en el frontend, así que en vez de introducir un
+`dangerouslySetInnerHTML` sin sanitizar, `LessonBody` trata `html` igual que
+texto plano. Es una regresión visual conocida y documentada para ese único
+tipo de lección — no una que valiera la pena resolver sin una librería de
+sanitización, dado el resto del alcance de esta tarea.
+
+**Validación ejecutada:** backend — `pytest tests/ --ignore=tests/integration`
+(verde, 1 skip preexistente) y `ruff check` sobre los archivos tocados.
+Frontend — `npm run typecheck`, `npm run lint`, `npm run i18n:check` (417
+keys), `npx vitest run` (123/123 sobre 27 archivos — 19 casos nuevos en 10
+archivos de test de esta vertical) y `npm run build`, todos en verde. Smoke
+manual con Playwright (Python) contra `npm run dev` + el backend local:
+`/dashboard`, `/resources` y `/roadmaps` anónimos redirigen a `/login` sin
+error de consola ni de React.
+
+**Qué falta para marcar COMPLETED — igual que TASK-046 y TASK-047:**
+
+1. Diff visual contra la baseline de TASK-035.
+2. Playwright sobre docker compose con un actor autenticado real (misma razón
+   que en TASK-047: no se creó ninguna cuenta de prueba contra el Neon de
+   desarrollo sin autorización explícita).
+3. Medición de tráfico cero al contrato legacy
+   (`/students_dashboard`, `/roadmaps/{slug}/save`).
+4. `GET /resources/{resource_id}/outline` sigue sin `response_model` — no se
+   tocó porque ninguna pantalla de esta vertical lo consume (el detalle ya
+   trae `modules[].lessons[]` completo vía `GET /resources/{resource_id}`).
 
 ## TASK-049 — Vertical 4 — Jobs, análisis de CV y candidaturas en React
 
