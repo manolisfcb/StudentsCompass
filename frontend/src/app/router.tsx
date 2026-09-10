@@ -5,6 +5,8 @@ import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/component
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { ApplicationsPage } from "@/features/jobs-applications/ApplicationsPage";
+import { JobsPage } from "@/features/jobs-applications/JobsPage";
 import { AboutPage } from "@/features/marketing/AboutPage";
 import { HomePage } from "@/features/marketing/HomePage";
 import { ProfilePage } from "@/features/profile-resumes/ProfilePage";
@@ -68,6 +70,8 @@ export const router = createBrowserRouter([
       { path: "/resources/:resourceId", element: <ResourceDetailPage /> },
       { path: "/roadmaps", element: <RoadmapsListPage /> },
       { path: "/roadmaps/:slug", element: <RoadmapDetailPage /> },
+      { path: "/jobs", element: <JobsPage /> },
+      { path: "/jobs/applications", element: <ApplicationsPage /> },
     ],
   },
   {

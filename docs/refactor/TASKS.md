@@ -120,7 +120,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-046 | Vertical 1 — Shell público y autenticación en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-035, TASK-042, TASK-044 | NONE |
 | TASK-047 | Vertical 2 — Perfil, cuestionario y CV en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-006, TASK-030, TASK-041, TASK-046 | TASK-048, TASK-050 |
 | TASK-048 | Vertical 3 — Dashboard, recursos y roadmaps en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-018, TASK-025, TASK-046 | TASK-047, TASK-050 |
-| TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | TODO | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
+| TASK-049 | Vertical 4 — Jobs, análisis de CV y candidaturas en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-020, TASK-041, TASK-046, TASK-054 | TASK-050, TASK-051 |
 | TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | TODO | TASK-046 | TASK-047, TASK-048, TASK-049 |
 | TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | TODO | TASK-024, TASK-046 | TASK-049, TASK-052 |
 | TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | TODO | TASK-022, TASK-023, TASK-046 | TASK-051 |
@@ -8916,7 +8916,7 @@ error de consola ni de React.
 
 ## TASK-049 — Vertical 4 — Jobs, análisis de CV y candidaturas en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8987,14 +8987,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en TASK-046/047/048.
+- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en `/jobs` y `/jobs/applications`; falta el barrido con un actor autenticado real.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-11/F-12 (TASK-014/015, COMPLETED) y F-18 (TASK-020, COMPLETED) ya estaban resueltos en el backend antes de esta tarea. F-14 (jobs de CV efímeros) es exactamente lo que TASK-054 más el índice único parcial de `job_analysis` cerraron; esta vertical además cierra el hueco de `Idempotency-Key` que quedaba en el cliente (ver Completion Notes) y reemplaza el polling de 20×3s fijo por uno con backoff creciente y el mismo tope de ~60s.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -9011,6 +9011,82 @@ Performance: HIGH
 Maintainability: HIGH
 Cost: HIGH
 Risk: HIGH
+
+### Completion Notes (parcial — ver "Qué falta" antes de cerrar)
+
+**Backend, cuarto y quinto rename de la migración, y el primero que cambia un
+código de estado.** `POST /jobs/search` → `POST /job-searches`;
+`GET /jobs/keywords/{id}` → `GET /cv-analyses/{id}`;
+`POST /applications/{id}/interview-selection` →
+`PUT /applications/{id}/selected-interview` (ya era idempotente por el índice
+único de TASK-015: reseleccionar el mismo slot responde 200, uno distinto
+409). El cambio real es `POST /jobs/keywords/analyze` → `POST /cv-analyses`
+respondiendo **202** en vez de **200** — plan 08 §5.2 lo pide porque la
+respuesta es un recurso `job` recién encolado, no un resultado. Ese único
+cambio de status obligó a partir la función en `_start_cv_analysis(...,
+success_status_code)` con dos wrappers finos (`start_cv_analysis` = 202,
+`start_cv_analysis_legacy` = 200): `guard.store()` (la ruta de replay bajo
+`Idempotency-Key`) fija su propio `status_code` con default 200 en cada
+llamada, así que un `status_code=202` puesto solo en el decorador de la ruta
+dejaba de aplicarse en cuanto una petición se volvía idempotente — un caso que
+TASK-047/048 no habían tocado porque sus renames no cambiaban el código de
+estado. `contract/openapi.json` y los tipos generados están regenerados y
+verificados (`tests/test_openapi_contract.py`, 21/21 — incluida la comprobación
+de `operationId` único, que no colisiona porque `start_cv_analysis_legacy` no
+entra al schema); suite completa de backend en verde (1 skip preexistente).
+
+**El polling deja de ser un `while` con límite fijo.** `jobs.js` sondeaba cada
+3s hasta 20 veces (~60s) con un bucle manual. `CvAnalysisPanel.tsx` usa
+`refetchInterval` de TanStack Query con backoff creciente
+(`3000 * 1.5^intento`, tope 15s) y el mismo límite de ~60s antes de mostrar
+"esto está tardando más de lo esperado" — una sola pieza decide cuándo seguir
+preguntando, no un temporizador reinventado en cada pantalla. La comparación
+de tiempo vive en un `useEffect`/`setTimeout`, no en el cuerpo del componente:
+leer el reloj o un ref durante el render es impuro y el linter de reglas de
+React ahora lo señala como error, no como estilo.
+
+**`Idempotency-Key` en creación de candidaturas era ya del backend; ahora el
+cliente también lo manda siempre.** `POST /applications` ya soportaba la
+cabecera (TASK-041); `createApplication`/`startCvAnalysis` generan un
+`crypto.randomUUID()` por intento, igual que TASK-047 hizo para
+`course-audit-upload` — un doble clic o un timeout de red ya no puede producir
+una segunda candidatura o una segunda ejecución de IA.
+
+**La selección de entrevista se apoya en la unicidad de TASK-015, no la
+reimplementa.** `InterviewSlotPicker` solo muestra el error que el backend
+devuelve (409 si alguien más ya reservó otro slot); no hay lógica de
+"¿ya está reservado?" en React — es exactamente lo que Proposed Solution pide.
+
+**Alcance recortado, documentado en vez de silenciado:** la lista de "ya
+aplicado" que atenuaba el botón Quick Apply en `jobs.js` (derivada de
+`job_posting_id` sobre la lista completa de candidaturas) no se replicó — la
+paginación por cursor de TASK-041 hace que "cargar todas las candidaturas para
+mirar un campo" sea precisamente el patrón que esa tarea quería dejar atrás.
+El único costo es cosmético: un botón "Quick Apply" que no se deshabilita para
+un trabajo al que ya se aplicó (el `Idempotency-Key` en la creación evita que
+un reintento cree una segunda fila, así que no hay riesgo de datos).
+
+**Validación ejecutada:** backend — `pytest tests/ --ignore=tests/integration`
+(verde, 1 skip preexistente) y `ruff check` sobre los archivos tocados.
+Frontend — `npm run typecheck`, `npm run lint`, `npm run i18n:check` (455
+keys), `npx vitest run` (137/137 sobre 31 archivos — 14 casos nuevos en 5
+archivos de test de esta vertical, incluida la prueba de backoff/timeout del
+polling con temporizadores simulados) y `npm run build`, todos en verde. Smoke
+manual con Playwright (Python) contra `npm run dev` + el backend local:
+`/jobs` y `/jobs/applications` anónimos redirigen a `/login` sin error de
+consola ni de React.
+
+**Qué falta para marcar COMPLETED — igual que las verticales anteriores:**
+
+1. Diff visual contra la baseline de TASK-035.
+2. Playwright sobre docker compose con un actor autenticado real, incluido un
+   flujo de candidatura y de selección de entrevista de extremo a extremo (no
+   se creó ninguna cuenta de prueba contra el Neon de desarrollo sin
+   autorización explícita).
+3. Medición de tráfico cero al contrato legacy
+   (`/jobs/search`, `/jobs/keywords/*`, `/applications/{id}/interview-selection`).
+4. El indicador "ya aplicado" en Quick Apply, descrito arriba, si se decide
+   que vale la pena frente al costo de cargar todas las candidaturas.
 
 ## TASK-050 — Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters
 

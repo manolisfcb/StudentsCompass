@@ -10537,8 +10537,8 @@
         ]
       }
     },
-    "/api/v1/applications/{application_id}/interview-selection": {
-      "post": {
+    "/api/v1/applications/{application_id}/selected-interview": {
+      "put": {
         "operationId": "dashboard_select_interview_availability",
         "parameters": [
           {
@@ -14694,6 +14694,101 @@
         ]
       }
     },
+    "/api/v1/cv-analyses": {
+      "post": {
+        "operationId": "jobs_start_cv_analysis",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Start Cv Analysis",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/cv-analyses/{job_id}": {
+      "get": {
+        "description": "Get status of CV analysis job (for polling)",
+        "operationId": "jobs_get_job_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Get Job Status",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
     "/api/v1/dashboard/stats": {
       "get": {
         "description": "Get dashboard statistics for the current user",
@@ -15291,6 +15386,63 @@
         ]
       }
     },
+    "/api/v1/job-searches": {
+      "post": {
+        "description": "Search Students Compass first, then append LinkedIn results after internal matches.",
+        "operationId": "jobs_search_jobs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSearchResultsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Search Jobs",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
     "/api/v1/jobs/board": {
       "get": {
         "operationId": "jobs_list_job_board_postings",
@@ -15417,159 +15569,6 @@
           }
         ],
         "summary": "Get Job Keywords",
-        "tags": [
-          "jobs"
-        ]
-      }
-    },
-    "/api/v1/jobs/keywords/analyze": {
-      "post": {
-        "description": "Start CV analysis job - returns immediately with job_id\n\nThis endpoint spends AI credit, so it is one of the three plan 08 §5.1 names\nfor ``Idempotency-Key``. The existing per-resume defences — the cached job,\nthe running job and the unique active index — already stop a *second\nanalysis*; the key adds the piece they cannot give, which is returning the\n**same answer** to a client that never saw the first one. The key is scoped\nto the CV it was sent for, so reusing it after uploading a different CV is a\n409 rather than a stale job id.",
-        "operationId": "jobs_start_cv_analysis",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobInitResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Start Cv Analysis",
-        "tags": [
-          "jobs"
-        ]
-      }
-    },
-    "/api/v1/jobs/keywords/{job_id}": {
-      "get": {
-        "description": "Get status of CV analysis job (for polling)",
-        "operationId": "jobs_get_job_status",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "job_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Job Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobStatusResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Get Job Status",
-        "tags": [
-          "jobs"
-        ]
-      }
-    },
-    "/api/v1/jobs/search": {
-      "post": {
-        "description": "Search Students Compass first, then append LinkedIn results after internal matches.",
-        "operationId": "jobs_search_jobs",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JobSearchRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobSearchResultsResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            },
-            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
-          }
-        },
-        "security": [
-          {
-            "APIKeyCookie": []
-          }
-        ],
-        "summary": "Search Jobs",
         "tags": [
           "jobs"
         ]

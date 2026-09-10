@@ -29,6 +29,11 @@ from app.core.errors import CODE_JOB_SEARCH, server_failure
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
+# TASK-049 (plan 08 §5.2): `/job-searches` and `/cv-analyses` are the renamed
+# contract React consumes; `legacy_router` keeps `/jobs/search` and
+# `/jobs/keywords/*` alive for `jobs.js`, mounted with `include_in_schema=False`
+# — the same pattern TASK-047/048 used for `/resumes` and `/dashboard/student`.
+legacy_router = APIRouter()
 
 class JobSearchRequest(BaseModel):
     keywords: str
@@ -112,7 +117,7 @@ async def list_job_board_postings(
     ]
 
 
-@router.post("/jobs/search", response_model=JobSearchResultsResponse)
+@router.post("/job-searches", response_model=JobSearchResultsResponse)
 async def search_jobs(
     request: JobSearchRequest,
     user: User = Depends(current_active_user),
@@ -286,14 +291,14 @@ async def process_cv_analysis(job_id: UUID, user_id: UUID, resume_id: UUID, sess
         break
 
 
-@router.post("/jobs/keywords/analyze", response_model=JobInitResponse)
-async def start_cv_analysis(
+async def _start_cv_analysis(
     background_tasks: BackgroundTasks,
     request: Request,
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(current_ai_user),
-
-):
+    session: AsyncSession,
+    user: User,
+    *,
+    success_status_code: int,
+) -> JobInitResponse:
     """Start CV analysis job - returns immediately with job_id
 
     This endpoint spends AI credit, so it is one of the three plan 08 §5.1 names
@@ -303,12 +308,21 @@ async def start_cv_analysis(
     **same answer** to a client that never saw the first one. The key is scoped
     to the CV it was sent for, so reusing it after uploading a different CV is a
     409 rather than a stale job id.
+
+    ``success_status_code`` exists because this one function serves two routes
+    with two contracts: the renamed ``/cv-analyses`` answers ``202`` (plan 08
+    §5.2, a job just got queued), the legacy ``/jobs/keywords/analyze`` keeps
+    answering ``200`` unchanged. It has to be threaded into every
+    ``guard.store`` call too — under a replayed ``Idempotency-Key`` the stored
+    ``JSONResponse`` carries whatever status was passed there, not the route's
+    own decorator, so a route-level ``status_code=202`` alone would silently
+    stop applying the moment a key made the second and later calls idempotent.
     """
     guard = None
     try:
         analysis_service = CVAnalysisService(session)
         resume = await analysis_service.get_latest_resume(user.id)
-        
+
         if not resume:
             raise HTTPException(status_code=404, detail="No CV found. Please upload your CV first.")
 
@@ -316,7 +330,7 @@ async def start_cv_analysis(
             session,
             request=request,
             actor=actor_key("user", user.id),
-            endpoint="POST /jobs/keywords/analyze",
+            endpoint="POST /cv-analyses",
             payload={"resume_id": str(resume.id)},
         )
         if guard.is_replay:
@@ -328,7 +342,7 @@ async def start_cv_analysis(
                 job_id=str(cached_job.id),
                 status=cached_job.status.value,
                 message="CV already analyzed. Using cached keywords."
-            ))
+            ), status_code=success_status_code)
 
         running_job = await analysis_service.get_running_analysis(user_id=user.id, resume_id=resume.id)
         if running_job:
@@ -336,7 +350,7 @@ async def start_cv_analysis(
                 job_id=str(running_job.id),
                 status=running_job.status.value,
                 message="CV analysis already in progress for this resume."
-            ))
+            ), status_code=success_status_code)
 
         ai_analysis_rate_limiter.check_request(request)
         # Atomically claim a daily slot *before* dispatching any LLM work so
@@ -358,7 +372,7 @@ async def start_cv_analysis(
                 job_id=str(job.id),
                 status=job.status.value,
                 message="CV analysis already in progress for this resume.",
-            ))
+            ), status_code=success_status_code)
 
         LOGGER.info(f"Created job {job.id} for user {user.id}")
 
@@ -370,13 +384,13 @@ async def start_cv_analysis(
             process_cv_analysis, job.id, user.id, resume.id, get_session_factory, reservation
         )
         wake_runner()
-        
+
         return await guard.store(JobInitResponse(
             job_id=str(job.id),
             status=job.status.value,
             message="CV analysis started. Use the job_id to check status."
-        ))
-        
+        ), status_code=success_status_code)
+
     except HTTPException as exc:
         # A 409 raised *by* the guard must not release the key it is defending;
         # every other failure releases, so the client may retry with the same key.
@@ -390,7 +404,26 @@ async def start_cv_analysis(
         raise HTTPException(status_code=500, detail=LLM_GENERAL_FAILURE_MESSAGE)
 
 
-@router.get("/jobs/keywords/{job_id}", response_model=JobStatusResponse)
+@router.post("/cv-analyses", response_model=JobInitResponse, status_code=status.HTTP_202_ACCEPTED)
+async def start_cv_analysis(
+    background_tasks: BackgroundTasks,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_ai_user),
+):
+    return await _start_cv_analysis(background_tasks, request, session, user, success_status_code=202)
+
+
+async def start_cv_analysis_legacy(
+    background_tasks: BackgroundTasks,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_ai_user),
+):
+    return await _start_cv_analysis(background_tasks, request, session, user, success_status_code=200)
+
+
+@router.get("/cv-analyses/{job_id}", response_model=JobStatusResponse)
 async def get_job_status(
     job_id: UUID,
     session: AsyncSession = Depends(get_session),
@@ -438,3 +471,29 @@ async def get_job_keywords(
     except Exception:
         LOGGER.exception("Failed to check CV status")
         return KeywordsResponse(keywords="developer", has_cv=False)
+
+
+# --- Legacy adapter (TASK-049, plan 08 §13) -----------------------------------
+#
+# Old paths, hidden from the OpenAPI document, kept for `jobs.js` until
+# TASK-059 confirms zero traffic. `/jobs/search` and `/jobs/keywords/{job_id}`
+# reuse the same functions as their renamed counterparts unchanged;
+# `/jobs/keywords/analyze` uses the 200-status wrapper so its response shape
+# does not change under the client that has always called it.
+legacy_router.add_api_route(
+    "/jobs/search", search_jobs, methods=["POST"], response_model=JobSearchResultsResponse, include_in_schema=False
+)
+legacy_router.add_api_route(
+    "/jobs/keywords/analyze",
+    start_cv_analysis_legacy,
+    methods=["POST"],
+    response_model=JobInitResponse,
+    include_in_schema=False,
+)
+legacy_router.add_api_route(
+    "/jobs/keywords/{job_id}",
+    get_job_status,
+    methods=["GET"],
+    response_model=JobStatusResponse,
+    include_in_schema=False,
+)

@@ -237,7 +237,7 @@ async def get_application_page(
     )
 
 
-@router.post("/applications/{application_id}/interview-selection", response_model=ApplicationRead)
+@router.put("/applications/{application_id}/selected-interview", response_model=ApplicationRead)
 async def select_interview_availability(
     application_id: UUID,
     payload: InterviewAvailabilitySelectionRequest,
@@ -292,10 +292,19 @@ async def delete_application(
     return {"message": "Application deleted successfully"}
 
 
-# --- Legacy adapter (TASK-048, plan 08 §13) -----------------------------------
+# --- Legacy adapter (TASK-048/049, plan 08 §13) -------------------------------
 #
-# Same function, old path, hidden from the OpenAPI document. `dashboard.js`
-# keeps calling `/students_dashboard` until TASK-059 confirms zero traffic.
+# Same functions, old paths, hidden from the OpenAPI document. `dashboard.js`
+# keeps calling `/students_dashboard`, and `jobs.js` keeps calling
+# `POST /applications/{id}/interview-selection`, until TASK-059 confirms zero
+# traffic on each.
+legacy_router.add_api_route(
+    "/applications/{application_id}/interview-selection",
+    select_interview_availability,
+    methods=["POST"],
+    response_model=ApplicationRead,
+    include_in_schema=False,
+)
 legacy_router.add_api_route(
     "/students_dashboard",
     get_students_dashboard,

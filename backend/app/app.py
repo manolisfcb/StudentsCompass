@@ -34,7 +34,7 @@ from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
 from app.views.views import router as views_router
 from app.routes.questionnaireRoute import router as questionnaire_router
 from app.routes.resumeRoute import legacy_router as resume_legacy_router, router as resume_router
-from app.routes.jobRoute import router as job_router
+from app.routes.jobRoute import legacy_router as job_legacy_router, router as job_router
 from app.routes.companyRoute import router as company_router
 from app.routes.dashboardRoute import legacy_router as dashboard_legacy_router, router as dashboard_router
 from app.routes.communityRoute import router as community_router
@@ -289,6 +289,7 @@ app.include_router(questionnaire_router, prefix="/api/v1", tags=["questionnaire"
 app.include_router(resume_router, prefix="/api/v1", tags=["resume"])
 app.include_router(resume_legacy_router, prefix="/api/v1", tags=["resume"])
 app.include_router(job_router, prefix="/api/v1", tags=["jobs"])
+app.include_router(job_legacy_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(dashboard_legacy_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(community_router, prefix="/api/v1", tags=["communities"])
