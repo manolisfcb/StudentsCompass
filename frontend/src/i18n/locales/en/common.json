@@ -666,6 +666,7 @@
   "admin.shell.admin": "Admin",
   "admin.shell.panel": "Admin Panel",
   "admin.shell.navigation": "Admin navigation",
+  "admin.shell.openMenu": "Open navigation",
   "admin.shell.closeMenu": "Close navigation",
   "admin.shell.superAdmin": "Super Admin",
   "admin.backToSite": "Back to site",

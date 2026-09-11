@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
@@ -70,6 +70,14 @@ export function ResourceEditor({
   const [modules, setModules] = useState<ModuleDraft[]>(() => initialModules(resource));
 
   const save = useMutation({ mutationFn: onSave });
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   function updateModule(moduleKey: string, patch: Partial<ModuleDraft>) {
     setModules((current) => current.map((module) => (module.key === moduleKey ? { ...module, ...patch } : module)));

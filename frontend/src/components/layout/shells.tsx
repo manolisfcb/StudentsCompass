@@ -123,7 +123,16 @@ export function AdminShell() {
       {menuOpen ? <button type="button" aria-label={t("admin.shell.closeMenu")} className="fixed inset-0 z-30 bg-ink/70 lg:hidden" onClick={() => setMenuOpen(false)} /> : null}
       <div className="lg:pl-64">
         <header className="flex min-h-16 items-center border-b border-white/10 px-4 sm:px-8">
-          <button type="button" className="mr-4 rounded p-2 text-xl lg:hidden" aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen((open) => !open)}>☰</button>
+          <button
+            type="button"
+            className="mr-4 rounded p-2 text-xl lg:hidden"
+            aria-label={menuOpen ? t("admin.shell.closeMenu") : t("admin.shell.openMenu")}
+            aria-expanded={menuOpen}
+            aria-controls="admin-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            ☰
+          </button>
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden text-right sm:block">
               <strong className="block text-sm">{adminName}</strong>

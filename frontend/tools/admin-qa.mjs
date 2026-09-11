@@ -1,8 +1,10 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 
-const chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const base = "http://127.0.0.1:4173";
+const localChrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const executablePath = process.env.PLAYWRIGHT_CHROME_PATH ?? (existsSync(localChrome) ? localChrome : undefined);
+const base = process.env.ADMIN_QA_BASE_URL ?? "http://127.0.0.1:4173";
 const actor = {
   id: "7674de34-7a8c-40c2-bcdc-81d14ac36473",
   actor_type: "student",
@@ -18,6 +20,7 @@ let users = [
 let resources = [{
   id: "3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d", title: "Baseline Course", description: "Visual fixture", category: "career", icon: "📘", level: "beginner", tags: ["baseline"], estimated_duration_minutes: 45, external_url: null, is_published: true, is_locked: false, created_at: "2026-01-05T12:00:00Z", updated_at: "2026-01-05T12:00:00Z",
 }];
+const observedAdminRequests = [];
 
 const json = (route, status, body) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 async function installApi(page, { forbidden = false } = {}) {
@@ -25,6 +28,7 @@ async function installApi(page, { forbidden = false } = {}) {
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname;
+    if (path.startsWith("/api/v1/admin/")) observedAdminRequests.push(`${request.method()} ${path}`);
     if (path === "/api/v1/auth/session") return json(route, 200, { actor, actors: [actor], csrf_token: "qa" });
     if (path === "/api/v1/admin/stats") {
       if (forbidden) return json(route, 403, { error: { code: "forbidden", message: "Admin privileges required.", details: null, request_id: "qa-403" } });
@@ -53,7 +57,7 @@ async function installApi(page, { forbidden = false } = {}) {
   });
 }
 
-const browser = await chromium.launch({ executablePath: chrome, headless: true });
+const browser = await chromium.launch({ executablePath, headless: true });
 const consoleErrors = [];
 try {
   const desktop = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -78,6 +82,7 @@ try {
   await page.getByRole("button", { name: "Unpublish" }).click();
   await page.getByRole("button", { name: "Publish" }).waitFor();
   await page.getByRole("button", { name: "New Resource" }).click();
+  assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
   await page.getByLabel("Title").fill("Playwright Course");
   await page.getByLabel("Category").fill("career");
   await page.getByLabel("Description").fill("Created through browser controls.");
@@ -89,6 +94,7 @@ try {
   assert.equal(await page.getByLabel("Resource URL").inputValue(), "https://files.invalid/lesson.txt");
   await page.getByRole("button", { name: "Save Resource" }).click();
   await page.getByText("Playwright Course").waitFor();
+  assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   await page.screenshot({ path: "/private/tmp/admin-playwright-resources.png" });
 
   const forbiddenPage = await desktop.newPage();
@@ -102,15 +108,23 @@ try {
   const mobilePage = await mobile.newPage();
   await installApi(mobilePage);
   await mobilePage.goto(`${base}/admin`);
+  await mobilePage.screenshot({ path: "/private/tmp/admin-playwright-mobile-dashboard.png" });
   await mobilePage.getByRole("button", { name: /navigation/i }).click();
+  await mobilePage.waitForTimeout(200);
+  await mobilePage.screenshot({ path: "/private/tmp/admin-playwright-mobile-menu.png" });
   await mobilePage.getByRole("link", { name: /Resources/ }).click();
   await mobilePage.getByRole("button", { name: "New Resource" }).waitFor();
+  await mobilePage.waitForTimeout(200);
   assert.equal(await mobilePage.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false);
   await mobilePage.screenshot({ path: "/private/tmp/admin-playwright-mobile.png" });
   await mobile.close();
 
   assert.deepEqual(consoleErrors, []);
-  console.log(JSON.stringify({ dashboard: true, userSearch: true, userStateCycle: true, resourceStateCycle: true, resourceCreate: true, resourceUpload: true, forbidden: true, mobileNavigation: true, horizontalOverflow: false }));
+  const legacyRequests = observedAdminRequests.filter((entry) =>
+    entry.includes("/toggle-") || entry.includes("/resources/upload-file") || entry.includes("/admin/jobs"),
+  );
+  assert.deepEqual(legacyRequests, []);
+  console.log(JSON.stringify({ dashboard: true, userSearch: true, userStateCycle: true, resourceStateCycle: true, resourceCreate: true, resourceUpload: true, forbidden: true, mobileNavigation: true, horizontalOverflow: false, legacyRequests: legacyRequests.length }));
 } finally {
   await browser.close();
 }
