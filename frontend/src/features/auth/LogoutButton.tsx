@@ -12,7 +12,7 @@ import { type ActorKind, logout } from "@/features/auth/api";
  * current shell represents rather than clearing every session the browser
  * holds.
  */
-export function LogoutButton({ actorKind }: { actorKind: ActorKind }) {
+export function LogoutButton({ actorKind, className }: { actorKind: ActorKind; className?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -26,7 +26,7 @@ export function LogoutButton({ actorKind }: { actorKind: ActorKind }) {
   });
 
   return (
-    <Button variant="ghost" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+    <Button variant="ghost" className={className} onClick={() => mutation.mutate()} disabled={mutation.isPending}>
       {mutation.isPending ? t("auth.logout.pending") : t("auth.logout.label")}
     </Button>
   );

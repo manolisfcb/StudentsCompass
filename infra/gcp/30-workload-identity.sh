@@ -29,17 +29,30 @@ fi
 # convenience. Without it, *any* GitHub repository in the world could exchange
 # its token for this project's credentials: the issuer is github.com itself, so
 # a token from someone else's repository is just as validly signed as ours.
+#
+# Bug fix: this used to check only assertion.repository. deploy.yml runs from a
+# workflow_run event gated on head_branch == main, but that gate lives in a
+# workflow file — anyone who can push a branch can edit it there. The
+# attribute-condition is enforced by Google before a token is minted, outside
+# anything a branch can change, so it is the only one of the two checks that is
+# actually a security boundary rather than a convenience. Pin it to main too.
+CONDITION="assertion.repository == '${GITHUB_REPOSITORY}' && assertion.ref == 'refs/heads/main'"
 if gcloud iam workload-identity-pools providers describe "$PROVIDER" \
       --workload-identity-pool="$POOL" --location=global \
       --project "$PROJECT_ID" >/dev/null 2>&1; then
-  echo "Provider $PROVIDER already exists"
+  echo "Provider $PROVIDER already exists — reconciling its attribute condition"
+  gcloud iam workload-identity-pools providers update-oidc "$PROVIDER" \
+    --workload-identity-pool="$POOL" \
+    --location=global \
+    --attribute-condition="$CONDITION" \
+    --project "$PROJECT_ID"
 else
   gcloud iam workload-identity-pools providers create-oidc "$PROVIDER" \
     --workload-identity-pool="$POOL" \
     --location=global \
     --issuer-uri="https://token.actions.githubusercontent.com" \
     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
-    --attribute-condition="assertion.repository == '${GITHUB_REPOSITORY}'" \
+    --attribute-condition="$CONDITION" \
     --project "$PROJECT_ID"
 fi
 

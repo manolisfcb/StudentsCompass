@@ -1,0 +1,312 @@
+# TASK-056. Despliega studentscompass-api, studentscompass-front y el Job
+# studentscompass-migrate por SHA, en el orden y con los gates de plan 08 §10:
+# migrate → API sin tráfico → smoke → promoción → frontend → smoke público.
+#
+# Disparado por `workflow_run` sobre `ci` en vez de por `push` directamente:
+# así el SHA que se despliega es exactamente el que CI acaba de marcar verde,
+# sin una segunda ejecución de las mismas comprobaciones y sin la carrera de
+# desplegar un commit cuyo CI todavía no ha terminado. `ci.yml` ya deja escrito
+# que publicar imágenes y tocar la nube es de este fichero (ci.yml:8-9).
+#
+# Nunca se despliega por `:latest`: cada imagen se etiqueta con el SHA y Cloud
+# Run recibe esa referencia. El Job de migraciones usa la imagen de API del
+# mismo SHA para que el código y el schema nunca se separen (§10 paso 3).
+name: deploy
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+
+# id-token: write es lo que permite intercambiar el token OIDC de este run por
+# credenciales de Google vía WIF (TASK-055) — sin él, google-github-actions/auth
+# no tiene nada que ofrecer al pool. Nada más de este workflow necesita escribir
+# en GitHub.
+permissions:
+  contents: read
+  id-token: write
+
+# Un segundo push a main mientras un despliegue está en curso no debe cancelar
+# el que ya está promoviendo tráfico a medias; se encola en vez de cancelarse.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  # Identificadores del proyecto, no secretos (infra/gcp/README.md). Viven como
+  # Actions variables porque cambian de un fork o un entorno a otro; un valor
+  # por defecto aquí sería un proyecto de otra persona.
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+  # Nombres fijos: son los mismos que infra/gcp/config.env.example declara para
+  # el aprovisionamiento, así que no tiene sentido que floten como variables.
+  API_SERVICE: studentscompass-api
+  FRONT_SERVICE: studentscompass-front
+  MIGRATE_JOB: studentscompass-migrate
+  TASKS_QUEUE: studentscompass-cv-analysis
+  SHA: ${{ github.event.workflow_run.head_sha }}
+
+jobs:
+  deploy:
+    # Tres condiciones, no una: `conclusion == success` sin más dispararía
+    # también tras un CI verde de una rama de feature o de un PR (ci.yml corre
+    # en ambos triggers). `event == push` y `head_branch == main` acotan esto a
+    # exactamente lo que main mergea. La restricción que de verdad importa —la
+    # que un branch no puede sortear editando este fichero— es la condición de
+    # atributo de WIF (infra/gcp/30-workload-identity.sh); esta es la que evita
+    # ejecuciones innecesarias, no la que da seguridad.
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configurar Docker contra Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Resolver etiquetas de imagen
+        id: tags
+        run: |
+          SHORT_SHA="${SHA:0:12}"
+          BASE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "api_image=${BASE}/api:${SHA}" >> "$GITHUB_OUTPUT"
+          echo "front_image=${BASE}/front:${SHA}" >> "$GITHUB_OUTPUT"
+
+      # --- Build & push --------------------------------------------------
+      #
+      # Dos imágenes, un SHA. La imagen de API no lleva templates ni assets de
+      # React (§11); la de frontend no lleva secretos, solo el bundle y
+      # nginx.conf (TASK-055, backend/tests/test_deployment_configuration.py
+      # ya lo comprueba a nivel de Dockerfile).
+
+      - name: Construir y publicar la imagen de API
+        run: |
+          docker build -t "${{ steps.tags.outputs.api_image }}" backend/
+          docker push "${{ steps.tags.outputs.api_image }}"
+
+      - name: Construir y publicar la imagen de frontend
+        run: |
+          docker build -t "${{ steps.tags.outputs.front_image }}" frontend/
+          docker push "${{ steps.tags.outputs.front_image }}"
+
+      # --- URL de la API, conocida antes de que el servicio exista --------
+      #
+      # Cloud Run (v2, el default desde 2022) asigna
+      # `https://SERVICE-PROJECTNUMBER.REGION.run.app`: nada al azar, solo el
+      # número de proyecto. Eso permite calcular la URL de la API *antes* de
+      # crearla y usarla en el propio primer despliegue — sin ella,
+      # INTERNAL_TASKS_BASE_URL/AUDIENCE (que la API necesita para verificar el
+      # OIDC de Cloud Tasks contra sí misma, TASK-054) tendrían que quedar
+      # vacías en el primer despliegue y arreglarse en un segundo, con una
+      # revisión intermedia inservible de por medio.
+      - name: Calcular las URLs de los servicios
+        id: urls
+        run: |
+          PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          API_URL="https://${API_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          FRONT_URL="https://${FRONT_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          echo "project_number=${PROJECT_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "api_url=${API_URL}" >> "$GITHUB_OUTPUT"
+          echo "front_url=${FRONT_URL}" >> "$GITHUB_OUTPUT"
+
+      # --- Migraciones, bloqueantes, antes de que la API reciba tráfico ---
+      #
+      # El Job usa exactamente la imagen de API de este SHA (§10 paso 3, plan
+      # 08:243-244): correrlas al arrancar cada réplica produciría una carrera
+      # de schema entre revisiones bajo min-instances/max-instances > 1.
+      - name: Actualizar el Job de migraciones a este SHA
+        run: |
+          gcloud run jobs update "$MIGRATE_JOB" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --image "${{ steps.tags.outputs.api_image }}" \
+            --command="alembic" --args="upgrade,head" \
+            --service-account "sc-migrate@${PROJECT_ID}.iam.gserviceaccount.com" \
+            --set-secrets "ALEMBIC_DATABASE_URL=ALEMBIC_DATABASE_URL:latest" \
+            --max-retries=0 \
+            --task-timeout=600s \
+            --tasks=1
+
+      - name: Ejecutar migraciones y esperar
+        run: |
+          gcloud run jobs execute "$MIGRATE_JOB" \
+            --project "$PROJECT_ID" --region "$REGION" --wait
+
+      # --- API, desplegada sin tráfico ------------------------------------
+      #
+      # --no-traffic dejando la revisión detrás de una etiqueta: el paso de
+      # smoke pega a esa revisión directamente y nunca a $API_SERVICE, así que
+      # ningún usuario ve la revisión nueva antes de que el smoke la apruebe.
+      #
+      # --max-instances: presupuesto de conexiones sin verificar todavía contra
+      # el límite real de Neon (TASK-056, criterio de aceptación pendiente). 3
+      # instancias × (DB_POOL_SIZE=5 + DB_MAX_OVERFLOW=10) = 45 conexiones como
+      # techo. Subir este número sin medir el límite real del pooler de Neon es
+      # exactamente el error que este criterio existe para atrapar.
+      - name: Desplegar la API sin tráfico
+        id: deploy_api
+        run: |
+          TAG="deploy-${{ steps.tags.outputs.short_sha }}"
+          gcloud run deploy "$API_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --image "${{ steps.tags.outputs.api_image }}" \
+            --service-account "sc-api@${PROJECT_ID}.iam.gserviceaccount.com" \
+            --no-traffic --tag "$TAG" \
+            --cpu=1 --memory=1Gi --concurrency=40 --timeout=60s \
+            --min-instances=0 --max-instances=3 \
+            --set-env-vars "ENV=production,TRUSTED_PROXY_IPS=private,TASK_DISPATCH_TRANSPORT=cloud_tasks,CLOUD_TASKS_QUEUE=projects/${PROJECT_ID}/locations/${REGION}/queues/${TASKS_QUEUE},CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL=sc-tasks@${PROJECT_ID}.iam.gserviceaccount.com,INTERNAL_TASKS_BASE_URL=${{ steps.urls.outputs.api_url }},INTERNAL_TASKS_AUDIENCE=${{ steps.urls.outputs.api_url }}" \
+            --set-secrets "DATABASE_URL=DATABASE_URL:latest,SECRET_KEY=SECRET_KEY:latest,GENAI_API_KEY=GENAI_API_KEY:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest,IMAGEKIT_PRIVATE_KEY=IMAGEKIT_PRIVATE_KEY:latest,REDIS_URL=REDIS_URL:latest" \
+            --allow-unauthenticated \
+            --quiet
+
+          # `TAG---SERVICE-PROJECTNUMBER.REGION.run.app` es el patrón que Cloud
+          # Run usa para URLs de revisión etiquetadas; se construye en vez de
+          # leerse porque `status.traffic[].url` no siempre resuelve por tag
+          # según la versión de gcloud, y el patrón ya es conocido (paso
+          # anterior).
+          REVISION_URL="https://${TAG}---${API_SERVICE}-${{ steps.urls.outputs.project_number }}.${REGION}.run.app"
+          echo "revision_url=${REVISION_URL}" >> "$GITHUB_OUTPUT"
+
+          PREV_REVISION="$(gcloud run services describe "$API_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.traffic.filter(percent:100).revisionName)' | head -n1)"
+          echo "previous_revision=${PREV_REVISION}" >> "$GITHUB_OUTPUT"
+
+          NEW_REVISION="$(gcloud run revisions list \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --service "$API_SERVICE" \
+            --sort-by='~metadata.creationTimestamp' --limit=1 \
+            --format='value(metadata.name)')"
+          echo "new_revision=${NEW_REVISION}" >> "$GITHUB_OUTPUT"
+
+      # --- Smoke contra la revisión sin tráfico ---------------------------
+      #
+      # /healthz primero (no toca nada; si esto falla, la imagen no arranca) y
+      # /readyz después (toca la DB; confirma que las migraciones y el secreto
+      # de conexión son los correctos). Reintentos porque una revisión recién
+      # creada puede tardar unos segundos en quedar lista para recibir tráfico
+      # aunque el despliegue ya haya vuelto.
+      - name: Smoke de la revisión sin tráfico
+        run: |
+          URL="${{ steps.deploy_api.outputs.revision_url }}"
+          for path in healthz readyz; do
+            ok=""
+            for _ in $(seq 1 10); do
+              code="$(curl -s -o /dev/null -w '%{http_code}' "${URL}/${path}" || true)"
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              sleep 3
+            done
+            if [ -z "$ok" ]; then
+              echo "::error::${URL}/${path} no respondió 200 tras 10 intentos (último: ${code:-sin respuesta})"
+              exit 1
+            fi
+          done
+
+      # --- Promoción -------------------------------------------------------
+      #
+      # A una revisión concreta, no a --to-latest: así el rollback de más abajo
+      # es simétrico, apuntando de vuelta a `previous_revision` por nombre en
+      # vez de a un "latest" que para entonces ya habrá cambiado de sentido.
+      - name: Promover la API
+        run: |
+          gcloud run services update-traffic "$API_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${{ steps.deploy_api.outputs.new_revision }}=100"
+
+      # --- Frontend ---------------------------------------------------------
+      #
+      # API_ORIGIN va a Nginx por variable de entorno, nunca al bundle (§11,
+      # frontend/nginx.conf). API_DNS_RESOLVER es 169.254.169.254 en Cloud Run
+      # y no 127.0.0.11 (el DNS embebido de compose) — frontend/nginx.conf lo
+      # deja escrito como responsabilidad de esta ficha.
+      - name: Desplegar el frontend
+        id: deploy_front
+        run: |
+          PREV_FRONT_REVISION="$(gcloud run services describe "$FRONT_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.traffic.filter(percent:100).revisionName)' 2>/dev/null | head -n1 || true)"
+          echo "previous_revision=${PREV_FRONT_REVISION}" >> "$GITHUB_OUTPUT"
+
+          gcloud run deploy "$FRONT_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --image "${{ steps.tags.outputs.front_image }}" \
+            --service-account "sc-front@${PROJECT_ID}.iam.gserviceaccount.com" \
+            --port=8080 \
+            --cpu=1 --memory=512Mi --concurrency=80 \
+            --min-instances=0 --max-instances=10 \
+            --set-env-vars "API_ORIGIN=${{ steps.urls.outputs.api_url }},API_DNS_RESOLVER=169.254.169.254" \
+            --allow-unauthenticated \
+            --quiet
+
+          NEW_FRONT_REVISION="$(gcloud run revisions list \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --service "$FRONT_SERVICE" \
+            --sort-by='~metadata.creationTimestamp' --limit=1 \
+            --format='value(metadata.name)')"
+          echo "new_revision=${NEW_FRONT_REVISION}" >> "$GITHUB_OUTPUT"
+
+      # --- Smoke público -----------------------------------------------------
+      #
+      # Contra PUBLIC_BASE_URL si TASK-057 ya mapeó un dominio; si no, contra la
+      # URL run.app del frontend, que existe desde el primer despliegue. De
+      # cualquiera de las dos formas esto prueba lo mismo que un usuario real
+      # golpea: el proxy de Nginx llegando a la API por su URL pública.
+      - name: Smoke público
+        run: |
+          BASE="${{ vars.PUBLIC_BASE_URL }}"
+          if [ -z "$BASE" ]; then
+            BASE="${{ steps.urls.outputs.front_url }}"
+          fi
+          for path in readyz robots.txt; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' "${BASE%/}/${path}")"
+            if [ "$code" != "200" ]; then
+              echo "::error::${BASE%/}/${path} respondió ${code}, se esperaba 200"
+              exit 1
+            fi
+          done
+
+    outputs:
+      api_previous_revision: ${{ steps.deploy_api.outputs.previous_revision }}
+      front_previous_revision: ${{ steps.deploy_front.outputs.previous_revision }}
+
+  # --- Rollback ------------------------------------------------------------
+  #
+  # Solo se dispara si el job de arriba falló *después* de promover — un fallo
+  # en build, migrate o el smoke pre-promoción no deja nada que revertir,
+  # porque nunca se movió tráfico. `needs.deploy.outputs` sobrevive al fallo
+  # del job siempre que el paso que fija el output haya corrido antes de que
+  # fallara uno posterior, que es exactamente el caso que importa aquí.
+  rollback:
+    needs: deploy
+    if: failure() && needs.deploy.outputs.api_previous_revision != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Revertir tráfico de la API a la revisión anterior
+        run: |
+          gcloud run services update-traffic "${{ env.API_SERVICE }}" \
+            --project "${{ env.PROJECT_ID }}" --region "${{ env.REGION }}" \
+            --to-revisions "${{ needs.deploy.outputs.api_previous_revision }}=100"
+      - name: Revertir tráfico del frontend a la revisión anterior
+        if: needs.deploy.outputs.front_previous_revision != ''
+        run: |
+          gcloud run services update-traffic "${{ env.FRONT_SERVICE }}" \
+            --project "${{ env.PROJECT_ID }}" --region "${{ env.REGION }}" \
+            --to-revisions "${{ needs.deploy.outputs.front_previous_revision }}=100"

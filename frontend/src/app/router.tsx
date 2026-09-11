@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { RequireActor, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
+import { AdminLoginPage } from "@/features/admin/AdminLoginPage";
+import { AdminPage } from "@/features/admin/AdminPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { CareerLabPage } from "@/features/career-lab/CareerLabPage";
@@ -40,6 +42,7 @@ import { SmokePage } from "@/features/smoke/SmokePage";
  * backend decides authorization. TASK-053 builds the screens behind it.
  */
 export const router = createBrowserRouter([
+  { path: "/admin/login", element: <AdminLoginPage /> },
   {
     element: <PublicShell />,
     children: [
@@ -102,11 +105,11 @@ export const router = createBrowserRouter([
   },
   {
     element: (
-      <RequireActor allow={["student"]}>
+      <RequireActor allow={["student"]} signInPath="/admin/login">
         <AdminShell />
       </RequireActor>
     ),
-    children: [{ path: "/admin", element: <Navigate to="/__smoke" replace /> }],
+    children: [{ path: "/admin", element: <AdminPage /> }],
   },
   { path: "*", element: <Navigate to="/__smoke" replace /> },
 ]);

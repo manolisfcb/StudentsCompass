@@ -11,6 +11,11 @@ export const queryKeys = {
   smoke: {
     origin: ["smoke", "origin"] as const,
   },
+  admin: {
+    stats: ["admin", "stats"] as const,
+    users: (page: number) => ["admin", "users", page] as const,
+    resources: (page: number) => ["admin", "resources", page] as const,
+  },
   profile: {
     current: ["profile"] as const,
   },

@@ -36,6 +36,7 @@ function renderAt(path: string, element: React.ReactElement) {
         <Routes>
           <Route path={path} element={element} />
           <Route path="/login" element={<p>sign in</p>} />
+          <Route path="/admin/login" element={<p>admin sign in</p>} />
           <Route path="/dashboard" element={<p>student home</p>} />
           <Route path="/company" element={<p>company home</p>} />
         </Routes>
@@ -62,6 +63,14 @@ describe("RequireActor", () => {
 
     expect(await screen.findByText("sign in")).toBeInTheDocument();
     expect(screen.queryByText("secret")).not.toBeInTheDocument();
+  });
+
+  it("can send an anonymous admin visitor to the dedicated sign-in screen", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse(401, null))));
+
+    renderAt("/protected", <RequireActor allow={["student"]} signInPath="/admin/login"><p>secret</p></RequireActor>);
+
+    expect(await screen.findByText("admin sign in")).toBeInTheDocument();
   });
 
   it("sends a signed-in actor of the wrong type to their own home, not to sign in", async () => {

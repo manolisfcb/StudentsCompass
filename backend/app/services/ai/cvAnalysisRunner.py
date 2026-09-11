@@ -94,7 +94,18 @@ class CVAnalysisRunner:
         """Recover stale jobs, then run what is waiting. Returns jobs started."""
         async with self._session_factory() as session:
             service = CVAnalysisService(session)
-            await service.recover_stale_jobs()
+            recovery = await service.recover_stale_jobs()
+            # TASK-057 alerts on this: `failed_after_spend` is a job that already
+            # called the provider and paid for it before its worker disappeared,
+            # so it is the one outcome of the three that is not routine cleanup.
+            # Logged only when something happened — a clean sweep would otherwise
+            # write a line every five seconds for nothing.
+            if any(recovery.values()):
+                LOGGER.info(
+                    "Stale job recovery: %s",
+                    recovery,
+                    extra={"stale_job_recovery": True, **recovery},
+                )
             job_ids = await service.due_job_ids(limit=MAX_JOBS_PER_SWEEP)
 
         started = 0

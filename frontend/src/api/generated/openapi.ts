@@ -157,6 +157,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/job-postings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Job Postings */
+        get: operations["admin_list_job_postings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/job-postings/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Job Posting */
+        delete: operations["admin_delete_job_posting"];
+        options?: never;
+        head?: never;
+        /** Update Job Posting */
+        patch: operations["admin_update_job_posting"];
+        trace?: never;
+    };
     "/api/v1/admin/jobs": {
         parameters: {
             query?: never;
@@ -164,7 +199,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Jobs */
+        /**
+         * List Jobs
+         * @deprecated
+         */
         get: operations["admin_list_jobs"];
         put?: never;
         post?: never;
@@ -184,7 +222,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Job */
+        /**
+         * Delete Job
+         * @deprecated
+         */
         delete: operations["admin_delete_job"];
         options?: never;
         head?: never;
@@ -204,8 +245,28 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Toggle Job Active */
+        /**
+         * Toggle Job Active
+         * @deprecated
+         */
         patch: operations["admin_toggle_job_active"];
+        trace?: never;
+    };
+    "/api/v1/admin/resource-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Resource File */
+        post: operations["admin_create_resource_file"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/resources": {
@@ -242,7 +303,8 @@ export interface paths {
         delete: operations["admin_delete_resource"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Resource State */
+        patch: operations["admin_update_resource_state"];
         trace?: never;
     };
     "/api/v1/admin/resources/{resource_id}/toggle-locked": {
@@ -258,7 +320,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Toggle Resource Locked */
+        /**
+         * Toggle Resource Locked
+         * @deprecated
+         */
         patch: operations["admin_toggle_resource_locked"];
         trace?: never;
     };
@@ -275,7 +340,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Toggle Resource Published */
+        /**
+         * Toggle Resource Published
+         * @deprecated
+         */
         patch: operations["admin_toggle_resource_published"];
         trace?: never;
     };
@@ -288,7 +356,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Upload Resource File */
+        /**
+         * Upload Resource File
+         * @deprecated
+         */
         post: operations["admin_upload_resource_file"];
         delete?: never;
         options?: never;
@@ -344,7 +415,8 @@ export interface paths {
         delete: operations["admin_delete_user"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update User */
+        patch: operations["admin_update_user"];
         trace?: never;
     };
     "/api/v1/admin/users/{user_id}/resource-progress": {
@@ -377,7 +449,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Toggle User Active */
+        /**
+         * Toggle User Active
+         * @deprecated
+         */
         patch: operations["admin_toggle_user_active"];
         trace?: never;
     };
@@ -394,7 +469,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Toggle User Superuser */
+        /**
+         * Toggle User Superuser
+         * @deprecated
+         */
         patch: operations["admin_toggle_user_superuser"];
         trace?: never;
     };
@@ -2678,6 +2756,362 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminApplicationRead */
+        AdminApplicationRead: {
+            /** Application Date */
+            application_date?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Title */
+            job_title: string;
+            /** Status */
+            status?: string | null;
+            /** User Email */
+            user_email?: string | null;
+        };
+        /** AdminApplicationsPage */
+        AdminApplicationsPage: {
+            /** Applications */
+            applications: components["schemas"]["AdminApplicationRead"][];
+            /** Items */
+            items: components["schemas"]["AdminApplicationRead"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
+        /** AdminCommunitiesPage */
+        AdminCommunitiesPage: {
+            /** Communities */
+            communities: components["schemas"]["AdminCommunityRead"][];
+            /** Items */
+            items: components["schemas"]["AdminCommunityRead"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
+        /** AdminCommunityRead */
+        AdminCommunityRead: {
+            /** Activity Status */
+            activity_status?: string | null;
+            /** Created At */
+            created_at?: string | null;
+            /** Creator Email */
+            creator_email?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Icon */
+            icon?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Member Count */
+            member_count: number;
+            /** Name */
+            name: string;
+        };
+        /** AdminCompaniesPage */
+        AdminCompaniesPage: {
+            /** Companies */
+            companies: components["schemas"]["AdminCompanyRead"][];
+            /** Items */
+            items: components["schemas"]["AdminCompanyRead"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
+        /** AdminCompanyRead */
+        AdminCompanyRead: {
+            /** Company Name */
+            company_name: string;
+            /** Email */
+            email?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Industry */
+            industry?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Website */
+            website?: string | null;
+        };
+        /** AdminDeleteRead */
+        AdminDeleteRead: {
+            /** Ok */
+            ok: boolean;
+        };
+        /** AdminJobPostingPatch */
+        AdminJobPostingPatch: {
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** AdminJobPostingRead */
+        AdminJobPostingRead: {
+            /** Company Name */
+            company_name: string;
+            /** Created At */
+            created_at?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Job Type */
+            job_type?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** AdminJobPostingsPage */
+        AdminJobPostingsPage: {
+            /** Items */
+            items: components["schemas"]["AdminJobPostingRead"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
+        /** AdminResourceDetailRead */
+        AdminResourceDetailRead: {
+            /** Category */
+            category: string;
+            /** Created At */
+            created_at?: string | null;
+            /** Description */
+            description: string;
+            /** Estimated Duration Minutes */
+            estimated_duration_minutes?: number | null;
+            /** External Url */
+            external_url?: string | null;
+            /** Icon */
+            icon?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Locked */
+            is_locked: boolean;
+            /** Is Published */
+            is_published: boolean;
+            /** Level */
+            level?: string | null;
+            /** Modules */
+            modules?: components["schemas"]["AdminResourceModuleRead"][];
+            /** Tags */
+            tags?: string[];
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** AdminResourceFileRead */
+        AdminResourceFileRead: {
+            /** Content Type */
+            content_type: string;
+            /** File Key */
+            file_key: string;
+            /** File Url */
+            file_url: string;
+            /** Original Filename */
+            original_filename: string;
+        };
+        /** AdminResourceLessonRead */
+        AdminResourceLessonRead: {
+            /** Content */
+            content?: string | null;
+            /** Content Payload */
+            content_payload?: {
+                [key: string]: unknown;
+            } | null;
+            /** Content Type */
+            content_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Notes */
+            notes?: string | null;
+            /** Position */
+            position: number;
+            /** Reading Time Minutes */
+            reading_time_minutes?: number | null;
+            /** Resource Url */
+            resource_url?: string | null;
+            /** Title */
+            title: string;
+            /** Video Url */
+            video_url?: string | null;
+        };
+        /** AdminResourceModuleRead */
+        AdminResourceModuleRead: {
+            /** Description */
+            description?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lessons */
+            lessons?: components["schemas"]["AdminResourceLessonRead"][];
+            /** Position */
+            position: number;
+            /** Title */
+            title: string;
+        };
+        /** AdminResourceMutationRead */
+        AdminResourceMutationRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Locked */
+            is_locked: boolean;
+            /** Is Published */
+            is_published: boolean;
+            /** Title */
+            title?: string | null;
+        };
+        /** AdminResourceRead */
+        AdminResourceRead: {
+            /** Category */
+            category: string;
+            /** Created At */
+            created_at?: string | null;
+            /** Description */
+            description: string;
+            /** Estimated Duration Minutes */
+            estimated_duration_minutes?: number | null;
+            /** External Url */
+            external_url?: string | null;
+            /** Icon */
+            icon?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Locked */
+            is_locked: boolean;
+            /** Is Published */
+            is_published: boolean;
+            /** Level */
+            level?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** AdminResourcesPage */
+        AdminResourcesPage: {
+            /** Items */
+            items: components["schemas"]["AdminResourceRead"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Resources */
+            resources: components["schemas"]["AdminResourceRead"][];
+            /** Total */
+            total: number;
+        };
+        /** AdminResourceStatePatch */
+        AdminResourceStatePatch: {
+            /** Is Locked */
+            is_locked?: boolean | null;
+            /** Is Published */
+            is_published?: boolean | null;
+        };
+        /** AdminStatsRead */
+        AdminStatsRead: {
+            /** Recent Users */
+            recent_users: number;
+            /** Total Applications */
+            total_applications: number;
+            /** Total Communities */
+            total_communities: number;
+            /** Total Companies */
+            total_companies: number;
+            /** Total Jobs */
+            total_jobs: number;
+            /** Total Questionnaires */
+            total_questionnaires: number;
+            /** Total Resources */
+            total_resources: number;
+            /** Total Resumes */
+            total_resumes: number;
+            /** Total Users */
+            total_users: number;
+        };
+        /** AdminUserPatch */
+        AdminUserPatch: {
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Is Superuser */
+            is_superuser?: boolean | null;
+        };
+        /** AdminUserRead */
+        AdminUserRead: {
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /** Is Verified */
+            is_verified: boolean;
+            /** Last Name */
+            last_name?: string | null;
+            /** Nickname */
+            nickname?: string | null;
+        };
+        /** AdminUsersPage */
+        AdminUsersPage: {
+            /** Items */
+            items: components["schemas"]["AdminUserRead"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+            /** Users */
+            users: components["schemas"]["AdminUserRead"][];
+        };
         /** AnswerCreate */
         AnswerCreate: {
             /** Option Id */
@@ -2860,6 +3294,11 @@ export interface components {
             /** Notes */
             notes?: string | null;
             status?: components["schemas"]["ApplicationStatus"] | null;
+        };
+        /** Body_admin_create_resource_file */
+        Body_admin_create_resource_file: {
+            /** File */
+            file: string;
         };
         /** Body_admin_upload_resource_file */
         Body_admin_upload_resource_file: {
@@ -5838,8 +6277,12 @@ export interface operations {
     admin_list_applications: {
         parameters: {
             query?: {
-                limit?: number;
-                skip?: number;
+                /** @deprecated */
+                limit?: number | null;
+                page?: number | null;
+                page_size?: number | null;
+                /** @deprecated */
+                skip?: number | null;
             };
             header?: never;
             path?: never;
@@ -5853,7 +6296,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminApplicationsPage"];
                 };
             };
             /** @description Validation Error */
@@ -5879,8 +6322,12 @@ export interface operations {
     admin_list_communities: {
         parameters: {
             query?: {
-                limit?: number;
-                skip?: number;
+                /** @deprecated */
+                limit?: number | null;
+                page?: number | null;
+                page_size?: number | null;
+                /** @deprecated */
+                skip?: number | null;
             };
             header?: never;
             path?: never;
@@ -5894,7 +6341,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminCommunitiesPage"];
                 };
             };
             /** @description Validation Error */
@@ -5937,7 +6384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminDeleteRead"];
                 };
             };
             /** @description Validation Error */
@@ -5963,8 +6410,12 @@ export interface operations {
     admin_list_companies: {
         parameters: {
             query?: {
-                limit?: number;
-                skip?: number;
+                /** @deprecated */
+                limit?: number | null;
+                page?: number | null;
+                page_size?: number | null;
+                /** @deprecated */
+                skip?: number | null;
             };
             header?: never;
             path?: never;
@@ -5978,7 +6429,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminCompaniesPage"];
                 };
             };
             /** @description Validation Error */
@@ -6021,7 +6472,138 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminDeleteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    admin_list_job_postings: {
+        parameters: {
+            query?: {
+                page?: number | null;
+                page_size?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminJobPostingsPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    admin_delete_job_posting: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+                referer?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDeleteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    admin_update_job_posting: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+                referer?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminJobPostingPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminJobPostingRead"];
                 };
             };
             /** @description Validation Error */
@@ -6171,11 +6753,60 @@ export interface operations {
             };
         };
     };
+    admin_create_resource_file: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+                referer?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_admin_create_resource_file"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminResourceFileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     admin_list_resources: {
         parameters: {
             query?: {
-                limit?: number;
-                skip?: number;
+                /** @deprecated */
+                limit?: number | null;
+                page?: number | null;
+                page_size?: number | null;
+                /** @deprecated */
+                skip?: number | null;
             };
             header?: never;
             path?: never;
@@ -6189,7 +6820,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminResourcesPage"];
                 };
             };
             /** @description Validation Error */
@@ -6229,12 +6860,12 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminResourceMutationRead"];
                 };
             };
             /** @description Validation Error */
@@ -6274,7 +6905,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminResourceDetailRead"];
                 };
             };
             /** @description Validation Error */
@@ -6321,7 +6952,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminResourceMutationRead"];
                 };
             };
             /** @description Validation Error */
@@ -6364,7 +6995,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminDeleteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    admin_update_resource_state: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+                referer?: string | null;
+            };
+            path: {
+                resource_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminResourceStatePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminResourceMutationRead"];
                 };
             };
             /** @description Validation Error */
@@ -6495,7 +7173,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminResourceFileRead"];
                 };
             };
             /** @description Validation Error */
@@ -6533,7 +7211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminStatsRead"];
                 };
             };
             /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
@@ -6550,8 +7228,12 @@ export interface operations {
     admin_list_users: {
         parameters: {
             query?: {
-                limit?: number;
-                skip?: number;
+                /** @deprecated */
+                limit?: number | null;
+                page?: number | null;
+                page_size?: number | null;
+                /** @deprecated */
+                skip?: number | null;
             };
             header?: never;
             path?: never;
@@ -6565,7 +7247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminUsersPage"];
                 };
             };
             /** @description Validation Error */
@@ -6608,7 +7290,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AdminDeleteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    admin_update_user: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+                referer?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserRead"];
                 };
             };
             /** @description Validation Error */

@@ -1,9 +1,12 @@
-# Aprovisionamiento de Google Cloud (TASK-055)
+# Aprovisionamiento de Google Cloud (TASK-055, TASK-057)
 
 Lo que estos scripts dejan listo: dos imágenes en Artifact Registry, una
 identidad federada para GitHub Actions **sin ninguna clave JSON**, los secretos
 en Secret Manager y una service account por carga de trabajo con el mínimo
-privilegio. Desplegar los servicios es TASK-056; aquí no se despliega nada.
+privilegio (TASK-055); y, una vez que TASK-056 ha desplegado los servicios,
+dominio, TLS, alertas y budget sobre ellos (TASK-057, `60`-`70`). Desplegar los
+servicios en sí es `.github/workflows/deploy.yml`, TASK-056; ningún script de
+este directorio lo hace.
 
 Implementan la [ADR-001](../../docs/refactor/ADR-001-cloud-run-ingress.md) —
 opción A, la API invocable tras el proxy Nginx del frontend— y **no la
@@ -32,6 +35,10 @@ cp config.env.example config.env   # y rellenar
 ./40-secrets.sh
 ./50-cloud-tasks.sh
 ./99-verify.sh
+# En este punto TASK-055 está listo. TASK-056 (deploy.yml) despliega los
+# servicios. Solo entonces tienen sentido los dos siguientes:
+./60-domain-mapping.sh    # requiere DOMAIN en config.env
+./70-observability.sh     # requiere ALERT_EMAIL; BILLING_ACCOUNT_ID y BUDGET_AMOUNT son opcionales
 ```
 
 Todos son idempotentes: re-ejecutarlos no duplica nada y es la forma de
@@ -105,7 +112,13 @@ válidamente que el nuestro. Sin la condición, cualquier repositorio de GitHub
 podría cambiar su token por credenciales de este proyecto.
 
 La segunda acotación está en el binding de impersonación, que solo alcanza al
-repositorio indicado. TASK-056 restringe además por rama en el propio workflow.
+repositorio indicado. La condición de atributo restringe además por rama
+(`assertion.ref == 'refs/heads/main'`) desde la corrección de TASK-055 en
+TASK-056: antes solo comprobaba el repositorio, y el comentario que prometía la
+rama no tenía código detrás. `deploy.yml` (TASK-056) también comprueba la rama
+en su propio `if`, pero esa comprobación vive en un fichero que cualquiera con
+permiso de push puede editar — la que no se puede sortear así es la condición
+de WIF, evaluada por Google antes de emitir el token.
 
 ### Lo que TASK-056 debe usar
 
@@ -200,3 +213,69 @@ expuestos. La carga es también la rotación.
 
 Los puntos 2 a 4 dependen de que exista el pipeline; el 1 solo depende de tener
 los valores rotados a mano.
+
+## TASK-056 — `deploy.yml`
+
+Vive en `.github/workflows/deploy.yml`, no en este directorio: es el pipeline,
+no aprovisionamiento. Implementa la secuencia de plan 08 §10 — build, migrate
+bloqueante, API sin tráfico, smoke contra la revisión etiquetada, promoción,
+frontend, smoke público — y hace rollback automático a la revisión anterior si
+algo falla después de promover.
+
+Escrito pero **no ejecutado ni una vez**: nada de esto se ha corrido contra
+`gen-lang-client-0908704200`. Cuando corra por primera vez, reemplazará el
+despliegue hecho a mano (`gcloud run deploy --source`, sección de arriba) por
+uno con secretos por referencia y la service account `sc-api` de mínimo
+privilegio en vez de la de Compute por defecto — ese reemplazo es automático,
+`gcloud run deploy` no conserva configuración que el comando nuevo no pida.
+
+Depende de que `40-secrets.sh` tenga los ocho valores cargados: sin eso,
+`--set-secrets` en el propio `deploy.yml` falla al desplegar porque el secreto
+referenciado no tiene ninguna versión.
+
+## TASK-057 — dominio, TLS, alertas y budget
+
+`60-domain-mapping.sh` mapea `DOMAIN` a `$FRONT_SERVICE` y deja que Cloud Run
+gestione el certificado; no hay paso manual de TLS más allá de crear los
+registros DNS que el propio comando imprime.
+
+`70-observability.sh` crea un canal de notificación por email, cuatro métricas
+basadas en logs sobre campos que `backend/app/logging.py` ya escribe (429,
+fallos de proveedor externo, jobs de CV fallidos tras gastar, techo de gasto de
+IA alcanzado), seis políticas de alerta —esas cuatro más 5xx y p95 nativas de
+Cloud Run— y un budget de facturación mensual. Cada política trae su propio
+runbook en `documentation.content`, legible desde la propia alerta cuando
+dispara.
+
+Lo que **no** cubre, documentado en la salida del propio script: una métrica
+real de pool de conexiones de DB. No existe hoy ni en logs ni en Cloud
+Monitoring (SQLAlchemy no la expone; Neon no es Cloud SQL), así que su síntoma
+—agotamiento— se alerta indirectamente vía la alerta de 5xx en vez de
+inventarse una fuente de telemetría que TASK-028 no decidió emitir.
+
+### Runbook de rollback por revisión
+
+No hay comando especial: es el mismo que usa el job `rollback` de `deploy.yml`.
+
+```bash
+# Revisión que está sirviendo tráfico ahora mismo, por servicio:
+gcloud run services describe studentscompass-api \
+  --project "$PROJECT_ID" --region "$REGION" \
+  --format='value(status.traffic.filter(percent:100).revisionName)'
+
+# Volver a una revisión concreta (código anterior). Las migraciones nunca se
+# revierten con esto: expand/contract (§12) es lo que hace que el código
+# anterior siga funcionando contra el schema nuevo.
+gcloud run services update-traffic studentscompass-api \
+  --project "$PROJECT_ID" --region "$REGION" \
+  --to-revisions REVISION_ANTERIOR=100
+
+gcloud run services update-traffic studentscompass-front \
+  --project "$PROJECT_ID" --region "$REGION" \
+  --to-revisions REVISION_ANTERIOR=100
+```
+
+**No ensayado todavía.** El criterio de aceptación de TASK-057 pide un rollback
+"ejecutado en staging, no solo documentado" — esto es la documentación; falta
+desplegar de verdad, romper algo a propósito y medir cuánto tarda en volver a
+servir, lo que a su vez espera a que TASK-056 haya corrido al menos una vez.

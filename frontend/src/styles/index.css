@@ -48,3 +48,22 @@
     font-family: var(--font-sans);
   }
 }
+
+/* Admin keeps the captured dark presentation while reusing the shared
+ * components. The overrides are scoped so DataTable remains light elsewhere. */
+@layer components {
+  .admin-console .admin-dark-table > div {
+    border-color: color-mix(in srgb, white 10%, transparent) !important;
+    background: color-mix(in srgb, white 4%, transparent) !important;
+  }
+
+  .admin-console .admin-dark-table thead,
+  .admin-console .admin-dark-table tr {
+    border-color: color-mix(in srgb, white 10%, transparent) !important;
+  }
+
+  .admin-console .admin-dark-table th,
+  .admin-console .admin-dark-table td {
+    color: var(--color-ink-muted) !important;
+  }
+}

@@ -119,6 +119,25 @@ class AdminService:
         await self.session.refresh(user)
         return user
 
+    async def update_user_flags(
+        self,
+        user_id: uuid.UUID,
+        *,
+        is_active: bool | None = None,
+        is_superuser: bool | None = None,
+    ) -> Optional[User]:
+        """Set the desired state; unlike a toggle, replays are idempotent."""
+        user = await self.get_user(user_id)
+        if user is None:
+            return None
+        if is_active is not None:
+            user.is_active = is_active
+        if is_superuser is not None:
+            user.is_superuser = is_superuser
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
+
     async def delete_user(self, user_id: uuid.UUID) -> bool:
         user = await self.get_user(user_id)
         if user is None:
@@ -129,6 +148,10 @@ class AdminService:
 
     async def count_users(self) -> int:
         return (await self.session.execute(select(func.count(User.id)))).scalar() or 0
+
+    async def count_rows(self, model: type) -> int:
+        """Count a bounded admin catalogue for its numbered-page envelope."""
+        return (await self.session.execute(select(func.count(model.id)))).scalar() or 0
 
     # ── Communities ────────────────────────────────────────────────────
     async def list_communities(self, skip: int = 0, limit: int = 50) -> Sequence[CommunityModel]:
@@ -281,6 +304,27 @@ class AdminService:
         await self.session.refresh(resource)
         return resource
 
+    async def update_resource_state(
+        self,
+        resource_id: uuid.UUID,
+        *,
+        is_published: bool | None = None,
+        is_locked: bool | None = None,
+    ) -> Optional[ResourceModel]:
+        result = await self.session.execute(
+            select(ResourceModel).where(ResourceModel.id == resource_id)
+        )
+        resource = result.scalar_one_or_none()
+        if resource is None:
+            return None
+        if is_published is not None:
+            resource.is_published = is_published
+        if is_locked is not None:
+            resource.is_locked = is_locked
+        await self.session.commit()
+        await self.session.refresh(resource)
+        return resource
+
     async def delete_resource(self, resource_id: uuid.UUID) -> bool:
         result = await self.session.execute(
             select(ResourceModel).where(ResourceModel.id == resource_id)
@@ -384,6 +428,20 @@ class AdminService:
         if job is None:
             return None
         job.is_active = not job.is_active
+        await self.session.commit()
+        await self.session.refresh(job)
+        return job
+
+    async def update_job_state(self, job_id: uuid.UUID, *, is_active: bool) -> Optional[JobPosting]:
+        result = await self.session.execute(
+            select(JobPosting)
+            .where(JobPosting.id == job_id)
+            .options(selectinload(JobPosting.company))
+        )
+        job = result.scalar_one_or_none()
+        if job is None:
+            return None
+        job.is_active = is_active
         await self.session.commit()
         await self.session.refresh(job)
         return job

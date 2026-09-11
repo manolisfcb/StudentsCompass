@@ -124,7 +124,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-050 | Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters | HIGH | PHASE-M3 | IN PROGRESS | TASK-046 | TASK-047, TASK-048, TASK-049 |
 | TASK-051 | Vertical 6 — Community, friendships y messages en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-024, TASK-046 | TASK-049, TASK-052 |
 | TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-022, TASK-023, TASK-046 | TASK-051 |
-| TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | TODO | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
+| TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
 | TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | COMPLETED | TASK-013, TASK-037 | TASK-055 |
 | TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | BLOCKED | TASK-002, TASK-036, TASK-039 | TASK-054 |
 | TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | BLOCKED | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
@@ -9602,7 +9602,7 @@ Risk: HIGH
 
 ## TASK-053 — Vertical 8 — Admin en React
 
-Status: TODO
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration

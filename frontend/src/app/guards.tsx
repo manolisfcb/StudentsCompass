@@ -27,9 +27,11 @@ import { useSession } from "@/app/useSession";
  */
 export function RequireActor({
   allow,
+  signInPath = SIGN_IN_PATH,
   children,
 }: {
   allow: readonly ActorType[];
+  signInPath?: string;
   children: ReactNode;
 }) {
   const session = useSession();
@@ -39,7 +41,7 @@ export function RequireActor({
     <AsyncBoundary query={session}>
       {(value) => {
         if (value === null) {
-          return <Navigate to={SIGN_IN_PATH} replace state={{ from: location }} />;
+          return <Navigate to={signInPath} replace state={{ from: location }} />;
         }
         // `actors` rather than `actor`: a person holding both a student and a
         // recruiter cookie should reach either surface without signing out of
