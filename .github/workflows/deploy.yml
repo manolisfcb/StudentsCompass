@@ -37,6 +37,7 @@ env:
   # Actions variables porque cambian de un fork o un entorno a otro; un valor
   # por defecto aquí sería un proyecto de otra persona.
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
   REGION: ${{ vars.GCP_REGION }}
   REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
   # Nombres fijos: son los mismos que infra/gcp/config.env.example declara para
@@ -112,12 +113,11 @@ jobs:
       - name: Calcular las URLs de los servicios
         id: urls
         run: |
-          PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
           API_URL="$(gcloud run services describe "$API_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
           FRONT_URL="https://${FRONT_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
-          if [ -z "$API_URL" ]; then
-            echo "::error::No se pudo resolver la URL permanente de ${API_SERVICE}"
+          if [ -z "$PROJECT_NUMBER" ] || [ -z "$API_URL" ]; then
+            echo "::error::Falta GCP_PROJECT_NUMBER o no se pudo resolver la URL de ${API_SERVICE}"
             exit 1
           fi
           echo "project_number=${PROJECT_NUMBER}" >> "$GITHUB_OUTPUT"
