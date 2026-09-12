@@ -597,8 +597,8 @@ async def capture_fixtures(out_dir: Path) -> list[dict[str, Any]]:
     async with AsyncClient(transport=transport, base_url="http://baseline.test") as anon:
         clients = {"public": anon}
         for name, url, data in (
-            ("student", "/auth/jwt/login", {"username": STUDENT_EMAIL, "password": STUDENT_PASSWORD}),
-            ("admin", "/auth/jwt/login", {"username": ADMIN_EMAIL, "password": ADMIN_PASSWORD}),
+            ("student", "/api/v1/auth/student/login", {"username": STUDENT_EMAIL, "password": STUDENT_PASSWORD}),
+            ("admin", "/api/v1/auth/student/login", {"username": ADMIN_EMAIL, "password": ADMIN_PASSWORD}),
             (
                 "recruiter",
                 "/api/v1/auth/company/login",
@@ -606,7 +606,9 @@ async def capture_fixtures(out_dir: Path) -> list[dict[str, Any]]:
             ),
         ):
             client = AsyncClient(transport=transport, base_url="http://baseline.test")
-            response = await client.post(url, data=data)
+            await client.get("/healthz")
+            csrf_token = client.cookies.get("studentscompass_csrf")
+            response = await client.post(url, data=data, headers={"X-CSRF-Token": csrf_token})
             if response.status_code not in (200, 204):
                 raise SystemExit(f"login de {name} falló: {response.status_code} {response.text}")
             clients[name] = client
@@ -678,7 +680,7 @@ async def capture_fixtures(out_dir: Path) -> list[dict[str, Any]]:
                     + "\n"
                 )
                 record["captured"] = True
-                record["file"] = str(fixture_path.relative_to(BASELINE_DIR))
+                record["file"] = str(fixture_path.relative_to(out_dir.parent))
                 results.append(record)
         finally:
             for name, client in clients.items():
@@ -778,8 +780,8 @@ def login_cookies(base_url: str) -> dict[str, dict[str, str]]:
     import httpx
 
     logins = {
-        "student": ("/auth/jwt/login", STUDENT_EMAIL, STUDENT_PASSWORD, "studentscompass_auth"),
-        "admin": ("/auth/jwt/login", ADMIN_EMAIL, ADMIN_PASSWORD, "studentscompass_auth"),
+        "student": ("/api/v1/auth/student/login", STUDENT_EMAIL, STUDENT_PASSWORD, "studentscompass_auth"),
+        "admin": ("/api/v1/auth/student/login", ADMIN_EMAIL, ADMIN_PASSWORD, "studentscompass_auth"),
         "recruiter": (
             "/api/v1/auth/company/login", RECRUITER_EMAIL, RECRUITER_PASSWORD,
             "studentscompass_company_auth",
@@ -788,7 +790,13 @@ def login_cookies(base_url: str) -> dict[str, dict[str, str]]:
     cookies: dict[str, dict[str, str]] = {}
     with httpx.Client(base_url=base_url) as client:
         for name, (url, email, password, cookie_name) in logins.items():
-            response = client.post(url, data={"username": email, "password": password})
+            client.get("/healthz")
+            csrf_token = client.cookies.get("studentscompass_csrf")
+            response = client.post(
+                url,
+                data={"username": email, "password": password},
+                headers={"X-CSRF-Token": csrf_token},
+            )
             if response.status_code not in (200, 204):
                 raise SystemExit(f"login de {name} falló: {response.status_code} {response.text}")
             value = response.cookies.get(cookie_name)
@@ -925,7 +933,7 @@ def audit_fixtures(fixtures_dir: Path) -> list[str]:
     problems: list[str] = []
     for path in sorted(fixtures_dir.rglob("*.json")):
         text = path.read_text()
-        rel = path.relative_to(BASELINE_DIR)
+        rel = path.relative_to(fixtures_dir.parent)
         for label, pattern in FORBIDDEN_PATTERNS:
             if pattern.search(text):
                 problems.append(f"{rel}: coincide con el patrón prohibido «{label}»")
@@ -1127,6 +1135,13 @@ def main() -> int:
     args = parser.parse_args()
     out_dir = Path(args.out).resolve()
 
+    def display_path(path: Path) -> str:
+        """Keep the default output concise while allowing --out anywhere."""
+        try:
+            return str(path.relative_to(REPO_ROOT))
+        except ValueError:
+            return str(path)
+
     try:
         for stale in ("fixtures", "screens"):
             shutil.rmtree(out_dir / stale, ignore_errors=True)
@@ -1136,7 +1151,7 @@ def main() -> int:
         asyncio.run(seed())
 
         openapi_path = export_openapi(out_dir)
-        print(f"openapi: {openapi_path.relative_to(REPO_ROOT)}")
+        print(f"openapi: {display_path(openapi_path)}")
 
         fixtures = asyncio.run(capture_fixtures(out_dir / "fixtures"))
         captured = sum(1 for f in fixtures if f.get("captured"))
@@ -1156,7 +1171,7 @@ def main() -> int:
         print("revisión de secretos/PII: sin hallazgos")
 
         write_manifest(out_dir, fixtures, screens, openapi_path, not args.skip_screens)
-        print(f"manifiesto: {(out_dir / 'MANIFEST.md').relative_to(REPO_ROOT)}")
+        print(f"manifiesto: {display_path(out_dir / 'MANIFEST.md')}")
         return 0
     finally:
         asyncio.run(ENGINE.dispose())

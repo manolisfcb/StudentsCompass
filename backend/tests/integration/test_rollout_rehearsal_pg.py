@@ -381,6 +381,24 @@ DECLARED_REMOVED_PATHS = {
     # endpoints carrying CSRF double-submit.
     "/auth/jwt/login",
     "/auth/jwt/logout",
+    # TASK-048–053: the legacy adapters remain callable while traffic drains,
+    # but are intentionally hidden from the public OpenAPI contract. Their
+    # REST replacements below are the documented surface consumed by React.
+    "/api/v1/applications/{application_id}/interview-selection",
+    "/api/v1/communities/{community_id}/join",
+    "/api/v1/communities/{community_id}/leave",
+    "/api/v1/company_dashboard",
+    "/api/v1/friends/requests/{request_id}/accept",
+    "/api/v1/jobs/keywords/analyze",
+    "/api/v1/jobs/keywords/{job_id}",
+    "/api/v1/jobs/search",
+    "/api/v1/profile/cv",
+    "/api/v1/profile/cv/course-audit-attempts",
+    "/api/v1/profile/cv/course-audit-upload",
+    "/api/v1/profile/cv/upload",
+    "/api/v1/profile/cv/{resume_id}",
+    "/api/v1/roadmaps/{slug}/save",
+    "/api/v1/students_dashboard",
 }
 DECLARED_ADDED_PATHS = {
     "/api/v1/auth/session",
@@ -394,6 +412,23 @@ DECLARED_ADDED_PATHS = {
     # exactly as it was beside the new one — bounded now, but unchanged in shape.
     "/api/v1/posts/page",
     "/api/v1/applications/page",
+    # TASK-048–053: stable REST replacements for the hidden legacy adapters.
+    "/api/v1/admin/job-postings",
+    "/api/v1/admin/job-postings/{job_id}",
+    "/api/v1/admin/resource-files",
+    "/api/v1/applications/{application_id}/selected-interview",
+    "/api/v1/communities/{community_id}/members/me",
+    "/api/v1/companies/me/dashboard",
+    "/api/v1/cv-analyses",
+    "/api/v1/cv-analyses/{job_id}",
+    "/api/v1/dashboard/student",
+    "/api/v1/friend-requests/{request_id}",
+    "/api/v1/job-searches",
+    "/api/v1/resume-course-audits",
+    "/api/v1/resume-course-audits/attempts",
+    "/api/v1/resumes",
+    "/api/v1/resumes/{resume_id}",
+    "/api/v1/roadmaps/{slug}/saves/me",
     # TASK-054: the endpoints a task queue calls, deliberately outside /api/v1
     # because they are not part of the public contract. Reachable from the
     # internet under ADR-001, and therefore authenticated by OIDC rather than by

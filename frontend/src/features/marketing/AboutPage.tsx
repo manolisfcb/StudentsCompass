@@ -141,21 +141,24 @@ export function AboutPage() {
         jsonLd={ABOUT_JSON_LD}
       />
 
-      <section className="space-y-6 text-center">
-        <h1 className="text-4xl font-bold text-ink">
+      <section className="full-bleed hero-gradient -mt-8 space-y-6 px-4 py-14 text-center md:py-20">
+        <h1 className="text-4xl font-bold text-white">
           {t("about.hero.titleLine1")}
           <br />
           {t("about.hero.titleLine2")}
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-ink-soft">{t("about.hero.tagline")}</p>
+        <p className="mx-auto max-w-2xl text-lg text-white/85">{t("about.hero.tagline")}</p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link
             to="/register"
-            className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-strong"
+            className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand shadow-[0_14px_28px_rgba(15,23,42,0.16)] hover:bg-[#f0fdfa]"
           >
             {t("about.hero.primaryCta")}
           </Link>
-          <a href="#for-employers" className="text-sm font-medium text-brand hover:underline">
+          <a
+            href="#for-employers"
+            className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+          >
             {t("about.hero.secondaryCta")}
           </a>
         </div>

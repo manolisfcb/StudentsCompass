@@ -20,6 +20,14 @@ x-backend-env: &backend-env
   # Development-only value. Production reads this from Secret Manager
   # (TASK-055); userService refuses to start without it when ENV=production.
   SECRET_KEY: local-development-secret-not-for-deployment
+  # `app.py`'s CORS_ORIGINS fallback lists Vite's dev port (3000) and the old
+  # monolith port (8000), not this file's single origin (8080, the whole
+  # point of `web` fronting everything through Nginx). Without this, the CORS
+  # *and* CSRF middleware both reject every mutating request's Origin header
+  # — login and register fail closed with 403 the moment a real browser hits
+  # them through this compose stack, even though `npm run dev` against a bare
+  # backend never surfaces it (TASK-046).
+  CORS_ORIGINS: http://localhost:8080
   # Alembic is the only authority on schema (§12). create_all stays off here
   # exactly as it is off in production; the migrate service does the work.
   AUTO_CREATE_TABLES: "0"

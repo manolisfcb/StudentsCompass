@@ -49,6 +49,44 @@
   }
 }
 
+/* Marketing/auth gradients (TASK-046). Literal values from
+ * `backend/app/static/css/style.css` (`.marketing-header`, `--auth-card-top`
+ * companion background) — not a redesign, the same brand gradient the public
+ * shell and login/register cards already ship, given one definition instead
+ * of being re-typed as a hex string in every component that needs it. */
+@layer components {
+  .hero-gradient {
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 20%),
+      linear-gradient(110deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
+  }
+
+  .auth-gradient {
+    background:
+      radial-gradient(circle at top left, rgba(94, 234, 212, 0.14), transparent 22%),
+      linear-gradient(135deg, #0a4f48 0%, #0f766e 38%, #0d9488 70%, #5eead4 100%);
+  }
+
+  /* The login/register aside panel (`.auth-aside` in the legacy sheet). */
+  .auth-aside-gradient {
+    background:
+      radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 28%),
+      linear-gradient(160deg, rgba(8, 59, 55, 0.96) 0%, rgba(11, 95, 88, 0.94) 100%);
+  }
+
+  /* Breaks a section out of the shell's centred `max-w-6xl` column so a
+   * gradient band can reach the viewport edge, the way `.marketing-header`
+   * does with a fluid parent instead of a fixed-width one. */
+  .full-bleed {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+}
+
 /* Admin keeps the captured dark presentation while reusing the shared
  * components. The overrides are scoped so DataTable remains light elsewhere. */
 @layer components {

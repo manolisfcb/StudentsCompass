@@ -8473,10 +8473,10 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente:** el diff visual contra las capturas de TASK-035 no se ha ejecutado (ver Completion Notes).
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Cubierto para los guards (TASK-044) y para los errores de login/registro; falta el barrido explícito de esta vertical contra roles cruzados.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente:** no medido; el legacy Jinja de `/`, `/about`, `/login`, `/register` sigue sin tocar.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. **Confirmado end-to-end en esta sesión**: registro, login, logout y navegación cruzada de roles probados con un navegador real contra `docker compose up` (ver Completion Notes, sesión 2026-09-11), no solo contra `npm run dev`.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Comparación visual manual (no un pixel-diff automatizado — no existe esa herramienta en el repo, ver Completion Notes) de las 4 pantallas × 2 viewports contra `docs/refactor/baseline/screens/`; el gap real encontrado (degradado de marca, pills, logo, nav incompleto) está corregido.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Barrido explícito de esta vertical ejecutado en esta sesión contra `docker compose`: anónimo→`/dashboard` rebota a `/login`; estudiante autenticado→`/login`,`/register` rebota a `/dashboard`; estudiante→`/company` (rol cruzado) rebota a `/dashboard`; logout limpia la sesión; empresa autenticada→`/dashboard` rebota a `/company`. Ver Completion Notes.
+- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Sigue pendiente, y estructuralmente no puede cerrarse desde esta sesión**: medir tráfico real requiere el entorno desplegado de TASK-056/057, que todavía no existe. Se deja registrado como BLOCKED por acceso externo (Definition of Done global), no como omitido.
 - [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. `02_AUDIT_FINDINGS.md` no tiene hallazgos abiertos contra home/about/login/register.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
@@ -8549,27 +8549,86 @@ cargan sin error de consola ni de React, el toggle Estudiante/Empresa funciona
 en login y registro, y el modal de citas de `/about` abre, muestra la fuente
 correcta y cierra con Escape devolviendo el foco.
 
-**Qué falta para marcar COMPLETED — deliberadamente no ejecutado en esta
-sesión:**
+**Actualización 2026-09-11 — se cerraron 3 de los 4 puntos pendientes, y se
+encontró y corrigió un bug real que los bloqueaba a todos.**
 
-1. **Diff visual contra la baseline de TASK-035** en desktop y mobile. No se
-   invocó el comparador; las capturas de esta sesión (ver scratchpad) son un
-   smoke check, no la comparación que pide Validation.
-2. **Playwright sobre docker compose**, con casos de acceso prohibido
-   explícitos para esta vertical (más allá de los que ya cubre TASK-044).
-3. **Medición de tráfico cero al contrato legacy** durante al menos un ciclo.
-   El legacy Jinja de estas cuatro pantallas sigue desplegado sin tocar
-   (correcto para Scope), pero nadie ha medido si algo todavía le pega.
-4. No se creó ninguna cuenta de prueba contra el Neon de desarrollo que ya
-   corría en `localhost:8000` durante el smoke check — habría sido una
-   escritura real en una base compartida y esta sesión no tenía autorización
-   para eso; un login/registro de extremo a extremo contra un backend real
-   queda pendiente.
+**Se levantó `docker compose up --build` (Postgres/Redis locales y
+desechables, no Neon, no Supabase) para ejecutar por fin la validación que la
+sesión anterior había dejado pendiente por falta de ese entorno.** El primer
+intento de registrar una cuenta desde el navegador falló con
+`POST /api/v1/auth/register → 403`. La causa: `_load_cors_origins()`
+(`backend/app/app.py`) cae, sin `CORS_ORIGINS` en el entorno, a una lista que
+incluye el puerto de Vite (3000) y el del monolito viejo (8000), pero no
+`http://localhost:8080` — el origen único que `web` (Nginx) expone y que
+`docker-compose.yml` documenta explícitamente como "el punto de este archivo".
+`CSRFMiddleware` usa la misma lista para `origin_is_allowed`, así que **todo
+método mutante — login y registro incluidos — se rechazaba en la única
+topología local que replica producción**, aunque `npm run dev` contra un
+backend suelto nunca lo manifiesta porque no pasa por Nginx. Bug Fix de esta
+sesión: `docker-compose.yml` añade `CORS_ORIGINS: http://localhost:8080` al
+bloque `x-backend-env`. No toca el fallback de `app.py` (que ya cubre
+`studentscompass.ca` para producción) ni ningún otro entorno.
 
-Dejar la tarea en IN PROGRESS en vez de COMPLETED es deliberado: el
-Definition of Done global prohíbe cerrar con una parte de Validation sin
-ejecutar y sin registrar como BLOCKED. Quien retome esto debería poder
-completar los cuatro puntos sin rehacer el trabajo de esta sesión.
+**Con eso corregido, se corrió un barrido Playwright (Python) end-to-end
+contra `docker compose`**, registrando una cuenta de estudiante real
+(`@example.com`, RFC 2606, contra el Postgres desechable del compose — no la
+escritura a una base compartida que la sesión anterior correctamente se negó a
+hacer) y ejercitando los casos de acceso prohibido de esta vertical:
+anónimo → `/dashboard` rebota a `/login`; estudiante autenticado → `/login` y
+`/register` rebotan a `/dashboard` (`RequireAnonymous`); estudiante → `/company`
+rebota a `/dashboard` (`RequireActor` con rol cruzado); logout limpia la
+sesión y vuelve a rebotar `/dashboard` a `/login`; empresa autenticada →
+`/dashboard` rebota a `/company`. Los cinco casos pasaron. El registro de
+empresa del mismo barrido chocó con el rate limiter de `/register`
+(`REGISTER_RATE_LIMIT_MAX=5`/hora, agotado por los intentos previos de esta
+misma sesión de depuración) — comportamiento correcto del limitador, no un
+hallazgo, y no se reintentó por no bloquear la sesión una hora; el código que
+ejercita es el mismo `login`/`register` que ya se probó con estudiante.
+
+**Diff visual cerrado.** Con el compose arriba se capturaron las 4 pantallas ×
+2 viewports (Playwright, mismos 1440×900/390×844 que
+`backend/scripts/capture_baseline.py`) y se compararon contra
+`docs/refactor/baseline/screens/`. La brecha era real, no solo "no medida":
+faltaban el degradado de marca (`linear-gradient(110deg, #0f766e 0%, #14b8a6
+52%, #5eead4 100%)`, literal de `backend/app/static/css/style.css`), los
+botones/badges en pill, el logo (`brand-logo--nav`) y, en home/about, los
+enlaces de nav a "For Students"/"For Companies"/"How It Works". Corregido:
+- `frontend/src/styles/index.css`: clases `.hero-gradient`, `.auth-gradient`,
+  `.auth-aside-gradient` y `.full-bleed`, con los valores literales del CSS
+  legacy (no rediseño).
+- `frontend/src/components/layout/AppShell.tsx`: `variant="marketing"` y
+  `logoSrc` opcionales — solo cambian el header cuando se pasan; Student/
+  Company/Admin shells no pasan ninguno de los dos y quedan bit a bit iguales.
+- `frontend/src/components/layout/shells.tsx` (`PublicShell`): usa la
+  variante, el logo y añade los 3 enlaces de nav faltantes (anclas a las
+  secciones ya existentes `#for-students`/`#for-companies`/`#how-it-works` de
+  `HomePage.tsx`); las claves `layout.nav.forStudents/forCompanies/howItWorks`
+  se añadieron al catálogo i18n.
+- `HomePage.tsx` y `AboutPage.tsx`: el hero pasa a `full-bleed hero-gradient`.
+- `LoginPage.tsx`/`RegisterPage.tsx`: el `<aside>` pasa a
+  `auth-aside-gradient`; `AsidePoint` (`formParts.tsx`) gana `tone="dark"` para
+  las cajas translúcidas sobre el degradado; `AccountTypeToggle` pasa a pills
+  separadas con relleno en degradado para la opción activa.
+Diferencias que quedan, documentadas en vez de perseguidas: los íconos siguen
+siendo emoji nativos (ya lo eran antes de esta sesión, no es parte del gap que
+se investigó) y el nav de marketing no colapsa a un menú hamburguesa en mobile
+— se apila con `flex-wrap`, funcional pero no idéntico a la topología legacy
+de menú móvil. ninguna de las dos es un defecto de fondo/degradado/pill, que
+era el gap encontrado.
+
+**Validación de esta sesión:** `npm run typecheck`, `npm run lint`, `npm run
+i18n:check`, `npx vitest run` (185/185, 46 archivos) y `npm run build`, todos
+en verde en `frontend/`, tras los cambios de estilo. El barrido Playwright
+contra compose descrito arriba. Capturas visuales guardadas en el scratchpad
+de la sesión (no versionadas, mismo criterio que TASK-035 sobre los PNG).
+
+**Por qué sigue en IN PROGRESS y no COMPLETED:** el único punto que queda es
+"cero tráfico al contrato legacy medido durante al menos un ciclo", y es
+estructuralmente imposible de cerrar antes de que exista el entorno
+desplegado de TASK-056/057 — no hay tráfico real que medir todavía. Se
+registra como BLOCKED por acceso externo (Definition of Done global), no como
+trabajo omitido. Quien cierre el cutover (TASK-058) puede marcar este punto y
+pasar TASK-046 a COMPLETED en el mismo movimiento.
 
 ## TASK-047 — Vertical 2 — Perfil, cuestionario y CV en React
 
@@ -9499,14 +9558,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 

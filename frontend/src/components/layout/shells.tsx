@@ -24,21 +24,31 @@ function useShellStrings() {
 export function PublicShell() {
   const { t } = useTranslation();
   const { app, skip } = useShellStrings();
-  const nav: NavItem[] = [{ to: "/about", label: t("layout.nav.about") }];
+  const nav: NavItem[] = [
+    { to: "/#for-students", label: t("layout.nav.forStudents") },
+    { to: "/#for-companies", label: t("layout.nav.forCompanies") },
+    { to: "/#how-it-works", label: t("layout.nav.howItWorks") },
+    { to: "/about", label: t("layout.nav.about") },
+  ];
   return (
     <AppShell
       title={app}
       titleHref="/"
       nav={nav}
       skipLabel={skip}
+      variant="marketing"
+      logoSrc="/images/Logo_Ready_to_Use.png"
       actions={
-        <div className="flex items-center gap-3">
-          <Link to="/login" className="text-sm font-medium text-ink-soft hover:text-brand">
+        <div className="flex items-center gap-2">
+          <Link
+            to="/login"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 bg-ink/30 px-4 py-2 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_24px_rgba(15,23,42,0.12)] transition hover:bg-ink/40"
+          >
             {t("layout.nav.login")}
           </Link>
           <Link
             to="/register"
-            className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-strong"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white bg-white px-4 py-2 text-sm font-bold text-brand shadow-[0_14px_28px_rgba(15,23,42,0.16)] transition hover:bg-[#f0fdfa]"
           >
             {t("layout.nav.getStarted")}
           </Link>

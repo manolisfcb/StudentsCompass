@@ -272,15 +272,14 @@ class TestOutboxDelivery:
 
 
 class TestTransports:
-    def test_the_default_transport_refuses_instead_of_guessing(self):
+    @pytest.mark.asyncio
+    async def test_the_default_transport_refuses_instead_of_guessing(self):
         row = TaskOutboxModel(
             id=uuid.uuid4(), task_type=TASK_CV_ANALYSIS, payload={"job_id": str(uuid.uuid4())},
             dedupe_key="x", status=OutboxStatus.PENDING,
         )
         with pytest.raises(TransportNotConfigured):
-            import asyncio
-
-            asyncio.get_event_loop().run_until_complete(DisabledTransport().deliver(row))
+            await DisabledTransport().deliver(row)
 
     def test_the_task_url_is_derived_from_the_payload(self):
         job_id = uuid.uuid4()

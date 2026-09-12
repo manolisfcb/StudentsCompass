@@ -58,59 +58,64 @@ export function HomePage() {
     <div className="space-y-20">
       <DocumentMeta title={t("home.seoTitle")} description={t("home.seoDescription")} path="/" />
 
-      <section className="grid gap-10 md:grid-cols-2 md:items-center">
-        <div className="space-y-6">
-          <span className="text-sm font-semibold uppercase tracking-wide text-brand">
-            {t("home.hero.kicker")}
-          </span>
-          <h1 className="text-4xl font-bold text-ink">{t("home.hero.title")}</h1>
-          <p className="text-lg text-ink-soft">{t("home.hero.body")}</p>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link
-              to="/register"
-              className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-strong"
-            >
-              {t("home.hero.primaryCta")}
-            </Link>
-            <Link to="/about" className="text-sm font-medium text-brand hover:underline">
-              {t("home.hero.secondaryCta")}
-            </Link>
+      <section className="full-bleed hero-gradient -mt-8 px-4 py-14 md:py-20">
+        <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-2 md:items-center">
+          <div className="space-y-6">
+            <span className="inline-block rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+              {t("home.hero.kicker")}
+            </span>
+            <h1 className="text-4xl font-bold text-white">{t("home.hero.title")}</h1>
+            <p className="text-lg text-white/85">{t("home.hero.body")}</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                to="/register"
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand shadow-[0_14px_28px_rgba(15,23,42,0.16)] hover:bg-[#f0fdfa]"
+              >
+                {t("home.hero.primaryCta")}
+              </Link>
+              <Link
+                to="/about"
+                className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                {t("home.hero.secondaryCta")}
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-white/70">
+              <span>{t("home.hero.proof1")}</span>
+              <span>{t("home.hero.proof2")}</span>
+              <span>{t("home.hero.proof3")}</span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-muted">
-            <span>{t("home.hero.proof1")}</span>
-            <span>{t("home.hero.proof2")}</span>
-            <span>{t("home.hero.proof3")}</span>
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          <article className="rounded-lg border border-border bg-surface p-6 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-brand">
-              {t("home.showcase.primaryLabel")}
-            </div>
-            <h3 className="mt-2 text-lg font-semibold text-ink">{t("home.showcase.primaryTitle")}</h3>
-            <p className="mt-1 text-sm text-ink-soft">{t("home.showcase.primaryBody")}</p>
-            <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-              <div>
-                <strong className="block text-ink">{t("home.showcase.stat1Title")}</strong>
-                <span className="text-ink-muted">{t("home.showcase.stat1Body")}</span>
+          <div className="space-y-4">
+            <article className="rounded-2xl border border-white/20 bg-surface p-6 shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
+              <div className="text-xs font-semibold uppercase tracking-wide text-brand">
+                {t("home.showcase.primaryLabel")}
               </div>
-              <div>
-                <strong className="block text-ink">{t("home.showcase.stat2Title")}</strong>
-                <span className="text-ink-muted">{t("home.showcase.stat2Body")}</span>
+              <h3 className="mt-2 text-lg font-semibold text-ink">{t("home.showcase.primaryTitle")}</h3>
+              <p className="mt-1 text-sm text-ink-soft">{t("home.showcase.primaryBody")}</p>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <strong className="block text-ink">{t("home.showcase.stat1Title")}</strong>
+                  <span className="text-ink-muted">{t("home.showcase.stat1Body")}</span>
+                </div>
+                <div>
+                  <strong className="block text-ink">{t("home.showcase.stat2Title")}</strong>
+                  <span className="text-ink-muted">{t("home.showcase.stat2Body")}</span>
+                </div>
+                <div>
+                  <strong className="block text-ink">{t("home.showcase.stat3Title")}</strong>
+                  <span className="text-ink-muted">{t("home.showcase.stat3Body")}</span>
+                </div>
               </div>
-              <div>
-                <strong className="block text-ink">{t("home.showcase.stat3Title")}</strong>
-                <span className="text-ink-muted">{t("home.showcase.stat3Body")}</span>
+            </article>
+            <article className="rounded-2xl border border-white/20 bg-ink/25 p-6 text-white shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
+              <div className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
+                {t("home.showcase.secondaryBadge")}
               </div>
-            </div>
-          </article>
-          <article className="rounded-lg bg-brand p-6 text-white">
-            <div className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
-              {t("home.showcase.secondaryBadge")}
-            </div>
-            <p className="mt-2 text-sm">{t("home.showcase.secondaryBody")}</p>
-          </article>
+              <p className="mt-2 text-sm">{t("home.showcase.secondaryBody")}</p>
+            </article>
+          </div>
         </div>
       </section>
 

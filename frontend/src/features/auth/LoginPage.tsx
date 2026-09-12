@@ -49,19 +49,19 @@ export function LoginPage() {
     <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-2 md:items-center">
       <DocumentMeta title={t("auth.login.title")} description={t("auth.login.seoDescription")} path="/login" />
 
-      <aside className="space-y-6">
-        <span className="text-sm font-semibold uppercase tracking-wide text-brand">
+      <aside className="auth-aside-gradient space-y-6 rounded-3xl p-8 text-white shadow-[0_32px_80px_rgba(15,23,42,0.24)]">
+        <span className="inline-block rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
           {t("auth.login.kicker")}
         </span>
-        <h1 className="text-3xl font-bold text-ink">{t("auth.login.heroTitle")}</h1>
-        <p className="text-ink-soft">{t("auth.login.heroBody")}</p>
-        <div className="space-y-4">
-          <AsidePoint icon="🧭" title={t("auth.login.point1.title")} body={t("auth.login.point1.body")} />
-          <AsidePoint icon="⚡" title={t("auth.login.point2.title")} body={t("auth.login.point2.body")} />
+        <h1 className="text-3xl font-bold text-white">{t("auth.login.heroTitle")}</h1>
+        <p className="text-white/85">{t("auth.login.heroBody")}</p>
+        <div className="space-y-3">
+          <AsidePoint icon="🧭" title={t("auth.login.point1.title")} body={t("auth.login.point1.body")} tone="dark" />
+          <AsidePoint icon="⚡" title={t("auth.login.point2.title")} body={t("auth.login.point2.body")} tone="dark" />
         </div>
       </aside>
 
-      <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
+      <div className="rounded-3xl border border-border bg-surface p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
         <Link to="/" className="text-sm text-ink-soft hover:text-brand">
           {t("auth.backToHome")}
         </Link>

@@ -103,22 +103,23 @@ jobs:
           docker build -t "${{ steps.tags.outputs.front_image }}" frontend/
           docker push "${{ steps.tags.outputs.front_image }}"
 
-      # --- URL de la API, conocida antes de que el servicio exista --------
+      # --- URLs de los servicios ------------------------------------------
       #
-      # Cloud Run (v2, el default desde 2022) asigna
-      # `https://SERVICE-PROJECTNUMBER.REGION.run.app`: nada al azar, solo el
-      # número de proyecto. Eso permite calcular la URL de la API *antes* de
-      # crearla y usarla en el propio primer despliegue — sin ella,
-      # INTERNAL_TASKS_BASE_URL/AUDIENCE (que la API necesita para verificar el
-      # OIDC de Cloud Tasks contra sí misma, TASK-054) tendrían que quedar
-      # vacías en el primer despliegue y arreglarse en un segundo, con una
-      # revisión intermedia inservible de por medio.
+      # La API ya existe: su URL permanente fue asignada bajo el formato
+      # histórico con hash y no coincide con la URL determinista de servicios
+      # nuevos. Se consulta en vez de reconstruirse. El frontend sí es nuevo y
+      # su URL determinista se necesita antes de desplegarlo para CORS/CSRF.
       - name: Calcular las URLs de los servicios
         id: urls
         run: |
           PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-          API_URL="https://${API_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          API_URL="$(gcloud run services describe "$API_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
           FRONT_URL="https://${FRONT_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          if [ -z "$API_URL" ]; then
+            echo "::error::No se pudo resolver la URL permanente de ${API_SERVICE}"
+            exit 1
+          fi
           echo "project_number=${PROJECT_NUMBER}" >> "$GITHUB_OUTPUT"
           echo "api_url=${API_URL}" >> "$GITHUB_OUTPUT"
           echo "front_url=${FRONT_URL}" >> "$GITHUB_OUTPUT"
@@ -130,7 +131,7 @@ jobs:
       # de schema entre revisiones bajo min-instances/max-instances > 1.
       - name: Actualizar el Job de migraciones a este SHA
         run: |
-          gcloud run jobs update "$MIGRATE_JOB" \
+          gcloud run jobs deploy "$MIGRATE_JOB" \
             --project "$PROJECT_ID" --region "$REGION" \
             --image "${{ steps.tags.outputs.api_image }}" \
             --command="alembic" --args="upgrade,head" \
@@ -151,11 +152,11 @@ jobs:
       # smoke pega a esa revisión directamente y nunca a $API_SERVICE, así que
       # ningún usuario ve la revisión nueva antes de que el smoke la apruebe.
       #
-      # --max-instances: presupuesto de conexiones sin verificar todavía contra
-      # el límite real de Neon (TASK-056, criterio de aceptación pendiente). 3
-      # instancias × (DB_POOL_SIZE=5 + DB_MAX_OVERFLOW=10) = 45 conexiones como
-      # techo. Subir este número sin medir el límite real del pooler de Neon es
-      # exactamente el error que este criterio existe para atrapar.
+      # Arranque conservador a una sola instancia. El servicio anterior no
+      # tenía REDIS_URL y el proyecto no tiene Memorystore; con una única
+      # réplica, AI_ALLOW_UNSHARED_COUNTER mantiene un solo contador efectivo
+      # sin fingir coordinación entre procesos. Añadir Redis es el gate para
+      # subir max-instances, no para publicar la primera revisión segura.
       - name: Desplegar la API sin tráfico
         id: deploy_api
         run: |
@@ -166,18 +167,22 @@ jobs:
             --service-account "sc-api@${PROJECT_ID}.iam.gserviceaccount.com" \
             --no-traffic --tag "$TAG" \
             --cpu=1 --memory=1Gi --concurrency=40 --timeout=60s \
-            --min-instances=0 --max-instances=3 \
-            --set-env-vars "ENV=production,TRUSTED_PROXY_IPS=private,TASK_DISPATCH_TRANSPORT=cloud_tasks,CLOUD_TASKS_QUEUE=projects/${PROJECT_ID}/locations/${REGION}/queues/${TASKS_QUEUE},CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL=sc-tasks@${PROJECT_ID}.iam.gserviceaccount.com,INTERNAL_TASKS_BASE_URL=${{ steps.urls.outputs.api_url }},INTERNAL_TASKS_AUDIENCE=${{ steps.urls.outputs.api_url }}" \
-            --set-secrets "DATABASE_URL=DATABASE_URL:latest,SECRET_KEY=SECRET_KEY:latest,GENAI_API_KEY=GENAI_API_KEY:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest,IMAGEKIT_PRIVATE_KEY=IMAGEKIT_PRIVATE_KEY:latest,REDIS_URL=REDIS_URL:latest" \
+            --min-instances=0 --max-instances=1 \
+            --set-env-vars "^@^ENV=production@TRUSTED_PROXY_IPS=private@AI_ALLOW_UNSHARED_COUNTER=1@TASK_DISPATCH_TRANSPORT=cloud_tasks@CLOUD_TASKS_QUEUE=projects/${PROJECT_ID}/locations/${REGION}/queues/${TASKS_QUEUE}@CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL=sc-tasks@${PROJECT_ID}.iam.gserviceaccount.com@INTERNAL_TASKS_BASE_URL=${{ steps.urls.outputs.api_url }}@INTERNAL_TASKS_AUDIENCE=${{ steps.urls.outputs.api_url }}@CORS_ORIGINS=${{ steps.urls.outputs.front_url }},https://studentscompass.ca,https://www.studentscompass.ca@AWS_REGION=${{ vars.AWS_REGION }}@BUCKET_NAME=${{ vars.BUCKET_NAME }}@RESOURCES_BUCKET_NAME=${{ vars.RESOURCES_BUCKET_NAME }}" \
+            --set-secrets "DATABASE_URL=DATABASE_URL:latest,SECRET_KEY=SECRET_KEY:latest,GENAI_API_KEY=GENAI_API_KEY:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest,IMAGEKIT_PRIVATE_KEY=IMAGEKIT_PRIVATE_KEY:latest" \
             --allow-unauthenticated \
             --quiet
 
-          # `TAG---SERVICE-PROJECTNUMBER.REGION.run.app` es el patrón que Cloud
-          # Run usa para URLs de revisión etiquetadas; se construye en vez de
-          # leerse porque `status.traffic[].url` no siempre resuelve por tag
-          # según la versión de gcloud, y el patrón ya es conocido (paso
-          # anterior).
-          REVISION_URL="https://${TAG}---${API_SERVICE}-${{ steps.urls.outputs.project_number }}.${REGION}.run.app"
+          # La URL etiquetada usa el dominio permanente real del servicio. El
+          # servicio existente conserva el formato histórico con hash, por lo
+          # que construirla con el número de proyecto apuntaría a otro host.
+          REVISION_URL="$(gcloud run services describe "$API_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            | jq -r --arg tag "$TAG" '.status.traffic[] | select(.tag == $tag) | .url')"
+          if [ -z "$REVISION_URL" ]; then
+            echo "::error::Cloud Run no publicó URL para la etiqueta ${TAG}"
+            exit 1
+          fi
           echo "revision_url=${REVISION_URL}" >> "$GITHUB_OUTPUT"
 
           PREV_REVISION="$(gcloud run services describe "$API_SERVICE" \
@@ -185,11 +190,9 @@ jobs:
             --format='value(status.traffic.filter(percent:100).revisionName)' | head -n1)"
           echo "previous_revision=${PREV_REVISION}" >> "$GITHUB_OUTPUT"
 
-          NEW_REVISION="$(gcloud run revisions list \
+          NEW_REVISION="$(gcloud run services describe "$API_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" \
-            --service "$API_SERVICE" \
-            --sort-by='~metadata.creationTimestamp' --limit=1 \
-            --format='value(metadata.name)')"
+            --format='value(status.latestCreatedRevisionName)')"
           echo "new_revision=${NEW_REVISION}" >> "$GITHUB_OUTPUT"
 
       # --- Smoke contra la revisión sin tráfico ---------------------------
@@ -257,6 +260,9 @@ jobs:
             --sort-by='~metadata.creationTimestamp' --limit=1 \
             --format='value(metadata.name)')"
           echo "new_revision=${NEW_FRONT_REVISION}" >> "$GITHUB_OUTPUT"
+          SERVICE_URL="$(gcloud run services describe "$FRONT_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          echo "service_url=${SERVICE_URL}" >> "$GITHUB_OUTPUT"
 
       # --- Smoke público -----------------------------------------------------
       #
@@ -268,7 +274,7 @@ jobs:
         run: |
           BASE="${{ vars.PUBLIC_BASE_URL }}"
           if [ -z "$BASE" ]; then
-            BASE="${{ steps.urls.outputs.front_url }}"
+            BASE="${{ steps.deploy_front.outputs.service_url }}"
           fi
           for path in readyz robots.txt; do
             code="$(curl -s -o /dev/null -w '%{http_code}' "${BASE%/}/${path}")"
