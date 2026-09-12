@@ -62,14 +62,16 @@ def _database_that(session):
 
 class TestLivenessIsIndependentOfEverything:
     @pytest.mark.asyncio
-    async def test_healthz_answers_ok(self, client):
-        response = await client.get("/healthz")
+    @pytest.mark.parametrize("path", ["/health", "/healthz"])
+    async def test_healthz_answers_ok(self, client, path):
+        response = await client.get(path)
 
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
     @pytest.mark.asyncio
-    async def test_healthz_still_answers_when_the_database_is_down(self, client):
+    @pytest.mark.parametrize("path", ["/health", "/healthz"])
+    async def test_healthz_still_answers_when_the_database_is_down(self, client, path):
         """The point of separating the two probes.
 
         A liveness check that touched the database would fail here, the platform
@@ -78,29 +80,32 @@ class TestLivenessIsIndependentOfEverything:
         running to recover.
         """
         with _database_that(_SessionThatFails(OSError("connection refused"))):
-            response = await client.get("/healthz")
+            response = await client.get(path)
 
         assert response.status_code == 200
 
 
 class TestReadinessFollowsTheDatabase:
     @pytest.mark.asyncio
-    async def test_readyz_is_ready_when_the_database_answers(self, client):
-        response = await client.get("/readyz")
+    @pytest.mark.parametrize("path", ["/ready", "/readyz"])
+    async def test_readyz_is_ready_when_the_database_answers(self, client, path):
+        response = await client.get(path)
 
         assert response.status_code == 200
         assert response.json()["status"] == "ready"
 
     @pytest.mark.asyncio
-    async def test_readyz_refuses_traffic_when_the_database_is_unavailable(self, client):
+    @pytest.mark.parametrize("path", ["/ready", "/readyz"])
+    async def test_readyz_refuses_traffic_when_the_database_is_unavailable(self, client, path):
         with _database_that(_SessionThatFails(OSError("connection refused"))):
-            response = await client.get("/readyz")
+            response = await client.get(path)
 
         assert response.status_code == 503
         assert response.json()["status"] == "not_ready"
 
     @pytest.mark.asyncio
-    async def test_readyz_leaks_no_infrastructure_detail(self, client):
+    @pytest.mark.parametrize("path", ["/ready", "/readyz"])
+    async def test_readyz_leaks_no_infrastructure_detail(self, client, path):
         """The probe is reachable from the internet.
 
         A driver error names the host, the port and often the user, so the
@@ -111,7 +116,7 @@ class TestReadinessFollowsTheDatabase:
         )
 
         with _database_that(_SessionThatFails(leaky)):
-            response = await client.get("/readyz")
+            response = await client.get(path)
 
         assert response.status_code == 503
         body = response.text

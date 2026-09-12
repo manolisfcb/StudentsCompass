@@ -170,7 +170,6 @@ jobs:
             --min-instances=0 --max-instances=1 \
             --set-env-vars "^|^ENV=production|TRUSTED_PROXY_IPS=private|AI_ALLOW_UNSHARED_COUNTER=1|TASK_DISPATCH_TRANSPORT=cloud_tasks|CLOUD_TASKS_QUEUE=projects/${PROJECT_ID}/locations/${REGION}/queues/${TASKS_QUEUE}|CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL=sc-tasks@${PROJECT_ID}.iam.gserviceaccount.com|INTERNAL_TASKS_BASE_URL=${{ steps.urls.outputs.api_url }}|INTERNAL_TASKS_AUDIENCE=${{ steps.urls.outputs.api_url }}|CORS_ORIGINS=${{ steps.urls.outputs.front_url }},https://studentscompass.ca,https://www.studentscompass.ca|AWS_REGION=${{ vars.AWS_REGION }}|BUCKET_NAME=${{ vars.BUCKET_NAME }}|RESOURCES_BUCKET_NAME=${{ vars.RESOURCES_BUCKET_NAME }}" \
             --set-secrets "DATABASE_URL=DATABASE_URL:latest,SECRET_KEY=SECRET_KEY:latest,GENAI_API_KEY=GENAI_API_KEY:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest,IMAGEKIT_PRIVATE_KEY=IMAGEKIT_PRIVATE_KEY:latest" \
-            --allow-unauthenticated \
             --quiet
 
           # La URL etiquetada usa el dominio permanente real del servicio. El
@@ -186,8 +185,9 @@ jobs:
           echo "revision_url=${REVISION_URL}" >> "$GITHUB_OUTPUT"
 
           PREV_REVISION="$(gcloud run services describe "$API_SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" \
-            --format='value(status.traffic.filter(percent:100).revisionName)' | head -n1)"
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            | jq -r '.status.traffic[] | select(.percent == 100) | .revisionName' \
+            | head -n1)"
           echo "previous_revision=${PREV_REVISION}" >> "$GITHUB_OUTPUT"
 
           NEW_REVISION="$(gcloud run services describe "$API_SERVICE" \
@@ -197,15 +197,16 @@ jobs:
 
       # --- Smoke contra la revisión sin tráfico ---------------------------
       #
-      # /healthz primero (no toca nada; si esto falla, la imagen no arranca) y
-      # /readyz después (toca la DB; confirma que las migraciones y el secreto
+      # /health primero (no toca nada; si esto falla, la imagen no arranca) y
+      # /ready después (toca la DB; confirma que las migraciones y el secreto
       # de conexión son los correctos). Reintentos porque una revisión recién
       # creada puede tardar unos segundos en quedar lista para recibir tráfico
-      # aunque el despliegue ya haya vuelto.
+      # aunque el despliegue ya haya vuelto. Evitamos sufijos en "z": Cloud Run
+      # documenta que algunos de esos paths están reservados por la plataforma.
       - name: Smoke de la revisión sin tráfico
         run: |
           URL="${{ steps.deploy_api.outputs.revision_url }}"
-          for path in healthz readyz; do
+          for path in health ready; do
             ok=""
             for _ in $(seq 1 10); do
               code="$(curl -s -o /dev/null -w '%{http_code}' "${URL}/${path}" || true)"
@@ -239,8 +240,9 @@ jobs:
         id: deploy_front
         run: |
           PREV_FRONT_REVISION="$(gcloud run services describe "$FRONT_SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" \
-            --format='value(status.traffic.filter(percent:100).revisionName)' 2>/dev/null | head -n1 || true)"
+            --project "$PROJECT_ID" --region "$REGION" --format=json 2>/dev/null \
+            | jq -r '.status.traffic[] | select(.percent == 100) | .revisionName' \
+            | head -n1 || true)"
           echo "previous_revision=${PREV_FRONT_REVISION}" >> "$GITHUB_OUTPUT"
 
           gcloud run deploy "$FRONT_SERVICE" \
@@ -251,7 +253,6 @@ jobs:
             --cpu=1 --memory=512Mi --concurrency=80 \
             --min-instances=0 --max-instances=10 \
             --set-env-vars "API_ORIGIN=${{ steps.urls.outputs.api_url }},API_DNS_RESOLVER=169.254.169.254" \
-            --allow-unauthenticated \
             --quiet
 
           NEW_FRONT_REVISION="$(gcloud run revisions list \
@@ -276,7 +277,7 @@ jobs:
           if [ -z "$BASE" ]; then
             BASE="${{ steps.deploy_front.outputs.service_url }}"
           fi
-          for path in readyz robots.txt; do
+          for path in ready robots.txt; do
             code="$(curl -s -o /dev/null -w '%{http_code}' "${BASE%/}/${path}")"
             if [ "$code" != "200" ]; then
               echo "::error::${BASE%/}/${path} respondió ${code}, se esperaba 200"

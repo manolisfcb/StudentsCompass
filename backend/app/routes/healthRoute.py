@@ -18,12 +18,14 @@ from app.db import get_session
 router = APIRouter()
 
 
+@router.get("/health", include_in_schema=False)
 @router.get("/healthz", include_in_schema=False)
 async def healthz() -> Response:
     """Liveness: the process is up and serving. Touches nothing."""
     return JSONResponse({"status": "ok"})
 
 
+@router.get("/ready", include_in_schema=False)
 @router.get("/readyz", include_in_schema=False)
 async def readyz(session: AsyncSession = Depends(get_session)) -> Response:
     """Readiness: this replica can serve real traffic.
