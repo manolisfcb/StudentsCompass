@@ -138,7 +138,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-064 | Estabilizar la lane SQLite frente a la afinidad numérica de UUID | MEDIUM | PHASE-0 | COMPLETED | TASK-001 | TASK-065 |
 | TASK-065 | Corregir el test de agregados diarios que compara fecha local con UTC | LOW | PHASE-0 | TODO | TASK-001 | TASK-064 |
 | TASK-066 | Reconciliar requirements.txt y uv.lock en una sola fuente de verdad | HIGH | PHASE-6 | COMPLETED | TASK-029 | TASK-067 |
-| TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | TODO | TASK-029, TASK-066 | NONE |
+| TASK-067 | Remediar los advisories vigentes de dependencias y bloquear CI con ellos | HIGH | PHASE-6 | COMPLETED | TASK-029, TASK-066 | NONE |
 | TASK-068 | Retirar el patrón create_all/drop_all por test de la lane PostgreSQL | LOW | PHASE-0 | TODO | TASK-031 | NONE |
 | TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | COMPLETED | TASK-009 | NONE |
 | TASK-070 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | COMPLETED | TASK-001 | NONE |
@@ -12319,7 +12319,7 @@ Risk: HIGH
 
 ## TASK-067 — Remediar los advisories vigentes de dependencias y bloquear CI con ellos
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-6
 Category: Security
@@ -12403,6 +12403,61 @@ Blocks: NONE
 `osv-scanner` sin hallazgos bloqueantes sobre los dos lockfiles; suite completa verde tras cada
 subida; `deps-audit` sin `continue-on-error` y en verde; excepciones aceptadas documentadas con
 su motivo.
+
+### Completion Notes
+
+**Entregado el 2026-09-12.** La medición fresca con `osv-scanner` v2.5.1 ya no
+reprodujo la cifra histórica de 74: encontró **39 vulnerabilidades conocidas en
+10 paquetes** —0 critical, 24 high, 11 medium y 4 low— y declaró las 39
+corregibles. El reescaneo del lock final devolvió **No issues found** sobre 124
+paquetes de `backend/requirements.txt` y 330 de
+`frontend/package-lock.json`. No queda ninguna excepción aceptada ni silenciada.
+
+**Clasificación y versiones.** Se usó la primera versión corregida compatible,
+sin actualizar el resto del entorno:
+
+| Superficie | Paquete | Antes | Después |
+| --- | --- | --- | --- |
+| Request/auth | `starlette` | 1.0.0 | 1.3.1 |
+| Request/upload | `python-multipart` | 0.0.29 | 0.0.31 |
+| Auth/token | `pyjwt` | 2.12.1 | 2.13.0 |
+| Auth/Google SDK | `cryptography` | 48.0.0 | 50.0.0 |
+| Archivo no confiable | `pillow` | 12.2.0 | 12.3.0 |
+| Identidad Google, transitiva | `pyasn1` | 0.6.3 | 0.6.4 |
+| Scraper HTML, transitiva | `soupsieve` | 2.8.3 | 2.8.4 |
+| Análisis ML | `torch` | 2.12.0 | 2.13.0 |
+| Análisis ML | `transformers` | 5.8.1 | 5.10.1 |
+| Build/runtime de Torch | `setuptools` | 81.0.0 | 83.0.0 |
+
+`setuptools` y `torch` tuvieron que subir juntos: Torch 2.12 fija
+`setuptools<82`, por lo que no existe una resolución con `setuptools==83.0.0`.
+Torch 2.13.0 es simultáneamente la primera versión que corrige su advisory y la
+primera que permite el setuptools corregido. Esa actualización ajustó sus
+dependencias Linux `cuda-toolkit` 13.0.2→13.0.3.0 y `triton` 3.7.0→3.7.1; no
+son upgrades laterales elegidos a mano. `transformers` 5.10.0 figuraba como
+yanked en PyPI por haberse publicado desde una rama antigua; se fijó 5.10.1,
+la primera versión corregida no retirada.
+
+**CI bloqueante.** `.github/workflows/ci.yml` ya no lleva
+`continue-on-error`; el job se llama `dependencias (osv-scanner, bloqueante)` y
+un advisory nuevo da un veredicto rojo. `uv.lock` sigue siendo la fuente de
+verdad y `requirements.txt` se regeneró con el comando de TASK-066; una segunda
+exportación produjo exactamente los mismos bytes.
+
+**Validación ejecutada.** Después de cada subida independiente se sincronizó el
+entorno y se ejecutó la lane rápida completa. Hubo nueve veredictos consecutivos
+de **825 passed, 1 skipped**: `cryptography`, `python-multipart`, `pyjwt`,
+`starlette`, `pillow`, `pyasn1`, el conjunto inseparable
+`setuptools`/`torch`, `soupsieve` y `transformers`. El único skip es el ya
+previsto por la suite. La lane PostgreSQL/Redis contra `sc-test-pg` y
+`sc-test-redis` desechables terminó **133 passed**. `ruff check backend/app
+backend/tests`, `uv lock --check`, exportación idempotente, parseo de `ci.yml`,
+ausencia de `continue-on-error` y `git diff --check` quedaron verdes. El primer
+intento de la lane rápida dentro del sandbox produjo 804 passed/21 skipped y un
+`PermissionError` al abrir loopback en el test del propio harness; repetida
+fuera del sandbox, como exige ese test, dio el veredicto verde citado arriba.
+`uv pip check` confirmó 113 paquetes compatibles y los imports reales de los
+diez paquetes actualizados, más `sentence_transformers`, cargaron correctamente.
 
 ### Estimated Impact
 

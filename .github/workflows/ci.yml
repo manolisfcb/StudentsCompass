@@ -59,15 +59,11 @@ jobs:
         run: "$RUNNER_TEMP/gitleaks dir . --no-banner --redact --exit-code 1 --config .gitleaks.toml"
 
   deps-audit:
-    name: dependencias (osv-scanner, informativo)
+    name: dependencias (osv-scanner, bloqueante)
     runs-on: ubuntu-latest
-    # NO bloquea, y es una decisión, no un descuido. Dos razones: los pines
-    # actuales ya arrastran advisories conocidos —74 sobre 10 paquetes de
-    # `backend/requirements.txt` el 2026-09-08— y subirlos es un cambio de
-    # dependencias que pertenece a TASK-029; y un advisory publicado río arriba
-    # pondría en rojo PRs que no tocaron ninguna dependencia. El informe queda
-    # visible en cada run. **TASK-029 remedia y quita este `continue-on-error`.**
-    continue-on-error: true
+    # TASK-067 dejó ambos lockfiles sin advisories conocidos y convirtió este
+    # informe en gate. Un advisory nuevo debe poner el commit en rojo hasta que
+    # se remedie o se documente una excepción acotada; no se silencia aquí.
     steps:
       - uses: actions/checkout@v4
       - name: Instalar osv-scanner

@@ -54,7 +54,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   tqdm
     #   typer
     #   uvicorn
-cryptography==48.0.0
+cryptography==50.0.0
     # via
     #   google-auth
     #   pyjwt
@@ -62,7 +62,7 @@ cuda-bindings==13.4.1 ; sys_platform == 'linux'
     # via torch
 cuda-pathfinder==1.8.1 ; sys_platform == 'linux'
     # via cuda-bindings
-cuda-toolkit==13.0.2 ; sys_platform == 'linux'
+cuda-toolkit==13.0.3.0 ; sys_platform == 'linux'
     # via torch
 distro==1.9.0
     # via
@@ -163,28 +163,28 @@ numpy==2.2.6
     #   transformers
 nvidia-cublas==13.1.1.3 ; sys_platform == 'linux'
     # via
+    #   cuda-toolkit
     #   nvidia-cudnn-cu13
     #   nvidia-cusolver
-    #   torch
-nvidia-cuda-cupti==13.0.85 ; sys_platform == 'linux'
+nvidia-cuda-cupti==13.0.85 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
 nvidia-cuda-nvrtc==13.0.88 ; sys_platform == 'linux'
     # via
     #   cuda-toolkit
     #   nvidia-cublas
-nvidia-cuda-runtime==13.0.96 ; sys_platform == 'linux'
+nvidia-cuda-runtime==13.0.96 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
 nvidia-cudnn-cu13==9.20.0.48 ; sys_platform == 'linux'
     # via torch
-nvidia-cufft==12.0.0.61 ; sys_platform == 'linux'
+nvidia-cufft==12.0.0.61 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
-nvidia-cufile==1.15.1.6 ; sys_platform == 'linux'
+nvidia-cufile==1.15.1.6 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
-nvidia-curand==10.4.0.35 ; sys_platform == 'linux'
+nvidia-curand==10.4.0.35 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
-nvidia-cusolver==12.0.4.66 ; sys_platform == 'linux'
+nvidia-cusolver==12.0.4.66 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
-nvidia-cusparse==12.6.3.3 ; sys_platform == 'linux'
+nvidia-cusparse==12.6.3.3 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via
     #   cuda-toolkit
     #   nvidia-cusolver
@@ -192,7 +192,7 @@ nvidia-cusparselt-cu13==0.8.1 ; sys_platform == 'linux'
     # via torch
 nvidia-nccl-cu13==2.29.7 ; sys_platform == 'linux'
     # via torch
-nvidia-nvjitlink==13.0.88 ; sys_platform == 'linux'
+nvidia-nvjitlink==13.0.88 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via
     #   cuda-toolkit
     #   nvidia-cufft
@@ -200,7 +200,7 @@ nvidia-nvjitlink==13.0.88 ; sys_platform == 'linux'
     #   nvidia-cusparse
 nvidia-nvshmem-cu13==3.4.5 ; sys_platform == 'linux'
     # via torch
-nvidia-nvtx==13.0.85 ; sys_platform == 'linux'
+nvidia-nvtx==13.0.85 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
 ortools==9.15.6755
     # via studentscompass
@@ -212,7 +212,7 @@ pandas==2.3.3
     # via ortools
 pgvector==0.4.2
     # via studentscompass
-pillow==12.2.0
+pillow==12.3.0
     # via studentscompass
 protobuf==6.33.6
     # via ortools
@@ -224,7 +224,7 @@ psycopg2-binary==2.9.12
     # via studentscompass
 pwdlib==0.3.0
     # via fastapi-users
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via pyasn1-modules
 pyasn1-modules==0.4.2
     # via google-auth
@@ -239,7 +239,7 @@ pydantic-core==2.46.4
     # via pydantic
 pygments==2.20.0
     # via rich
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via fastapi-users
 pymupdf==1.27.2.3
     # via studentscompass
@@ -251,7 +251,7 @@ python-dotenv==1.2.2
     # via
     #   studentscompass
     #   uvicorn
-python-multipart==0.0.29
+python-multipart==0.0.31
     # via fastapi-users
 pytz==2026.3.post1
     # via pandas
@@ -282,7 +282,7 @@ scipy==1.15.3
     #   sentence-transformers
 sentence-transformers==5.5.1
     # via studentscompass
-setuptools==81.0.0
+setuptools==83.0.0
     # via torch
 shellingham==1.5.4
     # via typer
@@ -292,13 +292,13 @@ sniffio==1.3.1
     # via
     #   google-genai
     #   imagekitio
-soupsieve==2.8.3
+soupsieve==2.8.4
     # via beautifulsoup4
 sqlalchemy==2.0.49
     # via
     #   alembic
     #   fastapi-users-db-sqlalchemy
-starlette==1.0.0
+starlette==1.3.1
     # via fastapi
 sympy==1.14.0
     # via torch
@@ -308,16 +308,16 @@ threadpoolctl==3.6.0
     # via scikit-learn
 tokenizers==0.22.2
     # via transformers
-torch==2.12.0
+torch==2.13.0
     # via sentence-transformers
 tqdm==4.67.3
     # via
     #   huggingface-hub
     #   sentence-transformers
     #   transformers
-transformers==5.8.1
+transformers==5.10.1
     # via sentence-transformers
-triton==3.7.0 ; sys_platform == 'linux'
+triton==3.7.1 ; sys_platform == 'linux'
     # via torch
 typer==0.27.2
     # via
