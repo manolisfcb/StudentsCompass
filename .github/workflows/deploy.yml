@@ -136,7 +136,7 @@ jobs:
             --image "${{ steps.tags.outputs.api_image }}" \
             --command="alembic" --args="upgrade,head" \
             --service-account "sc-migrate@${PROJECT_ID}.iam.gserviceaccount.com" \
-            --set-secrets "ALEMBIC_DATABASE_URL=ALEMBIC_DATABASE_URL:latest" \
+            --set-secrets "DATABASE_URL=DATABASE_URL:latest,ALEMBIC_DATABASE_URL=ALEMBIC_DATABASE_URL:latest" \
             --max-retries=0 \
             --task-timeout=600s \
             --tasks=1
