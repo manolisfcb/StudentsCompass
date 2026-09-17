@@ -10757,7 +10757,7 @@ Risk: HIGH
 
 ## TASK-057 — Configurar dominio, TLS, alertas, budgets y rollback por revisión
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure / Observability
@@ -11014,6 +11014,30 @@ repuntar el mapeo al frontend es **el cutover**, es decir, TASK-058. Por eso est
 ficha no puede cerrarse antes que aquella, aunque el orden del plan diga lo
 contrario. Se deja registrado como desviación del plan en vez de forzar el
 mapeo para poder marcar la casilla.
+
+**Cierre 2026-09-17 (tarde) — el criterio que faltaba está cumplido: el dominio
+apunta al frontend.**
+
+`studentscompass.ca → studentscompass-front`, ejecutado a las 16:38 EDT. Con eso
+queda satisfecho lo que la corrección de la mañana dejó abierto, y que era el
+único punto sin marcar de esta ficha.
+
+**El certificado tardó 10 minutos, no 56.** Es el dato que faltaba para decidir
+con fundamento y queda aquí para la próxima vez: `CertificateProvisioned: True`
+a las 20:48:58 UTC, diez minutos después de recrear el mapeo. La primera emisión
+de 2026-05-20 había tardado 56, y ese número fue el que hizo dudar de la ventana.
+Tras el certificado hubo **un minuto más** de propagación entre nodos del edge,
+con parte de las peticiones fallando la validación TLS: medido, 5 fallos de 8 a
+los tres minutos, 1 de 8 al minuto siguiente, 0 de 8 al siguiente.
+
+**TLS y same-origin verificados desde fuera**, contra el dominio y no contra el
+`run.app`: `ssl_verify_result=0`, las pantallas sirviendo el documento del SPA,
+`/api/v1/auth/session` devolviendo 401 JSON a través del proxy —o sea cookies
+first-party sobre el mismo origen, que es el diseño entero de plan 08 §1— y los
+siete 301 legacy respondiendo al destino correcto.
+
+**Lo que sigue sin existir y no se disimula:** no hay métrica de pool de
+conexiones, por lo que ya está escrito arriba. El resto de §6.4 está cubierto.
 
 ### Estimated Impact
 
@@ -11306,6 +11330,50 @@ sirve `52a4087` desde `00006-vp6` y la API `52a4087` desde `00032-zih`, las dos
 clavadas por el rollback descrito arriba, aunque existan revisiones sanas de
 `c9da16f`. Destrabarlas es un `update-traffic` y es el primer paso del repunte.
 
+**Actualización 2026-09-17, 16:38 EDT — el cutover está ejecutado.**
+
+`studentscompass.ca` sirve el frontend React. La ventana entre borrar y recrear
+el mapeo fue de **13 segundos**; el certificado tardó 10 minutos y la
+propagación del edge un minuto más, con fallos de validación TLS decrecientes
+mientras tanto (5/8 → 1/8 → 0/8). Detalle completo en TASK-057.
+
+**Verificado contra el dominio, no contra el `run.app`:** once pantallas a 200
+con el documento del SPA, los seis 301 legacy al destino correcto,
+`GET /api/v1/auth/register` a 301 `/register` con el POST llegando a la API, una
+URL inexistente a 404 con la pantalla de NotFound, `/.env` a 404 con la página
+de nginx, `/robots.txt` y `/sitemap.xml` desde el bundle, y
+`/api/v1/auth/session` a 401 JSON.
+
+**Un comando del runbook estaba mal y se descubrió al usarlo.** §5 y §6 escribían
+`domain-mappings delete $D`, con el dominio como posicional; la sintaxis es
+`--domain=$D`. El comando fallaba sin borrar nada — inofensivo en el cutover,
+porque se vio al instante, pero ese mismo error estaba copiado en el plan de
+**rollback**, donde se pega bajo presión y donde fallar significa minutos de
+caída mientras alguien lee la ayuda de gcloud. Corregido en las dos secciones.
+
+**Lo que esta ficha sigue sin poder marcar, y por qué:**
+
+1. **El ensayo sobre copia anonimizada no se hizo.** Nunca existió el entorno, y
+   se decidió ejecutar el cutover sin él. Queda como desviación consciente, no
+   como casilla olvidada. Lo que sustituyó al ensayo fue la verificación contra
+   el `run.app` del frontend —matriz completa de rutas y `verify_parity.py`—,
+   que cubre el riesgo de presentación y de sesión pero no el de datos.
+2. **La ventana de observación acaba de abrirse.** Las seis alertas de TASK-057
+   están vivas; el criterio de cierre sigue sin estar escrito, que era el tercero
+   de los puntos que esta ficha lleva pendientes desde el 16/09.
+
+**El plan de vuelta atrás ha cambiado hoy, y esto es lo más importante de esta
+nota.** TASK-059 se ejecutó el mismo día por decisión explícita del responsable,
+tras advertir por escrito de esta consecuencia. Mientras ese retiro no se
+despliegue, revertir sigue siendo repuntar el dominio a la API. **En cuanto se
+despliegue, deja de serlo**: la API ya no sirve pantallas, así que devolverle el
+dominio daría 404 en todas ellas.
+
+Revertir sigue siendo posible, pero pasa a ser de dos pasos y más lento:
+desplegar en Cloud Run una revisión anterior a TASK-059 —las imágenes por SHA
+siguen en Artifact Registry, y `52a4087` es la última que sirve Jinja— y solo
+entonces repuntar el dominio. §6 del runbook queda reescrito con eso.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -11316,7 +11384,7 @@ Risk: HIGH
 
 ## TASK-059 — Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados
 
-Status: BLOCKED
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-M5
 Category: Cleanup / Structure
@@ -11385,13 +11453,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] FastAPI no importa Jinja, no monta `/static` y no sirve pantallas.
-- [ ] Cada endpoint retirado tiene su evidencia de cero tráfico archivada.
-- [ ] Ninguna tabla, columna ni objeto de storage se eliminó en esta tarea.
-- [ ] Lo que no pudo retirarse quedó registrado con su motivo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] FastAPI no importa Jinja, no monta `/static` y no sirve pantallas.
+- [x] Cada endpoint retirado tiene su evidencia de cero tráfico archivada.
+- [x] Ninguna tabla, columna ni objeto de storage se eliminó en esta tarea.
+- [x] Lo que no pudo retirarse quedó registrado con su motivo.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -11469,17 +11537,56 @@ El agente añade al final de su tarea, tras validar, este bloque con resultados 
 ```markdown
 ### Completion Notes
 
-Implemented:
-- ...
+**2026-09-17 — ejecutada el mismo día que el cutover, y con el alcance acotado
+por la única regla que esta ficha tiene: solo se retira lo que tiene evidencia.**
 
-Validation performed:
-- ...
+**Retirado, 27.837 líneas en 91 ficheros:**
 
-Unexpected findings:
-- ...
+| Qué | Evidencia que lo autoriza |
+| --- | --- |
+| `app/views/views.py` y las 22 pantallas Jinja | El dominio dejó de servirlas a las 16:38 del 17/09; cada una tiene su sustituto React desplegado y las siete que cambiaron de URL tienen su 301 en `nginx.conf`, verificado contra el dominio real |
+| `app/templates/` (23 plantillas) | Sin consumidor tras retirar las vistas |
+| `app/static/` (57 ficheros JS/CSS/imágenes) | Ídem; `/static/*` ya no se proxea, y el mapa de `nginx.conf` cubre con 301 los cinco assets que sí tenían tráfico externo |
+| Montaje de `StaticFiles` y `Jinja2Templates` | — |
+| `app/template_utils.py` | Solo lo usaba Jinja |
+| `/sitemap.xml` y `/robots.txt` de FastAPI | El bundle los sirve desde el cutover (runbook §7 opción A), verificado 200 en el dominio |
+| `/favicon.ico` de FastAPI y `app/favicon.ico` | El bundle sirve el suyo, verificado 200 en el dominio |
+| `AdminUsersPage.users` | Adaptador de compatibilidad para `app/static/js/admin.js`, que ya no existe. React lee `items`. La propia ficha lo nombraba como retirable solo tras esto |
+| `jinja2` como dependencia directa | Sobrevive en el lock solo porque `torch` la pide; eso no es de esta ficha |
 
-Follow-up tasks created:
-- ...
+**Comprobado ejecutando, no leyendo:** importada la app, `184` rutas y **cero
+fuera del contrato REST**; `jinja2` ni siquiera aparece en `sys.modules`. Suite
+backend `801 passed, 129 skipped`, ruff limpio, frontend `293 passed` con
+`tsc` y `eslint` en verde.
+
+**No retirado, con su motivo — que es el criterio de aceptación nº 4:**
+
+1. **`/auth/jwt/*`**, su montaje y su entrada en el proxy de `nginx.conf`. La
+   ficha solo permite retirar contra **tráfico medido en cero**, y la ventana
+   que lo mide se abrió con el cutover hace unas horas. La última muestra
+   pre-cutover tenía **10 POST reales** a `/auth/jwt/login`. Quitarlo ahora
+   pondría su contador a cero *por construcción*, y «nadie puede llamarlo» no es
+   «nadie lo llama» — es justo lo que B4 del runbook decidió evitar.
+2. **Los `*_legacy_router` bajo `/api/v1`.** El informe de paridad demuestra que
+   el SPA hace **cero** peticiones al contrato legacy, así que el único tráfico
+   posible viene de fuera. Eso es exactamente lo que la ventana tiene que medir
+   antes de tocarlos.
+3. **Ninguna tabla, columna ni objeto de storage.** No se ejecutó un solo DROP.
+   `user_stats` y `communities.member_count` siguen donde estaban, como la
+   sección OUT OF SCOPE exige.
+
+**Dos guards tuvieron que actualizarse, y conviene decir por qué eso es buena
+señal.** `test_no_endpoint_disappeared_without_a_task_saying_so` (TASK-031)
+tumbó el retiro hasta que las 22 rutas quedaron declaradas una por una con su
+sustituto; y el mismo test no vigilaba verbos, así que la pérdida del `GET` de
+`/api/v1/auth/register` —el B10, una pantalla Jinja montada bajo el prefijo de
+la API— pasaba inadvertida. Ahora hay `DECLARED_REMOVED_METHODS` y ese verbo
+está declarado. El POST de registro no se tocó y el smoke lo afirma contra el
+proxy real.
+
+**Contrato regenerado** (`contract/openapi.json`, 130 rutas) y los tipos
+TypeScript con él: 676 líneas menos de contrato y 993 de tipos. Sin eso, el
+frontend compilaría contra pantallas que la API ya no sirve.
 ```
 
 ## PARALLEL EXECUTION GROUPS

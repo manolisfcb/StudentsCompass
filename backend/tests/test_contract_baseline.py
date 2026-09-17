@@ -44,15 +44,6 @@ async def test_json_endpoints_reject_anonymous_callers(client, method, path):
 
 
 @pytest.mark.asyncio
-async def test_html_pages_redirect_anonymous_callers_to_login(client):
-    """Pages redirect; APIs 401. Mixing the two breaks the frontend."""
-    response = await client.get("/career-lab", follow_redirects=False)
-
-    assert response.status_code == 303
-    assert response.headers["location"] == "/login"
-
-
-@pytest.mark.asyncio
 async def test_authenticated_identity_contract(client, auth_headers, test_user):
     response = await client.get("/api/v1/users/me", headers=auth_headers)
 

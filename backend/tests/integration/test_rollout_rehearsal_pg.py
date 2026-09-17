@@ -377,6 +377,35 @@ async def test_a_dump_taken_before_the_upgrade_restores_the_data(
 #: is an accident, and that is the whole point of the check: a contract change
 #: has to be written down somewhere before it is allowed.
 DECLARED_REMOVED_PATHS = {
+    # TASK-059: the Jinja screens, retired after the cutover moved
+    # studentscompass.ca to the React frontend. Each one has a replacement that
+    # already serves it, and the seven whose URL changed have a 301 in
+    # frontend/nginx.conf rather than a broken bookmark — asserted by
+    # frontend/src/app/cutoverRouting.test.ts and by the deploy smoke, which
+    # exercise the real proxy. The URLs that did not change are served by the
+    # SPA at the same address, so nothing here is a URL that stopped answering.
+    "/",                              # SPA /
+    "/about",                         # SPA /about
+    "/admin",                         # SPA /admin           (TASK-053)
+    "/admin/login",                   # SPA /admin/login     (TASK-053)
+    "/career-lab",                    # SPA /career-lab      (TASK-052)
+    "/community",                     # SPA /community       (TASK-051)
+    "/community/{community_id}",      # SPA /community/:id   (TASK-051)
+    "/company-candidates",            # 301 -> /company/applicants  (TASK-050)
+    "/company-dashboard",             # 301 -> /company             (TASK-050)
+    "/company-team",                  # 301 -> /company/recruiters  (TASK-050)
+    "/dashboard",                     # SPA /dashboard       (TASK-048)
+    "/home",                          # 301 -> /
+    "/jobs",                          # SPA /jobs            (TASK-049)
+    "/login",                         # SPA /login           (TASK-046)
+    "/questionnaire",                 # SPA /questionnaire   (TASK-047)
+    "/register",                      # SPA /register        (TASK-046)
+    "/resources",                     # SPA /resources       (TASK-048)
+    "/resources/{resource_id}",       # SPA /resources/:id   (TASK-048)
+    "/roadmap",                       # 301 -> /roadmaps
+    "/roadmaps",                      # SPA /roadmaps        (TASK-048)
+    "/roadmaps/{slug}",               # SPA /roadmaps/:slug  (TASK-048)
+    "/user-profile",                  # 301 -> /profile      (TASK-047)
     # TASK-042 replaced the fastapi-users JWT routes with per-actor session
     # endpoints carrying CSRF double-submit.
     "/auth/jwt/login",
@@ -467,6 +496,20 @@ def test_no_endpoint_disappeared_without_a_task_saying_so():
     }
 
 
+#: A verb retired from a path that otherwise stayed. Same rule as
+#: DECLARED_REMOVED_PATHS: written down before it is allowed, never discovered.
+DECLARED_REMOVED_METHODS = {
+    # TASK-059, runbook §4 B10. The Jinja register screen was mounted *under*
+    # the API prefix, so one path carried both a page and its form target. The
+    # page is retired with the rest of the screens; the POST is the real
+    # registration endpoint and is untouched. frontend/nginx.conf 301s the GET
+    # to /register and lets the POST through, and both halves are asserted by
+    # the deploy smoke against the real proxy — the POST assertion exists
+    # precisely so the redirect can never start swallowing it.
+    "/api/v1/auth/register": {"get"},
+}
+
+
 def test_the_methods_of_every_surviving_endpoint_are_unchanged():
     """A path that stayed must not have quietly lost a verb."""
     from app.app import app
@@ -481,6 +524,7 @@ def test_the_methods_of_every_surviving_endpoint_are_unchanged():
             continue
         before = {method for method in item if method in verbs}
         after = {method for method in current["paths"].get(path, {}) if method in verbs}
-        if before - after:
-            lost.append((path, sorted(before - after)))
+        gone = before - after - DECLARED_REMOVED_METHODS.get(path, set())
+        if gone:
+            lost.append((path, sorted(gone)))
     assert lost == [], lost

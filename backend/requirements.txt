@@ -127,9 +127,7 @@ imagekitio==5.4.0
 immutabledict==4.3.1
     # via ortools
 jinja2==3.1.6
-    # via
-    #   studentscompass
-    #   torch
+    # via torch
 jmespath==1.1.0
     # via
     #   boto3

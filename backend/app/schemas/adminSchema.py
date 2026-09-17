@@ -48,9 +48,6 @@ class AdminUsersPage(BaseModel):
     page: int
     page_size: int
     total: int
-    # Compatibility adapter for backend/app/static/js/admin.js. TASK-059
-    # removes it only after the legacy consumer has observed zero traffic.
-    users: list[AdminUserRead]
 
 
 class AdminCommunityRead(BaseModel):

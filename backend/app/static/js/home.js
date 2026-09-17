@@ -1,1 +1,0 @@
-/* Home page uses shared navigation behavior from base.js. */

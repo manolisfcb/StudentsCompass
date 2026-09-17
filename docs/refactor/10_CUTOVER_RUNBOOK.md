@@ -451,7 +451,7 @@ gcloud beta run domain-mappings list --project $P --region $R \
 #    esperado: studentscompass.ca  studentscompass-api
 
 # 1. Borrar el mapeo actual (a partir de aquí el dominio no resuelve a nada)
-gcloud beta run domain-mappings delete $D --project $P --region $R
+gcloud beta run domain-mappings delete --domain=$D --project $P --region $R
 
 # 2. Recrearlo contra el frontend — esto es el cutover
 #    infra/gcp/60-domain-mapping.sh hace exactamente esto y verifica el destino
@@ -483,11 +483,34 @@ se reaprovisiona desde cero.
 | Certificado | Gestionado por Cloud Run; sobrevive al repunte |
 | Sesiones de usuario | Sobreviven en ambos sentidos (cookie host-only sobre el dominio) |
 
+> **Aviso 2026-09-17: esto ya no basta por sí solo.** TASK-059 retiró las
+> pantallas Jinja el mismo día del cutover. Mientras ese retiro no esté
+> desplegado, lo de abajo sigue siendo el procedimiento completo. **En cuanto lo
+> esté, repuntar el dominio a la API devuelve 404 en todas las pantallas**,
+> porque la API ya no sirve ninguna.
+>
+> Revertir sigue siendo posible y sigue siendo rápido, pero son dos pasos:
+>
+> ```bash
+> P=gen-lang-client-0908704200; R=us-central1
+> # 1. Devolver la API a la última revisión que sirve Jinja (imagen 52a4087).
+> #    `gcloud run revisions list --service studentscompass-api` las lista; la
+> #    correspondencia revisión → SHA se lee por el digest en Artifact Registry.
+> gcloud run services update-traffic studentscompass-api \
+>   --project $P --region $R --to-revisions <revisión-pre-TASK-059>=100
+> # 2. Y solo entonces, repuntar el dominio con el procedimiento de abajo.
+> ```
+>
+> Las imágenes por SHA no se borran de Artifact Registry, así que el punto de
+> retorno existe mientras exista esa imagen. Lo que se ha perdido es que la
+> vuelta atrás fuera **un solo comando**, y eso fue una decisión explícita
+> tomada con la advertencia por escrito, no un descuido.
+
 **Procedimiento, sin tocar código:**
 
 ```bash
 P=gen-lang-client-0908704200; R=us-central1; D=studentscompass.ca
-gcloud beta run domain-mappings delete $D --project $P --region $R
+gcloud beta run domain-mappings delete --domain=$D --project $P --region $R
 gcloud beta run domain-mappings create --service studentscompass-api \
   --domain $D --project $P --region $R
 ```

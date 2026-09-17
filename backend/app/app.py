@@ -1,21 +1,14 @@
-from dataclasses import dataclass
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pathlib import Path
-from urllib.parse import urljoin
-from xml.etree.ElementTree import Element, SubElement, tostring, register_namespace
 
 # Load environment variables from .env early so routes can read them
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(dotenv_path=ROOT / ".env")
 
 from fastapi import FastAPI
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.db import create_db_and_tables
-from app.template_utils import configure_template_helpers
 import os
 
 from contextlib import asynccontextmanager
@@ -31,7 +24,6 @@ from app.core.openapi import (
 from app.middleware.request_context import RequestContextMiddleware
 from app.routes.authRoute import router as auth_router
 from app.schemas.userSchema import UserCreate, UserRead, UserUpdate
-from app.views.views import router as views_router
 from app.routes.questionnaireRoute import router as questionnaire_router
 from app.routes.resumeRoute import legacy_router as resume_legacy_router, router as resume_router
 from app.routes.jobRoute import legacy_router as job_legacy_router, router as job_router
@@ -63,71 +55,9 @@ from app.middleware.body_size import (
     RequestBodySizeLimitMiddleware,
 )
 from app.middleware.rate_limit import RequestRateLimiter
-from fastapi import Response
-from fastapi.responses import FileResponse
 
 
 LOGGER_APP = logging.getLogger(__name__)
-
-SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
-register_namespace("", SITEMAP_NAMESPACE)
-
-
-@dataclass(frozen=True)
-class SitemapEntry:
-    path: str
-    priority: str
-    changefreq: str
-    source_file: Path | None = None
-
-
-_PUBLIC_SITEMAP_ENTRIES: tuple[SitemapEntry, ...] = (
-    SitemapEntry(path="/", priority="1.0", changefreq="weekly", source_file=ROOT / "app/templates/home.html"),
-    SitemapEntry(path="/about", priority="0.8", changefreq="monthly", source_file=ROOT / "app/templates/about.html"),
-    SitemapEntry(path="/login", priority="0.6", changefreq="monthly", source_file=ROOT / "app/templates/login.html"),
-    SitemapEntry(path="/register", priority="0.7", changefreq="monthly", source_file=ROOT / "app/templates/register.html"),
-)
-
-
-def _get_public_base_url() -> str:
-    configured = (
-        os.getenv("PUBLIC_BASE_URL")
-        or os.getenv("APP_BASE_URL")
-        or os.getenv("SITE_URL")
-        or "https://studentscompass.ca"
-    ).strip()
-    return configured.rstrip("/")
-
-
-def _build_public_url(path: str) -> str:
-    base_url = _get_public_base_url()
-    relative_path = path.lstrip("/")
-    if not relative_path:
-        return f"{base_url}/"
-    return urljoin(f"{base_url}/", relative_path)
-
-
-def _get_last_modified_date(path: Path | None) -> str | None:
-    if path is None or not path.exists():
-        return None
-    modified_at = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
-    return modified_at.date().isoformat()
-
-
-def _build_sitemap_xml() -> bytes:
-    urlset = Element(f"{{{SITEMAP_NAMESPACE}}}urlset")
-
-    for entry in _PUBLIC_SITEMAP_ENTRIES:
-        url_node = SubElement(urlset, f"{{{SITEMAP_NAMESPACE}}}url")
-        SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}loc").text = _build_public_url(entry.path)
-        last_modified = _get_last_modified_date(entry.source_file)
-        if last_modified:
-            SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}lastmod").text = last_modified
-        SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}changefreq").text = entry.changefreq
-        SubElement(url_node, f"{{{SITEMAP_NAMESPACE}}}priority").text = entry.priority
-
-    return tostring(urlset, encoding="utf-8", xml_declaration=True)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -219,8 +149,9 @@ app.add_middleware(
 app.add_middleware(RequestContextMiddleware)
 
 # Registered after the middleware that mints the request id, because every
-# envelope these handlers write quotes it. Scoped to /api/v1 inside; the Jinja
-# views keep the framework's HTML error pages.
+# envelope these handlers write quotes it. Scoped to /api/v1 inside, which since
+# TASK-059 is the whole application: the Jinja views that kept the framework's
+# HTML error pages are gone.
 install_error_handlers(app)
 
 app.add_middleware(
@@ -245,32 +176,16 @@ async def apply_rate_limits(request, call_next):
     return await call_next(request)
 
 
-@app.get("/sitemap.xml", include_in_schema=False)
-async def sitemap():
-    return Response(content=_build_sitemap_xml(), media_type="application/xml")
-
-@app.get("/robots.txt", include_in_schema=False)
-async def robots():
-    public_base_url = _get_public_base_url()
-    return Response(
-        content=f"User-agent: *\nAllow: /\nSitemap: {public_base_url}/sitemap.xml",
-        media_type="text/plain"
-    )
-
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    return FileResponse("app/static/images/favicon.ico", media_type="image/x-icon")
-
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = configure_template_helpers(Jinja2Templates(directory="app/templates"))
-
 app.include_router(post_router, prefix="/api/v1", tags=["posts"])
 # Two mounts of the same router, on purpose. ``/api/v1/auth/student`` is the
 # contract: it matches ``/api/v1/auth/company`` so a client addresses either
-# actor the same way. ``/auth/jwt`` is the path the Jinja pages have always
-# called and stays until they are gone (TASK-059), because breaking it would
-# log every current session out mid-migration.
+# actor the same way. ``/auth/jwt`` is the path the Jinja pages called, and it
+# outlives them on purpose (TASK-059, runbook §4 B4): the ficha may only retire
+# an endpoint against measured zero traffic, and the window that measures it
+# opened with the cutover on 2026-09-17. Dropping the mount now would zero its
+# counter *by construction* — "nobody can call it" is not "nobody calls it" —
+# and the last pre-cutover sample still had 10 real POSTs to it. It comes out
+# when the window says it may, together with its proxy entry in nginx.conf.
 app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/api/v1/auth/student", tags=["auth"])
 app.include_router(
     fastapi_users.get_auth_router(auth_backend),
@@ -284,7 +199,6 @@ app.include_router(fastapi_users.get_reset_password_router(), prefix="/api/v1/au
 app.include_router(fastapi_users.get_verify_router(UserRead), prefix="/api/v1/auth", tags=["auth"])
 app.include_router(fastapi_users.get_users_router(UserRead, UserUpdate), prefix="/api/v1/users", tags=["users"])
 app.include_router(company_router, prefix="/api/v1", tags=["companies"])
-app.include_router(views_router, tags=["views"])
 app.include_router(questionnaire_router, prefix="/api/v1", tags=["questionnaire"])
 app.include_router(resume_router, prefix="/api/v1", tags=["resume"])
 app.include_router(resume_legacy_router, prefix="/api/v1", tags=["resume"])

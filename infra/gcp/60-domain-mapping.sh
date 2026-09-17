@@ -44,7 +44,7 @@ if [ -n "$CURRENT_ROUTE" ] && [ "$CURRENT_ROUTE" != "$FRONT_SERVICE" ]; then
   echo "infraestructura, y se hace con su ventana y su plan de vuelta atrás." >&2
   echo >&2
   echo "Para hacerlo deliberadamente:" >&2
-  echo "  gcloud beta run domain-mappings delete $DOMAIN --project $PROJECT_ID --region $REGION" >&2
+  echo "  gcloud beta run domain-mappings delete --domain=$DOMAIN --project $PROJECT_ID --region $REGION" >&2
   echo "  ./60-domain-mapping.sh" >&2
   exit 1
 fi

@@ -67,7 +67,7 @@ def _clear_overrides():
         app.dependency_overrides.pop(dependency, None)
 
 
-async def test_users_use_numbered_page_shape_and_keep_the_legacy_adapter(client):
+async def test_users_use_the_numbered_page_shape_and_nothing_else(client):
     service = StubAdminService()
     _override_admin(service)
     try:
@@ -80,7 +80,11 @@ async def test_users_use_numbered_page_shape_and_keep_the_legacy_adapter(client)
     assert body["page"] == 2
     assert body["page_size"] == 20
     assert body["total"] == 41
-    assert body["items"] == body["users"]
+    # TASK-059 retired the duplicated ``users`` key. It existed for
+    # app/static/js/admin.js, which no longer exists; React reads ``items``.
+    # Asserted as absent rather than simply not mentioned, so putting it back
+    # is a decision someone makes rather than a shape that drifts in again.
+    assert "users" not in body
 
 
 async def test_user_patch_is_explicit_and_replay_safe(client):

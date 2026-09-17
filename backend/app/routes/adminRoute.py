@@ -240,7 +240,7 @@ async def list_users(
     users = await svc.list_users(skip=offset, limit=size)
     total = await svc.count_users()
     items = [_user_to_dict(u) for u in users]
-    return {"items": items, "page": resolved_page, "page_size": size, "total": total, "users": items}
+    return {"items": items, "page": resolved_page, "page_size": size, "total": total}
 
 
 @router.patch("/users/{user_id}", response_model=AdminUserRead)

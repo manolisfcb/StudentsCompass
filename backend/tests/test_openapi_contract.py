@@ -211,10 +211,21 @@ def test_the_published_catalogue_is_the_whole_catalogue():
     assert set(published) == {code.value for code in ErrorCode}
 
 
-def test_views_are_not_given_an_api_error_response():
-    """Las páginas Jinja devuelven HTML; el envelope es de `/api/v1`."""
+def test_the_contract_carries_no_screen_of_its_own():
+    """TASK-059: retiradas las pantallas Jinja, el documento es solo la API.
+
+    Este caso afirmaba que `/about` no llevaba el envelope de error, porque era
+    una página y no un endpoint. Ya no hay ninguna página que excluir, así que
+    lo que se afirma ahora es lo que sustituyó a aquello: que **ninguna** ruta
+    del contrato vive fuera de `/api/v1` salvo las que están ahí a propósito.
+    """
     document = app.openapi()
-    assert "default" not in document["paths"]["/about"]["get"]["responses"]
+    fuera = [
+        path
+        for path in document["paths"]
+        if not path.startswith(("/api/v1/", "/internal/"))
+    ]
+    assert fuera == [], fuera
 
 
 # --- el comparador de contratos ---------------------------------------------
