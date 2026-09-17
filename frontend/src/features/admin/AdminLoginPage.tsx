@@ -5,8 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { PageScope } from "@/components/layout/PageScope";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Alert, Button, Card, FormField, Input } from "@/components/ui";
 import { fetchAdminStats } from "@/features/admin/api";
 import { login } from "@/features/auth/api";
 
@@ -36,66 +36,70 @@ export function AdminLoginPage() {
     mutation.mutate();
   }
 
-  const message = mutation.error instanceof ApiError && mutation.error.status === 403
-    ? t("admin.login.notAdmin")
-    : t("admin.login.invalid");
+  const message =
+    mutation.error instanceof ApiError && mutation.error.status === 403
+      ? t("admin.login.notAdmin")
+      : t("admin.login.invalid");
 
   return (
-    <PageScope name={["admin", "admin-page"]} className="admin-login-page">
+    // `theme-dark` is the console's whole theme: the same tokens, re-pointed.
+    // The card below is the design system's `Card`, with no dark-specific
+    // class on it — and the layout is centred, which the ported sheet never
+    // managed (it pinned the card to the top-left corner).
+    <div className="theme-dark flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
       <DocumentMeta title={t("admin.login.seoTitle")} description={t("admin.login.subtitle")} path="/admin/login" />
-      <main className="admin-login-card">
-        <div className="admin-login-header">
-          <div className="admin-login-icon" aria-hidden="true">
-            🛡️
-          </div>
-          <h1 className="admin-login-title">{t("admin.login.title")}</h1>
-          <p className="admin-login-subtitle">{t("admin.login.subtitle")}</p>
-        </div>
 
-        {mutation.isError ? (
-          <div className="admin-login-error visible" role="alert">
-            {message}
+      <main className="w-full max-w-sm">
+        <Card padding="lg" className="flex flex-col gap-5">
+          <div className="text-center">
+            <div
+              aria-hidden="true"
+              className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-primary text-2xl"
+            >
+              🛡️
+            </div>
+            <h1 className="text-section-title text-ink">{t("admin.login.title")}</h1>
+            <p className="mt-1 text-body-sm text-ink-soft">{t("admin.login.subtitle")}</p>
           </div>
-        ) : null}
 
-        <form onSubmit={submit}>
-          <div className="admin-form-group">
-            <label className="admin-form-label" htmlFor="adminEmail">
-              {t("admin.login.email")}
-            </label>
-            <input
-              className="admin-form-input"
-              id="adminEmail"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-          <div className="admin-form-group">
-            <label className="admin-form-label" htmlFor="adminPassword">
-              {t("admin.login.password")}
-            </label>
-            <input
-              className="admin-form-input"
-              id="adminPassword"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
-          <button type="submit" className="admin-login-btn" disabled={mutation.isPending}>
-            {mutation.isPending ? t("admin.login.submitting") : t("admin.login.submit")}
-          </button>
-        </form>
+          {mutation.isError ? <Alert tone="danger">{message}</Alert> : null}
 
-        <Link to="/" className="admin-login-subtitle">
-          {t("admin.backToSite")}
-        </Link>
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <FormField label={t("admin.login.email")}>
+              <Input
+                id="adminEmail"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </FormField>
+
+            <FormField label={t("admin.login.password")}>
+              <Input
+                id="adminPassword"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </FormField>
+
+            <Button type="submit" size="lg" block loading={mutation.isPending}>
+              {mutation.isPending ? t("admin.login.submitting") : t("admin.login.submit")}
+            </Button>
+          </form>
+
+          <Link
+            to="/"
+            className="text-center text-body-sm text-ink-muted transition-colors hover:text-ink"
+          >
+            {t("admin.backToSite")}
+          </Link>
+        </Card>
       </main>
-    </PageScope>
+    </div>
   );
 }

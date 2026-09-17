@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
 import { type ActorKind, logout } from "@/features/auth/api";
+import { cn } from "@/lib/cn";
 
 /**
  * One shell, one identity. A person can hold a student cookie and a recruiter
@@ -13,10 +14,14 @@ import { type ActorKind, logout } from "@/features/auth/api";
  */
 export function LogoutButton({
   actorKind,
-  className = "nav-btn nav-btn-logout",
+  className,
 }: {
   actorKind: ActorKind;
-  /** Defaults to the nav's own logout pill (`includes/navbar.html`). */
+  /**
+   * Overrides the default treatment. The default suits a coloured header bar;
+   * the admin console passes nothing and inherits it too, because its header
+   * is a dark surface where the same translucent-white fill still reads.
+   */
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -32,7 +37,16 @@ export function LogoutButton({
   });
 
   return (
-    <button type="button" className={className} onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+    <button
+      type="button"
+      className={cn(
+        "flex h-9 items-center justify-center rounded-md border border-white/25 px-3 text-body-sm font-medium text-white transition-colors",
+        "hover:bg-white/10 disabled:pointer-events-none disabled:opacity-60",
+        className,
+      )}
+      onClick={() => mutation.mutate()}
+      disabled={mutation.isPending}
+    >
       {mutation.isPending ? t("auth.logout.pending") : t("auth.logout.label")}
     </button>
   );

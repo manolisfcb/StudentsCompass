@@ -4,13 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import {
-  type ActorKind,
-  describeAuthError,
-  registerCompany,
-  registerStudent,
-} from "@/features/auth/api";
-import { AccountTypeToggle, AsidePoint, Field } from "@/features/auth/formParts";
+import { Alert, Button, FormField, Input, Textarea } from "@/components/ui";
+import { type ActorKind, describeAuthError, registerCompany, registerStudent } from "@/features/auth/api";
+import { AuthLayout } from "@/features/auth/AuthLayout";
+import { AccountTypeToggle, AsidePoint } from "@/features/auth/formParts";
 
 const MIN_PASSWORD_LENGTH = 8;
 /** How long the success message shows before redirecting, matching the legacy page. */
@@ -21,48 +18,38 @@ export function RegisterPage() {
   const [kind, setKind] = useState<ActorKind>("student");
 
   return (
-    <div className={`auth-container${kind === "company" ? " company-mode" : ""}`}>
+    <>
       <DocumentMeta
         title={t("auth.register.title")}
         description={t("auth.register.seoDescription")}
         path="/register"
       />
 
-      <div className="auth-shell">
-        <aside className="auth-aside">
-          <Link to="/" className="auth-brand" aria-label={t("app.name")}>
-            <img src="/images/Logo_Ready_to_Use.png" alt={t("layout.logoAlt")} className="brand-logo brand-logo--hero" />
-          </Link>
-          <span className="auth-kicker">{t("auth.register.kicker")}</span>
-          <h1>{t("auth.register.heroTitle")}</h1>
-          <p>{t("auth.register.heroBody")}</p>
-          <div className="auth-aside-points">
+      <AuthLayout
+        kicker={t("auth.register.kicker")}
+        heroTitle={t("auth.register.heroTitle")}
+        heroBody={t("auth.register.heroBody")}
+        points={
+          <>
             <AsidePoint icon="🎯" title={t("auth.register.point1.title")} body={t("auth.register.point1.body")} />
             <AsidePoint icon="🏢" title={t("auth.register.point2.title")} body={t("auth.register.point2.body")} />
-          </div>
-        </aside>
-
-        <div className="auth-card">
-          <div className="auth-form-header">
-            <Link to="/" className="auth-back-link">
-              {t("auth.backToHome")}
+          </>
+        }
+        title={t("auth.register.title")}
+        subtitle={t("auth.register.subtitle")}
+        footer={
+          <p>
+            {t("auth.register.haveAccount")}{" "}
+            <Link to="/login" className="font-medium text-primary hover:text-primary-hover">
+              {t("auth.register.login")}
             </Link>
-            <h2>{t("auth.register.title")}</h2>
-            <p>{t("auth.register.subtitle")}</p>
-          </div>
-
-          <AccountTypeToggle idPrefix="reg-type" name="account-type" value={kind} onChange={setKind} />
-
-          {kind === "student" ? <StudentForm /> : <CompanyForm />}
-
-          <div className="auth-links">
-            <p>
-              {t("auth.register.haveAccount")} <Link to="/login">{t("auth.register.login")}</Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+          </p>
+        }
+      >
+        <AccountTypeToggle idPrefix="reg-type" name="account-type" value={kind} onChange={setKind} />
+        {kind === "student" ? <StudentForm /> : <CompanyForm />}
+      </AuthLayout>
+    </>
   );
 }
 
@@ -124,59 +111,51 @@ function StudentForm() {
   const errorMessage = validationError ?? (mutation.isError ? describeAuthError(mutation.error, t) : null);
 
   return (
-    <form className="registration-form" onSubmit={handleSubmit} noValidate>
-      {errorMessage ? (
-        <div className="auth-message auth-message-error is-visible" role="alert">
-          {errorMessage}
-        </div>
-      ) : null}
-      {mutation.isSuccess ? (
-        <div className="auth-message auth-message-success is-visible" role="status">
-          {t("auth.register.success.student")}
-        </div>
-      ) : null}
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
+      {mutation.isSuccess ? <Alert tone="success">{t("auth.register.success.student")}</Alert> : null}
 
-      <div className="form-grid-two">
-        <Field label={t("auth.register.student.firstName")}>
-          <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("auth.register.student.firstName")}>
+          <Input
             required
             autoComplete="given-name"
             value={firstName}
             onChange={(event) => setFirstName(event.target.value)}
           />
-        </Field>
-        <Field label={t("auth.register.student.lastName")}>
-          <input
+        </FormField>
+        <FormField label={t("auth.register.student.lastName")}>
+          <Input
             required
             autoComplete="family-name"
             value={lastName}
             onChange={(event) => setLastName(event.target.value)}
           />
-        </Field>
+        </FormField>
       </div>
 
-      <Field label={t("auth.register.student.nickname")}>
-        <input
+      <FormField label={t("auth.register.student.nickname")}>
+        <Input
           required
           placeholder={t("auth.register.student.nicknamePlaceholder")}
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
         />
-      </Field>
+      </FormField>
 
-      <Field label={t("auth.register.student.email")}>
-        <input
+      <FormField label={t("auth.register.student.email")}>
+        <Input
           type="email"
           required
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
-      </Field>
+      </FormField>
 
-      <div className="form-grid-two">
-        <Field label={t("auth.register.student.password")}>
-          <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("auth.register.student.password")}>
+          <Input
             type="password"
             required
             autoComplete="new-password"
@@ -184,9 +163,9 @@ function StudentForm() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-        </Field>
-        <Field label={t("auth.register.student.confirmPassword")}>
-          <input
+        </FormField>
+        <FormField label={t("auth.register.student.confirmPassword")}>
+          <Input
             type="password"
             required
             autoComplete="new-password"
@@ -194,12 +173,12 @@ function StudentForm() {
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
-        </Field>
+        </FormField>
       </div>
 
-      <button type="submit" className="cta-button auth-button" disabled={mutation.isPending}>
+      <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
         {mutation.isPending ? t("auth.register.submitting") : t("auth.register.student.submit")}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -247,84 +226,76 @@ function CompanyForm() {
   const errorMessage = validationError ?? (mutation.isError ? describeAuthError(mutation.error, t) : null);
 
   return (
-    <form className="registration-form" onSubmit={handleSubmit} noValidate>
-      {errorMessage ? (
-        <div className="auth-message auth-message-error is-visible" role="alert">
-          {errorMessage}
-        </div>
-      ) : null}
-      {mutation.isSuccess ? (
-        <div className="auth-message auth-message-success is-visible" role="status">
-          {t("auth.register.success.company")}
-        </div>
-      ) : null}
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
+      {mutation.isSuccess ? <Alert tone="success">{t("auth.register.success.company")}</Alert> : null}
 
-      <div className="form-grid-two">
-        <Field label={t("auth.register.company.name")}>
-          <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("auth.register.company.name")}>
+          <Input
             required
             value={companyName}
             onChange={(event) => setCompanyName(event.target.value)}
           />
-        </Field>
-        <Field label={t("auth.register.company.industry")}>
-          <input value={industry} onChange={(event) => setIndustry(event.target.value)} />
-        </Field>
+        </FormField>
+        <FormField label={t("auth.register.company.industry")}>
+          <Input value={industry} onChange={(event) => setIndustry(event.target.value)} />
+        </FormField>
       </div>
 
-      <Field label={t("auth.register.company.contactPerson")}>
-        <input
+      <FormField label={t("auth.register.company.contactPerson")}>
+        <Input
           value={contactPerson}
           onChange={(event) => setContactPerson(event.target.value)}
         />
-      </Field>
+      </FormField>
 
-      <div className="form-grid-two">
-        <Field label={t("auth.register.company.email")}>
-          <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("auth.register.company.email")}>
+          <Input
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
-        </Field>
-        <Field label={t("auth.register.company.phone")}>
-          <input
+        </FormField>
+        <FormField label={t("auth.register.company.phone")}>
+          <Input
             type="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
           />
-        </Field>
+        </FormField>
       </div>
 
-      <div className="form-grid-two">
-        <Field label={t("auth.register.company.website")}>
-          <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("auth.register.company.website")}>
+          <Input
             type="url"
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
           />
-        </Field>
-        <Field label={t("auth.register.company.location")}>
-          <input
+        </FormField>
+        <FormField label={t("auth.register.company.location")}>
+          <Input
             value={location}
             onChange={(event) => setLocation(event.target.value)}
           />
-        </Field>
+        </FormField>
       </div>
 
-      <Field label={t("auth.register.company.description")}>
-        <textarea
+      <FormField label={t("auth.register.company.description")}>
+        <Textarea
           rows={5}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
-      </Field>
+      </FormField>
 
-      <div className="form-grid-two">
-        <Field label={t("auth.register.company.password")}>
-          <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("auth.register.company.password")}>
+          <Input
             type="password"
             required
             autoComplete="new-password"
@@ -332,9 +303,9 @@ function CompanyForm() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-        </Field>
-        <Field label={t("auth.register.company.confirmPassword")}>
-          <input
+        </FormField>
+        <FormField label={t("auth.register.company.confirmPassword")}>
+          <Input
             type="password"
             required
             autoComplete="new-password"
@@ -342,12 +313,12 @@ function CompanyForm() {
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
-        </Field>
+        </FormField>
       </div>
 
-      <button type="submit" className="cta-button auth-button" disabled={mutation.isPending}>
+      <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
         {mutation.isPending ? t("auth.register.submitting") : t("auth.register.company.submit")}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -3,9 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
-import { Spinner } from "@/components/primitives/Spinner";
+import { Alert, Button, LoadingState } from "@/components/ui";
 
 /**
  * The three states of a remote read, in one place.
@@ -25,11 +23,9 @@ export function AsyncBoundary<T>({
   const { t } = useTranslation();
 
   if (query.isPending) {
-    return (
-      <div className="p-8">
-        <Spinner label={t("async.loading")} />
-      </div>
-    );
+    // Skeleton rows rather than a lone spinner: they reserve roughly the
+    // height the content will take, so the page does not jump when it lands.
+    return <LoadingState label={t("async.loading")} />;
   }
 
   if (query.isError) {
@@ -51,20 +47,23 @@ export function QueryError({ error, onRetry }: { error: unknown; onRetry?: () =>
   const apiError = error instanceof ApiError ? error : null;
 
   return (
-    <div className="p-8">
-      <Alert tone="danger" title={t("async.error.title")}>
-        <p>{apiError?.detail?.message ?? t("async.error.generic")}</p>
-        {apiError?.requestId ? (
-          <p className="mt-2 font-mono text-xs text-ink-muted">
-            {t("async.error.requestId", { requestId: apiError.requestId })}
-          </p>
-        ) : null}
-        {onRetry ? (
-          <Button variant="secondary" className="mt-4" onClick={onRetry}>
+    <Alert
+      tone="danger"
+      title={t("async.error.title")}
+      action={
+        onRetry ? (
+          <Button variant="outline" size="sm" onClick={onRetry}>
             {t("async.error.retry")}
           </Button>
-        ) : null}
-      </Alert>
-    </div>
+        ) : null
+      }
+    >
+      <p>{apiError?.detail?.message ?? t("async.error.generic")}</p>
+      {apiError?.requestId ? (
+        <p className="mt-2 font-mono text-caption text-ink-muted">
+          {t("async.error.requestId", { requestId: apiError.requestId })}
+        </p>
+      ) : null}
+    </Alert>
   );
 }

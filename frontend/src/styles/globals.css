@@ -1,0 +1,146 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Global baseline.
+ *
+ * Document-level defaults only: anything that belongs to a component lives in
+ * `components/ui`, and anything that belongs to one screen lives in that
+ * screen. If a rule here needs a class name to work, it is in the wrong file.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings carry weight and tracking from the type scale, but never a size:
+   * an `<h2>` on a card and an `<h2>` opening a page are different sizes and
+   * the same element, so the size is the caller's to choose. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  p {
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  /* Controls do not inherit type by default, which is the reason inputs kept
+   * drifting from the rest of the page in the ported sheets. */
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: not-allowed;
+  }
+
+  /* ── Focus ──────────────────────────────────────────────────────────
+   * The audit found 118 `:hover` rules against 8 `:focus-visible` ones, so
+   * keyboard users were navigating an app that mostly did not respond. One
+   * global ring fixes that everywhere at once, including on the screens that
+   * have not been migrated yet.
+   *
+   * `:focus-visible` rather than `:focus` keeps the ring off mouse clicks,
+   * and the offset keeps it outside the control instead of over its border. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* The ported sheets suppress outlines in a few places. This wins them back
+   * without having to hunt each one down. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-muted);
+    color: var(--color-ink);
+  }
+
+  /* Images are block-level and fluid by default; the alternative is the
+   * inline-baseline gap under every logo and the horizontal overflow the
+   * audit found on narrow screens. */
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+  }
+
+  /* Long words — a pasted URL in a post, a CV filename — must wrap rather
+   * than widen the page. */
+  body {
+    overflow-wrap: break-word;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* The SPA's own chrome — the one thing with no counterpart in the templates
+   * this app was ported from. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 300;
+  }
+
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+  }
+}

@@ -3,10 +3,9 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Alert, Badge, Button, Card, EmptyState, FormField, Input, PageHeader, Textarea } from "@/components/ui";
 import {
   createJobPosting,
   deleteJobPosting,
@@ -18,48 +17,49 @@ import {
 
 const QUERY_KEY = ["company", "job-postings"];
 
-/** `company-dashboard.html`'s job-posting CRUD, split into its own screen. */
+/** The job-posting CRUD, on its own screen. */
 export function JobPostingsPage() {
   const { t } = useTranslation();
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: fetchJobPostings });
   const [creating, setCreating] = useState(false);
 
   return (
-    <PageScope name="company-dashboard" className="dashboard-container">
+    <div className="flex flex-col gap-6">
       <DocumentMeta
         title={t("company.postings.seoTitle")}
         description={t("company.postings.seoDescription")}
         path="/company/postings"
       />
-      <section className="section-card">
-        <div className="section-card-head">
-          <div>
-            <h3>{t("company.postings.title")}</h3>
-          </div>
-          <button type="button" className="btn btn-primary" onClick={() => setCreating((value) => !value)}>
+
+      <PageHeader
+        title={t("company.postings.title")}
+        actions={
+          <Button variant={creating ? "outline" : "primary"} onClick={() => setCreating((value) => !value)}>
             {creating ? t("company.postings.cancel") : t("company.postings.newPosting")}
-          </button>
-        </div>
+          </Button>
+        }
+      />
 
-        {creating ? <JobPostingForm onDone={() => setCreating(false)} /> : null}
+      {creating ? (
+        <Card>
+          <JobPostingForm onDone={() => setCreating(false)} />
+        </Card>
+      ) : null}
 
-        <AsyncBoundary query={query}>
-          {(postings) =>
-            postings.length === 0 ? (
-              <div className="empty-state">
-                <p>{t("company.postings.empty")}</p>
-              </div>
-            ) : (
-              <ul className="job-list">
-                {postings.map((posting) => (
-                  <PostingRow key={posting.id} posting={posting} />
-                ))}
-              </ul>
-            )
-          }
-        </AsyncBoundary>
-      </section>
-    </PageScope>
+      <AsyncBoundary query={query}>
+        {(postings) =>
+          postings.length === 0 ? (
+            <EmptyState title={t("company.postings.empty")} icon="🏗️" />
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {postings.map((posting) => (
+                <PostingRow key={posting.id} posting={posting} />
+              ))}
+            </ul>
+          )
+        }
+      </AsyncBoundary>
+    </div>
   );
 }
 
@@ -80,44 +80,53 @@ function PostingRow({ posting }: { posting: JobPosting }) {
 
   if (editing) {
     return (
-      <li className="job-item">
-        <JobPostingForm posting={posting} onDone={() => setEditing(false)} />
+      <li>
+        <Card>
+          <JobPostingForm posting={posting} onDone={() => setEditing(false)} />
+        </Card>
       </li>
     );
   }
 
   return (
-    <li className="job-item">
-      <div>
-        <div className="job-title">{posting.title}</div>
-        <div className="job-info">{posting.location ?? t("company.postings.noLocation")}</div>
-        <span className={`status-pill ${posting.is_active ? "active" : "inactive"}`}>
-          {posting.is_active ? t("company.postings.active") : t("company.postings.inactive")}
-        </span>
-      </div>
-      <div className="action-buttons">
-        <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
-          {t("company.postings.edit")}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          disabled={toggleActiveMutation.isPending}
-          onClick={() => toggleActiveMutation.mutate()}
-        >
-          {posting.is_active ? t("company.postings.deactivate") : t("company.postings.activate")}
-        </button>
-        <button
-          type="button"
-          className="btn btn-danger"
-          disabled={deleteMutation.isPending}
-          onClick={() => {
-            if (window.confirm(t("company.postings.confirmDelete"))) deleteMutation.mutate();
-          }}
-        >
-          {t("company.postings.delete")}
-        </button>
-      </div>
+    <li>
+      <Card className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="truncate text-card-title text-ink">{posting.title}</p>
+            <Badge tone={posting.is_active ? "success" : "neutral"}>
+              {posting.is_active ? t("company.postings.active") : t("company.postings.inactive")}
+            </Badge>
+          </div>
+          <p className="mt-0.5 text-caption text-ink-muted">
+            {posting.location ?? t("company.postings.noLocation")}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            {t("company.postings.edit")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            loading={toggleActiveMutation.isPending}
+            onClick={() => toggleActiveMutation.mutate()}
+          >
+            {posting.is_active ? t("company.postings.deactivate") : t("company.postings.activate")}
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            loading={deleteMutation.isPending}
+            onClick={() => {
+              if (window.confirm(t("company.postings.confirmDelete"))) deleteMutation.mutate();
+            }}
+          >
+            {t("company.postings.delete")}
+          </Button>
+        </div>
+      </Card>
     </li>
   );
 }
@@ -153,35 +162,37 @@ function JobPostingForm({ posting, onDone }: { posting?: JobPosting; onDone: () 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="recruiter-form">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {mutation.isError ? (
-        <p className="feedback-message" role="alert">
+        <Alert tone="danger">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("company.postings.saveError")}
-        </p>
+        </Alert>
       ) : null}
-      <div className="recruiter-form-grid">
-        <FormField label={t("company.postings.form.title")}>
-          <input required value={title} onChange={(e) => setTitle(e.target.value)} />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("company.postings.form.title")} required>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </FormField>
         <FormField label={t("company.postings.form.location")}>
-          <input value={location} onChange={(e) => setLocation(e.target.value)} />
+          <Input value={location} onChange={(e) => setLocation(e.target.value)} />
         </FormField>
         <FormField label={t("company.postings.form.jobType")}>
-          <input value={jobType} onChange={(e) => setJobType(e.target.value)} />
+          <Input value={jobType} onChange={(e) => setJobType(e.target.value)} />
         </FormField>
-        <FormField className="form-field full" label={t("company.postings.form.description")}>
-          <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <FormField label={t("company.postings.form.description")} className="sm:col-span-2">
+          <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </FormField>
       </div>
-      <div className="recruiter-actions">
-        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
+
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" loading={mutation.isPending}>
           {mutation.isPending ? t("company.postings.saving") : t("company.postings.save")}
-        </button>
-        <button type="button" className="btn btn-secondary" onClick={onDone}>
+        </Button>
+        <Button type="button" variant="ghost" onClick={onDone}>
           {t("company.postings.cancel")}
-        </button>
+        </Button>
       </div>
     </form>
   );

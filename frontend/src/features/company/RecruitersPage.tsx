@@ -3,10 +3,9 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Alert, Badge, Button, Card, CardHeader, FormField, Input, PageHeader, Select } from "@/components/ui";
 import {
   createRecruiter,
   deleteRecruiter,
@@ -31,44 +30,47 @@ export function RecruitersPage() {
   const [inviting, setInviting] = useState(false);
 
   return (
-    <PageScope name="company-team" className="team-shell">
+    <div className="flex flex-col gap-6">
       <DocumentMeta
         title={t("company.recruiters.seoTitle")}
         description={t("company.recruiters.seoDescription")}
         path="/company/recruiters"
       />
-      <div className="page-hero">
-        <div>
-          <h2>{t("company.recruiters.title")}</h2>
-          <p>{t("company.recruiters.subtitle")}</p>
-        </div>
-        <div className="owner-badge">{t("company.recruiters.ownerBadge")}</div>
-      </div>
 
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h3>{t("company.recruiters.accessTitle")}</h3>
-            <p>{t("company.recruiters.accessSubtitle")}</p>
+      <PageHeader
+        title={t("company.recruiters.title")}
+        description={t("company.recruiters.subtitle")}
+        actions={<Badge tone="brand" size="md">{t("company.recruiters.ownerBadge")}</Badge>}
+      />
+
+      <Card>
+        <CardHeader
+          title={t("company.recruiters.accessTitle")}
+          description={t("company.recruiters.accessSubtitle")}
+          action={
+            <Button variant={inviting ? "outline" : "primary"} size="sm" onClick={() => setInviting((value) => !value)}>
+              {inviting ? t("company.recruiters.cancel") : t("company.recruiters.invite")}
+            </Button>
+          }
+        />
+
+        {inviting ? (
+          <div className="mt-4 rounded-lg border border-border bg-surface-subtle p-4">
+            <InviteForm onDone={() => setInviting(false)} />
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => setInviting((value) => !value)}>
-            {inviting ? t("company.recruiters.cancel") : t("company.recruiters.invite")}
-          </button>
-        </div>
-
-        {inviting ? <InviteForm onDone={() => setInviting(false)} /> : null}
+        ) : null}
 
         <AsyncBoundary query={query}>
           {(recruiters) => (
-            <div className="recruiter-list">
+            <ul className="mt-4 divide-y divide-border-subtle">
               {recruiters.map((recruiter) => (
                 <RecruiterRow key={recruiter.id} recruiter={recruiter} />
               ))}
-            </div>
+            </ul>
           )}
         </AsyncBoundary>
-      </section>
-    </PageScope>
+      </Card>
+    </div>
   );
 }
 
@@ -94,49 +96,54 @@ function RecruiterRow({ recruiter }: { recruiter: Recruiter }) {
   const name = `${recruiter.first_name ?? ""} ${recruiter.last_name ?? ""}`.trim() || recruiter.email;
 
   return (
-    <article className="recruiter-item">
-      <div className="recruiter-identity">
-        <strong>{name}</strong>
-        <span>{recruiter.email}</span>
-        <span className={`status-pill ${recruiter.is_active ? "active" : "inactive"}`}>
-          {recruiter.is_active ? t("company.recruiters.active") : t("company.recruiters.inactive")}
-        </span>
+    <li className="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate text-card-title text-ink">{name}</p>
+          <Badge tone={recruiter.is_active ? "success" : "neutral"}>
+            {recruiter.is_active ? t("company.recruiters.active") : t("company.recruiters.inactive")}
+          </Badge>
+        </div>
+        <p className="truncate text-caption text-ink-muted">{recruiter.email}</p>
+
+        {roleMutation.isError ? (
+          <p role="alert" className="mt-1 text-caption text-danger">
+            {errorMessage(roleMutation.error, "company.recruiters.roleError")}
+          </p>
+        ) : null}
+        {deleteMutation.isError ? (
+          <p role="alert" className="mt-1 text-caption text-danger">
+            {errorMessage(deleteMutation.error, "company.recruiters.removeError")}
+          </p>
+        ) : null}
       </div>
-      <div className="recruiter-item-actions">
-        <select
+
+      <div className="flex shrink-0 items-center gap-2">
+        <Select
           value={recruiter.role}
           disabled={roleMutation.isPending}
           aria-label={t("company.recruiters.roleFor", { name })}
           onChange={(event) => roleMutation.mutate(event.target.value)}
+          className="w-auto"
         >
           {ROLES.map((role) => (
             <option key={role} value={role}>
               {role}
             </option>
           ))}
-        </select>
-        <button
-          type="button"
-          className="btn btn-danger"
-          disabled={deleteMutation.isPending}
+        </Select>
+        <Button
+          variant="danger"
+          size="sm"
+          loading={deleteMutation.isPending}
           onClick={() => {
             if (window.confirm(t("company.recruiters.confirmRemove"))) deleteMutation.mutate();
           }}
         >
           {t("company.recruiters.remove")}
-        </button>
+        </Button>
       </div>
-      {roleMutation.isError ? (
-        <p className="feedback-message" role="alert">
-          {errorMessage(roleMutation.error, "company.recruiters.roleError")}
-        </p>
-      ) : null}
-      {deleteMutation.isError ? (
-        <p className="feedback-message" role="alert">
-          {errorMessage(deleteMutation.error, "company.recruiters.removeError")}
-        </p>
-      ) : null}
-    </article>
+    </li>
   );
 }
 
@@ -164,47 +171,44 @@ function InviteForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="recruiter-form">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {mutation.isError ? (
-        <p className="feedback-message" role="alert">
+        <Alert tone="danger">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("company.recruiters.inviteError")}
-        </p>
+        </Alert>
       ) : null}
-      <div className="recruiter-form-grid">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FormField label={t("company.recruiters.form.firstName")}>
-          <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
         </FormField>
         <FormField label={t("company.recruiters.form.lastName")}>
-          <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
         </FormField>
-        <FormField label={t("company.recruiters.form.email")}>
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <FormField label={t("company.recruiters.form.email")} required>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </FormField>
         <FormField label={t("company.recruiters.form.role")}>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as (typeof ROLES)[number])}
-          >
+          <Select value={role} onChange={(e) => setRole(e.target.value as (typeof ROLES)[number])}>
             {ROLES.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
             ))}
-          </select>
+          </Select>
         </FormField>
-        <FormField label={t("company.recruiters.form.password")}>
-          <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <FormField label={t("company.recruiters.form.password")} required>
+          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </FormField>
       </div>
-      <div className="recruiter-actions">
-        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" loading={mutation.isPending}>
           {mutation.isPending ? t("company.recruiters.sending") : t("company.recruiters.sendInvite")}
-        </button>
-        <button type="button" className="btn btn-secondary" onClick={onDone}>
+        </Button>
+        <Button type="button" variant="ghost" onClick={onDone}>
           {t("company.recruiters.cancel")}
-        </button>
+        </Button>
       </div>
     </form>
   );

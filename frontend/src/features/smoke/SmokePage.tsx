@@ -46,7 +46,7 @@ export function SmokePage() {
 
   return (
     <main className="mx-auto max-w-2xl p-8 font-sans text-ink">
-      <h1 className="text-2xl font-semibold text-brand">{t("smoke.title")}</h1>
+      <h1 className="text-page-title text-primary">{t("smoke.title")}</h1>
       <p className="mt-3 text-ink-soft">{t("smoke.intro")}</p>
       <p className="mt-2 text-sm text-ink-muted">
         {t("smoke.origin", { origin: window.location.origin })}
@@ -84,7 +84,7 @@ export function SmokePage() {
 
       <button
         type="button"
-        className="mt-6 rounded bg-brand px-4 py-2 text-surface hover:bg-brand-strong"
+        className="mt-6 rounded-md bg-primary px-4 py-2 text-primary-fg transition-colors hover:bg-primary-hover"
         onClick={() => void probes.refetch()}
       >
         {t("smoke.rerun")}

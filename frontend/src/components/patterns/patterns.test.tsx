@@ -5,9 +5,8 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/api/client";
+import { DataTable, EmptyState } from "@/components/ui";
 import { AsyncBoundary, QueryError } from "@/components/patterns/AsyncBoundary";
-import { DataTable } from "@/components/patterns/DataTable";
-import { EmptyState } from "@/components/patterns/EmptyState";
 import "@/i18n";
 
 function withClient(children: ReactNode) {

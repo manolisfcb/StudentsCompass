@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { PageScope } from "@/components/layout/PageScope";
+import { Alert, Button, Card, ProgressBar } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
@@ -28,22 +28,22 @@ export function QuestionnairePage() {
   const query = useQuery({ queryKey: queryKeys.questionnaire.current, queryFn: fetchQuestionnaire });
 
   return (
-    <PageScope name="questionnaire" className="flex justify-center p-4">
+    <div className="flex justify-center">
       <DocumentMeta
         title={t("questionnaire.seoTitle")}
         description={t("questionnaire.seoDescription")}
         path="/questionnaire"
       />
-      {/* `questionnaire.html` is the one screen the Jinja app built on utility
-          classes rather than a sheet of its own (it loaded Tailwind from a CDN
-          and `questionnaire.css` only tunes it responsively), so the port keeps
-          the utilities — they are the original, not a rewrite of it. */}
-      <div className="relative flex min-h-[600px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+      {/* This screen was already built on utilities rather than a sheet — but
+          on a CDN Tailwind's default palette (`bg-gray-100`, `text-red-600`)
+          and a `brand` token that no longer exists. Now it reads the same
+          design tokens as the rest of the app. */}
+      <Card padding="none" className="flex min-h-[36rem] w-full max-w-2xl flex-col overflow-hidden">
         <AsyncBoundary query={query}>
           {(questionnaire) => <QuestionnaireFlow questionnaire={questionnaire} />}
         </AsyncBoundary>
-      </div>
-    </PageScope>
+      </Card>
+    </div>
   );
 }
 
@@ -70,28 +70,29 @@ function QuestionnaireFlow({ questionnaire }: { questionnaire: Questionnaire }) 
 
   return (
     <>
-      <div className="h-1.5 w-full bg-gray-100">
+      <div className="h-1 w-full bg-surface-hover">
         <div
-          className="questionnaire-progress-bar h-1.5 bg-brand transition-all duration-500 ease-out"
+          className="h-1 bg-primary transition-[width] duration-500 ease-out"
           style={{ width: `${((stepIndex + 1) / questionnaire.questions.length) * 100}%` }}
         />
       </div>
-      <div className="flex items-end justify-between px-8 pt-6">
-        <span className="text-xs font-bold uppercase tracking-wider text-brand">
+
+      <div className="flex items-end justify-between px-6 pt-5">
+        <span className="text-overline text-primary uppercase">
           {t("questionnaire.stepOf", { current: stepIndex + 1, total: questionnaire.questions.length })}
         </span>
-        <span className="text-xs text-gray-400">
+        <span className="text-caption text-ink-muted tabular-nums">
           {Math.round(((stepIndex + 1) / questionnaire.questions.length) * 100)}%
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col p-8">
-        <div className="fade-in mb-6">
-          <h2 className="mb-2 text-2xl font-bold leading-tight text-gray-900">{question.title}</h2>
-          {question.subtitle ? <p className="text-sm text-gray-500">{question.subtitle}</p> : null}
+      <div className="flex flex-1 flex-col p-6">
+        <div className="mb-5">
+          <h2 className="text-section-title text-ink">{question.title}</h2>
+          {question.subtitle ? <p className="mt-1 text-body-sm text-ink-soft">{question.subtitle}</p> : null}
         </div>
 
-        <div role="radiogroup" aria-label={question.title} className="fade-in flex-1 space-y-3 overflow-y-auto pb-4 pr-1">
+        <div role="radiogroup" aria-label={question.title} className="flex-1 space-y-2 overflow-y-auto pb-4 pr-1">
         {question.options.map((option) => (
           <button
             key={option.id}
@@ -99,10 +100,10 @@ function QuestionnaireFlow({ questionnaire }: { questionnaire: Questionnaire }) 
             role="radio"
             aria-checked={selected === option.id}
             onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: option.id }))}
-            className={`block w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors ${
+            className={`block w-full rounded-md border px-4 py-3 text-left text-body-sm transition-colors ${
               selected === option.id
-                ? "border-brand bg-brand/10 font-medium text-brand"
-                : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50"
+                ? "border-primary bg-primary-subtle font-medium text-primary"
+                : "border-border-strong bg-surface text-ink hover:bg-surface-hover"
             }`}
           >
             {option.label}
@@ -111,40 +112,32 @@ function QuestionnaireFlow({ questionnaire }: { questionnaire: Questionnaire }) 
         </div>
 
         {mutation.isError ? (
-          <p className="mt-4 text-sm text-red-600" role="alert">
+          <Alert tone="danger" className="mt-4">
             {mutation.error instanceof ApiError && mutation.error.detail
               ? mutation.error.detail.message
               : t("questionnaire.error.submit")}
-          </p>
+          </Alert>
         ) : null}
 
-        <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-6">
-          <button
-            type="button"
-            className="rounded-lg px-4 py-2 font-medium text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-0"
-            disabled={stepIndex === 0}
-            onClick={() => setStepIndex((i) => i - 1)}
-          >
-            {t("questionnaire.previous")}
-          </button>
-          {isLast ? (
-            <button
-              type="button"
-              className="rounded-lg bg-brand px-8 py-2.5 font-medium text-white shadow-lg transition-all hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-              disabled={!selected || mutation.isPending}
-              onClick={() => mutation.mutate()}
-            >
-              {mutation.isPending ? t("questionnaire.submitting") : t("questionnaire.submit")}
-            </button>
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-5">
+          {/* Hidden rather than faded out on the first step: a control at zero
+            * opacity is still focusable and still announced. */}
+          {stepIndex === 0 ? (
+            <span />
           ) : (
-            <button
-              type="button"
-              className="rounded-lg bg-brand px-8 py-2.5 font-medium text-white shadow-lg transition-all hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-              disabled={!selected}
-              onClick={() => setStepIndex((i) => i + 1)}
-            >
+            <Button variant="ghost" onClick={() => setStepIndex((i) => i - 1)}>
+              {t("questionnaire.previous")}
+            </Button>
+          )}
+
+          {isLast ? (
+            <Button size="lg" disabled={!selected} loading={mutation.isPending} onClick={() => mutation.mutate()}>
+              {mutation.isPending ? t("questionnaire.submitting") : t("questionnaire.submit")}
+            </Button>
+          ) : (
+            <Button size="lg" disabled={!selected} onClick={() => setStepIndex((i) => i + 1)}>
               {t("questionnaire.next")}
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -161,38 +154,31 @@ function QuestionnaireResults({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="fade-in flex flex-1 flex-col items-center justify-center p-10 text-center">
-      <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600 shadow-sm">
+    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+      <div
+        aria-hidden="true"
+        className="mb-5 flex size-16 items-center justify-center rounded-full bg-success-subtle text-2xl text-success"
+      >
         ✓
       </div>
-      <h2 className="mb-2 text-3xl font-bold text-gray-900">{t("questionnaire.results.title")}</h2>
-      <p className="mx-auto mb-8 max-w-md text-gray-500">{t("questionnaire.results.subtitle")}</p>
-      <div className="w-full max-w-md space-y-4 text-left">
+      <h2 className="text-page-title text-ink">{t("questionnaire.results.title")}</h2>
+      <p className="mx-auto mt-2 mb-8 max-w-md text-body text-ink-soft">{t("questionnaire.results.subtitle")}</p>
+
+      <div className="w-full max-w-md space-y-3 text-left">
         {result.top_careers.map((career) => (
-          <div key={career.career}>
-            <div className="flex justify-between text-sm font-medium text-gray-900">
-              <span>{career.career}</span>
-              <span>{career.score}</span>
-            </div>
-            <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-100">
-              <div className="h-full bg-brand" style={{ width: `${Math.min(100, career.score * 10)}%` }} />
-            </div>
-          </div>
+          <ProgressBar
+            key={career.career}
+            label={career.career}
+            value={Math.min(100, career.score * 10)}
+            showValue={false}
+          />
         ))}
       </div>
-      <div className="mt-10 flex w-full justify-center gap-4">
-        <button
-          type="button"
-          className="rounded-lg bg-brand px-6 py-2.5 font-medium text-white shadow-lg transition-all hover:bg-brand-strong"
-          onClick={onRetake}
-        >
-          {t("questionnaire.results.retake")}
-        </button>
-        <Link
-          to="/dashboard"
-          className="rounded-lg bg-gray-200 px-6 py-2.5 font-medium text-gray-800 transition-all hover:bg-gray-300"
-        >
-          {t("questionnaire.results.goToDashboard")}
+
+      <div className="mt-10 flex w-full flex-wrap justify-center gap-3">
+        <Button onClick={onRetake}>{t("questionnaire.results.retake")}</Button>
+        <Link to="/dashboard">
+          <Button variant="outline">{t("questionnaire.results.goToDashboard")}</Button>
         </Link>
       </div>
     </div>

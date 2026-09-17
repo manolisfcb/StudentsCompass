@@ -4,15 +4,16 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Badge, Card, EmptyState, Input, PageHeader, ProgressBar, SectionHeader, Select } from "@/components/ui";
 import { fetchRoadmaps, fetchSavedRoadmaps, type Roadmap, type SavedRoadmap } from "@/features/resources-roadmaps/api";
 
 /**
- * `roadmaps_list.html` over `roadmaps.css`: the saved rail on top
- * (`.saved-grid` of `.saved-card`s with their progress track), then the
- * in-demand three and the full `.demand-grid`.
+ * The roadmap catalogue: the saved rail on top, then the in-demand three and
+ * the full browse grid. All three are the same `Card` — they were three
+ * different ones (`.saved-card`, `.demand-card`, `.roadmap-card`) for three
+ * views of the same object.
  *
  * The toolbar filtered server-side in the template (`<form method="get">`);
  * here it filters the one fetched list, because the API answers the whole
@@ -27,68 +28,56 @@ export function RoadmapsListPage() {
   const [sort, setSort] = useState<"most_saved" | "newest">("most_saved");
 
   return (
-    <PageScope name="roadmaps">
+    <div className="flex flex-col gap-6">
       <DocumentMeta title={t("roadmaps.seoTitle")} description={t("roadmaps.seoDescription")} path="/roadmaps" />
-      <section className="roadmaps-page">
-        <div className="roadmaps-hero page-shell-header">
-          <div className="page-shell-header-row">
-            <div className="page-shell-header-copy">
-              <h2>{t("roadmaps.title")}</h2>
-              <p>{t("roadmaps.subtitle")}</p>
-            </div>
-          </div>
-        </div>
 
-        <div className="roadmaps-toolbar">
-          <div className="toolbar-form">
-            <input
+      <PageHeader
+        title={t("roadmaps.title")}
+        description={t("roadmaps.subtitle")}
+        actions={
+          <div className="flex gap-2">
+            <Input
               type="search"
-              className="toolbar-input"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("roadmaps.searchPlaceholder")}
               aria-label={t("roadmaps.searchPlaceholder")}
+              className="sm:w-56"
             />
-            <select
-              className="toolbar-select"
+            <Select
               value={sort}
               onChange={(event) => setSort(event.target.value as "most_saved" | "newest")}
               aria-label={t("roadmaps.sortLabel")}
+              className="w-auto"
             >
               <option value="most_saved">{t("roadmaps.sort.mostSaved")}</option>
               <option value="newest">{t("roadmaps.sort.newest")}</option>
-            </select>
+            </Select>
           </div>
-        </div>
+        }
+      />
 
-        <section className="roadmaps-section">
-          <div className="section-heading">
-            <h3>{t("roadmaps.saved.title")}</h3>
-            <p>{t("roadmaps.saved.subtitle")}</p>
-          </div>
-          <AsyncBoundary query={savedQuery}>
-            {(saved) =>
-              saved.length === 0 ? (
-                <div className="empty-state">
-                  <h4>{t("roadmaps.saved.empty")}</h4>
-                  <p>{t("roadmaps.saved.emptyHint")}</p>
-                </div>
-              ) : (
-                <div className="saved-grid">
-                  {saved.map((item) => (
-                    <SavedRoadmapCard key={item.roadmap.slug} saved={item} />
-                  ))}
-                </div>
-              )
-            }
-          </AsyncBoundary>
-        </section>
-
-        <AsyncBoundary query={roadmapsQuery}>
-          {(roadmaps) => <RoadmapSections roadmaps={roadmaps} search={search} sort={sort} />}
+      <section className="flex flex-col gap-4">
+        <SectionHeader title={t("roadmaps.saved.title")} description={t("roadmaps.saved.subtitle")} />
+        <AsyncBoundary query={savedQuery}>
+          {(saved) =>
+            saved.length === 0 ? (
+              <EmptyState title={t("roadmaps.saved.empty")} description={t("roadmaps.saved.emptyHint")} icon="🧭" />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {saved.map((item) => (
+                  <SavedRoadmapCard key={item.roadmap.slug} saved={item} />
+                ))}
+              </div>
+            )
+          }
         </AsyncBoundary>
       </section>
-    </PageScope>
+
+      <AsyncBoundary query={roadmapsQuery}>
+        {(roadmaps) => <RoadmapSections roadmaps={roadmaps} search={search} sort={sort} />}
+      </AsyncBoundary>
+    </div>
   );
 }
 
@@ -123,29 +112,21 @@ function RoadmapSections({
 
   return (
     <>
-      <section className="roadmaps-section">
-        <div className="section-heading">
-          <h3>{t("roadmaps.inDemand.title")}</h3>
-          <p>{t("roadmaps.inDemand.subtitle")}</p>
-        </div>
-        <div className="demand-grid">
+      <section className="flex flex-col gap-4">
+        <SectionHeader title={t("roadmaps.inDemand.title")} description={t("roadmaps.inDemand.subtitle")} />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {visible.slice(0, 3).map((roadmap) => (
             <DemandCard key={roadmap.slug} roadmap={roadmap} icon={DEMAND_ICONS[roadmap.slug] ?? "🧭"} />
           ))}
         </div>
       </section>
 
-      <section className="roadmaps-section">
-        <div className="section-heading">
-          <h3>{t("roadmaps.browse.title")}</h3>
-          <p>{t("roadmaps.browse.subtitle")}</p>
-        </div>
+      <section className="mt-6 flex flex-col gap-4">
+        <SectionHeader title={t("roadmaps.browse.title")} description={t("roadmaps.browse.subtitle")} />
         {visible.length === 0 ? (
-          <div className="empty-state">
-            <h4>{t("roadmaps.browse.empty")}</h4>
-          </div>
+          <EmptyState title={t("roadmaps.browse.empty")} icon="🔍" />
         ) : (
-          <div className="demand-grid">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visible.map((roadmap) => (
               <DemandCard key={roadmap.slug} roadmap={roadmap} />
             ))}
@@ -159,23 +140,32 @@ function RoadmapSections({
 function DemandCard({ roadmap, icon }: { roadmap: Roadmap; icon?: string }) {
   const { t } = useTranslation();
   return (
-    <article className="demand-card">
-      <div className="demand-header">
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
         {icon ? (
-          <span className="icon-pill" aria-hidden="true">
+          <span
+            aria-hidden="true"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-lg"
+          >
             {icon}
           </span>
         ) : null}
-        <span className="save-count">{t("roadmaps.saveCount", { count: roadmap.popularity })}</span>
-        {roadmap.is_saved ? <span className="saved-indicator">{t("roadmaps.savedIndicator")}</span> : null}
-      </div>
-      <h4>{roadmap.title}</h4>
-      <p>{roadmap.description}</p>
-      <div className="meta-row">
-        <span>
-          {roadmap.duration_weeks_min}-{roadmap.duration_weeks_max} {t("roadmaps.weeks")}
+        <span className="ml-auto text-caption text-ink-muted">
+          {t("roadmaps.saveCount", { count: roadmap.popularity })}
         </span>
-        <span>{roadmap.difficulty}</span>
+        {roadmap.is_saved ? <Badge tone="brand">{t("roadmaps.savedIndicator")}</Badge> : null}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <h4 className="text-card-title text-ink">{roadmap.title}</h4>
+        <p className="mt-1 line-clamp-2 text-body-sm text-ink-soft">{roadmap.description}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        <Badge>
+          {roadmap.duration_weeks_min}-{roadmap.duration_weeks_max} {t("roadmaps.weeks")}
+        </Badge>
+        <Badge>{roadmap.difficulty}</Badge>
       </div>
       {/* The template made the whole `.demand-card` clickable with a JS
           `data-href`, which left the card's only real link reading as a bare
@@ -183,12 +173,12 @@ function DemandCard({ roadmap, icon }: { roadmap: Roadmap; icon?: string }) {
           instead — same target, an accessible name per card. */}
       <Link
         to={`/roadmaps/${roadmap.slug}`}
-        className="card-link"
         aria-label={t("roadmaps.openRoadmapNamed", { title: roadmap.title })}
+        className="mt-auto border-t border-border pt-3 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
       >
-        {t("roadmaps.openRoadmap")}
+        {t("roadmaps.openRoadmap")} →
       </Link>
-    </article>
+    </Card>
   );
 }
 
@@ -196,25 +186,29 @@ function SavedRoadmapCard({ saved }: { saved: SavedRoadmap }) {
   const { t } = useTranslation();
   const { roadmap } = saved;
   return (
-    <article className="saved-card">
-      <div className="saved-card-top">
-        <h4>{roadmap.title}</h4>
-        <span className="progress-chip">{roadmap.overall_progress_percent}%</span>
+    <Card className="flex flex-col gap-3">
+      <div className="min-w-0">
+        <h4 className="truncate text-card-title text-ink">{roadmap.title}</h4>
+        <p className="text-caption text-ink-muted">
+          {roadmap.duration_weeks_min}-{roadmap.duration_weeks_max} {t("roadmaps.weeks")} • {roadmap.difficulty}
+        </p>
       </div>
-      <p>
-        {roadmap.duration_weeks_min}-{roadmap.duration_weeks_max} {t("roadmaps.weeks")} • {roadmap.difficulty}
-      </p>
-      <div className="progress-track">
-        <span className="roadmap-progress-fill" style={{ width: `${roadmap.overall_progress_percent}%` }} />
-      </div>
-      <small>{t("roadmaps.tasksCompleted", { completed: roadmap.completed_tasks, total: roadmap.total_tasks })}</small>
+
+      <ProgressBar
+        label={t("roadmaps.tasksCompleted", {
+          completed: roadmap.completed_tasks,
+          total: roadmap.total_tasks,
+        })}
+        value={roadmap.overall_progress_percent}
+      />
+
       <Link
         to={`/roadmaps/${roadmap.slug}`}
-        className="card-link"
         aria-label={t("roadmaps.continueRoadmapNamed", { title: roadmap.title })}
+        className="mt-auto border-t border-border pt-3 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
       >
-        {t("roadmaps.continueRoadmap")}
+        {t("roadmaps.continueRoadmap")} →
       </Link>
-    </article>
+    </Card>
   );
 }

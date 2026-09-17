@@ -6,8 +6,8 @@ import { useSearchParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { DataTable, type Column } from "@/components/patterns/DataTable";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Alert, Button, Card, CardHeader, type Column, DataTable, Input, StatCard } from "@/components/ui";
 import {
   createAdminResource,
   deleteAdminResource,
@@ -44,14 +44,12 @@ export function AdminPage() {
   }[section];
 
   return (
-    <div className="admin-content">
+    <>
       <DocumentMeta title={t("admin.seoTitle")} description={t("admin.seoDescription")} path="/admin" />
-      <div className="admin-section active">
-        {section === "dashboard" ? <AdminDashboard /> : null}
-        {section === "users" ? <UsersPanel title={sectionTitle} /> : null}
-        {section === "resources" ? <ResourcesPanel title={sectionTitle} /> : null}
-      </div>
-    </div>
+      {section === "dashboard" ? <AdminDashboard /> : null}
+      {section === "users" ? <UsersPanel title={sectionTitle} /> : null}
+      {section === "resources" ? <ResourcesPanel title={sectionTitle} /> : null}
+    </>
   );
 }
 
@@ -62,24 +60,16 @@ function AdminDashboard() {
   return (
     <AsyncBoundary query={query}>
       {(stats) => (
-        <div className="admin-stats-grid">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {(
             [
-              ["users", "👥", stats.total_users, t("admin.stats.users")],
-              ["resources", "📚", stats.total_resources, t("admin.stats.resources")],
-              ["resumes", "📄", stats.total_resumes, t("admin.stats.resumes")],
-              ["questionnaires", "📝", stats.total_questionnaires, t("admin.stats.questionnaires")],
+              ["👥", stats.total_users, t("admin.stats.users")],
+              ["📚", stats.total_resources, t("admin.stats.resources")],
+              ["📄", stats.total_resumes, t("admin.stats.resumes")],
+              ["📝", stats.total_questionnaires, t("admin.stats.questionnaires")],
             ] as const
-          ).map(([tone, icon, value, label]) => (
-            <article key={label} className="admin-stat-card">
-              <div className="admin-stat-header">
-                <span className={`admin-stat-icon ${tone}`} aria-hidden="true">
-                  {icon}
-                </span>
-              </div>
-              <div className="admin-stat-value">{value}</div>
-              <div className="admin-stat-label">{label}</div>
-            </article>
+          ).map(([icon, value, label]) => (
+            <StatCard key={label} icon={icon} value={value} label={label} />
           ))}
         </div>
       )}
@@ -113,29 +103,20 @@ function UsersPanel({ title }: { title: string }) {
   });
 
   return (
-    <section className="admin-panel">
-      <div className="admin-panel-header">
-        <div className="admin-panel-title">
-          <span className="panel-icon" aria-hidden="true">
-            👥
-          </span>{" "}
-          {title}
-        </div>
-        <div className="admin-panel-actions">
-          <div className="admin-search">
-            <span className="search-icon" aria-hidden="true">
-              🔍
-            </span>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t("admin.users.search")}
-              aria-label={t("admin.users.search")}
-            />
-          </div>
-        </div>
-      </div>
+    <Card className="flex flex-col gap-4">
+      <CardHeader
+        title={title}
+        action={
+          <Input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("admin.users.search")}
+            aria-label={t("admin.users.search")}
+            className="w-56"
+          />
+        }
+      />
       {update.isError || remove.isError ? <MutationError error={update.error ?? remove.error} /> : null}
       <AsyncBoundary query={query}>
         {(data) => {
@@ -155,7 +136,7 @@ function UsersPanel({ title }: { title: string }) {
           );
         }}
       </AsyncBoundary>
-    </section>
+    </Card>
   );
 }
 
@@ -179,50 +160,52 @@ function UsersTable({
       key: "status",
       header: t("admin.users.status"),
       cell: (user) => (
-        <button
+        <Button
           type="button"
-          className="admin-btn admin-btn-ghost"
+          variant="ghost"
+          size="sm"
           disabled={pendingId === user.id}
           onClick={() => onUpdate({ id: user.id, payload: { is_active: !user.is_active } })}
         >
           {user.is_active ? t("admin.users.deactivate") : t("admin.users.activate")}
-        </button>
+        </Button>
       ),
     },
     {
       key: "role",
       header: t("admin.users.role"),
       cell: (user) => (
-        <button
+        <Button
           type="button"
-          className="admin-btn admin-btn-ghost"
+          variant="ghost"
+          size="sm"
           disabled={pendingId === user.id}
           onClick={() => onUpdate({ id: user.id, payload: { is_superuser: !user.is_superuser } })}
         >
           {user.is_superuser ? t("admin.users.removeAdmin") : t("admin.users.makeAdmin")}
-        </button>
+        </Button>
       ),
     },
     {
       key: "delete",
       header: t("admin.users.actions"),
       cell: (user) => (
-        <button
+        <Button
           type="button"
-          className="admin-btn admin-btn-danger"
+          variant="danger"
+          size="sm"
           disabled={pendingId === user.id}
           onClick={() => {
             if (window.confirm(t("admin.users.confirmDelete", { email: user.email }))) onDelete(user.id);
           }}
         >
           {t("admin.delete")}
-        </button>
+        </Button>
       ),
     },
   ];
   return (
     <DataTable
-      variant="admin"
       rows={users}
       columns={columns}
       rowKey={(user) => user.id}
@@ -269,32 +252,23 @@ function ResourcesPanel({ title }: { title: string }) {
   }
 
   return (
-    <section className="admin-panel">
-      <div className="admin-panel-header">
-        <div className="admin-panel-title">
-          <span className="panel-icon" aria-hidden="true">
-            📚
-          </span>{" "}
-          {title}
-        </div>
-        <div className="admin-panel-actions">
-          <button type="button" className="admin-btn admin-btn-primary" onClick={() => setEditor("new")}>
-            {t("admin.resources.new")}
-          </button>
-          <div className="admin-search">
-            <span className="search-icon" aria-hidden="true">
-              🔍
-            </span>
-            <input
+    <Card className="flex flex-col gap-4">
+      <CardHeader
+        title={title}
+        action={
+          <div className="flex items-center gap-2">
+            <Input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("admin.resources.search")}
               aria-label={t("admin.resources.search")}
+              className="w-56"
             />
+            <Button onClick={() => setEditor("new")}>{t("admin.resources.new")}</Button>
           </div>
-        </div>
-      </div>
+        }
+      />
       {state.isError || remove.isError || loadEditor.isError ? (
         <MutationError error={state.error ?? remove.error ?? loadEditor.error} />
       ) : null}
@@ -329,7 +303,7 @@ function ResourcesPanel({ title }: { title: string }) {
           onCancel={() => setEditor(null)}
         />
       ) : null}
-    </section>
+    </Card>
   );
 }
 
@@ -355,53 +329,57 @@ function ResourcesTable({
       key: "published",
       header: t("admin.resources.visibility"),
       cell: (resource) => (
-        <button
+        <Button
           type="button"
-          className="admin-btn admin-btn-ghost"
+          variant="ghost"
+          size="sm"
           disabled={pendingId === resource.id}
           onClick={() => onState({ id: resource.id, payload: { is_published: !resource.is_published } })}
         >
           {resource.is_published ? t("admin.resources.unpublish") : t("admin.resources.publish")}
-        </button>
+        </Button>
       ),
     },
     {
       key: "locked",
       header: t("admin.resources.access"),
       cell: (resource) => (
-        <button
+        <Button
           type="button"
-          className="admin-btn admin-btn-ghost"
+          variant="ghost"
+          size="sm"
           disabled={pendingId === resource.id}
           onClick={() => onState({ id: resource.id, payload: { is_locked: !resource.is_locked } })}
         >
           {resource.is_locked ? t("admin.resources.unlock") : t("admin.resources.lock")}
-        </button>
+        </Button>
       ),
     },
     {
       key: "actions",
       header: t("admin.resources.actions"),
       cell: (resource) => (
-        <div className="admin-row-actions">
-          <button
+        <div className="flex gap-2">
+          <Button
             type="button"
-            className="admin-btn admin-btn-ghost"
+            variant="ghost"
+            size="sm"
             disabled={pendingId === resource.id}
             onClick={() => onEdit(resource.id)}
           >
             {t("admin.edit")}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="admin-btn admin-btn-danger"
+            variant="danger"
+            size="sm"
             disabled={pendingId === resource.id}
             onClick={() => {
               if (window.confirm(t("admin.resources.confirmDelete", { title: resource.title }))) onDelete(resource.id);
             }}
           >
             {t("admin.delete")}
-          </button>
+          </Button>
         </div>
       ),
     },
@@ -409,7 +387,6 @@ function ResourcesTable({
 
   return (
     <DataTable
-      variant="admin"
       rows={resources}
       columns={columns}
       rowKey={(resource) => resource.id}
@@ -423,19 +400,17 @@ function Pagination({ page, pageSize, total, onPage }: { page: number; pageSize:
   const { t } = useTranslation();
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
-    <nav aria-label={t("admin.pagination.label")} className="admin-pagination">
-      <button type="button" className="admin-btn admin-btn-ghost" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+    <nav
+      aria-label={t("admin.pagination.label")}
+      className="flex items-center justify-between gap-3 border-t border-border pt-4"
+    >
+      <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>
         {t("admin.pagination.previous")}
-      </button>
-      <span>{t("admin.pagination.status", { page, pages, total })}</span>
-      <button
-        type="button"
-        className="admin-btn admin-btn-ghost"
-        disabled={page >= pages}
-        onClick={() => onPage(page + 1)}
-      >
+      </Button>
+      <span className="text-caption text-ink-muted">{t("admin.pagination.status", { page, pages, total })}</span>
+      <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => onPage(page + 1)}>
         {t("admin.pagination.next")}
-      </button>
+      </Button>
     </nav>
   );
 }
@@ -443,8 +418,8 @@ function Pagination({ page, pageSize, total, onPage }: { page: number; pageSize:
 function MutationError({ error }: { error: unknown }) {
   const { t } = useTranslation();
   return (
-    <p className="admin-login-error visible" role="alert">
+    <Alert tone="danger">
       {error instanceof ApiError && error.detail ? error.detail.message : t("admin.actionError")}
-    </p>
+    </Alert>
   );
 }

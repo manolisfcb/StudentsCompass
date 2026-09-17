@@ -2,6 +2,8 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router-dom";
 
+import { cn } from "@/lib/cn";
+
 export interface NavItem {
   to: string;
   label: string;
@@ -14,16 +16,24 @@ export type ShellVariant = "student" | "company" | "marketing";
 const LOGO = "/images/Logo_Ready_to_Use.png";
 
 /**
- * The site header, ported from `includes/navbar.html` and
- * `includes/company_header.html`.
+ * The site header.
  *
- * The classes are the shipped ones (`student-header`, `student-nav`,
- * `nav-btn nav-btn-primary`, `#mobile-menu`) because the styling lives in the
- * ported `style.css` and keys off exactly those names — including the mobile
- * behaviour, where `nav ul` is the off-canvas panel and `.active` opens it.
- * That is why the menu state here toggles a class rather than a Tailwind
- * conditional: the sheet already owns the animation.
+ * The ported version was a floating, blur-backed, 28px-radius bar of white
+ * pill buttons sitting on a three-stop gradient, held together by fourteen
+ * `!important`s. This is the same header — same brand, same teal, same items —
+ * as one solid bar: sticky, 56px, tokens only.
+ *
+ * Each actor keeps its own bar colour because that is the fastest way to know
+ * which product you are in, but the structure and spacing are shared.
  */
+const CHROME: Record<ShellVariant, string> = {
+  student: "bg-primary text-white",
+  // Slate rather than the old blue gradient: it reads as the business-facing
+  // side without introducing a third brand colour.
+  company: "bg-ink text-white",
+  marketing: "bg-transparent text-white",
+};
+
 export function AppShell({
   variant,
   brandHref,
@@ -38,24 +48,32 @@ export function AppShell({
   /** The logout control, or the marketing shell's login/register pair. */
   actions?: ReactNode;
   /**
-   * Content rendered inside `<header>`, below the nav. The homepage hero lives
-   * there in `home.html` so that one `.marketing-header` gradient covers nav
-   * and hero together; painting it on a second element underneath would leave
-   * a seam, because the gradient is angled.
+   * Content rendered inside `<header>`, below the nav — the homepage hero,
+   * which shares the header's gradient so there is no seam between them.
    */
   headerExtra?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const isCompany = variant === "company";
   const isMarketing = variant === "marketing";
+  const isCompany = variant === "company";
 
-  const headerClass = isMarketing ? "marketing-header" : isCompany ? "company-header" : "student-header";
-  const navClass = isMarketing ? "marketing-nav" : isCompany ? "company-nav" : "student-nav";
-  const brandClass = isMarketing ? "marketing-brand" : isCompany ? "company-brand" : "student-brand";
-  const toggleClass = isCompany ? "company-menu-toggle" : "student-menu-toggle";
-  const menuId = isCompany ? "company-mobile-menu" : "mobile-menu";
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    cn(
+      "flex items-center rounded-md px-3 py-2 text-body-sm font-medium transition-colors md:h-9 md:py-0",
+      // The marketing bar sits on a gradient that runs from dark teal to pale
+      // mint, so white-on-transparent disappears by the right-hand end of the
+      // nav. A dark translucent chip gives every item the same backing
+      // regardless of what the gradient is doing underneath it.
+      isMarketing
+        ? isActive
+          ? "bg-ink/35 text-white"
+          : "bg-ink/20 text-white hover:bg-ink/35"
+        : isActive
+          ? "bg-white/18 text-white"
+          : "text-white/75 hover:bg-white/10 hover:text-white",
+    );
 
   return (
     <>
@@ -63,114 +81,129 @@ export function AppShell({
         {t("layout.skipToContent")}
       </a>
 
-      <header className={headerClass}>
-        <nav className={navClass} aria-label={t("app.name")}>
-          <div className="container">
-            <Link to={brandHref} className={brandClass} aria-label={t("app.name")}>
-              <img
-                src={LOGO}
-                alt={t("layout.logoAlt")}
-                className={`brand-logo ${isMarketing ? "brand-logo--hero" : "brand-logo--nav"}`}
-              />
+      <header className={cn(isMarketing ? "relative" : "sticky top-0 z-40", CHROME[variant])}>
+        <nav aria-label={t("app.name")} className={cn(!isMarketing && "border-b border-white/10")}>
+          <div className="mx-auto flex h-14 max-w-content items-center gap-3 px-4">
+            <Link
+              to={brandHref}
+              aria-label={t("app.name")}
+              className="flex shrink-0 items-center gap-2.5 rounded-md py-1"
+            >
+              <img src={LOGO} alt={t("layout.logoAlt")} className="h-8 w-auto" />
               {isMarketing ? null : (
-                <span className={isCompany ? "company-badge" : "student-badge"}>
+                <span className="hidden rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-overline text-white uppercase sm:inline-flex">
                   {isCompany ? t("layout.badge.company") : t("layout.badge.students")}
                 </span>
               )}
             </Link>
 
-            <button
-              type="button"
-              className={`mobile-menu-toggle ${toggleClass}`}
-              aria-label={t("layout.toggleNavigation")}
-              aria-expanded={menuOpen}
-              aria-controls={menuId}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              ☰
-            </button>
-
-            <ul id={menuId} className={menuOpen ? "active" : undefined}>
+            {/* The desktop nav sits right of the brand and left of the actions,
+             * so a long item list eats the middle rather than pushing the
+             * logout button off the bar. */}
+            <ul className="ml-auto hidden items-center gap-1 md:flex">
               {nav?.map((item) => (
                 <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.end ?? false}
-                    onClick={() => setMenuOpen(false)}
-                    className={({ isActive }) =>
-                      [
-                        isMarketing ? "" : "nav-btn nav-btn-primary",
-                        isActive ? (isMarketing ? "active-link" : "active") : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                  >
+                  <NavLink to={item.to} end={item.end ?? false} className={navLinkClass}>
                     {item.label}
                   </NavLink>
                 </li>
               ))}
-              {actions}
             </ul>
+
+            <ul className="hidden items-center gap-2 md:flex">{actions}</ul>
+
+            <button
+              type="button"
+              aria-label={t("layout.toggleNavigation")}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              onClick={() => setMenuOpen((open) => !open)}
+              className="ml-auto flex size-9 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10 md:hidden"
+            >
+              <span aria-hidden="true" className="text-lg">
+                {menuOpen ? "✕" : "☰"}
+              </span>
+            </button>
           </div>
+
+          {/* Rendered only when open rather than hidden with a class: an
+           * off-screen panel left in the DOM stays in the tab order, which is
+           * how the ported menu trapped keyboard users behind an invisible
+           * list of links.
+           *
+           * It closes on any click inside itself — every control in here either
+           * navigates or signs out — rather than from an effect keyed on the
+           * route, which would call setState on each render pass. */}
+          {menuOpen ? (
+            <div
+              id="mobile-menu"
+              onClick={() => setMenuOpen(false)}
+              className="border-t border-white/10 px-4 py-3 md:hidden"
+            >
+              <ul className="flex flex-col gap-1">
+                {nav?.map((item) => (
+                  <li key={item.to}>
+                    <NavLink to={item.to} end={item.end ?? false} className={navLinkClass}>
+                      {item.label}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+              <ul className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">{actions}</ul>
+            </div>
+          ) : null}
         </nav>
+
         {headerExtra}
       </header>
 
       {children}
 
-      {isMarketing ? <PublicFooter /> : <SiteFooter />}
+      <SiteFooter variant={variant} />
     </>
   );
 }
 
-/** The marketing pages' own footer (`home.html`, `about.html`). */
-export function PublicFooter() {
+/**
+ * One footer for every shell. The ported app had two that differed only in
+ * whether they listed a contact link.
+ */
+export function SiteFooter({ variant = "student" }: { variant?: ShellVariant }) {
   const { t } = useTranslation();
+  const links = [
+    { href: "#privacy", label: t("layout.footer.privacy") },
+    { href: "#terms", label: t("layout.footer.terms") },
+    ...(variant === "marketing" ? [] : [{ href: "#contact", label: t("layout.footer.contact") }]),
+  ];
+
   return (
-    <footer className="public-footer">
-      <div className="container">
+    <footer className="mt-auto border-t border-border bg-surface">
+      <div className="mx-auto flex max-w-content flex-col items-center justify-between gap-3 px-4 py-5 text-caption text-ink-muted sm:flex-row">
         <p>{t("layout.footer.copyright", { year: new Date().getFullYear() })}</p>
-        <ul>
-          <li>
-            <a href="#privacy">{t("layout.footer.privacy")}</a>
-          </li>
-          <li>
-            <a href="#terms">{t("layout.footer.terms")}</a>
-          </li>
+        <ul className="flex flex-wrap items-center gap-4">
+          {links.map((link) => (
+            <li key={link.href}>
+              <a href={link.href} className="rounded-xs transition-colors hover:text-ink">
+                {link.label}
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
     </footer>
   );
 }
 
-/** `includes/footer.html`. */
-export function SiteFooter() {
-  const { t } = useTranslation();
-  return (
-    <footer>
-      <div className="container">
-        <p>{t("layout.footer.copyright", { year: new Date().getFullYear() })}</p>
-        <ul>
-          <li>
-            <a href="#privacy">{t("layout.footer.privacy")}</a>
-          </li>
-          <li>
-            <a href="#terms">{t("layout.footer.terms")}</a>
-          </li>
-          <li>
-            <a href="#contact">{t("layout.footer.contact")}</a>
-          </li>
-        </ul>
-      </div>
-    </footer>
-  );
-}
+/** Kept for the marketing shell, which imports it by name. */
+export const PublicFooter = () => <SiteFooter variant="marketing" />;
 
 /**
- * `includes/sidebar.html`. The icons are the same inline SVGs the template
- * ships: `.sidebar-icon` styles them by class and recolours them on the active
- * row, which an icon font or an emoji could not reproduce.
+ * The student rail.
+ *
+ * Narrower and flatter than the ported one, which was a 260px blurred gradient
+ * card with a 30px radius and a 48px-blur shadow holding eight pill-shaped
+ * rows. Rows are 36px here, so the whole menu is visible without the sidebar
+ * competing with the page beside it.
  */
 export function StudentSidebar() {
   const { t } = useTranslation();
@@ -186,36 +219,54 @@ export function StudentSidebar() {
   ];
 
   return (
-    <aside className="dashboard-sidebar left">
-      <div className="sidebar-menu">
-        <h4>{t("layout.sidebar.explore")}</h4>
-        <ul>
+    // Hidden below `lg` rather than stacked: the same links are already in the
+    // header's mobile menu, and showing both put eight rows between the top of
+    // a phone screen and the page content.
+    <aside className="hidden w-sidebar shrink-0 lg:block">
+      <nav aria-label={t("layout.sidebar.explore")} className="sticky top-20">
+        <p className="px-3 pb-2 text-overline text-ink-muted uppercase">{t("layout.sidebar.explore")}</p>
+        <ul className="flex flex-col gap-0.5">
           {items.map((item) => (
             <li key={item.to}>
-              <NavLink to={item.to} end={item.end ?? false} className={({ isActive }) => (isActive ? "active" : "")}>
+              <NavLink
+                to={item.to}
+                end={item.end ?? false}
+                className={({ isActive }) =>
+                  cn(
+                    "flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm transition-colors",
+                    isActive
+                      ? "bg-primary-subtle font-medium text-primary"
+                      : "text-ink-soft hover:bg-surface-hover hover:text-ink",
+                  )
+                }
+              >
                 {item.icon}
                 <span>{item.label}</span>
               </NavLink>
             </li>
           ))}
         </ul>
-      </div>
+      </nav>
     </aside>
   );
 }
 
+/**
+ * The rail icons, inline so they inherit `currentColor` and recolour with the
+ * active row — which an icon font or an emoji could not do.
+ */
 function svgProps() {
   return {
     xmlns: "http://www.w3.org/2000/svg",
-    width: 24,
-    height: 24,
+    width: 18,
+    height: 18,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
     strokeWidth: 2,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
-    className: "sidebar-icon",
+    className: "shrink-0",
     "aria-hidden": true,
   };
 }

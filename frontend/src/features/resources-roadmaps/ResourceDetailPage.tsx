@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { PageScope } from "@/components/layout/PageScope";
-import { Alert } from "@/components/primitives/Alert";
+import { Alert, Badge, Button, Card, Input, ProgressBar } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { ResumeAuditWidget } from "@/features/profile-resumes/ResumeAuditWidget";
@@ -39,18 +38,16 @@ export function ResourceDetailPage() {
   });
 
   return (
-    <PageScope name="resources" className="resource-page-main">
-      <AsyncBoundary query={detailQuery}>
-        {(resource) => (
-          <>
-            <DocumentMeta title={resource.title} description={resource.description} path={`/resources/${resourceId}`} />
-            <AsyncBoundary query={progressQuery}>
-              {(progress) => <LessonViewer resource={resource} progress={progress} />}
-            </AsyncBoundary>
-          </>
-        )}
-      </AsyncBoundary>
-    </PageScope>
+    <AsyncBoundary query={detailQuery}>
+      {(resource) => (
+        <>
+          <DocumentMeta title={resource.title} description={resource.description} path={`/resources/${resourceId}`} />
+          <AsyncBoundary query={progressQuery}>
+            {(progress) => <LessonViewer resource={resource} progress={progress} />}
+          </AsyncBoundary>
+        </>
+      )}
+    </AsyncBoundary>
   );
 }
 
@@ -83,67 +80,72 @@ function LessonViewer({ resource, progress }: { resource: ResourceDetail; progre
   }, [resource.modules, search]);
 
   return (
-    <div className="resources-container">
-      <section className="resource-course-shell">
-        <aside className="panel course-sidebar">
-          <div className="course-sidebar-header">
-            <Link to="/resources" className="course-back-link">
-              {t("resources.detail.back")}
-            </Link>
-            <h2>
+    // Two columns on a laptop, stacked below it. The outline is `order-2` on a
+    // phone so the lesson you came to read is the first thing on the screen.
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <aside className="order-2 flex w-full shrink-0 flex-col gap-3 lg:order-1 lg:w-72">
+        <Card className="flex flex-col gap-3">
+          <Link to="/resources" className="text-body-sm text-ink-soft transition-colors hover:text-ink">
+            {t("resources.detail.back")}
+          </Link>
+
+          <div className="min-w-0">
+            <h2 className="text-card-title text-ink">
               <span aria-hidden="true">{resource.icon ?? "📚"}</span> {resource.title}
             </h2>
-            <p>{resource.description}</p>
-            <label className="course-search-wrap">
-              <span className="sr-only">{t("resources.detail.searchLessons")}</span>
-              <input
-                type="search"
-                autoComplete="off"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={t("resources.detail.searchPlaceholder")}
-              />
-            </label>
+            <p className="mt-1 text-caption text-ink-soft">{resource.description}</p>
           </div>
 
-          <div className="course-outline">
-            {outline.map(({ module, lessons }) => {
-              const moduleProgress = moduleProgressById.get(module.id);
-              return (
-                <section key={module.id} className="course-module">
-                  <div className="course-module-btn">
-                    <span className="course-module-caret" aria-hidden="true">
-                      ▾
-                    </span>
-                    <span className="course-module-copy">
-                      <span className="course-module-title">
-                        {t("resources.detail.moduleLabel", { position: module.position, title: module.title })}
-                      </span>
-                      <span className="course-module-progress">
-                        {t("resources.detail.moduleProgress", {
-                          completed: moduleProgress?.completed_lessons ?? 0,
-                          total: moduleProgress?.total_lessons ?? lessons.length,
-                        })}
-                      </span>
-                    </span>
-                  </div>
-                  <ul className="course-lessons">
-                    {lessons.map((moduleLesson) => (
-                      <li key={moduleLesson.id} className="course-lesson-row">
+          <label>
+            <span className="sr-only">{t("resources.detail.searchLessons")}</span>
+            <Input
+              type="search"
+              autoComplete="off"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t("resources.detail.searchPlaceholder")}
+            />
+          </label>
+        </Card>
+
+        <Card padding="sm" className="flex max-h-[32rem] flex-col gap-4 overflow-y-auto">
+          {outline.map(({ module, lessons }) => {
+            const moduleProgress = moduleProgressById.get(module.id);
+            return (
+              <section key={module.id}>
+                <div className="px-2 pb-1.5">
+                  <p className="text-label text-ink">
+                    {t("resources.detail.moduleLabel", { position: module.position, title: module.title })}
+                  </p>
+                  <p className="text-caption text-ink-muted">
+                    {t("resources.detail.moduleProgress", {
+                      completed: moduleProgress?.completed_lessons ?? 0,
+                      total: moduleProgress?.total_lessons ?? lessons.length,
+                    })}
+                  </p>
+                </div>
+
+                <ul className="flex flex-col gap-0.5">
+                  {lessons.map((moduleLesson) => {
+                    const active = moduleLesson.id === lesson?.id;
+                    return (
+                      <li key={moduleLesson.id}>
                         <button
                           type="button"
                           onClick={() => setLessonId(moduleLesson.id)}
-                          aria-current={moduleLesson.id === lesson?.id}
-                          className={`outline-lesson-btn course-lesson-btn${
-                            moduleLesson.id === lesson?.id ? " active" : ""
-                          }`}
+                          aria-current={active}
+                          className={
+                            active
+                              ? "flex w-full items-start gap-2 rounded-md bg-primary-subtle px-2 py-1.5 text-left text-primary"
+                              : "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-ink-soft transition-colors hover:bg-surface-hover hover:text-ink"
+                          }
                         >
-                          <span className="course-lesson-icon" aria-hidden="true">
+                          <span aria-hidden="true" className="mt-px shrink-0 text-caption">
                             {completed.has(moduleLesson.id) ? "✅" : "📄"}
                           </span>
-                          <span className="course-lesson-copy">
-                            <span className="course-lesson-title">{moduleLesson.title}</span>
-                            <span className="course-lesson-meta">
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-body-sm font-medium">{moduleLesson.title}</span>
+                            <span className="block text-caption text-ink-muted">
                               {moduleLesson.reading_time_minutes
                                 ? t("resources.detail.readingTime", { count: moduleLesson.reading_time_minutes })
                                 : t("resources.detail.lessonNumber", {
@@ -154,78 +156,80 @@ function LessonViewer({ resource, progress }: { resource: ResourceDetail; progre
                           </span>
                         </button>
                       </li>
-                    ))}
-                  </ul>
-                </section>
-              );
-            })}
-          </div>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
 
-          {outline.length === 0 ? <p className="lesson-search-empty">{t("resources.detail.searchEmpty")}</p> : null}
-        </aside>
+          {outline.length === 0 ? (
+            <p className="px-2 py-4 text-center text-caption text-ink-muted">{t("resources.detail.searchEmpty")}</p>
+          ) : null}
+        </Card>
+      </aside>
 
-        <article className="panel course-main">
-          <div className="course-main-toolbar" aria-live="polite">
-            <span className="course-toolbar-pill">
+      <div className="order-1 flex min-w-0 flex-1 flex-col gap-4 lg:order-2">
+        <Card className="flex flex-col gap-3" aria-live="polite">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="brand">
               {t("resources.detail.lessonStep", { current: lessonNumber, total: allLessons.length })}
-            </span>
-            <span className="course-toolbar-pill course-toolbar-pill-muted">
-              {t("resources.progressLabel", { percent: progress.progress_percent })}
-            </span>
+            </Badge>
           </div>
+          <ProgressBar
+            label={t("resources.progressLabel", { percent: progress.progress_percent })}
+            value={progress.progress_percent}
+            showValue={false}
+          />
+        </Card>
 
-          <div className="course-main-body">
-            {lesson ? (
-              <LessonContent
-                resourceId={resource.id}
-                lesson={lesson}
-                allLessons={allLessons}
-                completed={completed}
-                onNavigate={setLessonId}
-              />
-            ) : (
-              <p className="lesson-search-empty">{t("resources.noLessons")}</p>
-            )}
+        <Card padding="lg">
+          {lesson ? (
+            <LessonContent
+              resourceId={resource.id}
+              lesson={lesson}
+              allLessons={allLessons}
+              completed={completed}
+              onNavigate={setLessonId}
+            />
+          ) : (
+            <p className="text-center text-body-sm text-ink-muted">{t("resources.noLessons")}</p>
+          )}
+        </Card>
 
-            <section className="course-info-strip">
-              <ul className="meta-list">
-                <li>
-                  <strong>{t("resources.detail.meta.category")}</strong> {resource.category}
-                </li>
-                <li>
-                  <strong>{t("resources.detail.meta.level")}</strong>{" "}
-                  {resource.level ?? t("resources.detail.notSpecified")}
-                </li>
-                <li>
-                  <strong>{t("resources.detail.meta.duration")}</strong>{" "}
-                  {resource.estimated_duration_minutes
+        <Card className="flex flex-col gap-3">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+            {(
+              [
+                [t("resources.detail.meta.category"), resource.category],
+                [t("resources.detail.meta.level"), resource.level ?? t("resources.detail.notSpecified")],
+                [
+                  t("resources.detail.meta.duration"),
+                  resource.estimated_duration_minutes
                     ? t("resources.minutes", { count: resource.estimated_duration_minutes })
-                    : t("resources.detail.notAvailable")}
-                </li>
-                <li>
-                  <strong>{t("resources.detail.meta.modules")}</strong> {resource.modules.length}
-                </li>
-                <li>
-                  <strong>{t("resources.detail.meta.lessons")}</strong> {allLessons.length}
-                </li>
-                <li>
-                  <strong>{t("resources.detail.meta.progress")}</strong> {progress.progress_percent}%
-                </li>
-              </ul>
-              {resource.external_url ? (
-                <a
-                  href={resource.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="open-resource"
-                >
-                  {t("resources.openResource")}
-                </a>
-              ) : null}
-            </section>
-          </div>
-        </article>
-      </section>
+                    : t("resources.detail.notAvailable"),
+                ],
+                [t("resources.detail.meta.modules"), String(resource.modules.length)],
+                [t("resources.detail.meta.lessons"), String(allLessons.length)],
+                [t("resources.detail.meta.progress"), `${progress.progress_percent}%`],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-overline text-ink-muted uppercase">{label}</dt>
+                <dd className="truncate text-body-sm text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {resource.external_url ? (
+            <a href={resource.external_url} target="_blank" rel="noopener noreferrer" className="self-start">
+              <Button variant="outline" size="sm">
+                {t("resources.openResource")}
+              </Button>
+            </a>
+          ) : null}
+        </Card>
+      </div>
     </div>
   );
 }
@@ -258,22 +262,19 @@ function LessonContent({
   });
 
   return (
-    <>
-      <div className="lesson-head">
-        <h3 className="lesson-title">{lesson.title}</h3>
-        {lesson.notes ? <div className="lesson-subtitle">{lesson.notes}</div> : null}
+    <div className="flex flex-col gap-4">
+      <div className="min-w-0">
+        <h3 className="text-section-title text-ink">{lesson.title}</h3>
+        {lesson.notes ? <p className="mt-1 text-body-sm text-ink-soft">{lesson.notes}</p> : null}
       </div>
 
-      <div className="lesson-content">
-        <LessonBody lesson={lesson} />
-      </div>
+      <LessonBody lesson={lesson} />
 
       {lesson.content_type === "resume_upload" ? null : (
-        <div className="lesson-action-bar">
-          <button
-            type="button"
-            className="lesson-complete-btn"
-            disabled={mutation.isPending}
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <Button
+            className="self-start"
+            loading={mutation.isPending}
             onClick={() => (isCompleted && nextLesson ? onNavigate(nextLesson.id) : mutation.mutate())}
           >
             {isCompleted
@@ -283,15 +284,11 @@ function LessonContent({
               : mutation.isPending
                 ? t("resources.markingComplete")
                 : t("resources.markComplete")}
-          </button>
-          {mutation.isError ? (
-            <p className="lesson-action-note">
-              <Alert tone="danger">{t("resources.progressError")}</Alert>
-            </p>
-          ) : null}
+          </Button>
+          {mutation.isError ? <Alert tone="danger">{t("resources.progressError")}</Alert> : null}
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -304,16 +301,17 @@ function LessonBody({ lesson }: { lesson: Lesson }) {
 
   if (lesson.content_type === "video_url" && lesson.video_url) {
     const embedUrl = toEmbedUrl(lesson.video_url);
-    if (!embedUrl) return <p>{t("resources.invalidVideo")}</p>;
+    if (!embedUrl) return <p className="text-body-sm text-ink-muted">{t("resources.invalidVideo")}</p>;
     return (
-      <div className="lesson-video">
-        <div className="lesson-video-frame">
+      <div className="overflow-hidden rounded-lg bg-ink">
+        <div className="relative aspect-video w-full">
           <iframe
             src={embedUrl}
             title={lesson.title}
             allowFullScreen
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
+            className="absolute inset-0 size-full border-0"
           />
         </div>
       </div>
@@ -326,10 +324,10 @@ function LessonBody({ lesson }: { lesson: Lesson }) {
     isSafeHttpUrl(lesson.resource_url)
   ) {
     return (
-      <div className="lesson-external">
-        <p>{t("resources.externalResourceIntro")}</p>
-        <a href={lesson.resource_url} target="_blank" rel="noopener noreferrer" className="open-resource">
-          {t("resources.openResource")}
+      <div className="flex flex-col gap-3">
+        <p className="text-body-sm text-ink-soft">{t("resources.externalResourceIntro")}</p>
+        <a href={lesson.resource_url} target="_blank" rel="noopener noreferrer" className="self-start">
+          <Button variant="outline">{t("resources.openResource")}</Button>
         </a>
       </div>
     );
@@ -339,7 +337,7 @@ function LessonBody({ lesson }: { lesson: Lesson }) {
   // sanitizer on the frontend; rendering it as text (React escapes it) is the
   // safe default until one is added, even though it loses formatting for that
   // one lesson type. Plain-text lessons render the same way.
-  return <p className="lesson-text">{lesson.content}</p>;
+  return <p className="text-body whitespace-pre-wrap text-ink-soft">{lesson.content}</p>;
 }
 
 function isSafeHttpUrl(value: string): boolean {

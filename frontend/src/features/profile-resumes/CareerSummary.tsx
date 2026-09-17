@@ -3,9 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { Button } from "@/components/primitives/Button";
+import { Button, Card, EmptyState, SectionHeader } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
 import { fetchQuestionnaireProfile } from "@/features/questionnaire/api";
 
 /**
@@ -22,13 +21,14 @@ export function CareerSummary() {
   });
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-ink">{t("profile.careers.title")}</h2>
+    <>
+      <SectionHeader title={t("profile.careers.title")} className="mb-4" />
       <AsyncBoundary query={query}>
         {(profile) =>
           profile === null ? (
             <EmptyState
               title={t("profile.careers.empty")}
+              icon="🧭"
               action={
                 <Link to="/questionnaire">
                   <Button>{t("profile.careers.takeQuestionnaire")}</Button>
@@ -38,15 +38,15 @@ export function CareerSummary() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-3">
               {profile.results.slice(0, 3).map((career) => (
-                <div key={career.career} className="rounded-lg border border-border bg-surface p-4 text-center">
-                  <strong className="block text-ink">{career.career}</strong>
-                  <span className="text-sm text-ink-muted">{career.score}</span>
-                </div>
+                <Card key={career.career} className="flex items-baseline justify-between gap-2">
+                  <span className="min-w-0 truncate text-card-title text-ink">{career.career}</span>
+                  <span className="shrink-0 text-section-title text-primary tabular-nums">{career.score}</span>
+                </Card>
               ))}
             </div>
           )
         }
       </AsyncBoundary>
-    </div>
+    </>
   );
 }

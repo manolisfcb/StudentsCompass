@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { Alert, Badge } from "@/components/ui";
+import { FilePicker } from "@/features/profile-resumes/FilePicker";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import {
   type CourseAuditResult,
@@ -31,11 +31,11 @@ export function ResumeAuditWidget() {
   });
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-ink">{t("profile.audit.title")}</h2>
-      <p className="text-sm text-ink-soft">{t("profile.audit.intro")}</p>
+    <>
+      <h3>{t("profile.audit.title")}</h3>
+      <p>{t("profile.audit.intro")}</p>
       <AsyncBoundary query={query}>{(attempts) => <AuditUpload remaining={attempts.attempts_remaining} />}</AsyncBoundary>
-    </div>
+    </>
   );
 }
 
@@ -58,7 +58,7 @@ function AuditUpload({ remaining }: { remaining: number }) {
   });
 
   if (remaining <= 0) {
-    return <Alert tone="info">{t("profile.audit.limitReached")}</Alert>;
+    return <Alert tone="warning">{t("profile.audit.limitReached")}</Alert>;
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -70,29 +70,16 @@ function AuditUpload({ remaining }: { remaining: number }) {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-ink-muted">{t("profile.audit.attemptsRemaining", { count: remaining })}</p>
-      <div className="rounded-lg border border-dashed border-border bg-surface p-4">
-        <label className="flex cursor-pointer flex-col items-center gap-2 text-center text-sm text-ink-soft">
-          <span className="font-medium text-ink">{t("profile.audit.uploadLabel")}</span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={ALLOWED_EXTENSIONS.join(",")}
-            className="sr-only"
-            onChange={handleChange}
-            disabled={mutation.isPending}
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={mutation.isPending}
-            onClick={() => inputRef.current?.click()}
-          >
-            {mutation.isPending ? t("profile.audit.analyzing") : t("profile.audit.chooseFile")}
-          </Button>
-        </label>
-      </div>
+    <div className="flex flex-col gap-3">
+      <FilePicker
+        title={t("profile.audit.uploadLabel")}
+        hint={t("profile.audit.attemptsRemaining", { count: remaining })}
+        buttonLabel={mutation.isPending ? t("profile.audit.analyzing") : t("profile.audit.chooseFile")}
+        accept={ALLOWED_EXTENSIONS.join(",")}
+        inputRef={inputRef}
+        busy={mutation.isPending}
+        onChange={handleChange}
+      />
 
       {mutation.isError ? (
         <Alert tone="danger">
@@ -110,19 +97,22 @@ function AuditUpload({ remaining }: { remaining: number }) {
 function AuditResult({ result }: { result: CourseAuditResult }) {
   const { t } = useTranslation();
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
-      <Alert tone={result.pass_status ? "success" : "warning"}>
+    <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface-subtle p-4">
+      {/* The verdict is a badge, not coloured body text: the score is the one
+        * thing you look for here, so it gets the strongest treatment on the
+        * panel and its tone carries pass/fail without relying on colour alone. */}
+      <Badge tone={result.pass_status ? "success" : "danger"} size="md" className="self-start">
         {result.pass_status
           ? t("profile.audit.result.passed", { score: result.overall_score })
           : t("profile.audit.result.failed", { score: result.overall_score })}
-      </Alert>
-      <p className="text-sm text-ink-soft">{result.reason_for_score}</p>
-      <p className="text-sm text-ink-soft">{result.report}</p>
+      </Badge>
+      <p className="text-body-sm text-ink-soft">{result.reason_for_score}</p>
+      <p className="text-body-sm text-ink-soft">{result.report}</p>
 
       {result.main_weaknesses.length > 0 ? (
         <div>
-          <h3 className="text-sm font-semibold text-ink">{t("profile.audit.result.weaknesses")}</h3>
-          <ul className="mt-1 list-inside list-disc text-sm text-ink-soft">
+          <h4 className="text-card-title text-ink">{t("profile.audit.result.weaknesses")}</h4>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-body-sm text-ink-soft">
             {result.main_weaknesses.map((weakness) => (
               <li key={weakness}>{weakness}</li>
             ))}
@@ -132,8 +122,8 @@ function AuditResult({ result }: { result: CourseAuditResult }) {
 
       {result.improvements.length > 0 ? (
         <div>
-          <h3 className="text-sm font-semibold text-ink">{t("profile.audit.result.improvements")}</h3>
-          <ul className="mt-1 list-inside list-disc text-sm text-ink-soft">
+          <h4 className="text-card-title text-ink">{t("profile.audit.result.improvements")}</h4>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-body-sm text-ink-soft">
             {result.improvements.map((improvement) => (
               <li key={improvement}>{improvement}</li>
             ))}

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
+import { Button, SectionHeader } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import {
   acceptFriendRequest,
@@ -38,24 +39,21 @@ export function FriendsPanel() {
 
   return (
     <>
-      <div className="network-card__header">
-        <div>
-          <h3>{t("community.friends.title")}</h3>
-          <p>{t("community.friends.subtitle")}</p>
-        </div>
-      </div>
+      <SectionHeader
+        title={t("community.friends.title")}
+        description={t("community.friends.subtitle")}
+        className="mb-4"
+      />
 
-      <div className="network-grid">
-        <section className="network-column">
-          <div className="network-column__header">
-            <h4>{t("community.friends.incoming")}</h4>
-          </div>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <section className="flex flex-col gap-2">
+          <h4 className="text-overline text-ink-muted uppercase">{t("community.friends.incoming")}</h4>
           <AsyncBoundary query={incomingQuery}>
             {(requests) =>
               requests.length === 0 ? (
-                <p className="network-empty">{t("community.friends.noIncoming")}</p>
+                <p className="rounded-md bg-surface-subtle px-3 py-4 text-center text-caption text-ink-muted">{t("community.friends.noIncoming")}</p>
               ) : (
-                <ul className="network-list">
+                <ul className="flex flex-col gap-2">
                   {requests.map((request) => (
                     <IncomingRequestRow key={request.id} request={request} />
                   ))}
@@ -65,16 +63,14 @@ export function FriendsPanel() {
           </AsyncBoundary>
         </section>
 
-        <section className="network-column">
-          <div className="network-column__header">
-            <h4>{t("community.friends.outgoing")}</h4>
-          </div>
+        <section className="flex flex-col gap-2">
+          <h4 className="text-overline text-ink-muted uppercase">{t("community.friends.outgoing")}</h4>
           <AsyncBoundary query={outgoingQuery}>
             {(requests) =>
               requests.length === 0 ? (
-                <p className="network-empty">{t("community.friends.noOutgoing")}</p>
+                <p className="rounded-md bg-surface-subtle px-3 py-4 text-center text-caption text-ink-muted">{t("community.friends.noOutgoing")}</p>
               ) : (
-                <ul className="network-list">
+                <ul className="flex flex-col gap-2">
                   {requests.map((request) => (
                     <OutgoingRequestRow key={request.id} request={request} />
                   ))}
@@ -84,16 +80,14 @@ export function FriendsPanel() {
           </AsyncBoundary>
         </section>
 
-        <section className="network-column">
-          <div className="network-column__header">
-            <h4>{t("community.friends.friends")}</h4>
-          </div>
+        <section className="flex flex-col gap-2">
+          <h4 className="text-overline text-ink-muted uppercase">{t("community.friends.friends")}</h4>
           <AsyncBoundary query={friendsQuery}>
             {(friends) =>
               friends.length === 0 ? (
-                <p className="network-empty">{t("community.friends.noFriends")}</p>
+                <p className="rounded-md bg-surface-subtle px-3 py-4 text-center text-caption text-ink-muted">{t("community.friends.noFriends")}</p>
               ) : (
-                <ul className="network-list">
+                <ul className="flex flex-col gap-2">
                   {friends.map((friendship) => (
                     <FriendRow key={friendship.friend.id} friendship={friendship} />
                   ))}
@@ -107,7 +101,7 @@ export function FriendsPanel() {
   );
 }
 
-/** `.network-item` — an avatar, a name, and the row's actions. */
+/** One person in the network: an avatar, a name, and the row's actions. */
 function NetworkRow({
   name,
   actions,
@@ -118,17 +112,24 @@ function NetworkRow({
   error?: React.ReactNode;
 }) {
   return (
-    <li className="network-item">
-      <div className="network-item__identity">
-        <span className="network-avatar" aria-hidden="true">
+    <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span
+          aria-hidden="true"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-caption font-semibold text-primary"
+        >
           {name.charAt(0).toUpperCase()}
         </span>
-        <div>
-          <h5>{name}</h5>
-          {error ? <p role="alert">{error}</p> : null}
+        <div className="min-w-0">
+          <p className="truncate text-body-sm font-medium text-ink">{name}</p>
+          {error ? (
+            <p role="alert" className="text-caption text-danger">
+              {error}
+            </p>
+          ) : null}
         </div>
       </div>
-      <div className="network-item__actions">{actions}</div>
+      <div className="flex shrink-0 gap-1.5">{actions}</div>
     </li>
   );
 }
@@ -162,22 +163,21 @@ function IncomingRequestRow({ request }: { request: FriendRequest }) {
       }
       actions={
         <>
-          <button
-            type="button"
-            className="network-action"
+          <Button
+            size="sm"
             disabled={acceptMutation.isPending || rejectMutation.isPending}
             onClick={() => acceptMutation.mutate()}
           >
             {t("community.friends.accept")}
-          </button>
-          <button
-            type="button"
-            className="network-action"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={acceptMutation.isPending || rejectMutation.isPending}
             onClick={() => rejectMutation.mutate()}
           >
             {t("community.friends.ignore")}
-          </button>
+          </Button>
         </>
       }
     />
@@ -193,14 +193,14 @@ function OutgoingRequestRow({ request }: { request: FriendRequest }) {
     <NetworkRow
       name={request.receiver.display_name}
       actions={
-        <button
-          type="button"
-          className="network-action"
+        <Button
+          variant="ghost"
+          size="sm"
           disabled={cancelMutation.isPending}
           onClick={() => cancelMutation.mutate()}
         >
           {t("community.friends.cancel")}
-        </button>
+        </Button>
       }
     />
   );
@@ -224,24 +224,24 @@ function FriendRow({ friendship }: { friendship: Friendship }) {
       name={friendship.friend.display_name}
       actions={
         <>
-          <button
-            type="button"
-            className="network-action"
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={messageMutation.isPending}
             onClick={() => messageMutation.mutate()}
           >
             {t("community.friends.message")}
-          </button>
-          <button
-            type="button"
-            className="network-action"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={removeMutation.isPending}
             onClick={() => {
               if (window.confirm(t("community.friends.confirmRemove"))) removeMutation.mutate();
             }}
           >
             {t("community.friends.remove")}
-          </button>
+          </Button>
         </>
       }
     />

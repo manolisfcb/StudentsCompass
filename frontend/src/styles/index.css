@@ -1,73 +1,33 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Stylesheet entry point.
+ *
+ *   1. Tailwind    — the utility engine and its layers
+ *   2. theme.css   — the design tokens everything else reads
+ *   3. globals.css — document baseline (typography, focus, resets)
+ *   4. legacy/     — the marketing pages' own sheet (see its README)
+ *
+ * The layer order below is what made the migration possible one screen at a
+ * time: `legacy` sits between Tailwind's `base` and `components`, so every
+ * utility class beats every ported rule. The moment a component started using
+ * `bg-surface` and `rounded-lg`, the old `.resource-card` rule stopped
+ * applying to it — no deletions up front, no `!important` to fight through —
+ * while screens that had not moved yet kept rendering exactly as before.
+ *
+ * Item 4 is what remains. Every product screen is on the design system; the
+ * marketing and About pages are bespoke landing-page layouts with no reuse to
+ * gain from componentisation, so their sheet stays. It reads design tokens
+ * rather than its own hexes, so a rebrand still reaches it.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+@layer theme, base, legacy, components, utilities;
+
 @import "tailwindcss";
 
-/* Inter, which `admin.css` pulls in for the admin console. It is declared here
- * rather than inside the ported sheet because `@import` has to come before any
- * rule, and the port strips the statement out of the sheets it rewrites. */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+/* Inter is loaded by a <link> in `index.html`, not here: an `@import` that
+ * follows Tailwind's own expansion is no longer the first rule in the file,
+ * which is a CSS error. */
 
-/* The shipped design system, ported out of the Jinja app.
- *
- * `legacy/base.css` is `backend/app/static/css/style.css` verbatim and
- * `legacy/pages/*` are the per-page sheets, each scoped under the `.pg-<name>`
- * class its route renders (see `styles/legacy/README.md`). Both are imported
- * unlayered, so they win over Tailwind's `@layer utilities` the same way the
- * page sheets won over the shell sheet in the multipage build.
- *
- * The React screens carry the same class names as the templates they replace,
- * which is what makes these files a port and not a second design system.
- */
-@import "./legacy/index.css";
+@import "./theme.css";
+@import "./globals.css";
 
-/* The handful of components with no counterpart in the Jinja app. */
-@import "./app.css";
-
-/* Design tokens — the same palette the legacy sheets declare in `:root`,
- * restated as Tailwind theme entries so `bg-brand`/`text-ink` and
- * `var(--primary-color)` name one colour rather than two. */
-@theme {
-  --color-brand: #0f766e;
-  --color-brand-strong: #0b5d57;
-  --color-brand-soft: #5eead4;
-  --color-accent: #fb7185;
-
-  --color-canvas: #f8fafc;
-  --color-surface: #ffffff;
-  --color-border: #e5e7eb;
-
-  --color-ink: #0f172a;
-  --color-ink-soft: #475569;
-  --color-ink-muted: #94a3b8;
-
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
-
-  --font-sans: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* The skip link is the one piece of chrome the Jinja templates never had (they
- * had no SPA shell to skip past), so it is the one piece styled here. */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  z-index: 300;
-}
-
-.skip-link:focus {
-  left: 1rem;
-  top: 1rem;
-  padding: 0.65rem 1.1rem;
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--primary-color);
-  font-weight: 700;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
-}
-
-/* Route scopes double as the page frame: a page sheet was written against a
- * full-height document, and in the SPA it is a div inside the shell. */
-[class*="pg-"] {
-  min-width: 0;
-}
+@import "./legacy/index.css" layer(legacy);

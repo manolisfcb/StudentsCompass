@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Alert, Badge, Button, Card, Checkbox, EmptyState, Input, PageHeader, SectionHeader, Select, Tabs } from "@/components/ui";
 import { CvAnalysisPanel } from "@/features/jobs-applications/CvAnalysisPanel";
 import {
   createApplication,
@@ -49,154 +49,141 @@ export function JobsPage() {
   const resultCount = results ? results.students_compass.length + results.linkedin.length : 0;
 
   return (
-    <PageScope name="jobs" className="container jobs-page">
+    <div className="flex flex-col gap-6">
       <DocumentMeta title={t("jobs.seoTitle")} description={t("jobs.seoDescription")} path="/jobs" />
 
-      <section className="jobs-shell">
-        <header className="jobs-topbar">
-          <form className="jobs-searchbar" onSubmit={handleSubmit}>
-            <label className="search-field">
+      <PageHeader
+        title={t("jobs.title")}
+        description={t("jobs.hero.description")}
+        actions={
+          <Link to="/jobs/applications">
+            <Button variant="outline">{t("jobs.myApplications")}</Button>
+          </Link>
+        }
+      />
+
+      {/* The search bar is the primary action on this screen, so it sits
+        * directly under the title rather than inside a hero panel with its own
+        * gradient and stat tile. */}
+      <Card padding="sm">
+        <form className="flex flex-col gap-2 sm:flex-row" onSubmit={handleSubmit}>
+          <label className="relative flex-1">
+            <span className="sr-only">{t("jobs.keywords")}</span>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-muted"
+            >
               <SearchIcon />
-              <span className="sr-only">{t("jobs.keywords")}</span>
-              <input
-                type="search"
-                value={keywords}
-                onChange={(event) => setKeywords(event.target.value)}
-                placeholder={t("jobs.keywordsPlaceholder")}
-              />
-            </label>
-            <label className="search-field">
+            </span>
+            <Input
+              type="search"
+              value={keywords}
+              onChange={(event) => setKeywords(event.target.value)}
+              placeholder={t("jobs.keywordsPlaceholder")}
+              className="pl-9"
+            />
+          </label>
+
+          <label className="relative flex-1">
+            <span className="sr-only">{t("jobs.location")}</span>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-muted"
+            >
               <PinIcon />
-              <span className="sr-only">{t("jobs.location")}</span>
-              <input
-                type="search"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                placeholder={t("jobs.locationPlaceholder")}
-              />
-            </label>
-            <button type="submit" className="search-action" disabled={searchMutation.isPending}>
-              {searchMutation.isPending ? t("jobs.searching") : t("jobs.search")}
-            </button>
-          </form>
+            </span>
+            <Input
+              type="search"
+              value={location}
+              onChange={(event) => setLocation(event.target.value)}
+              placeholder={t("jobs.locationPlaceholder")}
+              className="pl-9"
+            />
+          </label>
 
-          <div className="jobs-utilitybar">
-            <nav className="jobs-tabs" aria-label={t("jobs.tabs.label")}>
-              <button
-                type="button"
-                className={`jobs-tab${tab === "home" ? " active" : ""}`}
-                onClick={() => setTab("home")}
-              >
-                {t("jobs.tabs.home")}
-              </button>
-              <button type="button" className={`jobs-tab${tab === "cv" ? " active" : ""}`} onClick={() => setTab("cv")}>
-                {t("jobs.tabs.cv")}
-              </button>
-              <Link className="jobs-profile-link" to="/jobs/applications">
-                {t("jobs.myApplications")}
-              </Link>
-            </nav>
+          <Select
+            value={limit}
+            onChange={(event) => setLimit(Number(event.target.value) as (typeof LIMIT_OPTIONS)[number])}
+            aria-label={t("jobs.perSearch")}
+            className="w-auto"
+          >
+            {LIMIT_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </Select>
 
-            <div className="toolbar-meta">
-              <label className="toolbar-select">
-                <span className="toolbar-label">{t("jobs.perSearch")}</span>
-                <select
-                  value={limit}
-                  onChange={(event) => setLimit(Number(event.target.value) as (typeof LIMIT_OPTIONS)[number])}
-                >
-                  {LIMIT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="toolbar-status" aria-live="polite">
-                {searchMutation.isError
-                  ? searchMutation.error instanceof ApiError && searchMutation.error.detail
-                    ? searchMutation.error.detail.message
-                    : t("jobs.searchError")
-                  : null}
-              </div>
-            </div>
-          </div>
-        </header>
+          <Button type="submit" loading={searchMutation.isPending}>
+            {searchMutation.isPending ? t("jobs.searching") : t("jobs.search")}
+          </Button>
+        </form>
+      </Card>
 
-        <div className="jobs-body">
-          {tab === "home" ? (
-            <section className="tab-panel active">
-              <div className="hero-panel">
-                <div className="hero-copy">
-                  <span className="hero-eyebrow">{t("jobs.hero.eyebrow")}</span>
-                  <h1 className="hero-title">{t("jobs.title")}</h1>
-                  <p className="hero-description">{t("jobs.hero.description")}</p>
-                </div>
-                <div className="hero-stats">
-                  <div className="hero-stat">
-                    <span className="hero-stat-label">{t("jobs.hero.lastResults")}</span>
-                    <span className="hero-stat-value">{resultCount}</span>
-                    <div className="hero-stat-copy">{t("jobs.hero.lastResultsCopy")}</div>
-                  </div>
-                </div>
-              </div>
+      <div aria-live="polite">
+        {searchMutation.isError ? (
+          <Alert tone="danger">
+            {searchMutation.error instanceof ApiError && searchMutation.error.detail
+              ? searchMutation.error.detail.message
+              : t("jobs.searchError")}
+          </Alert>
+        ) : null}
+      </div>
 
-              <section>
-                <div className="section-head">
-                  <div>
-                    <h2>{t("jobs.topPicks.title")}</h2>
-                    <p>{t("jobs.topPicks.subtitle")}</p>
-                  </div>
-                  <span className="jobs-count">
-                    {results ? t("jobs.countResults", { count: resultCount }) : t("jobs.noSearchYet")}
-                  </span>
-                </div>
+      <Tabs
+        items={[
+          { value: "home", label: t("jobs.tabs.home"), ...(results ? { count: resultCount } : {}) },
+          { value: "cv", label: t("jobs.tabs.cv") },
+        ]}
+        value={tab}
+        onChange={(value) => setTab(value as "home" | "cv")}
+        label={t("jobs.tabs.label")}
+        className="self-start"
+      />
 
-                <div className="board-layout">
-                  <div className="results-stack">
-                    {results ? (
-                      <SearchResults results={results} />
-                    ) : (
-                      <AsyncBoundary query={boardQuery}>{(board) => <JobBoard postings={board} />}</AsyncBoundary>
-                    )}
-                  </div>
-                </div>
-              </section>
-            </section>
+      {tab === "home" ? (
+        <section className="flex flex-col gap-4">
+          <SectionHeader
+            title={t("jobs.topPicks.title")}
+            description={t("jobs.topPicks.subtitle")}
+            actions={
+              <span className="text-caption text-ink-muted">
+                {results ? t("jobs.countResults", { count: resultCount }) : t("jobs.noSearchYet")}
+              </span>
+            }
+          />
+          {results ? (
+            <SearchResults results={results} />
           ) : (
-            <section className="tab-panel active">
-              <div className="section-head">
-                <div>
-                  <h2>{t("jobs.tabs.cv")}</h2>
-                  <p>{t("jobs.cvPanel.subtitle")}</p>
-                </div>
-              </div>
-              <div className="highlights-grid">
-                <article className="feature-card ai-card">
-                  <span className="feature-badge">{t("jobs.cvPanel.badge")}</span>
-                  <h2 className="feature-title">{t("jobs.cvPanel.title")}</h2>
-                  <p className="feature-copy">{t("jobs.cvPanel.copy")}</p>
-                  <div className="feature-actions">
-                    <CvAnalysisPanel
-                      onKeywords={(value) => {
-                        setKeywords(value);
-                        setTab("home");
-                        searchMutation.mutate();
-                      }}
-                    />
-                  </div>
-                </article>
-              </div>
-            </section>
+            <AsyncBoundary query={boardQuery}>{(board) => <JobBoard postings={board} />}</AsyncBoundary>
           )}
-        </div>
-      </section>
-    </PageScope>
+        </section>
+      ) : (
+        <section className="flex flex-col gap-4">
+          <SectionHeader title={t("jobs.tabs.cv")} description={t("jobs.cvPanel.subtitle")} />
+          <Card className="flex flex-col gap-3">
+            <Badge tone="brand" className="self-start">
+              {t("jobs.cvPanel.badge")}
+            </Badge>
+            <h3 className="text-section-title text-ink">{t("jobs.cvPanel.title")}</h3>
+            <p className="text-body-sm text-ink-soft">{t("jobs.cvPanel.copy")}</p>
+            <CvAnalysisPanel
+              onKeywords={(value) => {
+                setKeywords(value);
+                setTab("home");
+                searchMutation.mutate();
+              }}
+            />
+          </Card>
+        </section>
+      )}
+    </div>
   );
 }
 
 function SearchIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true" className="size-4">
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.35-4.35" />
     </svg>
@@ -205,7 +192,7 @@ function SearchIcon() {
 
 function PinIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true" className="size-4">
       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
       <circle cx="12" cy="10" r="3" />
     </svg>
@@ -216,19 +203,16 @@ function JobBoard({ postings }: { postings: JobBoardPosting[] }) {
   const { t } = useTranslation();
   if (postings.length === 0) {
     return (
-      <div className="empty-state">
-        <h3>{t("jobs.empty")}</h3>
-        <p>{t("jobs.emptyHint")}</p>
-      </div>
+      <EmptyState title={t("jobs.empty")} description={t("jobs.emptyHint")} icon="🔍" />
     );
   }
   return (
-    <section className="result-group">
-      <div className="result-group-header">
-        <h3 className="result-group-title">{t("jobs.studentsCompassResults")}</h3>
-        <span className="result-group-meta">{t("jobs.countResults", { count: postings.length })}</span>
+    <section className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-card-title text-ink">{t("jobs.studentsCompassResults")}</h3>
+        <span className="text-caption text-ink-muted">{t("jobs.countResults", { count: postings.length })}</span>
       </div>
-      <div className="job-results-grid">
+      <div className="grid gap-3 lg:grid-cols-2">
         {postings.map((posting) => (
           <BoardCard key={posting.id} posting={posting} />
         ))}
@@ -253,23 +237,20 @@ function SearchResults({ results }: { results: JobSearchResults }) {
   const total = results.students_compass.length + results.linkedin.length;
   if (total === 0) {
     return (
-      <div className="empty-state">
-        <h3>{t("jobs.empty")}</h3>
-        <p>{t("jobs.emptyHint")}</p>
-      </div>
+      <EmptyState title={t("jobs.empty")} description={t("jobs.emptyHint")} icon="🔍" />
     );
   }
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {results.students_compass.length > 0 ? (
-        <section className="result-group">
-          <div className="result-group-header">
-            <h3 className="result-group-title">{t("jobs.studentsCompassResults")}</h3>
-            <span className="result-group-meta">
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="text-card-title text-ink">{t("jobs.studentsCompassResults")}</h3>
+            <span className="text-caption text-ink-muted">
               {t("jobs.countResults", { count: results.students_compass.length })}
             </span>
           </div>
-          <div className="job-results-grid">
+          <div className="grid gap-3 lg:grid-cols-2">
             {results.students_compass.map((job) => (
               <JobCard
                 key={job.id ?? job.title}
@@ -287,17 +268,19 @@ function SearchResults({ results }: { results: JobSearchResults }) {
         </section>
       ) : null}
       {results.students_compass.length > 0 && results.linkedin.length > 0 ? (
-        <div className="jobs-source-divider">
+        <div className="flex items-center gap-3 text-caption text-ink-muted">
+          <span className="h-px flex-1 bg-border" />
           <span>{t("jobs.moreFromLinkedin")}</span>
+          <span className="h-px flex-1 bg-border" />
         </div>
       ) : null}
       {results.linkedin.length > 0 ? (
-        <section className="result-group">
-          <div className="result-group-header">
-            <h3 className="result-group-title">{t("jobs.linkedinResults")}</h3>
-            <span className="result-group-meta">{t("jobs.countResults", { count: results.linkedin.length })}</span>
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="text-card-title text-ink">{t("jobs.linkedinResults")}</h3>
+            <span className="text-caption text-ink-muted">{t("jobs.countResults", { count: results.linkedin.length })}</span>
           </div>
-          <div className="job-results-grid">
+          <div className="grid gap-3 lg:grid-cols-2">
             {results.linkedin.map((job) => (
               <JobCard
                 key={job.url ?? job.title}
@@ -311,7 +294,7 @@ function SearchResults({ results }: { results: JobSearchResults }) {
           </div>
         </section>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -337,26 +320,36 @@ function JobCard({
   const { t } = useTranslation();
   const [applying, setApplying] = useState(false);
 
+  // `min-w-0`: a grid item's default `min-width: auto` lets it grow past its
+  // track, and this card holds a `whitespace-nowrap` badge and a long job
+  // title. Without it the card is wider than its column on a phone and the
+  // whole document scrolls sideways.
   return (
-    <article className="job-result-card">
-      <div className="job-result-head">
-        <div className="job-detail-company">
-          <div className="company-mark" aria-hidden="true">
+    <Card className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 gap-3">
+          {/* The initials mark stands in for a logo the job board does not
+            * have. Monospaced digits keep the two-letter marks the same width
+            * so the titles beside them line up down the column. */}
+          <span
+            aria-hidden="true"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-label text-primary"
+          >
             {companyInitials(company)}
-          </div>
-          <div className="job-result-main">
-            {company ? <p className="job-result-company">{company}</p> : null}
-            <h3 className="job-result-title">{title}</h3>
+          </span>
+          <div className="min-w-0">
+            {company ? <p className="truncate text-caption text-ink-soft">{company}</p> : null}
+            <h3 className="truncate text-card-title text-ink">{title}</h3>
           </div>
         </div>
-        <span className="bookmark-pill">{externalUrl ? t("jobs.sourceLinkedin") : t("jobs.sourceInternal")}</span>
+        <Badge tone={externalUrl ? "neutral" : "brand"} className="shrink-0">
+          {externalUrl ? t("jobs.sourceLinkedin") : t("jobs.sourceInternal")}
+        </Badge>
       </div>
-      {location ? (
-        <div className="job-meta">
-          <span className="meta-pill">{location}</span>
-        </div>
-      ) : null}
-      <div className="job-card-actions">
+
+      {location ? <Badge className="self-start">{location}</Badge> : null}
+
+      <div className="mt-auto border-t border-border pt-3">
         {applyContext ? (
           applying ? (
             <QuickApplyForm
@@ -366,17 +359,19 @@ function JobCard({
               onDone={() => setApplying(false)}
             />
           ) : (
-            <button type="button" className="primary-link" onClick={() => setApplying(true)}>
+            <Button size="sm" onClick={() => setApplying(true)}>
               {t("jobs.quickApply")}
-            </button>
+            </Button>
           )
         ) : externalUrl ? (
-          <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="primary-link">
-            {t("jobs.viewOnLinkedin")}
+          <a href={externalUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">
+              {t("jobs.viewOnLinkedin")}
+            </Button>
           </a>
         ) : null}
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -420,35 +415,37 @@ function QuickApplyForm({
   });
 
   return (
-    <div className="quick-apply">
+    <div className="flex flex-col gap-3">
       <AsyncBoundary query={resumesQuery}>
         {(resumes) =>
           resumes.length === 0 ? (
-            <p className="job-result-snippet">{t("jobs.noEligibleResumes")}</p>
+            <p className="text-caption text-ink-muted">{t("jobs.noEligibleResumes")}</p>
           ) : (
             <ResumePicker resumes={resumes} value={resumeId} onChange={setResumeId} />
           )
         }
       </AsyncBoundary>
+
       {mutation.isError ? (
-        <p className="job-result-snippet" role="alert">
+        <p role="alert" className="text-caption text-danger">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("jobs.applyError")}
         </p>
       ) : null}
-      <div className="job-card-actions">
-        <button
-          type="button"
-          className="primary-link"
-          disabled={!resumeId || mutation.isPending}
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          disabled={!resumeId}
+          loading={mutation.isPending}
           onClick={() => mutation.mutate()}
         >
           {mutation.isPending ? t("jobs.applying") : t("jobs.submitApplication")}
-        </button>
-        <button type="button" className="secondary-link" onClick={onDone}>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDone}>
           {t("jobs.cancel")}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -465,17 +462,14 @@ function ResumePicker({
 }) {
   const { t } = useTranslation();
   return (
-    <fieldset className="resume-picker">
-      <legend>{t("jobs.chooseResume")}</legend>
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className="mb-1 text-label text-ink">{t("jobs.chooseResume")}</legend>
       {resumes.map((resume) => (
-        <label key={resume.id}>
-          <input
-            type="radio"
-            name="resume"
-            checked={value === resume.id}
-            onChange={() => onChange(resume.id)}
-          />
-          {resume.original_filename} ({resume.overall_score}/10)
+        <label key={resume.id} className="flex cursor-pointer items-center gap-2 text-body-sm text-ink-soft">
+          <Checkbox type="radio" name="resume" checked={value === resume.id} onChange={() => onChange(resume.id)} />
+          <span className="truncate">
+            {resume.original_filename} ({resume.overall_score}/10)
+          </span>
         </label>
       ))}
     </fieldset>

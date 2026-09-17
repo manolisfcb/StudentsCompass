@@ -877,5 +877,7 @@
   "company.recruiters.ownerBadge": "Owner Access",
   "company.recruiters.accessTitle": "Recruiter Access",
   "company.recruiters.accessSubtitle": "Create, update, activate or remove recruiters in your company account.",
-  "company.recruiters.roleFor": "Role for {{name}}"
+  "company.recruiters.roleFor": "Role for {{name}}",
+  "careerLab.kicker": "Career optimization",
+  "careerLab.metrics.label": "Career readiness metrics"
 }

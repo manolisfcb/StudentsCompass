@@ -1,63 +1,31 @@
-import { cloneElement, isValidElement, useId, type ReactElement, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
+import { cn } from "@/lib/cn";
 import type { ActorKind } from "@/features/auth/api";
 
 /**
- * Shared building blocks for the login and register cards (TASK-046), carrying
- * the classes `style.css` styles the auth screens by: `.form-group` for a
- * labelled field, `.auth-aside-point` for the panel's bullets, and
- * `.account-type-toggle > .toggle-option` for the student/company switch.
+ * Shared building blocks for the login and register cards.
  *
- * The toggle was two hidden radios and two `<label for>`s in the template,
- * which is how a stylesheet with no JS reacts to a choice. Here it is a real
- * radio group: same classes, same `.active` presentation, but the state lives
- * in React like every other control on the page.
+ * The labelled field the auth screens used to need is gone: they use the
+ * design system's `FormField` now, like every other form in the app. What is
+ * left here is the two pieces that are genuinely specific to these two
+ * screens — the marketing panel's bullets and the account-type switch.
  */
 
-export function Field({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  /** Pass one when the control already has an id; otherwise one is generated. */
-  htmlFor?: string;
-  children: ReactNode;
-}) {
-  // `.form-group` puts the label and the control side by side rather than
-  // nesting one in the other, which is what the sheet styles — so the pair has
-  // to be tied together by id. Generating it here keeps every call site from
-  // inventing one, and keeps the control reachable by its label.
-  const generatedId = useId();
-  const control = isValidElement(children)
-    ? (() => {
-        const element = children as ReactElement<{ id?: string }>;
-        return cloneElement(element, { id: element.props.id ?? htmlFor ?? generatedId });
-      })()
-    : children;
-  const controlId =
-    isValidElement(children) && (children as ReactElement<{ id?: string }>).props.id
-      ? (children as ReactElement<{ id?: string }>).props.id
-      : (htmlFor ?? generatedId);
-
-  return (
-    <div className="form-group">
-      <label htmlFor={controlId}>{label}</label>
-      {control}
-    </div>
-  );
-}
-
+/** A selling point in the panel beside the form. */
 export function AsidePoint({ icon, title, body }: { icon: string; title: string; body: string }) {
   return (
-    <div className="auth-aside-point">
-      <div className="auth-aside-icon" aria-hidden="true">
+    <div className="flex gap-3">
+      <span
+        aria-hidden="true"
+        className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/15 text-lg"
+      >
         {icon}
-      </div>
-      <div>
-        <strong>{title}</strong>
-        <span>{body}</span>
+      </span>
+      <div className="min-w-0">
+        <p className="text-card-title text-white">{title}</p>
+        <p className="mt-0.5 text-body-sm text-white/70">{body}</p>
       </div>
     </div>
   );
@@ -65,7 +33,15 @@ export function AsidePoint({ icon, title, body }: { icon: string; title: string;
 
 function StudentIcon() {
   return (
-    <svg className="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden="true"
+      className="size-5"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -74,13 +50,30 @@ function StudentIcon() {
 
 function CompanyIcon() {
   return (
-    <svg className="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden="true"
+      className="size-5"
+    >
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
       <path d="M16 4h2a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2h2m12 10v4M2 17v4" />
     </svg>
   );
 }
 
+/**
+ * The student/company switch.
+ *
+ * A real radio group in a `fieldset`, so a screen reader announces "Account
+ * type, Student, 1 of 2" rather than reading two unrelated labels. The radios
+ * are `sr-only` rather than `hidden` — a `hidden` radio cannot be reached with
+ * the keyboard at all — and `peer-checked` draws the selected state, which is
+ * what the template's `:checked ~ label` trick was doing.
+ */
 export function AccountTypeToggle({
   idPrefix,
   name,
@@ -100,33 +93,37 @@ export function AccountTypeToggle({
   ];
 
   return (
-    <div className="form-group">
-      <span className="auth-section-label">{t("auth.accountType.label")}</span>
-      <div className="account-type-toggle">
-        {/* Radios first, then labels: the selected presentation is
-            `#type-student:checked ~ label[for="type-student"]` in the shipped
-            sheet, and `~` only reaches later siblings. They are `sr-only`
-            rather than the template's `hidden`, which is the one change — a
-            `hidden` radio cannot be reached with the keyboard at all. */}
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className="mb-1.5 text-label text-ink">{t("auth.accountType.label")}</legend>
+      <div className="grid grid-cols-2 gap-2">
         {options.map((option) => (
-          <input
-            key={option.value}
-            type="radio"
-            className="sr-only"
-            name={name}
-            id={`${idPrefix}-${option.value}`}
-            value={option.value}
-            checked={value === option.value}
-            onChange={() => onChange(option.value)}
-          />
-        ))}
-        {options.map((option) => (
-          <label key={option.value} htmlFor={`${idPrefix}-${option.value}`} className="toggle-option">
-            {option.icon}
-            <span className="toggle-text">{option.label}</span>
-          </label>
+          <div key={option.value} className="contents">
+            <input
+              type="radio"
+              className="peer sr-only"
+              name={name}
+              id={`${idPrefix}-${option.value}`}
+              value={option.value}
+              checked={value === option.value}
+              onChange={() => onChange(option.value)}
+            />
+            <label
+              htmlFor={`${idPrefix}-${option.value}`}
+              className={cn(
+                "flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-body-sm font-medium transition-colors",
+                "border-border-strong text-ink-soft hover:bg-surface-hover",
+                // The ring follows the hidden radio's own focus, so tabbing to
+                // the group still shows where you are.
+                "peer-checked:border-primary peer-checked:bg-primary-subtle peer-checked:text-primary",
+                "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary",
+              )}
+            >
+              {option.icon}
+              {option.label}
+            </label>
+          </div>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }

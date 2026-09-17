@@ -1,23 +1,49 @@
 # Legacy stylesheets
 
-These files are the production design system of the Jinja app
-(`backend/app/static/css/`), ported so the React rewrite renders the same UI
-rather than a second one.
+What is left of the design system ported out of the Jinja app
+(`backend/app/static/css/`). It used to be nineteen sheets and ~14,800 lines
+covering the whole product; it is now two files serving the marketing site.
 
-- `base.css` — `style.css` verbatim: the shell (header, nav, sidebar, footer),
-  the auth screens, the marketing pages and the shared card/button vocabulary.
-- `pages/<name>.css` — the sheet that page loaded, with every selector prefixed
-  by `.pg-<name>`.
+- `base.css` — the marketing pages' layout and components: the home hero, the
+  feature/testimonial/step sections, the About page's problem, ROI, framework
+  and philosophy blocks, and the reference modal.
+- `pages/about.css` — the handful of About-only rules that sheet carried.
 
-The prefix is not cosmetic. Each sheet used to be the only page sheet on the
-document, so `.stat-card` means one thing in `dashboard.css` and another in
-`company-dashboard.css`, and `.tag` means four things. A bundler puts all of
-them on every route, so each route renders its wrapper with the matching
-`pg-` class (see `src/components/layout/PageScope.tsx`) and the sheets stay
-apart. `@keyframes` are renamed per scope for the same reason (`fadeIn` exists
-three times with three definitions).
+## Why these two stay
 
-To re-port after a change to the Jinja sheets, re-run the port rather than
-editing here by hand:
+Every screen behind a login is on the design system in `src/components/ui`.
+These two are not, and deliberately so: they are bespoke landing-page layouts —
+each section is laid out once and reused nowhere — so turning them into
+components would produce a set of one-use abstractions rather than a shared
+vocabulary. The cost of leaving them is one stylesheet; the cost of migrating
+them is the same markup expressed twice as long, with a real risk of quietly
+changing the page the product is sold on.
 
-    python3 tools/port-legacy-css.py
+They are not, however, a second source of truth for colour. Every brand,
+surface, text and border value in them is a `var(--color-*)` reference into
+`styles/theme.css`, so changing the brand teal still reaches the marketing
+site. What remains hardcoded is a small number of one-off decorative tints
+that appear once each — naming those as tokens would grow the system, not
+centralise it.
+
+## Scoping
+
+The `.pg-<name>` prefixes and the `PageScope` component they needed are gone
+with the per-page sheets. `base.css`'s bare element selectors — `header`,
+`nav`, `main`, `section`, `h2`, `footer` — are scoped under `.marketing-page`,
+which `PublicShell` renders. Unscoped they applied to every one of those
+elements in the whole app: `header` painted a teal gradient over every
+`PageHeader`, and `main { padding: 4rem 0 }` spaced every screen like a
+landing page.
+
+## Cascade
+
+`styles/index.css` imports this into a `legacy` layer that sits between
+Tailwind's `base` and `components`, so any utility class outranks anything
+here. That is what allows a marketing page to be migrated later without first
+deleting the rules it is replacing.
+
+## If you change the Jinja sheets
+
+Don't re-port. The port tooling is gone and these files have diverged: dead
+rules pruned, colours tokenised, selectors scoped. Edit them here.

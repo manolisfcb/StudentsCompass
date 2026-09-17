@@ -2,8 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Alert, Button, Checkbox, FormField, Input, Modal, Textarea } from "@/components/ui";
 import { ApiError } from "@/api/client";
-import { FormField } from "@/components/patterns/FormField";
 import {
   type AdminResourceCreate,
   type AdminResourceDetail,
@@ -126,97 +126,110 @@ export function ResourceEditor({
   }
 
   return (
-    <div className="admin-modal-overlay" role="dialog" aria-modal="true">
-      <form onSubmit={submit} className="admin-modal resource-create-modal">
-        <div className="admin-modal-title">
-          {resource ? t("admin.resources.editor.editTitle") : t("admin.resources.editor.createTitle")}
-        </div>
-        <div className="admin-modal-desc">{t("admin.resources.editor.description")}</div>
-
+    <Modal
+      open
+      onClose={onCancel}
+      size="lg"
+      title={resource ? t("admin.resources.editor.editTitle") : t("admin.resources.editor.createTitle")}
+      description={t("admin.resources.editor.description")}
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            {t("admin.resources.editor.cancel")}
+          </Button>
+          <Button type="submit" form="resource-editor-form" loading={save.isPending}>
+            {save.isPending ? t("admin.resources.editor.saving") : t("admin.resources.editor.save")}
+          </Button>
+        </>
+      }
+    >
+      <form id="resource-editor-form" onSubmit={submit} className="flex flex-col gap-4">
         {save.isError ? (
-          <p className="admin-login-error visible" role="alert">
+          <Alert tone="danger">
             {save.error instanceof ApiError && save.error.detail
               ? save.error.detail.message
               : t("admin.resources.editor.saveError")}
-          </p>
+          </Alert>
         ) : null}
 
-        <div className="admin-form-row">
-          <FormField className="admin-form-group" label={t("admin.resources.editor.title")}>
-            <input required value={title} onChange={(e) => setTitle(e.target.value)} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField label={t("admin.resources.editor.title")}>
+            <Input required value={title} onChange={(e) => setTitle(e.target.value)} />
           </FormField>
-          <FormField className="admin-form-group" label={t("admin.resources.editor.category")}>
-            <input required value={category} onChange={(e) => setCategory(e.target.value)} />
-          </FormField>
-        </div>
-        <FormField className="admin-form-group" label={t("admin.resources.editor.resourceDescription")}>
-          <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </FormField>
-        <div className="admin-form-row">
-          <FormField className="admin-form-group" label={t("admin.resources.editor.level")}>
-            <input value={level} onChange={(e) => setLevel(e.target.value)} />
-          </FormField>
-          <FormField className="admin-form-group" label={t("admin.resources.editor.icon")}>
-            <input value={icon} onChange={(e) => setIcon(e.target.value)} />
-          </FormField>
-          <FormField className="admin-form-group" label={t("admin.resources.editor.duration")}>
-            <input min="0" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+          <FormField label={t("admin.resources.editor.category")}>
+            <Input required value={category} onChange={(e) => setCategory(e.target.value)} />
           </FormField>
         </div>
-        <FormField className="admin-form-group" label={t("admin.resources.editor.externalUrl")}>
-          <input type="url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} />
+        <FormField label={t("admin.resources.editor.resourceDescription")}>
+          <Textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </FormField>
-        <FormField className="admin-form-group" label={t("admin.resources.editor.tags")}>
-          <input value={tags} onChange={(e) => setTags(e.target.value)} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField label={t("admin.resources.editor.level")}>
+            <Input value={level} onChange={(e) => setLevel(e.target.value)} />
+          </FormField>
+          <FormField label={t("admin.resources.editor.icon")}>
+            <Input value={icon} onChange={(e) => setIcon(e.target.value)} />
+          </FormField>
+          <FormField label={t("admin.resources.editor.duration")}>
+            <Input min="0" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+          </FormField>
+        </div>
+        <FormField label={t("admin.resources.editor.externalUrl")}>
+          <Input type="url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} />
         </FormField>
-        <div className="admin-form-row">
-          <label className="admin-form-checkbox">
-            <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+        <FormField label={t("admin.resources.editor.tags")}>
+          <Input value={tags} onChange={(e) => setTags(e.target.value)} />
+        </FormField>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-body-sm text-ink">
+            <Checkbox checked={published} onChange={(e) => setPublished(e.target.checked)} />
             {t("admin.resources.editor.published")}
           </label>
-          <label className="admin-form-checkbox">
-            <input type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)} />
+          <label className="flex items-center gap-2 text-body-sm text-ink">
+            <Checkbox checked={locked} onChange={(e) => setLocked(e.target.checked)} />
             {t("admin.resources.editor.locked")}
           </label>
         </div>
 
-        <section className="resource-structure">
-          <div className="resource-structure-header">
-            <h4 className="resource-structure-title">{t("admin.resources.editor.structure")}</h4>
-            <button
+        <section className="flex flex-col gap-3 rounded-lg border border-border p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-card-title text-ink">{t("admin.resources.editor.structure")}</h4>
+            <Button
               type="button"
-              className="admin-btn admin-btn-ghost"
+              variant="ghost"
+              size="sm"
               onClick={() => setModules((current) => [...current, emptyModule()])}
             >
               {t("admin.resources.editor.addModule")}
-            </button>
+            </Button>
           </div>
           {modules.map((module, moduleIndex) => (
-            <article key={module.key} className="resource-module-block">
-              <div className="resource-module-head">
+            <article key={module.key} className="flex flex-col gap-3 rounded-md border border-border bg-surface-subtle p-3">
+              <div className="flex items-center justify-between gap-2">
                 <strong>{t("admin.resources.editor.module", { number: moduleIndex + 1 })}</strong>
-                <button
+                <Button
                   type="button"
-                  className="admin-btn admin-btn-ghost"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setModules((current) => current.filter((item) => item.key !== module.key))}
                 >
                   {t("admin.resources.editor.remove")}
-                </button>
+                </Button>
               </div>
-              <input
+              <Input
                 required
-                className="admin-form-input"
+                className="w-full"
                 aria-label={t("admin.resources.editor.moduleTitle")}
                 value={module.title}
                 onChange={(e) => updateModule(module.key, { title: e.target.value })}
               />
-              <textarea
-                className="admin-form-input"
+              <Textarea
+                className="w-full"
                 aria-label={t("admin.resources.editor.moduleDescription")}
                 value={module.description ?? ""}
                 onChange={(e) => updateModule(module.key, { description: e.target.value || null })}
               />
-              <div className="resource-lesson-list">
+              <div className="flex flex-col gap-3">
                 {(module.lessons ?? []).map((lesson, lessonIndex) => (
                   <LessonRow
                     key={lesson.key}
@@ -231,27 +244,19 @@ export function ResourceEditor({
                   />
                 ))}
               </div>
-              <button
+              <Button
                 type="button"
-                className="admin-btn admin-btn-ghost"
+                variant="ghost"
+                size="sm"
                 onClick={() => updateModule(module.key, { lessons: [...(module.lessons ?? []), emptyLesson()] })}
               >
                 {t("admin.resources.editor.addLesson")}
-              </button>
+              </Button>
             </article>
           ))}
         </section>
-
-        <div className="admin-modal-actions">
-          <button type="button" className="admin-btn admin-btn-ghost" onClick={onCancel}>
-            {t("admin.resources.editor.cancel")}
-          </button>
-          <button type="submit" className="admin-btn admin-btn-primary" disabled={save.isPending}>
-            {save.isPending ? t("admin.resources.editor.saving") : t("admin.resources.editor.save")}
-          </button>
-        </div>
       </form>
-    </div>
+    </Modal>
   );
 }
 
@@ -278,49 +283,49 @@ function LessonRow({
   }
 
   return (
-    <div className="resource-lesson-block">
-      <div className="resource-module-head">
+    <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3">
+      <div className="flex items-center justify-between gap-2">
         <strong>{t("admin.resources.editor.lesson", { number })}</strong>
-        <button type="button" className="admin-btn admin-btn-ghost" onClick={onRemove}>
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
           {t("admin.resources.editor.remove")}
-        </button>
+        </Button>
       </div>
-      <div className="admin-form-row">
-        <input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
           required
-          className="admin-form-input"
+          className="w-full"
           aria-label={t("admin.resources.editor.lessonTitle")}
           value={lesson.title}
           onChange={(e) => onChange({ title: e.target.value })}
         />
-        <input
-          className="admin-form-input"
+        <Input
+          className="w-full"
           aria-label={t("admin.resources.editor.lessonType")}
           list={`admin-lesson-types-${lesson.key}`}
           value={lesson.content_type}
           onChange={(e) => onChange({ content_type: e.target.value })}
         />
       </div>
-      <textarea
-        className="admin-form-input"
+      <Textarea
+        className="w-full"
         aria-label={t("admin.resources.editor.lessonContent")}
         value={lesson.content ?? ""}
         onChange={(e) => onChange({ content: e.target.value })}
       />
-      <div className="admin-form-row">
-        <input
-          className="admin-form-input"
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          className="w-full"
           aria-label={t("admin.resources.editor.resourceUrl")}
           value={lesson.resource_url ?? ""}
           onChange={(e) => onChange({ resource_url: e.target.value || null })}
         />
-        <label className="admin-upload-label">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border-strong px-3 py-1.5 text-body-sm text-ink-soft transition-colors hover:bg-surface-hover">
           {upload.isPending ? t("admin.resources.editor.uploading") : t("admin.resources.editor.upload")}
           <input type="file" className="sr-only" disabled={upload.isPending} onChange={chooseFile} />
         </label>
       </div>
       {upload.isError ? (
-        <p className="admin-login-error visible" role="alert">
+        <p role="alert" className="text-caption text-danger">
           {t("admin.resources.editor.uploadError")}
         </p>
       ) : null}

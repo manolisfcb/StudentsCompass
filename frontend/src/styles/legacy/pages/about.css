@@ -1,12 +1,9 @@
-/* Ported from backend/app/static/css/about.css, scoped under `.pg-about`. */
-.pg-about .ref-modal__extra-link {
-    margin-top: 0.5rem;
-}
+
 
 .pg-about .about-partnership {
-    border-bottom: 1px solid rgba(15, 118, 110, 0.14);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 14%, transparent);
     background: #f7fbfa;
-    color: #475569;
+    color: var(--color-ink-soft);
     font-size: 0.9rem;
     text-align: center;
 }
@@ -20,10 +17,10 @@
 }
 
 .pg-about .about-partnership a {
-    color: #0f766e;
+    color: var(--color-primary);
     font-weight: 700;
     text-decoration: underline;
-    text-decoration-color: rgba(15, 118, 110, 0.35);
+    text-decoration-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
     text-underline-offset: 0.18em;
 }
 

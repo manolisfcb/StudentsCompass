@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { queryKeys } from "@/api/queryKeys";
-import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Card, PageHeader } from "@/components/ui";
 import { FriendsPanel } from "@/features/community-messages/FriendsPanel";
 import { CareerSummary } from "@/features/profile-resumes/CareerSummary";
 import { ProfileForm } from "@/features/profile-resumes/ProfileForm";
@@ -22,37 +22,33 @@ export function ProfilePage() {
   const query = useQuery({ queryKey: queryKeys.profile.current, queryFn: fetchProfile });
 
   return (
-    <PageScope name="userprofile" className="container">
+    <div className="flex flex-col gap-6">
       <DocumentMeta title={t("profile.seoTitle")} description={t("profile.seoDescription")} path="/profile" />
 
-      <div className="dashboard-header page-shell-header">
-        <div className="page-shell-header-row">
-          <div className="page-shell-header-copy">
-            <h2>{t("profile.title")}</h2>
-            <p>{t("profile.subtitle")}</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader title={t("profile.title")} description={t("profile.subtitle")} />
 
-      <div className="profile-edit-card profile-card fade-in">
+      {/* Five sections of one page, so they are five instances of one card
+        * rather than `.profile-edit-card`, `.info-card` and `.network-card`
+        * with three different paddings and radii. */}
+      <Card padding="lg">
         <AsyncBoundary query={query}>{(profile) => <ProfileForm profile={profile} />}</AsyncBoundary>
-      </div>
+      </Card>
 
-      <div className="info-card profile-card fade-in">
+      <Card padding="lg">
         <CareerSummary />
-      </div>
+      </Card>
 
-      <section className="network-card profile-card fade-in">
+      <Card padding="lg" className="flex flex-col">
         <FriendsPanel />
-      </section>
+      </Card>
 
-      <div className="info-card profile-card fade-in">
+      <Card padding="lg">
         <ResumeList />
-      </div>
+      </Card>
 
-      <div className="info-card profile-card fade-in">
+      <Card padding="lg">
         <ResumeAuditWidget />
-      </div>
-    </PageScope>
+      </Card>
+    </div>
   );
 }

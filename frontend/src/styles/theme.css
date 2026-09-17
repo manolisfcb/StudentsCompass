@@ -1,0 +1,249 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Students Compass — design tokens
+ *
+ * The single place colour, type, spacing, radius and elevation are decided.
+ * Everything else in the app — Tailwind utilities, the UI components, the
+ * remaining legacy sheets — reads from here, so changing the brand teal or
+ * tightening the radius scale is one edit, not twenty.
+ *
+ * Tailwind v4 compiles every `--color-*` / `--radius-*` / `--text-*` entry in
+ * `@theme` into a utility whose value is `var(--token)`. That indirection is
+ * what makes the dark admin console work: `.theme-dark` further down
+ * re-points the same semantic variables, and `bg-surface` inside that scope
+ * resolves to the dark surface without a single `dark:` variant in the JSX.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Brand ────────────────────────────────────────────────────────────
+   * The teal the product shipped with. `primary` is the action colour;
+   * `subtle` is its 10%-tint background for selected rows and soft badges. */
+  --color-primary: #0f766e;
+  --color-primary-hover: #0b5d57;
+  --color-primary-active: #0a4f4a;
+  --color-primary-subtle: #f0fdfa;
+  --color-primary-muted: #ccfbf1;
+  --color-primary-fg: #ffffff;
+  /* The bright mint of the marketing hero and its CTA. It is a brand colour,
+   * not a UI colour: nothing in the product chrome uses it, because at this
+   * lightness white text on it fails contrast. */
+  --color-primary-bright: #5eead4;
+
+  /* The rose the marketing pages and the logout control use. Reserved for
+   * emphasis on marketing surfaces — it is not a second action colour. */
+  --color-accent: #fb7185;
+  --color-accent-hover: #f43f5e;
+  --color-accent-fg: #ffffff;
+
+  /* ── Surfaces ─────────────────────────────────────────────────────────
+   * Three levels, and deliberately only three. The ported design nested
+   * four (dark page → light sheet → card → inner card), which is what made
+   * every screen read as a stack of boxes. */
+  --color-canvas: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f8fafc;
+  --color-surface-hover: #f1f5f9;
+
+  /* ── Borders ──────────────────────────────────────────────────────────
+   * `border` is the hairline that separates; `border-strong` is the one that
+   * outlines an interactive control so it looks pressable. */
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-border-subtle: #f1f5f9;
+
+  /* ── Text ─────────────────────────────────────────────────────────────
+   * Named by role, not by shade, so "the secondary text is too light" is a
+   * one-line fix. All four clear 4.5:1 on `surface` except `ink-muted`,
+   * which is 3.1:1 and therefore only ever used for non-essential text. */
+  --color-ink: #0f172a;
+  --color-ink-soft: #475569;
+  --color-ink-muted: #64748b;
+  --color-ink-inverse: #f8fafc;
+
+  /* ── Status ───────────────────────────────────────────────────────────
+   * Each role carries a fill, a tint and a readable foreground, because a
+   * badge and a banner need the same meaning at two different weights. */
+  --color-success: #15803d;
+  --color-success-subtle: #f0fdf4;
+  --color-success-border: #bbf7d0;
+
+  --color-warning: #b45309;
+  --color-warning-subtle: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-subtle: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  --color-info: #1d4ed8;
+  --color-info-subtle: #eff6ff;
+  --color-info-border: #bfdbfe;
+
+  /* ── Typography ───────────────────────────────────────────────────────
+   * Inter for everything. The ported sheets ran Segoe UI for the product and
+   * Inter for the admin; one family is one less inconsistency.
+   *
+   * Nine roles replace the ~60 ad-hoc `font-size` values in the legacy CSS.
+   * Each pairs a size with the line-height and tracking it actually wants, so
+   * a caller picks `text-card-title`, not `text-[0.92rem] leading-5`. */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 700;
+
+  --text-page-title: 1.75rem;
+  --text-page-title--line-height: 1.2;
+  --text-page-title--letter-spacing: -0.02em;
+  --text-page-title--font-weight: 700;
+
+  --text-section-title: 1.25rem;
+  --text-section-title--line-height: 1.3;
+  --text-section-title--letter-spacing: -0.01em;
+  --text-section-title--font-weight: 650;
+
+  --text-card-title: 1rem;
+  --text-card-title--line-height: 1.4;
+  --text-card-title--font-weight: 600;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.55;
+
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 550;
+
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.45;
+
+  --text-overline: 0.6875rem;
+  --text-overline--line-height: 1.3;
+  --text-overline--letter-spacing: 0.08em;
+  --text-overline--font-weight: 650;
+
+  /* ── Radius ───────────────────────────────────────────────────────────
+   * Five steps replacing the 38 distinct values the sheets carried. The step
+   * is the component's rank: controls are `md`, the cards holding them are
+   * `lg`, the panel holding those is `xl`. Nesting reads correctly because
+   * the outer radius is always the larger one. */
+  --radius-xs: 0.25rem; /*  4px — checkboxes, tight inner chips */
+  --radius-sm: 0.375rem; /*  6px — table cell affordances, small tags */
+  --radius-md: 0.5rem; /*  8px — buttons, inputs, selects */
+  --radius-lg: 0.75rem; /* 12px — cards, alerts, list rows */
+  --radius-xl: 1rem; /* 16px — modals, page panels, sidebars */
+  --radius-2xl: 1.5rem; /* 24px — marketing hero surfaces only */
+
+  /* ── Elevation ────────────────────────────────────────────────────────
+   * Four, down from 120. Height means meaning: a card at rest barely lifts,
+   * a dropdown sits above the page, a modal sits above everything. The
+   * ported sheets used 38px-blur shadows on static cards, which is what gave
+   * the product its slightly foggy look. */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.06);
+
+  /* ── Layout ───────────────────────────────────────────────────────────
+   * Named so the shell and the pages cannot drift apart. */
+  --spacing-sidebar: 15rem;
+  --spacing-content: 80rem;
+
+  /* Breakpoints. The sheets used eleven; these are the four that matter and
+   * they match Tailwind's defaults, so `md:` means one thing everywhere. */
+  --breakpoint-sm: 40rem; /*  640px — phone landscape */
+  --breakpoint-md: 48rem; /*  768px — tablet */
+  --breakpoint-lg: 64rem; /* 1024px — laptop */
+  --breakpoint-xl: 80rem; /* 1280px — desktop */
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Dark scope — the admin console.
+ *
+ * Not a second design system: the same semantic names, re-pointed. Every
+ * component built on `bg-surface` / `text-ink` / `border-border` works inside
+ * `.theme-dark` with no dark-specific markup, and a change to the radius or
+ * type scale above lands in both themes at once.
+ *
+ * It stays dark on purpose — it is the signal that you are in the internal
+ * panel and not in the student product.
+ * ══════════════════════════════════════════════════════════════════════ */
+.theme-dark {
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-primary-active: #4f46e5;
+  --color-primary-subtle: rgba(99, 102, 241, 0.12);
+  --color-primary-muted: rgba(99, 102, 241, 0.2);
+  --color-primary-fg: #ffffff;
+
+  --color-canvas: #0a0e1a;
+  --color-surface: #111827;
+  --color-surface-subtle: #0f1623;
+  --color-surface-hover: #1f2937;
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+
+  --color-ink: #f1f5f9;
+  --color-ink-soft: #cbd5e1;
+  --color-ink-muted: #94a3b8;
+  --color-ink-inverse: #0f172a;
+
+  /* Status colours lift on dark: the light-theme fills are too dim to read
+   * against #111827, and the tints have to become translucent rather than
+   * near-white. */
+  --color-success: #4ade80;
+  --color-success-subtle: rgba(34, 197, 94, 0.12);
+  --color-success-border: rgba(34, 197, 94, 0.3);
+
+  --color-warning: #fbbf24;
+  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-warning-border: rgba(245, 158, 11, 0.3);
+
+  --color-danger: #f87171;
+  --color-danger-hover: #ef4444;
+  --color-danger-subtle: rgba(239, 68, 68, 0.12);
+  --color-danger-border: rgba(239, 68, 68, 0.3);
+
+  --color-info: #60a5fa;
+  --color-info-subtle: rgba(59, 130, 246, 0.12);
+  --color-info-border: rgba(59, 130, 246, 0.3);
+
+  /* Shadows do almost nothing on a near-black canvas; depth there comes from
+   * the surface step and the border, so these stay shallow rather than
+   * painting grey smudges nobody can see. */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Legacy bridge.
+ *
+ * The ported sheets read `var(--primary-color)`, `var(--text-color)` and
+ * friends in ~960 places. Pointing those old names at the new tokens means a
+ * screen that has not been migrated yet still recolours when the brand
+ * changes — so the design system is authoritative from day one rather than
+ * only after the last page lands.
+ *
+ * This block shrinks as pages migrate and is deleted with the last sheet.
+ * ══════════════════════════════════════════════════════════════════════ */
+:root {
+  --primary-color: var(--color-primary);
+  --secondary-color: var(--color-primary-bright);
+  --accent-color: var(--color-accent);
+  --background-color: var(--color-canvas);
+  --text-color: var(--color-ink);
+  --text-secondary: var(--color-ink-soft);
+  --muted: var(--color-ink-muted);
+  --white: var(--color-surface);
+  --gray: var(--color-ink-soft);
+  --light-gray: var(--color-border);
+  --border: var(--color-border);
+  --card-bg: var(--color-surface);
+}

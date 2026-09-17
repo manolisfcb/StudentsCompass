@@ -3,35 +3,25 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Alert, Card, CardHeader, PageHeader, ProgressBar, StatCard } from "@/components/ui";
 import { fetchStudentDashboard, type StudentDashboard } from "@/features/dashboard/api";
 
 /**
- * The student dashboard (`dashboard.html`/`dashboard.js`). Every number here
- * — `stats.*`, `progress.*`, `application_breakdown.*` — is exactly what
- * `GET /dashboard/student` answers; nothing is recomputed client-side
- * (F-15, plan 08 §13).
- *
- * The markup is the template's: `.stats-grid` of `.stat-card`s whose modifier
- * class picks the gradient rule under each tile, then `.main-content-grid` of
- * `.content-card`s, the `.quick-actions` row and the `.notification-card`.
- * `dashboard.css` styles all of it by those names.
+ * The student dashboard. Every number here — `stats.*`, `progress.*`,
+ * `application_breakdown.*` — is exactly what `GET /dashboard/student`
+ * answers; nothing is recomputed client-side (F-15, plan 08 §13).
  */
 export function DashboardPage() {
   const { t } = useTranslation();
   const query = useQuery({ queryKey: queryKeys.dashboard.student, queryFn: fetchStudentDashboard });
 
   return (
-    <PageScope name="dashboard">
-      <DocumentMeta
-        title={t("dashboard.seoTitle")}
-        description={t("dashboard.seoDescription")}
-        path="/dashboard"
-      />
+    <>
+      <DocumentMeta title={t("dashboard.seoTitle")} description={t("dashboard.seoDescription")} path="/dashboard" />
       <AsyncBoundary query={query}>{(dashboard) => <DashboardContent dashboard={dashboard} />}</AsyncBoundary>
-    </PageScope>
+    </>
   );
 }
 
@@ -50,176 +40,127 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
     { key: "portfolio", label: t("dashboard.careerProgress.portfolio") },
   ];
 
-  return (
-    <div className="dashboard-container">
-      <div className="dashboard-header page-shell-header">
-        <div className="page-shell-header-row">
-          <div className="page-shell-header-copy">
-            <h2>{t("dashboard.greeting", { name })}</h2>
-            <p>{t("dashboard.subtitle")}</p>
-          </div>
-        </div>
-      </div>
+  const statuses = [
+    { label: t("dashboard.applications.applied"), value: dashboard.application_breakdown.applied },
+    { label: t("dashboard.applications.inReview"), value: dashboard.application_breakdown.in_review },
+    { label: t("dashboard.applications.interviews"), value: dashboard.application_breakdown.interviews },
+    { label: t("dashboard.applications.offers"), value: dashboard.application_breakdown.offers },
+  ];
 
-      <div className="stats-grid">
+  const quickActions = [
+    { to: "/questionnaire", icon: "📝", label: t("dashboard.quickActions.questionnaire") },
+    { to: "/community", icon: "👥", label: t("dashboard.quickActions.community") },
+    { to: "/profile", icon: "👤", label: t("dashboard.quickActions.profile") },
+    { to: "/resources", icon: "📖", label: t("dashboard.quickActions.resources") },
+  ];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t("dashboard.greeting", { name })} description={t("dashboard.subtitle")} />
+
+      {/* Two tiles per row on a phone rather than four stacked: the numbers are
+        * short, and a column of four full-width tiles pushed the actual content
+        * a full screen down. */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon="📊" value={`${dashboard.stats.overall_progress}%`} label={t("dashboard.stats.overallProgress")} />
-        <StatCard
-          icon="📝"
-          modifier="applications"
-          value={dashboard.stats.total_applications}
-          label={t("dashboard.stats.totalApplications")}
-        />
+        <StatCard icon="📝" value={dashboard.stats.total_applications} label={t("dashboard.stats.totalApplications")} />
         <StatCard
           icon="🎯"
-          modifier="interviews"
           value={dashboard.stats.interviews_scheduled}
           label={t("dashboard.stats.interviewsScheduled")}
         />
-        <StatCard
-          icon="🎉"
-          modifier="offers"
-          value={dashboard.stats.offers_received}
-          label={t("dashboard.stats.offersReceived")}
-        />
+        <StatCard icon="🎉" value={dashboard.stats.offers_received} label={t("dashboard.stats.offersReceived")} />
       </div>
 
-      <div className="main-content-grid">
-        <div className="content-card career-progress-card">
-          <div className="card-header">
-            <div className="card-icon" aria-hidden="true">
-              🚀
-            </div>
-            <h3>{t("dashboard.careerProgress.title")}</h3>
-          </div>
-
-          <div className="career-progress-list">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="flex flex-col">
+          <CardHeader title={t("dashboard.careerProgress.title")} />
+          <div className="mt-4 flex flex-1 flex-col gap-3">
             {progressItems.map(({ key, label }) => (
               <Link
                 key={key}
                 to={dashboard.resource_navigation[key] ?? "/resources"}
-                className="progress-item progress-item-link"
+                className="-mx-2 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-hover"
               >
-                <div className="progress-label">
-                  <strong>{label}</strong>
-                  <span className="progress-percentage">{dashboard.progress[key]}%</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress" style={{ width: `${Math.min(100, dashboard.progress[key])}%` }} />
-                </div>
+                <ProgressBar label={label} value={dashboard.progress[key]} />
               </Link>
             ))}
           </div>
-
-          <Link to="/resources" className="card-link">
-            {t("dashboard.careerProgress.viewResources")}
+          <Link
+            to="/resources"
+            className="mt-4 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
+          >
+            {t("dashboard.careerProgress.viewResources")} →
           </Link>
-        </div>
+        </Card>
 
-        <div className="content-card">
-          <div className="card-header">
-            <div className="card-icon" aria-hidden="true">
-              📋
-            </div>
-            <h3>{t("dashboard.applications.title")}</h3>
-          </div>
-
-          <ul className="status-list">
-            <StatusItem label={t("dashboard.applications.applied")} value={dashboard.application_breakdown.applied} />
-            <StatusItem label={t("dashboard.applications.inReview")} value={dashboard.application_breakdown.in_review} />
-            <StatusItem
-              label={t("dashboard.applications.interviews")}
-              value={dashboard.application_breakdown.interviews}
-            />
-            <StatusItem label={t("dashboard.applications.offers")} value={dashboard.application_breakdown.offers} />
+        <Card className="flex flex-col">
+          <CardHeader title={t("dashboard.applications.title")} />
+          <ul className="mt-4 flex-1 divide-y divide-border-subtle">
+            {statuses.map((status) => (
+              <li key={status.label} className="flex items-center justify-between py-2.5">
+                <span className="text-body-sm text-ink-soft">{status.label}</span>
+                <span className="text-card-title text-ink tabular-nums">{status.value}</span>
+              </li>
+            ))}
           </ul>
-
-          <Link to="/jobs/applications" className="card-link">
-            {t("dashboard.applications.viewAll")}
+          <Link
+            to="/jobs/applications"
+            className="mt-4 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
+          >
+            {t("dashboard.applications.viewAll")} →
           </Link>
-        </div>
-
-        {dashboard.resources.length > 0 ? (
-          <div className="content-card full-width-card">
-            <div className="card-header">
-              <div className="card-icon" aria-hidden="true">
-                📚
-              </div>
-              <h3>{t("dashboard.recommended.title")}</h3>
-            </div>
-
-            <p className="resource-list-copy">{t("dashboard.recommended.subtitle")}</p>
-
-            <ul className="resource-list">
-              {dashboard.resources.map((resource) => (
-                <li key={resource.title} className="resource-item">
-                  <Link to="/resources">
-                    <span aria-hidden="true">{resource.icon}</span> {resource.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <Link to="/resources" className="card-link">
-              {t("dashboard.recommended.explore")}
-            </Link>
-          </div>
-        ) : null}
+        </Card>
       </div>
 
-      <div className="quick-actions">
-        <QuickAction to="/questionnaire" icon="📝" label={t("dashboard.quickActions.questionnaire")} />
-        <QuickAction to="/community" icon="👥" label={t("dashboard.quickActions.community")} />
-        <QuickAction to="/profile" icon="👤" label={t("dashboard.quickActions.profile")} />
-        <QuickAction to="/resources" icon="📖" label={t("dashboard.quickActions.resources")} />
+      {dashboard.resources.length > 0 ? (
+        <Card>
+          <CardHeader
+            title={t("dashboard.recommended.title")}
+            description={t("dashboard.recommended.subtitle")}
+            action={
+              <Link
+                to="/resources"
+                className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
+              >
+                {t("dashboard.recommended.explore")} →
+              </Link>
+            }
+          />
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {dashboard.resources.map((resource) => (
+              <li key={resource.title}>
+                <Link
+                  to="/resources"
+                  className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-body-sm text-ink transition-colors hover:border-border-strong hover:bg-surface-hover"
+                >
+                  <span aria-hidden="true">{resource.icon}</span>
+                  <span className="truncate">{resource.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {quickActions.map((action) => (
+          <Link
+            key={action.to}
+            to={action.to}
+            className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-4 py-3 text-body-sm font-medium text-ink shadow-xs transition-colors hover:border-border-strong hover:bg-surface-hover"
+          >
+            <span aria-hidden="true" className="text-lg">
+              {action.icon}
+            </span>
+            <span className="truncate">{action.label}</span>
+          </Link>
+        ))}
       </div>
 
-      <div className="notification-card">
-        <h4>{t("dashboard.proTip.title")}</h4>
-        <p>{t("dashboard.proTip.body")}</p>
-      </div>
+      <Alert tone="info" title={t("dashboard.proTip.title")}>
+        {t("dashboard.proTip.body")}
+      </Alert>
     </div>
-  );
-}
-
-function StatCard({
-  icon,
-  value,
-  label,
-  modifier,
-}: {
-  icon: string;
-  value: string | number;
-  label: string;
-  /** Picks the accent bar under the tile (`.stat-card.applications::after`). */
-  modifier?: "applications" | "interviews" | "offers";
-}) {
-  return (
-    <div className={`stat-card${modifier ? ` ${modifier}` : ""}`}>
-      <div className="stat-icon" aria-hidden="true">
-        {icon}
-      </div>
-      <div className="stat-value">{value}</div>
-      <div className="stat-label">{label}</div>
-    </div>
-  );
-}
-
-function StatusItem({ label, value }: { label: string; value: number }) {
-  return (
-    <li className="status-item">
-      <strong>{label}</strong>
-      <span className="status-value">{value}</span>
-    </li>
-  );
-}
-
-function QuickAction({ to, icon, label }: { to: string; icon: string; label: string }) {
-  return (
-    <Link to={to} className="action-btn">
-      <span className="action-icon" aria-hidden="true">
-        {icon}
-      </span>
-      <span>{label}</span>
-    </Link>
   );
 }

@@ -4,12 +4,23 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  FormField,
+  Input,
+  PageHeader,
+  Select,
+  Spinner,
+  StatCard,
+} from "@/components/ui";
+import type { BadgeTone } from "@/components/ui";
 import { queryKeys } from "@/api/queryKeys";
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
-import { Spinner } from "@/components/primitives/Spinner";
-import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { fetchResumes, type Resume } from "@/features/profile-resumes/api";
 import {
@@ -128,62 +139,72 @@ export function CareerLabPage() {
   const hasResume = resumes.length > 0;
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-6">
       <DocumentMeta title={t("careerLab.seoTitle")} description={t("careerLab.seoDescription")} path="/career-lab" />
 
-      <div>
-        <h1 className="text-2xl font-bold text-ink">{t("careerLab.title")}</h1>
-        <p className="mt-1 text-sm text-ink-soft">{t("careerLab.subtitle")}</p>
-      </div>
+      <PageHeader
+        title={t("careerLab.title")}
+        description={t("careerLab.subtitle")}
+        breadcrumb={<Badge tone="brand">{t("careerLab.kicker")}</Badge>}
+      />
 
-      {resumesQuery.isPending ? (
-        <Spinner label={t("async.loading")} />
-      ) : !hasResume ? (
-        <Alert tone="info" title={t("careerLab.noResume.title")}>
-          <p>{t("careerLab.noResume.body")}</p>
-          <Link to="/profile" className="mt-3 inline-block text-sm font-medium text-brand hover:underline">
-            {t("careerLab.noResume.upload")}
-          </Link>
-        </Alert>
-      ) : (
-        <>
-          <section className="grid gap-4 rounded-lg border border-border bg-surface p-6 sm:grid-cols-3">
-            <FormField label={t("careerLab.resumeLabel")}>
-              <select
-                value={resumeId}
-                onChange={(event) => setSelectedResumeId(event.target.value)}
-              >
+      {hasResume ? (
+        <Card>
+          <form
+            className="flex flex-col gap-3 sm:flex-row sm:items-end"
+            onSubmit={(event) => {
+              event.preventDefault();
+              analyzeMutation.mutate();
+            }}
+          >
+            <FormField label={t("careerLab.resumeLabel")} className="sm:flex-1">
+              <Select value={resumeId} onChange={(event) => setSelectedResumeId(event.target.value)}>
                 {resumes.map((resume) => (
                   <option key={resume.id} value={resume.id}>
                     {resume.original_filename}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FormField>
 
-            <FormField label={t("careerLab.targetRoleLabel")}>
-              <select
-                value={targetRole}
-                onChange={(event) => setSelectedTargetRole(event.target.value)}
-              >
+            <FormField label={t("careerLab.targetRoleLabel")} className="sm:flex-1">
+              <Select value={targetRole} onChange={(event) => setSelectedTargetRole(event.target.value)}>
                 {roles.map((role) => (
                   <option key={role.target_role} value={role.target_role}>
                     {role.target_role}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FormField>
 
-            <div className="flex items-end">
-              <Button
-                disabled={resumeId === "" || targetRole === "" || analyzeMutation.isPending}
-                onClick={() => analyzeMutation.mutate()}
-              >
-                {analyzeMutation.isPending ? t("careerLab.analyzing") : t("careerLab.analyzeButton")}
-              </Button>
-            </div>
-          </section>
+            <Button
+              type="submit"
+              disabled={resumeId === "" || targetRole === ""}
+              loading={analyzeMutation.isPending}
+            >
+              {analyzeMutation.isPending ? t("careerLab.analyzing") : t("careerLab.analyzeButton")}
+            </Button>
+          </form>
+        </Card>
+      ) : null}
 
+      {resumesQuery.isPending ? (
+        <Card>
+          <Spinner label={t("async.loading")} />
+        </Card>
+      ) : !hasResume ? (
+        <EmptyState
+          title={t("careerLab.noResume.title")}
+          description={t("careerLab.noResume.body")}
+          icon="📄"
+          action={
+            <Link to="/profile">
+              <Button>{t("careerLab.noResume.upload")}</Button>
+            </Link>
+          }
+        />
+      ) : (
+        <>
           {analyzeMutation.isError ? (
             <Alert tone="danger">
               {analyzeMutation.error instanceof ApiError && analyzeMutation.error.detail
@@ -247,6 +268,14 @@ function formatHoursValue(value: number | null | undefined): string {
   return `${value.toFixed(0)}h`;
 }
 
+/** A skill's review state, coloured the way the rest of the app colours state. */
+const SKILL_STATUS_TONES: Record<string, BadgeTone> = {
+  confirmed: "success",
+  rejected: "danger",
+  manual: "brand",
+  detected: "neutral",
+};
+
 function skillStatusLabel(status: string | null | undefined, t: (key: string) => string): string {
   switch (status) {
     case "confirmed":
@@ -259,6 +288,14 @@ function skillStatusLabel(status: string | null | undefined, t: (key: string) =>
       return t("careerLab.skillReview.status.detected");
   }
 }
+
+/** Insight severity mapped onto the shared status tones. */
+const SEVERITY_TONES: Record<string, BadgeTone> = {
+  positive: "success",
+  high: "danger",
+  medium: "warning",
+  info: "info",
+};
 
 function severityLabel(severity: string, t: (key: string) => string): string {
   switch (severity) {
@@ -324,53 +361,61 @@ function SkillReviewPanel({
   }, {});
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-ink">{t("careerLab.skillReview.title")}</h2>
-        <div className="flex gap-3 text-xs text-ink-muted">
-          <span>{t("careerLab.skillReview.counts.detected", { count: counts.detected ?? 0 })}</span>
-          <span>{t("careerLab.skillReview.counts.confirmed", { count: counts.confirmed ?? 0 })}</span>
-          <span>{t("careerLab.skillReview.counts.manual", { count: counts.manual ?? 0 })}</span>
-        </div>
-      </div>
+    <Card className="flex flex-col gap-4">
+      <CardHeader
+        title={t("careerLab.skillReview.title")}
+        action={
+          <div className="flex flex-wrap gap-1.5">
+            <Badge>{t("careerLab.skillReview.counts.detected", { count: counts.detected ?? 0 })}</Badge>
+            <Badge tone="success">
+              {t("careerLab.skillReview.counts.confirmed", { count: counts.confirmed ?? 0 })}
+            </Badge>
+            <Badge tone="brand">{t("careerLab.skillReview.counts.manual", { count: counts.manual ?? 0 })}</Badge>
+          </div>
+        }
+      />
 
       <form
-        className="mt-4 flex gap-2"
+        className="flex items-end gap-2"
         onSubmit={(event) => {
           event.preventDefault();
           onAddManual();
         }}
       >
-        <input
-          value={manualSkillText}
-          onChange={(event) => onManualSkillTextChange(event.target.value)}
-          placeholder={t("careerLab.skillReview.addPlaceholder")}
-          aria-label={t("careerLab.skillReview.addLabel")}
-        />
-        <Button variant="secondary" disabled={resumeId === "" || addPending} onClick={onAddManual}>
+        <FormField label={t("careerLab.skillReview.addLabel")} className="flex-1">
+          <Input
+            value={manualSkillText}
+            onChange={(event) => onManualSkillTextChange(event.target.value)}
+            placeholder={t("careerLab.skillReview.addPlaceholder")}
+          />
+        </FormField>
+        <Button type="submit" disabled={resumeId === ""} loading={addPending}>
           {t("careerLab.skillReview.addButton")}
         </Button>
       </form>
 
-      <div className="mt-4 space-y-2">
+      <div className="flex flex-col gap-2">
         {isLoading ? (
           <Spinner label={t("async.loading")} />
         ) : skills.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("careerLab.skillReview.empty")}</p>
+          <p className="py-4 text-center text-body-sm text-ink-muted">{t("careerLab.skillReview.empty")}</p>
         ) : (
           skills.map((skill) => (
             <div
               key={skill.resume_skill_id ?? skill.skill_id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-2.5"
             >
-              <div>
-                <span className="text-xs uppercase text-ink-muted">{skillStatusLabel(skill.status, t)}</span>
-                <p className="text-sm font-medium text-ink">{skill.display_name}</p>
+              <div className="flex min-w-0 items-center gap-2">
+                <Badge tone={SKILL_STATUS_TONES[skill.status ?? "detected"] ?? "neutral"}>
+                  {skillStatusLabel(skill.status, t)}
+                </Badge>
+                <p className="truncate text-body-sm text-ink">{skill.display_name}</p>
               </div>
               {skill.resume_skill_id ? (
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-1.5">
                   <Button
                     variant="ghost"
+                    size="sm"
                     disabled={skill.status === "confirmed" || skill.status === "manual"}
                     onClick={() => onConfirm(skill.resume_skill_id as string)}
                   >
@@ -378,12 +423,13 @@ function SkillReviewPanel({
                   </Button>
                   <Button
                     variant="ghost"
+                    size="sm"
                     disabled={skill.status === "rejected" || skill.status === "manual"}
                     onClick={() => onReject(skill.resume_skill_id as string)}
                   >
                     {t("careerLab.skillReview.reject")}
                   </Button>
-                  <Button variant="ghost" onClick={() => onDelete(skill.resume_skill_id as string)}>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(skill.resume_skill_id as string)}>
                     {t("careerLab.skillReview.remove")}
                   </Button>
                 </div>
@@ -392,7 +438,7 @@ function SkillReviewPanel({
           ))
         )}
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -406,106 +452,110 @@ function GapAnalysisPanels({ analysis }: { analysis: GapAnalysis }) {
 
   return (
     <>
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label={t("careerLab.metrics.readiness")} value={formatPercent(analysis.overall_readiness_score)} />
-        <MetricCard label={t("careerLab.metrics.match")} value={formatPercent(analysis.match_score)} />
-        <MetricCard label={t("careerLab.metrics.context")} value={formatPercent(analysis.context_similarity_score)} />
-        <MetricCard label={t("careerLab.metrics.gaps")} value={String(missing.length)} />
+      <section aria-label={t("careerLab.metrics.label")} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label={t("careerLab.metrics.readiness")} value={formatPercent(analysis.overall_readiness_score)} />
+        <StatCard label={t("careerLab.metrics.match")} value={formatPercent(analysis.match_score)} />
+        <StatCard label={t("careerLab.metrics.context")} value={formatPercent(analysis.context_similarity_score)} />
+        <StatCard label={t("careerLab.metrics.gaps")} value={String(missing.length)} />
       </section>
 
-      <section className="rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-lg font-semibold text-ink">{t("careerLab.comparison.title")}</h2>
-        <div className="mt-4 space-y-3">
+      <Card className="flex flex-col gap-4">
+        <CardHeader title={t("careerLab.comparison.title")} />
+        <div className="flex flex-col gap-2">
           {topRequired.length === 0 ? (
-            <p className="text-sm text-ink-muted">{t("careerLab.comparison.empty")}</p>
+            <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.comparison.empty")}</p>
           ) : (
             topRequired.map((skill) => {
               const matched = matchedIds.has(skill.skill_id);
               return (
-                <div key={skill.skill_id} className="flex items-center justify-between text-sm">
-                  <span className="text-ink">{skill.display_name}</span>
-                  <span className={matched ? "text-success" : "text-ink-muted"}>
+                <div
+                  key={skill.skill_id}
+                  className="flex items-center justify-between gap-3 rounded-md bg-surface-subtle px-3 py-2"
+                >
+                  <span className="min-w-0 truncate text-body-sm text-ink">{skill.display_name}</span>
+                  <Badge tone={matched ? "success" : "warning"}>
                     {matched ? t("careerLab.comparison.matched") : t("careerLab.comparison.gap")}
-                  </span>
+                  </Badge>
                 </div>
               );
             })
           )}
         </div>
-      </section>
+      </Card>
 
-      <section className="rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-lg font-semibold text-ink">{t("careerLab.insights.title")}</h2>
-        <div className="mt-4 space-y-3">
+      <Card className="flex flex-col gap-4">
+        <CardHeader title={t("careerLab.insights.title")} />
+        <div className="flex flex-col gap-2">
           {analysis.gap_insights.length === 0 ? (
-            <p className="text-sm text-ink-muted">{t("careerLab.insights.empty")}</p>
+            <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.insights.empty")}</p>
           ) : (
             analysis.gap_insights.map((insight, index) => (
-              <div key={`${insight.insight_type}-${index}`} className="rounded-md border border-border p-3">
-                <span className="text-xs uppercase text-ink-muted">{severityLabel(insight.severity, t)}</span>
-                <p className="text-sm text-ink">{insight.message}</p>
+              <div
+                key={`${insight.insight_type}-${index}`}
+                className="flex flex-wrap items-start gap-2 rounded-md bg-surface-subtle px-3 py-2"
+              >
+                <Badge tone={SEVERITY_TONES[insight.severity] ?? "info"}>
+                  {severityLabel(insight.severity, t)}
+                </Badge>
+                <p className="min-w-0 flex-1 text-body-sm text-ink-soft">{insight.message}</p>
               </div>
             ))
           )}
         </div>
-      </section>
+      </Card>
 
-      <section className="rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-lg font-semibold text-ink">{t("careerLab.market.title")}</h2>
-        <div className="mt-4 space-y-2">
+      <Card className="flex flex-col gap-4">
+        <CardHeader title={t("careerLab.market.title")} />
+        <div className="flex flex-col gap-2">
           {analysis.market_signals.skills.length === 0 ? (
-            <p className="text-sm text-ink-muted">{t("careerLab.market.empty")}</p>
+            <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.market.empty")}</p>
           ) : (
             <>
-              <p className="text-xs text-ink-muted">
+              <p className="py-3 text-center text-body-sm text-ink-muted">
                 {t("careerLab.market.syncedPostings", { count: analysis.market_signals.synced_job_postings_count })}
               </p>
               {analysis.market_signals.skills.slice(0, 5).map((skill) => (
-                <div key={skill.skill_id} className="flex items-center justify-between text-sm">
-                  <span className="text-ink">{skill.display_name}</span>
-                  <span className="text-ink-muted">{formatPercent(skill.demand_score)}</span>
+                <div
+                  key={skill.skill_id}
+                  className="flex items-center justify-between gap-3 rounded-md bg-surface-subtle px-3 py-2"
+                >
+                  <span className="min-w-0 truncate text-body-sm text-ink">{skill.display_name}</span>
+                  <span className="text-body-sm text-ink-soft tabular-nums">{formatPercent(skill.demand_score)}</span>
                 </div>
               ))}
             </>
           )}
         </div>
-      </section>
+      </Card>
 
-      <section className="rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-lg font-semibold text-ink">{t("careerLab.courses.title")}</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <Card className="flex flex-col gap-4">
+        <CardHeader title={t("careerLab.courses.title")} />
+        <div className="flex flex-col gap-2">
           {analysis.recommended_courses.length === 0 ? (
-            <p className="text-sm text-ink-muted">{t("careerLab.courses.empty")}</p>
+            <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.courses.empty")}</p>
           ) : (
             analysis.recommended_courses.slice(0, 5).map((course) => (
-              <div key={course.course_id} className="rounded-md border border-border p-3">
-                <p className="text-sm font-medium text-ink">{course.title}</p>
-                <p className="text-xs text-ink-muted">{course.provider}</p>
+              <div
+                key={course.course_id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-body-sm font-medium text-ink">{course.title}</p>
+                  <p className="text-caption text-ink-muted">{course.provider}</p>
+                </div>
                 {course.url ? (
-                  <a
-                    href={course.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 inline-block text-xs font-medium text-brand hover:underline"
-                  >
-                    {t("careerLab.courses.openResource")}
+                  <a href={course.url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm">
+                      {t("careerLab.courses.openResource")}
+                    </Button>
                   </a>
                 ) : null}
               </div>
             ))
           )}
         </div>
-      </section>
+      </Card>
     </>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <span className="block text-2xl font-bold text-ink">{value}</span>
-      <span className="text-sm text-ink-soft">{label}</span>
-    </div>
   );
 }
 
@@ -537,18 +587,18 @@ function RouteOptimizationPanel({
   const { t } = useTranslation();
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-6">
-      <h2 className="text-lg font-semibold text-ink">{t("careerLab.route.title")}</h2>
+    <Card className="flex flex-col gap-4">
+      <CardHeader title={t("careerLab.route.title")} />
 
       <form
-        className="mt-4 grid gap-3 sm:grid-cols-4"
+        className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
           onGenerate();
         }}
       >
         <FormField label={t("careerLab.route.budgetLabel")}>
-          <input
+          <Input
             type="number"
             min={0}
             value={budget}
@@ -556,7 +606,7 @@ function RouteOptimizationPanel({
           />
         </FormField>
         <FormField label={t("careerLab.route.hoursLabel")}>
-          <input
+          <Input
             type="number"
             min={0}
             value={hours}
@@ -564,7 +614,7 @@ function RouteOptimizationPanel({
           />
         </FormField>
         <FormField label={t("careerLab.route.maxCoursesLabel")}>
-          <input
+          <Input
             type="number"
             min={1}
             max={20}
@@ -572,53 +622,61 @@ function RouteOptimizationPanel({
             onChange={(event) => onMaxCoursesChange(Number(event.target.value))}
           />
         </FormField>
-        <div className="flex items-end">
-          <Button disabled={disabled} onClick={onGenerate}>
-            {isPending ? t("careerLab.route.generating") : t("careerLab.route.generateButton")}
-          </Button>
-        </div>
+        <Button type="submit" disabled={disabled} loading={isPending}>
+          {isPending ? t("careerLab.route.generating") : t("careerLab.route.generateButton")}
+        </Button>
       </form>
 
-      {isError ? <Alert tone="danger" title={t("careerLab.route.error")}>{null}</Alert> : null}
+      {isError ? <Alert tone="danger">{t("careerLab.route.error")}</Alert> : null}
 
       {route ? (
-        <div className="mt-4 space-y-4">
-          <div className="flex flex-wrap gap-4 text-sm text-ink-soft">
-            <span>
-              {t("careerLab.route.before")}: {formatPercent(route.match_score_before)}
-            </span>
-            <span>
-              {t("careerLab.route.after")}: {formatPercent(route.projected_match_score_after)}
-            </span>
-            <span>
-              {t("careerLab.route.cost")}: {formatMoney(route.total_cost)}
-            </span>
-            <span>
-              {t("careerLab.route.hours")}: {formatHoursValue(route.total_hours)}
-            </span>
-          </div>
-          <p className="text-sm text-ink">{route.route_summary}</p>
+        <div className="flex flex-col gap-4 border-t border-border pt-4">
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {(
+              [
+                [t("careerLab.route.before"), formatPercent(route.match_score_before)],
+                [t("careerLab.route.after"), formatPercent(route.projected_match_score_after)],
+                [t("careerLab.route.cost"), formatMoney(route.total_cost)],
+                [t("careerLab.route.hours"), formatHoursValue(route.total_hours)],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label} className="rounded-md bg-surface-subtle px-3 py-2">
+                <dt className="text-overline text-ink-muted uppercase">{label}</dt>
+                <dd className="text-card-title text-ink tabular-nums">{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <p className="text-body-sm text-ink-soft">{route.route_summary}</p>
 
           {route.selected_courses.length === 0 ? (
-            <p className="text-sm text-ink-muted">{t("careerLab.route.empty")}</p>
+            <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.route.empty")}</p>
           ) : (
-            <div className="space-y-3">
+            <ol className="flex flex-col gap-2">
               {[...route.selected_courses]
                 .sort((a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0))
                 .map((course, index) => (
-                  <div key={course.course_id} className="rounded-md border border-border p-3">
-                    <span className="text-xs uppercase text-ink-muted">
-                      {t("careerLab.route.step", { order: course.sequence_order ?? index + 1 })}
+                  <li key={course.course_id} className="flex gap-3 rounded-md border border-border p-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-caption font-semibold text-primary tabular-nums"
+                    >
+                      {course.sequence_order ?? index + 1}
                     </span>
-                    <p className="text-sm font-medium text-ink">{course.title}</p>
-                    <p className="text-xs text-ink-muted">{course.selection_reason}</p>
-                  </div>
+                    <div className="min-w-0">
+                      <span className="sr-only">
+                        {t("careerLab.route.step", { order: course.sequence_order ?? index + 1 })}
+                      </span>
+                      <p className="text-body-sm font-medium text-ink">{course.title}</p>
+                      <p className="mt-0.5 text-caption text-ink-soft">{course.selection_reason}</p>
+                    </div>
+                  </li>
                 ))}
-            </div>
+            </ol>
           )}
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }
 
@@ -626,25 +684,26 @@ function BaselineComparisonPanel({ baseline, isPending }: { baseline: BaselineEv
   const { t } = useTranslation();
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-6">
-      <h2 className="text-lg font-semibold text-ink">{t("careerLab.baseline.title")}</h2>
+    <Card className="flex flex-col gap-4">
+      <CardHeader title={t("careerLab.baseline.title")} />
       {isPending ? (
         <Spinner label={t("async.loading")} />
       ) : !baseline ? (
-        <p className="mt-4 text-sm text-ink-muted">{t("careerLab.baseline.empty")}</p>
+        <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.baseline.empty")}</p>
       ) : (
-        <div className="mt-4 space-y-4">
-          <div className="text-sm text-ink">
-            <p>
+        <div className="flex flex-col gap-4">
+          <div className="rounded-md bg-primary-subtle px-3 py-2.5">
+            <p className="text-label text-primary">
               {t("careerLab.baseline.winner")}: {methodLabel(baseline.winner_summary.best_method ?? "", t)}
             </p>
-            <p className="text-ink-soft">{baseline.winner_summary.summary}</p>
+            <p className="mt-0.5 text-caption text-ink-soft">{baseline.winner_summary.summary}</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {baseline.methods.map((method) => (
               <div key={method.method} className="rounded-md border border-border p-3">
-                <p className="text-sm font-medium text-ink">{methodLabel(method.method, t)}</p>
-                <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-ink-muted">
+                <p className="text-body-sm font-medium text-ink">{methodLabel(method.method, t)}</p>
+                <div className="mt-2 flex flex-col gap-0.5 text-caption text-ink-soft tabular-nums">
                   <span>
                     {t("careerLab.baseline.coverage")}: {formatPercent(method.metrics.weighted_skill_coverage)}
                   </span>
@@ -666,7 +725,7 @@ function BaselineComparisonPanel({ baseline, isPending }: { baseline: BaselineEv
           </div>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -674,22 +733,25 @@ function RouteHistoryPanel({ runs }: { runs: RouteRun[] }) {
   const { t } = useTranslation();
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-6">
-      <h2 className="text-lg font-semibold text-ink">{t("careerLab.history.title")}</h2>
-      <div className="mt-4 space-y-2">
+    <Card className="flex flex-col gap-4">
+      <CardHeader title={t("careerLab.history.title")} />
+      <div className="flex flex-col gap-2">
         {runs.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("careerLab.history.empty")}</p>
+          <p className="py-3 text-center text-body-sm text-ink-muted">{t("careerLab.history.empty")}</p>
         ) : (
           runs.map((run) => (
-            <div key={run.optimization_run_id} className="flex items-center justify-between text-sm">
-              <span className="text-ink">{run.target_role}</span>
-              <span className="text-ink-muted">
+            <div
+              key={run.optimization_run_id}
+              className="flex items-center justify-between gap-3 rounded-md bg-surface-subtle px-3 py-2"
+            >
+              <span className="min-w-0 truncate text-body-sm text-ink">{run.target_role}</span>
+              <span className="shrink-0 text-body-sm text-ink-soft tabular-nums">
                 {formatPercent(run.match_score_before)} → {formatPercent(run.projected_match_score_after)}
               </span>
             </div>
           ))
         )}
       </div>
-    </section>
+    </Card>
   );
 }
