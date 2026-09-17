@@ -38,7 +38,7 @@ export function AuthLayout({
     <div className="grid min-h-screen bg-canvas lg:grid-cols-2">
       <aside className="hidden flex-col justify-between bg-primary p-10 text-white lg:flex">
         <Link to="/" aria-label={t("app.name")} className="inline-flex">
-          <img src="/images/Logo_Ready_to_Use.png" alt={t("layout.logoAlt")} className="h-10 w-auto" />
+          <img src="/images/logo.png" alt={t("layout.logoAlt")} width={316} height={160} className="h-10 w-auto" />
         </Link>
 
         <div className="max-w-md">
@@ -66,8 +66,10 @@ export function AuthLayout({
           {/* The logo only appears on small screens, where the brand panel that
             * normally carries it is hidden. */}
           <img
-            src="/images/Logo_Ready_to_Use.png"
+            src="/images/logo.png"
             alt={t("layout.logoAlt")}
+            width={316}
+            height={160}
             className="mb-6 h-10 w-auto lg:hidden"
           />
 

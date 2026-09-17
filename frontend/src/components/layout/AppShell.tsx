@@ -13,7 +13,17 @@ export interface NavItem {
 
 export type ShellVariant = "student" | "company" | "marketing";
 
-const LOGO = "/images/Logo_Ready_to_Use.png";
+/**
+ * The display logo: 316×160, 23 kB.
+ *
+ * The nav used to point at `Logo_Ready_to_Use.png` — 2168×1100 and 595 kB —
+ * to draw a 32px-tall mark. On a phone that single image was 73% of the bytes
+ * the homepage downloaded, roughly four times all of the JavaScript. The
+ * original is still what `index.html` hands to `og:image`, where a large
+ * image is the point; nothing on a page load fetches it any more.
+ */
+const LOGO = "/images/logo.png";
+const LOGO_SIZE = { width: 316, height: 160 };
 
 /**
  * The site header.
@@ -89,7 +99,15 @@ export function AppShell({
               aria-label={t("app.name")}
               className="flex shrink-0 items-center gap-2.5 rounded-md py-1"
             >
-              <img src={LOGO} alt={t("layout.logoAlt")} className="h-8 w-auto" />
+              <img
+                src={LOGO}
+                alt={t("layout.logoAlt")}
+                // Intrinsic size, so the bar does not reflow when the image
+                // lands — the `h-8 w-auto` still decides how it renders.
+                width={LOGO_SIZE.width}
+                height={LOGO_SIZE.height}
+                className="h-8 w-auto"
+              />
               {isMarketing ? null : (
                 <span className="hidden rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-overline text-white uppercase sm:inline-flex">
                   {isCompany ? t("layout.badge.company") : t("layout.badge.students")}
