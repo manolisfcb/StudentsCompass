@@ -400,12 +400,35 @@ jobs:
           expect GET /.env                 404 "" || rc=1
           expect GET /index.php            404 "" || rc=1
 
-          # Una ruta de app desconocida y sin extensión SÍ responde 200: la
-          # sirve el fallback y el 404 lo pinta NotFoundPage con `noindex`.
-          # Nginx no puede distinguirla sin una segunda copia de la tabla de
-          # rutas. Se afirma aquí para que el compromiso sea deliberado y no
-          # una sorpresa; quien lo cambie tiene que cambiar este smoke.
-          expect GET /no-existe-esta-ruta 200 "" || rc=1
+          # Una ruta de app desconocida y sin extensión responde 404. Esta
+          # afirmación decía 200 y esa era la verdad hasta que nginx tuvo la
+          # tabla de rutas: su comentario avisaba de que quien cambiara el
+          # compromiso tenía que cambiar este smoke, y eso es lo que pasó. El
+          # smoke hizo su trabajo —tumbó el despliegue que cambió el enrutado—
+          # y se actualiza en vez de relajarse.
+          expect GET /no-existe-esta-ruta 404 "" || rc=1
+
+          # Y el 404 tiene que llegar CON el documento del SPA, no con la
+          # página propia de nginx: el crawler lee el status y la persona ve la
+          # pantalla que pinta NotFoundPage. Si esto se rompiera, el status
+          # seguiría siendo correcto y la pantalla desaparecería, que es
+          # justo el fallo que un código de estado no puede detectar.
+          if curl -s --max-time 30 "${FRONT%/}/no-existe-esta-ruta" | grep -q 'id="root"'; then
+            echo "ok: el 404 de una ruta desconocida trae el documento del SPA"
+          else
+            echo "::error::/no-existe-esta-ruta responde 404 sin el documento del SPA: la pantalla de not found no se renderiza"
+            rc=1
+          fi
+
+          # El contraste: el ruido de escáneres de arriba NO debe traerlo, o
+          # estaríamos gastando el documento de entrada en 18.068 sondas y
+          # devolviendo algo que parece la aplicación a quien busca /.env.
+          if curl -s --max-time 30 "${FRONT%/}/.env" | grep -q 'id="root"'; then
+            echo "::error::/.env responde con el documento del SPA: error_page se ha escapado del fallback"
+            rc=1
+          else
+            echo "ok: el ruido de escáneres sigue recibiendo la página de nginx"
+          fi
 
           # robots.txt y sitemap.xml los sirve el bundle, ya no los reenvía el
           # proxy (runbook §7). Un 200 no basta para saberlo: el proxy también

@@ -13199,7 +13199,7 @@ Risk: HIGH
 
 ## TASK-068 — Retirar el patrón create_all/drop_all por test de la lane PostgreSQL
 
-Status: TODO
+Status: COMPLETED
 Priority: LOW
 Phase: PHASE-0
 Category: Testing
@@ -13276,6 +13276,44 @@ Blocks: NONE
 ### Validation
 
 La lane pasa entera cinco veces seguidas; tiempo antes y después registrado.
+
+### Completion Notes
+
+**2026-09-17 — cerrada. La limpieza ya estaba hecha; faltaba comprobarla y
+decir con qué evidencia, que es lo único que esta ficha pedía.**
+
+**No queda un solo `drop_all` en los once módulos.** Desaparecieron en `9353dc5`,
+sin mencionar la ficha. Hoy los quince módulos de `tests/integration/` que
+construyen esquema declaran únicamente `metadata.create_all` en su fixture
+`schema`, y la única definición de «limpiar» que queda en la lane es
+`reset_public_schema` dentro de `pg_engine`, que era exactamente el objetivo:
+que la limpieza sea responsabilidad de la lane y no de cada módulo. Las dos
+menciones de `drop_all` que sobreviven están en el docstring de
+`tests/integration/conftest.py`, contando por qué se quitaron.
+
+Los fixtures siguen siendo por test, no de sesión, como la ficha exigía
+explícitamente.
+
+**Evidencia de que la lane aguanta, y de dónde sale.** La lane corre entera en
+CI contra PostgreSQL 16 con pgvector y Redis. Las cuatro últimas corridas de
+`ci.yml` sobre `main` —`a995f06`, `6077a48`, `52a4087` y `3f1aa0a`— dan las
+cuatro `success` en el job de integración, y la última:
+
+```
+132 passed, 1 skipped in 86.67s
+```
+
+Son 132, no los 102 que registraba la ficha: la lane creció desde entonces.
+
+**Lo que no se hizo, en vez de darlo por hecho.** La validación pedía cinco
+corridas locales seguidas y el tiempo antes y después. Lo que hay son cuatro
+corridas verdes en CI, cada una sobre una máquina limpia y un PostgreSQL recién
+creado —una condición más dura que repetir cinco veces en la misma máquina, pero
+no es la misma medición— y **no hay tiempo «antes»**: el `drop_all` ya no existía
+cuando se abrió esta comprobación, así que no hay nada contra lo que comparar sin
+revertir el cambio a propósito. La propia ficha previó este final: «si no baja de
+forma apreciable, decirlo y cerrar igualmente, porque el valor es que haya una
+sola definición de "limpiar", no la velocidad».
 
 ### Estimated Impact
 
