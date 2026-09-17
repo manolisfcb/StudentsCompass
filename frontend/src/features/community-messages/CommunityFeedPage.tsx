@@ -4,7 +4,19 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { Alert, Arrow, Badge, Button, Card, EmptyState, Input, Select, Textarea } from "@/components/ui";
+import {
+  Alert,
+  Arrow,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Icon,
+  Input,
+  Select,
+  Textarea,
+  toIconName,
+} from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
@@ -152,9 +164,9 @@ function CommunityHeader({ community }: { community: Community }) {
         <div className="flex min-w-0 gap-3">
           <span
             aria-hidden="true"
-            className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-2xl"
+            className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary"
           >
-            {community.icon ?? "👥"}
+            <Icon name={toIconName(community.icon, "users")} size={24} />
           </span>
           <div className="min-w-0">
             <h1 className="text-page-title text-ink">{community.name}</h1>
@@ -201,7 +213,7 @@ function CommunityBody({ communityId, membership }: { communityId: string; membe
 
   if (!membership.is_member) {
     return (
-      <EmptyState title={t("community.feed.joinToView")} icon="🔒" />
+      <EmptyState title={t("community.feed.joinToView")} icon="lock" />
     );
   }
 
@@ -211,7 +223,7 @@ function CommunityBody({ communityId, membership }: { communityId: string; membe
       <AsyncBoundary query={postsQuery}>
         {(posts) =>
           posts.length === 0 ? (
-            <EmptyState title={t("community.feed.empty")} icon="💬" />
+            <EmptyState title={t("community.feed.empty")} icon="message" />
           ) : (
             <>
               {posts.map((post) => (

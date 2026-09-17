@@ -13,6 +13,8 @@ export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from "@
 export { Card, CardFooter, CardHeader, type CardPadding, type CardProps } from "@/components/ui/Card";
 export { DataTable, type Column } from "@/components/ui/DataTable";
 export { FormField } from "@/components/ui/FormField";
+export { Icon } from "@/components/ui/Icon";
+export { toIconName, type IconName, type IconVariant } from "@/components/ui/icons";
 export { Checkbox, Input, Select, Textarea } from "@/components/ui/Input";
 export { Modal, type ModalSize } from "@/components/ui/Modal";
 export { PageHeader, SectionHeader } from "@/components/ui/PageHeader";

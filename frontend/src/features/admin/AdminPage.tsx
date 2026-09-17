@@ -7,7 +7,18 @@ import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Alert, Button, Card, CardHeader, type Column, DataTable, Input, StatCard } from "@/components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  CardHeader,
+  type Column,
+  DataTable,
+  Icon,
+  Input,
+  StatCard,
+  toIconName,
+} from "@/components/ui";
 import {
   createAdminResource,
   deleteAdminResource,
@@ -63,10 +74,10 @@ function AdminDashboard() {
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {(
             [
-              ["👥", stats.total_users, t("admin.stats.users")],
-              ["📚", stats.total_resources, t("admin.stats.resources")],
-              ["📄", stats.total_resumes, t("admin.stats.resumes")],
-              ["📝", stats.total_questionnaires, t("admin.stats.questionnaires")],
+              ["users", stats.total_users, t("admin.stats.users")],
+              ["book", stats.total_resources, t("admin.stats.resources")],
+              ["document", stats.total_resumes, t("admin.stats.resumes")],
+              ["clipboard", stats.total_questionnaires, t("admin.stats.questionnaires")],
             ] as const
           ).map(([icon, value, label]) => (
             <StatCard key={label} icon={icon} value={value} label={label} />
@@ -322,7 +333,16 @@ function ResourcesTable({
 }) {
   const { t } = useTranslation();
   const columns: Column<AdminResource>[] = useMemo(() => [
-    { key: "title", header: t("admin.resources.title"), cell: (resource) => `${resource.icon ?? ""} ${resource.title}`.trim() },
+    {
+      key: "title",
+      header: t("admin.resources.title"),
+      cell: (resource) => (
+        <span className="flex items-center gap-2">
+          <Icon name={toIconName(resource.icon, "book")} size={16} className="text-ink-muted" />
+          {resource.title}
+        </span>
+      ),
+    },
     { key: "category", header: t("admin.resources.category"), cell: (resource) => resource.category },
     { key: "level", header: t("admin.resources.level"), cell: (resource) => resource.level ?? "—" },
     {

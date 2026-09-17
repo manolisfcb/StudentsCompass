@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Icon } from "@/components/ui/Icon";
+import type { IconName } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
 /**
@@ -20,7 +22,7 @@ export function StatCard({
   label: string;
   value: ReactNode;
   hint?: string;
-  icon?: ReactNode;
+  icon?: IconName;
   /** A period-over-period change. Direction picks the colour and the arrow. */
   trend?: { direction: "up" | "down"; label: string };
   className?: string;
@@ -32,9 +34,9 @@ export function StatCard({
         {icon ? (
           <span
             aria-hidden="true"
-            className="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
+            className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"
           >
-            {icon}
+            <Icon name={icon} size={16} />
           </span>
         ) : null}
       </div>
@@ -44,10 +46,16 @@ export function StatCard({
       <p className="mt-2 text-page-title text-ink tabular-nums">{value}</p>
 
       {trend ? (
-        <p className={cn("mt-1 text-caption", trend.direction === "up" ? "text-success" : "text-danger")}>
+        <p
+          className={cn(
+            "mt-1 flex items-center gap-1 text-caption",
+            trend.direction === "up" ? "text-success" : "text-danger",
+          )}
+        >
           {/* The arrow carries the direction for anyone who cannot use the
            * colour to tell up from down. */}
-          <span aria-hidden="true">{trend.direction === "up" ? "↑" : "↓"}</span> {trend.label}
+          <Icon name={trend.direction === "up" ? "trend-up" : "trend-down"} size={14} />
+          {trend.label}
         </p>
       ) : hint ? (
         <p className="mt-1 text-caption text-ink-muted">{hint}</p>

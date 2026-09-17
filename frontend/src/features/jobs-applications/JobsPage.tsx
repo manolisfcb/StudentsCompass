@@ -203,7 +203,7 @@ function JobBoard({ postings }: { postings: JobBoardPosting[] }) {
   const { t } = useTranslation();
   if (postings.length === 0) {
     return (
-      <EmptyState title={t("jobs.empty")} description={t("jobs.emptyHint")} icon="🔍" />
+      <EmptyState title={t("jobs.empty")} description={t("jobs.emptyHint")} icon="search" />
     );
   }
   return (
@@ -237,7 +237,7 @@ function SearchResults({ results }: { results: JobSearchResults }) {
   const total = results.students_compass.length + results.linkedin.length;
   if (total === 0) {
     return (
-      <EmptyState title={t("jobs.empty")} description={t("jobs.emptyHint")} icon="🔍" />
+      <EmptyState title={t("jobs.empty")} description={t("jobs.emptyHint")} icon="search" />
     );
   }
   return (

@@ -11025,7 +11025,7 @@ Risk: MEDIUM
 
 ## TASK-058 — Ensayar el cutover y observar la ventana de estabilidad
 
-Status: BLOCKED
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M5
 Category: Infrastructure / Release
@@ -11190,6 +11190,83 @@ paridad, o que la cookie de sesión no viaje igual— y eso se ensaya contra el
 
 Nada de esto se ha ejecutado. **Repuntar el dominio es la decisión con más
 consecuencia de todo el plan y no se toma desde una sesión de herramientas.**
+
+**Actualización 2026-09-17 — pasa de BLOCKED a IN PROGRESS: el pre-flight está
+hecho y commiteado; el repunte del dominio sigue sin ejecutarse.**
+
+La nota anterior cerraba con tres cosas «propuestas, no hechas». La primera está
+hecha. Su entregable vive en [10_CUTOVER_RUNBOOK.md](10_CUTOVER_RUNBOOK.md), que
+pasa a ser el documento operativo de esta ficha: §1 a §10 son la auditoría —Fase
+0, escrita antes de tocar nada— y §11 lleva el estado.
+
+**La auditoría sacó diez bloqueantes que no eran visibles desde el repositorio.**
+Se midió con `gcloud` en modo consulta, `curl` contra los dos `run.app` y 5.000
+peticiones de Cloud Logging (2026-09-11 → 2026-09-17). De ahí salen la matriz de
+dueños por URL (§2) y los hallazgos B1–B10, cinco de ellos BLOQUEANTES del
+repunte. Aparecen al comparar lo que sirve cada servicio hoy, no al leer código.
+
+**Resuelto en el repositorio** (`9a4989e`, `a995f06`, `1382527`):
+
+| | Qué se corrigió |
+| --- | --- |
+| B1 | El catch-all del SPA llevaba a `/__smoke`, una pantalla de diagnóstico. Ahora `NotFoundPage` dentro de `PublicShell` |
+| B2 | Siete URLs legacy cambian de path: siete `location =` con 301 en `nginx.conf` |
+| B3 | `/static/*` desaparecía en silencio: 301 con mapa explícito a los cinco assets que existen en el bundle, 410 para el resto |
+| B4 | `/auth/jwt/*` **se proxea** en vez de dejarlo morir, para que su contador de tráfico siga significando algo — TASK-059 exige evidencia de cero tráfico, y «nadie puede llamarlo» no es «nadie lo llama» |
+| B7 | El smoke público de `deploy.yml` reintenta, como el previo a la promoción |
+| B10 | `GET /api/v1/auth/register` → 301 `/register`; el `POST` sigue llegando a la API |
+| §7 | `robots.txt` y `sitemap.xml` salen del proxy: los sirve el bundle |
+
+Más una regla de extensión que devuelve 404 real al ruido de escáneres, 15 tests
+que cruzan `nginx.conf` con la tabla de rutas del SPA (`cutoverRouting.test.ts`)
+y cuatro sobre el catch-all (`notFound.test.tsx`), para que ningún 301 apunte a
+una ruta que React no conoce.
+
+**Verificado corriendo, no leyendo.** `nginx.conf` levantado en un contenedor
+`nginx-unprivileged:1.29-alpine` con el bundle real delante de la API de
+producción. Así aparecieron cuatro defectos que la lectura no daba: `Location`
+con el puerto interno 8080 —resuelto con `absolute_redirect off`—, cabeceras de
+seguridad perdidas porque `add_header` solo se hereda si el nivel inferior no
+declara ninguna, `%{redirect_url}` de curl comparando una URL absoluta contra un
+path relativo, y un `POST` sin cuerpo que recibía 411 del front end de Cloud Run
+antes de llegar a la aplicación. Los dos últimos estaban en el smoke del deploy:
+habrían fallado **después** de promover, disparando el job de rollback. En el
+repositorio, `tsc -b`, `eslint`, `i18n:check`, 260 tests y `vite build`, verdes.
+
+**B5 tenía otra causa que la registrada, y conviene dejarla escrita.** La deriva
+entre lo desplegado y el repositorio no era desatención: `deploy.yml` solo corre
+sobre un `ci` verde, y el job `secretos` llevaba rojo desde el 17/09 por un falso
+positivo de gitleaks — `api:<sha de 40 hex>` en este mismo fichero tiene la forma
+y la entropía de una clave. Corregido en `b0a1d45` con un allowlist de patrón
+—acotarlo además por `paths` apagaba el escaneo de `docs/` entero, comprobado
+plantando un secreto— y con una anotación por hallazgo, porque el job imprimía
+`leaks found: 1` y nada más. Por eso el último SHA en producción es `cef546b`,
+del 12/09.
+
+**`verify_parity.py` ya no copia el regex del proxy: lo lee de `nginx.conf`.**
+Llevaba una copia literal, y el pre-flight cambió esa lista —`robots.txt` y
+`sitemap.xml` salieron, `/auth/jwt/` entró—, así que la copia pasó a describir un
+proxy inexistente en el único fichero cuyo trabajo es decir qué origen sirve cada
+ruta.
+
+**Lo que sigue sin hacerse, y por qué la ficha no puede cerrarse:**
+
+1. **El repunte del dominio.** `studentscompass.ca` sigue mapeado a
+   `studentscompass-api`. Nada de lo de arriba mueve tráfico de usuarios por sí
+   solo: solo cambia cómo responde el servicio de frontend, que hoy no tiene
+   ninguno.
+2. **Desplegar el SHA que se quiere cortar** (B5). La tubería está desbloqueada;
+   falta que un `ci` verde dispare `deploy` y comprobar el resultado en el
+   `run.app` del frontend.
+3. **El recorrido autenticado completo** contra `verify_parity.py`, como
+   estudiante y como recruiter.
+4. **La copia anonimizada**, con sus tres decisiones intactas —dónde vive, cómo
+   se anonimiza, qué umbrales cierran la ventana— y la franja horaria del
+   repunte: entre borrar el mapeo y recrearlo el dominio no resuelve.
+
+Los criterios de aceptación siguen todos sin marcar: ninguno habla del
+pre-flight, y los cuatro primeros dependen de una ventana de observación que no
+ha empezado.
 
 ### Estimated Impact
 

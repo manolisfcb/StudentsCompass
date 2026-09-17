@@ -31,8 +31,8 @@ export function RegisterPage() {
         heroBody={t("auth.register.heroBody")}
         points={
           <>
-            <AsidePoint icon="🎯" title={t("auth.register.point1.title")} body={t("auth.register.point1.body")} />
-            <AsidePoint icon="🏢" title={t("auth.register.point2.title")} body={t("auth.register.point2.body")} />
+            <AsidePoint icon="target" title={t("auth.register.point1.title")} body={t("auth.register.point1.body")} />
+            <AsidePoint icon="building" title={t("auth.register.point2.title")} body={t("auth.register.point2.body")} />
           </>
         }
         title={t("auth.register.title")}

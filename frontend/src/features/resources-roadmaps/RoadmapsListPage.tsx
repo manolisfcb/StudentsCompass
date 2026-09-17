@@ -6,7 +6,19 @@ import { Link } from "react-router-dom";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Arrow, Badge, Card, EmptyState, Input, PageHeader, ProgressBar, SectionHeader, Select } from "@/components/ui";
+import {
+  Arrow,
+  Badge,
+  Card,
+  EmptyState,
+  Icon,
+  Input,
+  PageHeader,
+  ProgressBar,
+  SectionHeader,
+  Select,
+  type IconName,
+} from "@/components/ui";
 import { fetchRoadmaps, fetchSavedRoadmaps, type Roadmap, type SavedRoadmap } from "@/features/resources-roadmaps/api";
 
 /**
@@ -62,7 +74,7 @@ export function RoadmapsListPage() {
         <AsyncBoundary query={savedQuery}>
           {(saved) =>
             saved.length === 0 ? (
-              <EmptyState title={t("roadmaps.saved.empty")} description={t("roadmaps.saved.emptyHint")} icon="🧭" />
+              <EmptyState title={t("roadmaps.saved.empty")} description={t("roadmaps.saved.emptyHint")} icon="compass" />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {saved.map((item) => (
@@ -81,10 +93,10 @@ export function RoadmapsListPage() {
   );
 }
 
-const DEMAND_ICONS: Record<string, string> = {
-  "web-developer": "💻",
-  "data-scientist": "📊",
-  "product-manager": "🎯",
+const DEMAND_ICONS: Record<string, IconName> = {
+  "web-developer": "monitor",
+  "data-scientist": "chart",
+  "product-manager": "target",
 };
 
 function RoadmapSections({
@@ -116,7 +128,7 @@ function RoadmapSections({
         <SectionHeader title={t("roadmaps.inDemand.title")} description={t("roadmaps.inDemand.subtitle")} />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {visible.slice(0, 3).map((roadmap) => (
-            <DemandCard key={roadmap.slug} roadmap={roadmap} icon={DEMAND_ICONS[roadmap.slug] ?? "🧭"} />
+            <DemandCard key={roadmap.slug} roadmap={roadmap} icon={DEMAND_ICONS[roadmap.slug] ?? "compass"} />
           ))}
         </div>
       </section>
@@ -124,7 +136,7 @@ function RoadmapSections({
       <section className="mt-6 flex flex-col gap-4">
         <SectionHeader title={t("roadmaps.browse.title")} description={t("roadmaps.browse.subtitle")} />
         {visible.length === 0 ? (
-          <EmptyState title={t("roadmaps.browse.empty")} icon="🔍" />
+          <EmptyState title={t("roadmaps.browse.empty")} icon="search" />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visible.map((roadmap) => (
@@ -137,7 +149,7 @@ function RoadmapSections({
   );
 }
 
-function DemandCard({ roadmap, icon }: { roadmap: Roadmap; icon?: string }) {
+function DemandCard({ roadmap, icon }: { roadmap: Roadmap; icon?: IconName }) {
   const { t } = useTranslation();
   return (
     <Card className="flex flex-col gap-3">
@@ -145,9 +157,9 @@ function DemandCard({ roadmap, icon }: { roadmap: Roadmap; icon?: string }) {
         {icon ? (
           <span
             aria-hidden="true"
-            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-lg"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"
           >
-            {icon}
+            <Icon name={icon} size={18} />
           </span>
         ) : null}
         <span className="ml-auto text-caption text-ink-muted">

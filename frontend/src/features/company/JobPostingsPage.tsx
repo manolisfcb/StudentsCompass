@@ -49,7 +49,7 @@ export function JobPostingsPage() {
       <AsyncBoundary query={query}>
         {(postings) =>
           postings.length === 0 ? (
-            <EmptyState title={t("company.postings.empty")} icon="🏗️" />
+            <EmptyState title={t("company.postings.empty")} icon="briefcase" />
           ) : (
             <ul className="flex flex-col gap-3">
               {postings.map((posting) => (

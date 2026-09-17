@@ -5,7 +5,18 @@ import { Link } from "react-router-dom";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Alert, Arrow, Card, CardHeader, PageHeader, ProgressBar, StatCard } from "@/components/ui";
+import {
+  Alert,
+  Arrow,
+  Card,
+  CardHeader,
+  Icon,
+  PageHeader,
+  ProgressBar,
+  StatCard,
+  toIconName,
+  type IconName,
+} from "@/components/ui";
 import { fetchStudentDashboard, type StudentDashboard } from "@/features/dashboard/api";
 
 /**
@@ -47,11 +58,11 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
     { label: t("dashboard.applications.offers"), value: dashboard.application_breakdown.offers },
   ];
 
-  const quickActions = [
-    { to: "/questionnaire", icon: "📝", label: t("dashboard.quickActions.questionnaire") },
-    { to: "/community", icon: "👥", label: t("dashboard.quickActions.community") },
-    { to: "/profile", icon: "👤", label: t("dashboard.quickActions.profile") },
-    { to: "/resources", icon: "📖", label: t("dashboard.quickActions.resources") },
+  const quickActions: { to: string; icon: IconName; label: string }[] = [
+    { to: "/questionnaire", icon: "clipboard", label: t("dashboard.quickActions.questionnaire") },
+    { to: "/community", icon: "users", label: t("dashboard.quickActions.community") },
+    { to: "/profile", icon: "user", label: t("dashboard.quickActions.profile") },
+    { to: "/resources", icon: "book", label: t("dashboard.quickActions.resources") },
   ];
 
   return (
@@ -62,14 +73,22 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
         * short, and a column of four full-width tiles pushed the actual content
         * a full screen down. */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon="📊" value={`${dashboard.stats.overall_progress}%`} label={t("dashboard.stats.overallProgress")} />
-        <StatCard icon="📝" value={dashboard.stats.total_applications} label={t("dashboard.stats.totalApplications")} />
         <StatCard
-          icon="🎯"
+          icon="chart"
+          value={`${dashboard.stats.overall_progress}%`}
+          label={t("dashboard.stats.overallProgress")}
+        />
+        <StatCard
+          icon="document"
+          value={dashboard.stats.total_applications}
+          label={t("dashboard.stats.totalApplications")}
+        />
+        <StatCard
+          icon="schedule"
           value={dashboard.stats.interviews_scheduled}
           label={t("dashboard.stats.interviewsScheduled")}
         />
-        <StatCard icon="🎉" value={dashboard.stats.offers_received} label={t("dashboard.stats.offersReceived")} />
+        <StatCard icon="trophy" value={dashboard.stats.offers_received} label={t("dashboard.stats.offersReceived")} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -134,7 +153,7 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
                   to="/resources"
                   className="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-body-sm text-ink transition-colors hover:border-border-strong hover:bg-surface-hover"
                 >
-                  <span aria-hidden="true">{resource.icon}</span>
+                  <Icon name={toIconName(resource.icon, "book")} size={18} className="text-primary" />
                   <span className="truncate">{resource.title}</span>
                 </Link>
               </li>
@@ -150,9 +169,7 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
             to={action.to}
             className="flex items-center gap-2.5 rounded-lg border border-border bg-surface px-4 py-3 text-body-sm font-medium text-ink shadow-xs transition-colors hover:border-border-strong hover:bg-surface-hover"
           >
-            <span aria-hidden="true" className="text-lg">
-              {action.icon}
-            </span>
+            <Icon name={action.icon} size={18} className="text-primary" />
             <span className="truncate">{action.label}</span>
           </Link>
         ))}

@@ -55,8 +55,8 @@ export function LoginPage() {
         heroBody={t("auth.login.heroBody")}
         points={
           <>
-            <AsidePoint icon="🧭" title={t("auth.login.point1.title")} body={t("auth.login.point1.body")} />
-            <AsidePoint icon="⚡" title={t("auth.login.point2.title")} body={t("auth.login.point2.body")} />
+            <AsidePoint icon="compass" title={t("auth.login.point1.title")} body={t("auth.login.point1.body")} />
+            <AsidePoint icon="flash" title={t("auth.login.point2.title")} body={t("auth.login.point2.body")} />
           </>
         }
         title={t("auth.login.title")}

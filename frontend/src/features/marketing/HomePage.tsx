@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { Arrow, Button } from "@/components/ui";
-import { Band, CardGrid, MarketingCard, SectionHead } from "@/features/marketing/sections";
+import { Band, CardGrid, MarketingCard, SectionHead, type MarketingFeature } from "@/features/marketing/sections";
 
 /**
  * The homepage. The hero is not here: it belongs inside the shell's
@@ -20,22 +20,22 @@ import { Band, CardGrid, MarketingCard, SectionHead } from "@/features/marketing
 export function HomePage() {
   const { t } = useTranslation();
 
-  const studentFeatures = [
-    { icon: "📝", title: t("home.students.features.0.title"), body: t("home.students.features.0.body") },
-    { icon: "💼", title: t("home.students.features.1.title"), body: t("home.students.features.1.body") },
-    { icon: "🎯", title: t("home.students.features.2.title"), body: t("home.students.features.2.body") },
-    { icon: "📚", title: t("home.students.features.3.title"), body: t("home.students.features.3.body") },
-    { icon: "👥", title: t("home.students.features.4.title"), body: t("home.students.features.4.body") },
-    { icon: "📊", title: t("home.students.features.5.title"), body: t("home.students.features.5.body") },
+  const studentFeatures: MarketingFeature[] = [
+    { icon: "note", title: t("home.students.features.0.title"), body: t("home.students.features.0.body") },
+    { icon: "briefcase", title: t("home.students.features.1.title"), body: t("home.students.features.1.body") },
+    { icon: "target", title: t("home.students.features.2.title"), body: t("home.students.features.2.body") },
+    { icon: "book", title: t("home.students.features.3.title"), body: t("home.students.features.3.body") },
+    { icon: "users", title: t("home.students.features.4.title"), body: t("home.students.features.4.body") },
+    { icon: "chart", title: t("home.students.features.5.title"), body: t("home.students.features.5.body") },
   ];
 
-  const companyFeatures = [
-    { icon: "🎓", title: t("home.companies.features.0.title"), body: t("home.companies.features.0.body") },
-    { icon: "💡", title: t("home.companies.features.1.title"), body: t("home.companies.features.1.body") },
-    { icon: "🔍", title: t("home.companies.features.2.title"), body: t("home.companies.features.2.body") },
-    { icon: "📈", title: t("home.companies.features.3.title"), body: t("home.companies.features.3.body") },
-    { icon: "🤝", title: t("home.companies.features.4.title"), body: t("home.companies.features.4.body") },
-    { icon: "⚡", title: t("home.companies.features.5.title"), body: t("home.companies.features.5.body") },
+  const companyFeatures: MarketingFeature[] = [
+    { icon: "graduation", title: t("home.companies.features.0.title"), body: t("home.companies.features.0.body") },
+    { icon: "idea", title: t("home.companies.features.1.title"), body: t("home.companies.features.1.body") },
+    { icon: "search", title: t("home.companies.features.2.title"), body: t("home.companies.features.2.body") },
+    { icon: "trend-up", title: t("home.companies.features.3.title"), body: t("home.companies.features.3.body") },
+    { icon: "people", title: t("home.companies.features.4.title"), body: t("home.companies.features.4.body") },
+    { icon: "flash", title: t("home.companies.features.5.title"), body: t("home.companies.features.5.body") },
   ];
 
   const platformItems = [

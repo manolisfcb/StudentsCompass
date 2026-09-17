@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Icon } from "@/components/ui/Icon";
+import type { IconName } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
 export type AlertTone = "info" | "success" | "warning" | "danger";
@@ -18,11 +20,11 @@ const ICON_TONES: Record<AlertTone, string> = {
   danger: "text-danger",
 };
 
-const GLYPHS: Record<AlertTone, string> = {
-  info: "i",
-  success: "✓",
-  warning: "!",
-  danger: "!",
+const GLYPHS: Record<AlertTone, IconName> = {
+  info: "info",
+  success: "check-circle",
+  warning: "danger",
+  danger: "close-circle",
 };
 
 /**
@@ -54,15 +56,7 @@ export function Alert({
       role={assertive ? "alert" : "status"}
       className={cn("flex gap-3 rounded-lg border p-4", TONES[tone], className)}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-current text-overline",
-          ICON_TONES[tone],
-        )}
-      >
-        {GLYPHS[tone]}
-      </span>
+      <Icon name={GLYPHS[tone]} size={20} variant="Bold" className={cn("mt-0.5", ICON_TONES[tone])} />
 
       <div className="min-w-0 flex-1">
         {title ? <p className="text-card-title text-ink">{title}</p> : null}

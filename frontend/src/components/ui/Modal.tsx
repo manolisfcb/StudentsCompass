@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
 
 export type ModalSize = "sm" | "md" | "lg";
@@ -85,7 +86,7 @@ export function Modal({
             aria-label="Close"
             className="-mr-2 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink"
           >
-            <span aria-hidden="true">✕</span>
+            <Icon name="close" size={18} />
           </button>
         </header>
 

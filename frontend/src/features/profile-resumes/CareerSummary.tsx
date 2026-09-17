@@ -28,7 +28,7 @@ export function CareerSummary() {
           profile === null ? (
             <EmptyState
               title={t("profile.careers.empty")}
-              icon="🧭"
+              icon="compass"
               action={
                 <Link to="/questionnaire">
                   <Button>{t("profile.careers.takeQuestionnaire")}</Button>

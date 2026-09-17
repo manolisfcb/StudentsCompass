@@ -50,25 +50,25 @@ function DashboardContent({ dashboard }: { dashboard: CompanyDashboard }) {
         * page scopes had to exist. */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          icon="🏗️"
+          icon="briefcase"
           hint={t("company.dashboard.kicker.live")}
           label={t("company.dashboard.activePostings")}
           value={dashboard.stats.active_job_postings}
         />
         <StatCard
-          icon="📬"
+          icon="inbox"
           hint={t("company.dashboard.kicker.pipeline")}
           label={t("company.dashboard.totalApplications")}
           value={dashboard.stats.total_applications}
         />
         <StatCard
-          icon="🎙️"
+          icon="mic"
           hint={t("company.dashboard.kicker.inMotion")}
           label={t("company.dashboard.scheduledInterviews")}
           value={dashboard.stats.scheduled_interviews}
         />
         <StatCard
-          icon="⭐"
+          icon="star"
           hint={t("company.dashboard.kicker.shortlist")}
           label={t("company.dashboard.shortlisted")}
           value={dashboard.stats.shortlisted}

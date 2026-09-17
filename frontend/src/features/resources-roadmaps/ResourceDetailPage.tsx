@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { Alert, Arrow, Badge, Button, Card, Input, ProgressBar } from "@/components/ui";
+import { Alert, Arrow, Badge, Button, Card, Icon, Input, ProgressBar, toIconName } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { ResumeAuditWidget } from "@/features/profile-resumes/ResumeAuditWidget";
@@ -91,8 +91,9 @@ function LessonViewer({ resource, progress }: { resource: ResourceDetail; progre
           </Link>
 
           <div className="min-w-0">
-            <h2 className="text-card-title text-ink">
-              <span aria-hidden="true">{resource.icon ?? "📚"}</span> {resource.title}
+            <h2 className="flex items-center gap-2 text-card-title text-ink">
+              <Icon name={toIconName(resource.icon, "book")} size={20} className="text-primary" />
+              {resource.title}
             </h2>
             <p className="mt-1 text-caption text-ink-soft">{resource.description}</p>
           </div>
@@ -141,9 +142,12 @@ function LessonViewer({ resource, progress }: { resource: ResourceDetail; progre
                               : "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-ink-soft transition-colors hover:bg-surface-hover hover:text-ink"
                           }
                         >
-                          <span aria-hidden="true" className="mt-px shrink-0 text-caption">
-                            {completed.has(moduleLesson.id) ? "✅" : "📄"}
-                          </span>
+                          <Icon
+                            name={completed.has(moduleLesson.id) ? "check-circle" : "document"}
+                            size={16}
+                            variant={completed.has(moduleLesson.id) ? "Bold" : "Linear"}
+                            className="mt-0.5"
+                          />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-body-sm font-medium">{moduleLesson.title}</span>
                             <span className="block text-caption text-ink-muted">

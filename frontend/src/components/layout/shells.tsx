@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useLocation, useMatch, useSearchParams } from "react-router-dom";
 
 import { useSession } from "@/app/useSession";
+import { Icon } from "@/components/ui/Icon";
+import type { IconName } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 import { AppShell, StudentSidebar, type NavItem } from "@/components/layout/AppShell";
 import { LogoutButton } from "@/features/auth/LogoutButton";
@@ -170,10 +172,10 @@ export function AdminShell() {
   const adminName = actor?.display_name || actor?.email || t("admin.shell.admin");
   const initial = adminName.charAt(0).toUpperCase();
 
-  const sections = [
-    { key: "dashboard", to: "/admin", icon: "📊", label: t("admin.section.dashboard") },
-    { key: "users", to: "/admin?section=users", icon: "👥", label: t("admin.section.users") },
-    { key: "resources", to: "/admin?section=resources", icon: "📚", label: t("admin.section.resources") },
+  const sections: { key: string; to: string; icon: IconName; label: string }[] = [
+    { key: "dashboard", to: "/admin", icon: "chart", label: t("admin.section.dashboard") },
+    { key: "users", to: "/admin?section=users", icon: "users", label: t("admin.section.users") },
+    { key: "resources", to: "/admin?section=resources", icon: "book", label: t("admin.section.resources") },
   ];
   const headerTitle = sections.find((entry) => entry.key === section)?.label ?? t("admin.section.dashboard");
 
@@ -208,8 +210,11 @@ export function AdminShell() {
         )}
       >
         <div className="flex h-14 items-center gap-2.5 border-b border-border px-4">
-          <span aria-hidden="true" className="text-lg">
-            🧭
+          <span
+            aria-hidden="true"
+            className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"
+          >
+            <Icon name="compass" size={18} />
           </span>
           <div className="min-w-0">
             <p className="truncate text-card-title text-ink">{t("app.name")}</p>
@@ -225,7 +230,7 @@ export function AdminShell() {
               onClick={() => setSidebarOpen(false)}
               className={navItemClass(entry.key === section)}
             >
-              <span aria-hidden="true">{entry.icon}</span>
+              <Icon name={entry.icon} size={18} />
               {entry.label}
             </NavLink>
           ))}
@@ -233,7 +238,7 @@ export function AdminShell() {
 
         <div className="border-t border-border p-3">
           <Link to="/" className={navItemClass(false)}>
-            <span aria-hidden="true">🌐</span> {t("admin.backToSite")}
+            <Icon name="globe" size={18} /> {t("admin.backToSite")}
           </Link>
         </div>
       </aside>
@@ -248,7 +253,7 @@ export function AdminShell() {
             onClick={() => setSidebarOpen((open) => !open)}
             className="flex size-9 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-surface-hover hover:text-ink lg:hidden"
           >
-            <span aria-hidden="true">☰</span>
+            <Icon name={sidebarOpen ? "close" : "menu"} size={20} />
           </button>
 
           <h2 className="truncate text-section-title text-ink">{headerTitle}</h2>

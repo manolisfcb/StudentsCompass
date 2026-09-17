@@ -2,6 +2,8 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router-dom";
 
+import { Icon } from "@/components/ui/Icon";
+import type { IconName } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
 export interface NavItem {
@@ -138,9 +140,7 @@ export function AppShell({
               onClick={() => setMenuOpen((open) => !open)}
               className="ml-auto flex size-9 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10 md:hidden"
             >
-              <span aria-hidden="true" className="text-lg">
-                {menuOpen ? "✕" : "☰"}
-              </span>
+              <Icon name={menuOpen ? "close" : "menu"} size={22} />
             </button>
           </div>
 
@@ -225,15 +225,15 @@ export const PublicFooter = () => <SiteFooter variant="marketing" />;
  */
 export function StudentSidebar() {
   const { t } = useTranslation();
-  const items: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
-    { to: "/dashboard", label: t("layout.nav.dashboard"), icon: <IconDashboard />, end: true },
-    { to: "/profile", label: t("layout.nav.profile"), icon: <IconUser /> },
-    { to: "/career-lab", label: t("layout.nav.careerLab"), icon: <IconChart /> },
-    { to: "/resources", label: t("layout.nav.resources"), icon: <IconBook /> },
-    { to: "/roadmaps", label: t("layout.nav.roadmaps"), icon: <IconMap /> },
-    { to: "/community", label: t("layout.nav.community"), icon: <IconUsers /> },
-    { to: "/messages", label: t("layout.nav.messages"), icon: <IconMessage /> },
-    { to: "/jobs", label: t("layout.nav.jobs"), icon: <IconTarget /> },
+  const items: { to: string; label: string; icon: IconName; end?: boolean }[] = [
+    { to: "/dashboard", label: t("layout.nav.dashboard"), icon: "overview", end: true },
+    { to: "/profile", label: t("layout.nav.profile"), icon: "user" },
+    { to: "/career-lab", label: t("layout.nav.careerLab"), icon: "chart" },
+    { to: "/resources", label: t("layout.nav.resources"), icon: "book" },
+    { to: "/roadmaps", label: t("layout.nav.roadmaps"), icon: "route" },
+    { to: "/community", label: t("layout.nav.community"), icon: "users" },
+    { to: "/messages", label: t("layout.nav.messages"), icon: "messages" },
+    { to: "/jobs", label: t("layout.nav.jobs"), icon: "briefcase" },
   ];
 
   return (
@@ -258,7 +258,7 @@ export function StudentSidebar() {
                   )
                 }
               >
-                {item.icon}
+                <Icon name={item.icon} size={18} />
                 <span>{item.label}</span>
               </NavLink>
             </li>
@@ -266,104 +266,5 @@ export function StudentSidebar() {
         </ul>
       </nav>
     </aside>
-  );
-}
-
-/**
- * The rail icons, inline so they inherit `currentColor` and recolour with the
- * active row — which an icon font or an emoji could not do.
- */
-function svgProps() {
-  return {
-    xmlns: "http://www.w3.org/2000/svg",
-    width: 18,
-    height: 18,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 2,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    className: "shrink-0",
-    "aria-hidden": true,
-  };
-}
-
-function IconDashboard() {
-  return (
-    <svg {...svgProps()}>
-      <rect x="3" y="3" width="7" height="9" />
-      <rect x="14" y="3" width="7" height="5" />
-      <rect x="14" y="12" width="7" height="9" />
-      <rect x="3" y="16" width="7" height="5" />
-    </svg>
-  );
-}
-
-function IconUser() {
-  return (
-    <svg {...svgProps()}>
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function IconChart() {
-  return (
-    <svg {...svgProps()}>
-      <path d="M3 3v18h18" />
-      <path d="m19 9-5 5-4-4-3 3" />
-      <circle cx="19" cy="9" r="2" />
-      <circle cx="10" cy="10" r="2" />
-    </svg>
-  );
-}
-
-function IconBook() {
-  return (
-    <svg {...svgProps()}>
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
-  );
-}
-
-function IconMap() {
-  return (
-    <svg {...svgProps()}>
-      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-      <line x1="8" y1="2" x2="8" y2="18" />
-      <line x1="16" y1="6" x2="16" y2="22" />
-    </svg>
-  );
-}
-
-function IconUsers() {
-  return (
-    <svg {...svgProps()}>
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function IconMessage() {
-  return (
-    <svg {...svgProps()}>
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" />
-    </svg>
-  );
-}
-
-function IconTarget() {
-  return (
-    <svg {...svgProps()}>
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
   );
 }

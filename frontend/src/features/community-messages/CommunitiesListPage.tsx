@@ -6,9 +6,23 @@ import { Link } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Alert, Badge, Button, Card, EmptyState, FormField, Input, PageHeader, Textarea } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  FormField,
+  Icon,
+  Input,
+  PageHeader,
+  Textarea,
+  toIconName,
+  type IconName,
+} from "@/components/ui";
 
 import { apiRequest } from "@/api/client";
+import { cn } from "@/lib/cn";
 import { fetchCommunities, type Community } from "@/features/community-messages/api";
 
 const QUERY_KEY = ["communities"];
@@ -73,7 +87,7 @@ function CommunityGrid({ communities, search }: { communities: Community[]; sear
   }, [communities, search]);
 
   if (filtered.length === 0) {
-    return <EmptyState title={t("community.list.empty")} icon="👥" />;
+    return <EmptyState title={t("community.list.empty")} icon="users" />;
   }
 
   return (
@@ -83,9 +97,9 @@ function CommunityGrid({ communities, search }: { communities: Community[]; sear
           <div className="flex items-start gap-3">
             <span
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-lg"
+              className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"
             >
-              {community.icon ?? "👥"}
+              <Icon name={toIconName(community.icon, "users")} size={18} />
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-card-title text-ink">{community.name}</h3>
@@ -108,12 +122,27 @@ function CommunityGrid({ communities, search }: { communities: Community[]; sear
   );
 }
 
+/**
+ * What a community may be marked with. Each key is written out in full rather
+ * than built from the icon name, so a search for the key finds this table.
+ */
+const ICON_CHOICES: { name: IconName; labelKey: string }[] = [
+  { name: "users", labelKey: "community.list.form.iconOption.users" },
+  { name: "message", labelKey: "community.list.form.iconOption.message" },
+  { name: "code", labelKey: "community.list.form.iconOption.code" },
+  { name: "chart", labelKey: "community.list.form.iconOption.chart" },
+  { name: "design", labelKey: "community.list.form.iconOption.design" },
+  { name: "book", labelKey: "community.list.form.iconOption.book" },
+  { name: "briefcase", labelKey: "community.list.form.iconOption.briefcase" },
+  { name: "target", labelKey: "community.list.form.iconOption.target" },
+];
+
 function CreateCommunityForm({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [icon, setIcon] = useState("👥");
+  const [icon, setIcon] = useState<IconName>("users");
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -157,19 +186,31 @@ function CreateCommunityForm({ onDone }: { onDone: () => void }) {
       </FormField>
 
       <FormField label={t("community.list.form.icon")}>
-        {/* The preview sits inside the field rather than beside it, so the
-          * emoji you are typing is read as part of the same control. */}
-        <div className="relative">
-          <span aria-hidden="true" className="absolute top-1/2 left-3 -translate-y-1/2">
-            {icon || "👥"}
-          </span>
-          <Input
-            id="community-icon"
-            value={icon}
-            maxLength={4}
-            onChange={(event) => setIcon(event.target.value)}
-            className="w-32 pl-9"
-          />
+        {/* This was a four-character text box you typed an emoji into, which
+          * is how the seeded communities ended up each carrying a different
+          * platform's glyph. A fixed set of choices is the only way the grid
+          * stays one icon family, and it retires a free-text field that had
+          * no correct answer. */}
+        <div role="radiogroup" aria-label={t("community.list.form.icon")} className="flex flex-wrap gap-2">
+          {ICON_CHOICES.map((choice) => (
+            <button
+              key={choice.name}
+              type="button"
+              role="radio"
+              aria-checked={icon === choice.name}
+              aria-label={t(choice.labelKey)}
+              title={t(choice.labelKey)}
+              onClick={() => setIcon(choice.name)}
+              className={cn(
+                "flex size-10 items-center justify-center rounded-md border transition-colors",
+                icon === choice.name
+                  ? "border-primary bg-primary-subtle text-primary"
+                  : "border-border text-ink-muted hover:border-border-strong hover:text-ink",
+              )}
+            >
+              <Icon name={choice.name} size={18} />
+            </button>
+          ))}
         </div>
       </FormField>
 

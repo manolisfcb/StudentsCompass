@@ -38,8 +38,8 @@ describe("StatCard", () => {
   it("shows a trend direction as a glyph as well as a colour", () => {
     render(<StatCard label="Applications" value={14} trend={{ direction: "up", label: "+3 this week" }} />);
     // Colour alone would leave the direction unreadable in greyscale or to a
-    // colour-blind reader.
-    expect(screen.getByText(/\+3 this week/)).toHaveTextContent("↑");
+    // colour-blind reader, so the reading carries an arrow of its own.
+    expect(screen.getByText(/\+3 this week/).querySelector("svg")).toBeInTheDocument();
   });
 
   it("falls back to the hint when there is no trend", () => {
@@ -48,8 +48,10 @@ describe("StatCard", () => {
   });
 
   it("hides its decorative icon from assistive technology", () => {
-    const { container } = render(<StatCard label="Applications" value={14} icon="📝" />);
-    expect(container.querySelector("[aria-hidden='true']")).toHaveTextContent("📝");
+    const { container } = render(<StatCard label="Applications" value={14} icon="document" />);
+    // The label already says "Applications"; announcing the glyph too would
+    // read the tile twice.
+    expect(container.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 });
 

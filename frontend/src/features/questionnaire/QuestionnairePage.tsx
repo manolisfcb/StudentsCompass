@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { Alert, Button, Card, ProgressBar } from "@/components/ui";
+import { Alert, Button, Card, Icon, ProgressBar } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
@@ -157,9 +157,9 @@ function QuestionnaireResults({
     <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
       <div
         aria-hidden="true"
-        className="mb-5 flex size-16 items-center justify-center rounded-full bg-success-subtle text-2xl text-success"
+        className="mb-5 flex size-16 items-center justify-center rounded-full bg-success-subtle text-success"
       >
-        ✓
+        <Icon name="check-circle" size={32} variant="Bold" />
       </div>
       <h2 className="text-page-title text-ink">{t("questionnaire.results.title")}</h2>
       <p className="mx-auto mt-2 mb-8 max-w-md text-body text-ink-soft">{t("questionnaire.results.subtitle")}</p>

@@ -62,7 +62,7 @@ export function MessagesPage() {
           {conversationId ? (
             <ConversationView conversationId={conversationId} />
           ) : (
-            <EmptyState title={t("messages.selectConversation")} icon="💬" className="w-full" />
+            <EmptyState title={t("messages.selectConversation")} icon="message" className="w-full" />
           )}
         </div>
       </div>
@@ -79,7 +79,7 @@ function ConversationList({
 }) {
   const { t } = useTranslation();
   if (conversations.length === 0) {
-    return <EmptyState title={t("messages.noConversations")} icon="📬" />;
+    return <EmptyState title={t("messages.noConversations")} icon="inbox" />;
   }
 
   return (

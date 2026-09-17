@@ -196,7 +196,7 @@ export function CareerLabPage() {
         <EmptyState
           title={t("careerLab.noResume.title")}
           description={t("careerLab.noResume.body")}
-          icon="📄"
+          icon="document"
           action={
             <Link to="/profile">
               <Button>{t("careerLab.noResume.upload")}</Button>

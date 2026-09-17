@@ -6,7 +6,18 @@ import { Link } from "react-router-dom";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Badge, Card, EmptyState, Input, PageHeader, Select, Tabs, type TabItem } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  EmptyState,
+  Icon,
+  Input,
+  PageHeader,
+  Select,
+  Tabs,
+  toIconName,
+  type TabItem,
+} from "@/components/ui";
 import { fetchResources, type Resource } from "@/features/resources-roadmaps/api";
 
 /**
@@ -110,7 +121,7 @@ function ResourceBrowser({ resources }: { resources: Resource[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title={t("resources.empty")} icon="📚" />
+        <EmptyState title={t("resources.empty")} icon="book" />
       ) : (
         <section aria-label={t("resources.title")}>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -133,9 +144,9 @@ function ResourceCard({ resource }: { resource: Resource }) {
         <div className="flex items-start gap-3">
           <span
             aria-hidden="true"
-            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-lg"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"
           >
-            {resource.icon ?? "📚"}
+            <Icon name={toIconName(resource.icon, "book")} size={18} />
           </span>
           <div className="min-w-0 flex-1">
             <h3 className="text-card-title text-ink">{resource.title}</h3>

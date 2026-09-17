@@ -84,7 +84,7 @@ export function ApplicantsPage() {
       <AsyncBoundary query={query}>
         {(applicants) =>
           applicants.length === 0 ? (
-            <EmptyState title={t("company.applicants.empty")} icon="📬" />
+            <EmptyState title={t("company.applicants.empty")} icon="inbox" />
           ) : (
             <div className="flex flex-col gap-3">
               {applicants.map((applicant) => (

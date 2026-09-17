@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { DocumentMeta, PUBLIC_BASE_URL } from "@/components/seo/DocumentMeta";
-import { Arrow, Badge, Button } from "@/components/ui";
+import { Arrow, Badge, Button, Icon, type IconName } from "@/components/ui";
 import { ReferenceModal } from "@/features/marketing/ReferenceModal";
-import { Band, CardGrid, MarketingCard, SectionHead } from "@/features/marketing/sections";
+import { Band, CardGrid, MarketingCard, SectionHead, type MarketingFeature } from "@/features/marketing/sections";
 
 /**
  * `/about` (TASK-046). Content carried over verbatim from
@@ -72,13 +72,13 @@ export function AboutPage() {
     },
   ];
 
-  const employerValues = [
-    { icon: "🎯", title: t("about.employers.items.0.title"), body: t("about.employers.items.0.body") },
-    { icon: "📝", title: t("about.employers.items.1.title"), body: t("about.employers.items.1.body") },
-    { icon: "🎤", title: t("about.employers.items.2.title"), body: t("about.employers.items.2.body") },
-    { icon: "💡", title: t("about.employers.items.3.title"), body: t("about.employers.items.3.body") },
-    { icon: "📊", title: t("about.employers.items.4.title"), body: t("about.employers.items.4.body") },
-    { icon: "🤝", title: t("about.employers.items.5.title"), body: t("about.employers.items.5.body") },
+  const employerValues: MarketingFeature[] = [
+    { icon: "target", title: t("about.employers.items.0.title"), body: t("about.employers.items.0.body") },
+    { icon: "note", title: t("about.employers.items.1.title"), body: t("about.employers.items.1.body") },
+    { icon: "mic", title: t("about.employers.items.2.title"), body: t("about.employers.items.2.body") },
+    { icon: "idea", title: t("about.employers.items.3.title"), body: t("about.employers.items.3.body") },
+    { icon: "chart", title: t("about.employers.items.4.title"), body: t("about.employers.items.4.body") },
+    { icon: "people", title: t("about.employers.items.5.title"), body: t("about.employers.items.5.body") },
   ];
 
   const traditionalHiring = [
@@ -97,27 +97,27 @@ export function AboutPage() {
     t("about.roi.compass.items.4"),
   ];
 
-  const frameworkItems = [
-    { icon: "🔍", title: t("about.framework.items.0.title"), body: t("about.framework.items.0.body") },
-    { icon: "📋", title: t("about.framework.items.1.title"), body: t("about.framework.items.1.body") },
-    { icon: "🎤", title: t("about.framework.items.2.title"), body: t("about.framework.items.2.body") },
-    { icon: "🎯", title: t("about.framework.items.3.title"), body: t("about.framework.items.3.body") },
+  const frameworkItems: MarketingFeature[] = [
+    { icon: "search", title: t("about.framework.items.0.title"), body: t("about.framework.items.0.body") },
+    { icon: "clipboard", title: t("about.framework.items.1.title"), body: t("about.framework.items.1.body") },
+    { icon: "mic", title: t("about.framework.items.2.title"), body: t("about.framework.items.2.body") },
+    { icon: "target", title: t("about.framework.items.3.title"), body: t("about.framework.items.3.body") },
   ];
 
-  const outcomes = [
-    { icon: "🎯", body: t("about.outcomes.items.0") },
-    { icon: "📄", body: t("about.outcomes.items.1") },
-    { icon: "🗣️", body: t("about.outcomes.items.2") },
-    { icon: "💎", body: t("about.outcomes.items.3") },
+  const outcomes: { icon: IconName; body: string }[] = [
+    { icon: "target", body: t("about.outcomes.items.0") },
+    { icon: "document", body: t("about.outcomes.items.1") },
+    { icon: "mic", body: t("about.outcomes.items.2") },
+    { icon: "gem", body: t("about.outcomes.items.3") },
   ];
 
-  const studentFeatures = [
-    { icon: "📝", title: t("about.students.items.0.title"), body: t("about.students.items.0.body") },
-    { icon: "💼", title: t("about.students.items.1.title"), body: t("about.students.items.1.body") },
-    { icon: "🎯", title: t("about.students.items.2.title"), body: t("about.students.items.2.body") },
-    { icon: "📚", title: t("about.students.items.3.title"), body: t("about.students.items.3.body") },
-    { icon: "👥", title: t("about.students.items.4.title"), body: t("about.students.items.4.body") },
-    { icon: "📊", title: t("about.students.items.5.title"), body: t("about.students.items.5.body") },
+  const studentFeatures: MarketingFeature[] = [
+    { icon: "note", title: t("about.students.items.0.title"), body: t("about.students.items.0.body") },
+    { icon: "briefcase", title: t("about.students.items.1.title"), body: t("about.students.items.1.body") },
+    { icon: "target", title: t("about.students.items.2.title"), body: t("about.students.items.2.body") },
+    { icon: "book", title: t("about.students.items.3.title"), body: t("about.students.items.3.body") },
+    { icon: "users", title: t("about.students.items.4.title"), body: t("about.students.items.4.body") },
+    { icon: "chart", title: t("about.students.items.5.title"), body: t("about.students.items.5.body") },
   ];
 
   const believeList = [
@@ -199,8 +199,9 @@ export function AboutPage() {
             >
               <span className="text-display text-primary tabular-nums">{stat.value}</span>
               <p className="mt-3 text-body-sm text-ink-soft">{stat.body}</p>
-              <span className="mt-4 text-caption font-medium text-primary group-hover:text-primary-hover">
+              <span className="mt-4 flex items-center gap-1 text-caption font-medium text-primary group-hover:text-primary-hover">
                 {t("about.stats.viewSource")}
+                <Icon name="external" size={14} />
               </span>
             </button>
           ))}
@@ -244,9 +245,7 @@ export function AboutPage() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {traditionalHiring.map((item) => (
                 <li key={item} className="flex gap-2.5 text-body-sm text-white/70">
-                  <span aria-hidden="true" className="text-danger">
-                    ✕
-                  </span>
+                  <Icon name="close" size={16} className="mt-0.5 text-danger" />
                   {item}
                 </li>
               ))}
@@ -263,9 +262,7 @@ export function AboutPage() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {compassHiring.map((item) => (
                 <li key={item} className="flex gap-2.5 text-body-sm text-white/85">
-                  <span aria-hidden="true" className="text-primary-bright">
-                    ✓
-                  </span>
+                  <Icon name="check" size={16} className="mt-0.5 text-primary-bright" />
                   {item}
                 </li>
               ))}
@@ -298,9 +295,9 @@ export function AboutPage() {
             >
               <span
                 aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-lg"
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary"
               >
-                {outcome.icon}
+                <Icon name={outcome.icon} size={20} />
               </span>
               <p className="text-body-sm text-ink-soft">{outcome.body}</p>
             </li>
@@ -334,9 +331,7 @@ export function AboutPage() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {believeList.map((item) => (
                 <li key={item} className="flex gap-2.5 text-body-sm text-ink-soft">
-                  <span aria-hidden="true" className="text-success">
-                    ✓
-                  </span>
+                  <Icon name="check" size={16} className="mt-0.5 text-success" />
                   {item}
                 </li>
               ))}
@@ -347,9 +342,7 @@ export function AboutPage() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {notList.map((item) => (
                 <li key={item} className="flex gap-2.5 text-body-sm text-ink-soft">
-                  <span aria-hidden="true" className="text-danger">
-                    ✕
-                  </span>
+                  <Icon name="close" size={16} className="mt-0.5 text-danger" />
                   {item}
                 </li>
               ))}

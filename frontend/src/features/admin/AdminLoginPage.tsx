@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Alert, Button, Card, FormField, Input } from "@/components/ui";
+import { Alert, Button, Card, FormField, Icon, Input } from "@/components/ui";
 import { fetchAdminStats } from "@/features/admin/api";
 import { login } from "@/features/auth/api";
 
@@ -54,9 +54,9 @@ export function AdminLoginPage() {
           <div className="text-center">
             <div
               aria-hidden="true"
-              className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-primary text-2xl"
+              className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-fg"
             >
-              🛡️
+              <Icon name="shield" size={26} />
             </div>
             <h1 className="text-section-title text-ink">{t("admin.login.title")}</h1>
             <p className="mt-1 text-body-sm text-ink-soft">{t("admin.login.subtitle")}</p>

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Icon, type IconName } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { ActorKind } from "@/features/auth/api";
 
@@ -14,14 +15,14 @@ import type { ActorKind } from "@/features/auth/api";
  */
 
 /** A selling point in the panel beside the form. */
-export function AsidePoint({ icon, title, body }: { icon: string; title: string; body: string }) {
+export function AsidePoint({ icon, title, body }: { icon: IconName; title: string; body: string }) {
   return (
     <div className="flex gap-3">
       <span
         aria-hidden="true"
-        className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/15 text-lg"
+        className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/15 text-white"
       >
-        {icon}
+        <Icon name={icon} size={18} />
       </span>
       <div className="min-w-0">
         <p className="text-card-title text-white">{title}</p>

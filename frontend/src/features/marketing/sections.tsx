@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Icon } from "@/components/ui/Icon";
+import type { IconName } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
 /**
@@ -83,6 +85,9 @@ export function SectionHead({
   );
 }
 
+/** One entry in a marketing grid — the shape both landing pages build. */
+export type MarketingFeature = { icon: IconName; title: string; body: string };
+
 /**
  * A card in a marketing grid.
  *
@@ -100,7 +105,7 @@ export function MarketingCard({
   className,
   children,
 }: {
-  icon?: ReactNode;
+  icon?: IconName;
   title?: ReactNode;
   body?: string;
   onDark?: boolean;
@@ -121,11 +126,11 @@ export function MarketingCard({
         <span
           aria-hidden="true"
           className={cn(
-            "mb-4 flex size-11 items-center justify-center rounded-lg text-xl",
-            onDark ? "bg-white/10" : "bg-primary-subtle",
+            "mb-4 flex size-11 items-center justify-center rounded-lg",
+            onDark ? "bg-white/10 text-white" : "bg-primary-subtle text-primary",
           )}
         >
-          {icon}
+          <Icon name={icon} size={22} />
         </span>
       ) : null}
 

@@ -31,7 +31,7 @@ describe("AboutPage", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent("49% — Lack of Relevant Experience in Entry-Level Hiring");
-    expect(screen.getByRole("link", { name: "View Original Source ↗" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "View Original Source" })).toHaveAttribute(
       "href",
       "https://www.expresspros.ca/newsroom/news-releases/news-releases/2025/02/canadian-companies-say-worsening-skills-gap-and-navigating-ai-top-challenges-in-2025",
     );
@@ -51,6 +51,6 @@ describe("AboutPage", () => {
 
     await user.click(screen.getByRole("button", { name: /\$30,680/ }));
 
-    expect(screen.getByRole("link", { name: "View additional source (Robert Half) ↗" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View additional source (Robert Half)" })).toBeInTheDocument();
   });
 });

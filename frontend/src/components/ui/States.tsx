@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Icon } from "@/components/ui/Icon";
+import type { IconName } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
 /**
@@ -56,7 +58,7 @@ export function EmptyState({
 }: {
   title: string;
   description?: string;
-  icon?: ReactNode;
+  icon?: IconName;
   action?: ReactNode;
   className?: string;
 }) {
@@ -72,7 +74,7 @@ export function EmptyState({
           aria-hidden="true"
           className="mb-3 flex size-10 items-center justify-center rounded-full bg-surface text-ink-muted"
         >
-          {icon}
+          <Icon name={icon} size={20} />
         </div>
       ) : null}
       <p className="text-card-title text-ink">{title}</p>

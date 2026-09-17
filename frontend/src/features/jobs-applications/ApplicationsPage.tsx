@@ -56,7 +56,7 @@ export function ApplicationsPage() {
       <AsyncBoundary query={query}>
         {(page) =>
           page.items.length === 0 && cursors.length === 1 ? (
-            <EmptyState title={t("applications.empty")} icon="📝" />
+            <EmptyState title={t("applications.empty")} icon="document" />
           ) : (
             <div className="flex flex-col gap-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

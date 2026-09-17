@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import { Badge, Button, Modal } from "@/components/ui";
+import { Badge, Button, Icon, Modal } from "@/components/ui";
 
 /**
  * The citation dialog the three stat cards on `/about` open.
@@ -55,18 +55,20 @@ export function ReferenceModal({
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-body-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+            className="inline-flex items-center gap-1 text-body-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
           >
             {t("about.stats.modal.viewSource")}
+            <Icon name="external" size={14} className="no-underline" />
           </a>
           {secondaryUrl ? (
             <a
               href={secondaryUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-body-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+              className="inline-flex items-center gap-1 text-body-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
             >
               {t("about.stats.modal.viewAdditionalSource")}
+              <Icon name="external" size={14} className="no-underline" />
             </a>
           ) : null}
         </div>

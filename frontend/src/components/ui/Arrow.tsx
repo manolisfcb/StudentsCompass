@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
 
 /**
@@ -14,11 +15,10 @@ import { cn } from "@/lib/cn";
  */
 export function Arrow({ direction, className }: { direction: "back" | "forward"; className?: string }) {
   return (
-    <span
-      aria-hidden="true"
-      className={cn("inline-block rtl:rotate-180", className)}
-    >
-      {direction === "back" ? "←" : "→"}
-    </span>
+    <Icon
+      name={direction === "back" ? "arrow-left" : "arrow-right"}
+      size={16}
+      className={cn("inline-block align-text-bottom rtl:rotate-180", className)}
+    />
   );
 }
