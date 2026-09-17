@@ -43,7 +43,13 @@ const CHROME: Record<ShellVariant, string> = {
   // Slate rather than the old blue gradient: it reads as the business-facing
   // side without introducing a third brand colour.
   company: "bg-ink text-white",
-  marketing: "bg-transparent text-white",
+  // Dark teal to pale mint, left to right. This was the last rule the ported
+  // sheets still owned — `.marketing-page header` in `legacy/base.css`, which
+  // read `linear-gradient(to right, var(--primary-color), var(--secondary-color))`
+  // through the bridge aliases onto exactly these two tokens. Deleting that
+  // sheet left the bar `bg-transparent`, so the whole marketing header — nav,
+  // hero, and every `text-white` inside them — rendered on `bg-canvas`.
+  marketing: "bg-gradient-to-r from-primary to-primary-bright text-white",
 };
 
 export function AppShell({
