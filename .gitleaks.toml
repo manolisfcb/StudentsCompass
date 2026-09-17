@@ -38,3 +38,29 @@ paths = [
     '''(^|/)htmlcov/''',
     '''(^|/)dist/''',
 ]
+
+[[allowlists]]
+description = "Referencias de imagen de Artifact Registry"
+# `generic-api-key` marca `…/studentscompass/api:cef546b6a843…` como credencial:
+# el literal `api:` seguido de 40 caracteres hexadecimales tiene exactamente la
+# forma de una clave, y la entropía de un SHA de git la confirma. Es una
+# referencia de imagen, y escribir el SHA completo en vez de `:latest` es
+# precisamente lo que `deploy.yml` obliga a hacer y lo que la documentación de
+# TASK-056/057 registra al verificar un despliegue.
+#
+# Esto puso CI en rojo desde el 17/09 y, con ella, bloqueó todos los deploys:
+# el último SHA que llegó a producción es el último que pasó este job. El coste
+# de un falso positivo aquí no es ruido, es una tubería parada.
+#
+# La excepción es el patrón y nada más. El primer intento lo acotaba además con
+# `paths` y `condition = "AND"`, que parecía lo más estrecho y era lo contrario:
+# gitleaks aplica `paths` al elegir qué ficheros leer, antes de mirar el
+# contenido, así que dejaba de escanear `docs/` entero —de 10,68 MB a 6,04 MB—
+# y un secreto de verdad pegado en una nota se volvía invisible. Comprobado
+# plantando uno. Un `regexTarget = "line"` con esta forma exacta no tiene ese
+# problema: solo perdona un hallazgo cuya línea es una referencia de imagen de
+# este proyecto, esté donde esté.
+regexTarget = "line"
+regexes = [
+    '''studentscompass/(api|front):[0-9a-f]{40}''',
+]

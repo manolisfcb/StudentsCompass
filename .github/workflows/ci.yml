@@ -55,8 +55,43 @@ jobs:
       # checkout, no la historia: la historia es asunto de TASK-002 y reescribirla
       # no cabe aquí. Lo que este job garantiza es que ningún commit nuevo
       # introduzca una credencial. Excepciones documentadas en `.gitleaks.toml`.
+      # El informe JSON existe para que un fallo sea accionable. Sin él, este
+      # paso imprime `leaks found: N` y nada más: ni fichero, ni regla, ni
+      # línea. Un job que dice que hay una credencial pero no dónde obliga a
+      # reproducirlo a mano para poder leerlo, y mientras tanto la rama está
+      # roja y `deploy.yml` no despliega nada — que es exactamente lo que pasó
+      # entre el 17/09 y este commit.
+      #
+      # Se imprimen `RuleID`, `File` y `StartLine`, nunca `Secret` ni `Match`:
+      # el motivo de `--redact` es que el log de este run es público, y volcar
+      # el hallazgo ahí sería filtrar el secreto una segunda vez.
       - name: Escanear el árbol
-        run: "$RUNNER_TEMP/gitleaks dir . --no-banner --redact --exit-code 1 --config .gitleaks.toml"
+        run: |
+          set -o pipefail
+          "$RUNNER_TEMP/gitleaks" dir . --no-banner --redact --exit-code 1 \
+            --config .gitleaks.toml \
+            --report-format json --report-path "$RUNNER_TEMP/gitleaks.json"
+      - name: Localizar los hallazgos
+        if: failure()
+        run: |
+          python3 - "$RUNNER_TEMP/gitleaks.json" <<'PY'
+          import json, sys
+          try:
+              findings = json.load(open(sys.argv[1]))
+          except Exception as exc:
+              print(f"::warning::no se pudo leer el informe de gitleaks: {exc}")
+              raise SystemExit(0)
+          for f in findings:
+              print(
+                  "::error file={file},line={line}::gitleaks [{rule}] — "
+                  "revisar esta línea; si es un falso positivo, la excepción va "
+                  "en .gitleaks.toml".format(
+                      file=f.get("File", "?"),
+                      line=f.get("StartLine", 0),
+                      rule=f.get("RuleID", "?"),
+                  )
+              )
+          PY
 
   deps-audit:
     name: dependencias (osv-scanner, bloqueante)
