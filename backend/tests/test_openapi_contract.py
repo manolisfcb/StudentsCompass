@@ -368,3 +368,66 @@ def test_recursive_schemas_terminate():
     }
     other = json.loads(json.dumps(node))
     assert _verdict(node, other).breaking == []
+
+
+# --- retiros declarados (TASK-059) ------------------------------------------
+#
+# El comparador es una puerta cerrada: cualquier cambio incompatible falla CI.
+# TASK-059 tuvo que retirar 22 pantallas y un campo, y la alternativa a esto era
+# empujar otro commit para que la base cambiara y el cambio pasara sin que nadie
+# lo escribiera. Estos casos son lo que impide que esa puerta se quede abierta.
+
+
+def _declared_file(tmp_path, payload) -> Path:
+    path = tmp_path / "declared.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_a_declared_retirement_stops_blocking(tmp_path):
+    declared = _declared_file(tmp_path, {
+        "retirements": [{
+            "task": "TASK-059",
+            "evidencia": "el dominio dejó de servirla",
+            "operaciones": ["GET /login"],
+        }],
+    })
+    loaded = compat._load_declared(declared)
+    breaking = ["GET /login: la operación desapareció sin haber estado marcada deprecated (§5.3)"]
+    still, accepted = compat._split_declared(breaking, loaded)
+
+    assert still == []
+    assert accepted == [(breaking[0], "TASK-059")]
+
+
+def test_an_undeclared_retirement_still_blocks(tmp_path):
+    """Lo único que hace útil al mecanismo: lo que nadie escribió sigue rompiendo."""
+    declared = _declared_file(tmp_path, {
+        "retirements": [{
+            "task": "TASK-059",
+            "evidencia": "el dominio dejó de servirla",
+            "operaciones": ["GET /login"],
+        }],
+    })
+    loaded = compat._load_declared(declared)
+    breaking = ["GET /dashboard: la operación desapareció sin haber estado marcada deprecated (§5.3)"]
+    still, accepted = compat._split_declared(breaking, loaded)
+
+    assert still == breaking
+    assert accepted == []
+
+
+def test_a_declaration_without_its_task_or_evidence_is_refused(tmp_path):
+    """Un permiso en blanco no es una decisión, y se rechaza al leerlo."""
+    for entry in ({"operaciones": ["GET /login"]},
+                  {"task": "TASK-059", "operaciones": ["GET /login"]}):
+        with pytest.raises(SystemExit):
+            compat._load_declared(_declared_file(tmp_path, {"retirements": [entry]}))
+
+
+def test_the_declarations_file_in_the_repo_is_readable_and_complete():
+    """El fichero real, no uno de prueba: si se corrompe, CI lo dice aquí."""
+    declared = compat._load_declared(REPO_ROOT / "contract" / "declared_retirements.json")
+
+    assert declared, "el fichero de retiros declarados no aporta ninguno"
+    assert all(task.startswith("TASK-") for task in declared.values())

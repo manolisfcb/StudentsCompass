@@ -1,0 +1,57 @@
+{
+  "$comment": [
+    "Retiros de contrato que una ficha autorizó, con su evidencia.",
+    "check_openapi_compat.py rechaza cualquier cambio incompatible salvo los",
+    "que aparezcan aquí, y esa es toda la puerta que hay: un retiro se escribe",
+    "antes de permitirse, igual que en DECLARED_REMOVED_PATHS de",
+    "tests/integration/test_rollout_rehearsal_pg.py. Una entrada sin 'task' ni",
+    "'evidencia' no sirve de nada a quien la lea dentro de un año."
+  ],
+  "retirements": [
+    {
+      "task": "TASK-059",
+      "fecha": "2026-09-17",
+      "evidencia": "docs/refactor/10_CUTOVER_RUNBOOK.md §11 y las Completion Notes de TASK-059. El dominio dejó de servir estas pantallas a las 16:38 EDT del 17/09, cuando studentscompass.ca pasó a studentscompass-front. Cada una tiene su sustituto React desplegado, y las siete que cambiaron de URL tienen un 301 en frontend/nginx.conf verificado contra el dominio real.",
+      "operaciones": [
+        "GET /",
+        "GET /about",
+        "GET /admin",
+        "GET /admin/login",
+        "GET /career-lab",
+        "GET /community",
+        "GET /community/{community_id}",
+        "GET /company-candidates",
+        "GET /company-dashboard",
+        "GET /company-team",
+        "GET /dashboard",
+        "GET /home",
+        "GET /jobs",
+        "GET /login",
+        "GET /questionnaire",
+        "GET /register",
+        "GET /resources",
+        "GET /resources/{resource_id}",
+        "GET /roadmap",
+        "GET /roadmaps",
+        "GET /roadmaps/{slug}",
+        "GET /user-profile"
+      ]
+    },
+    {
+      "task": "TASK-059",
+      "fecha": "2026-09-17",
+      "evidencia": "La vista Jinja de registro estaba montada bajo el prefijo de la API y compartía path con el POST que registra de verdad (runbook §4 B10). Se retira el GET; el POST no se toca, y el smoke del deploy lo afirma contra el proxy real para que el 301 no pueda tragárselo.",
+      "operaciones": [
+        "GET /api/v1/auth/register"
+      ]
+    },
+    {
+      "task": "TASK-059",
+      "fecha": "2026-09-17",
+      "evidencia": "`users` duplicaba `items` para app/static/js/admin.js, que se retira en esta misma ficha. React lee `items`, comprobado en frontend/src/features/admin/AdminPage.tsx. tests/test_admin_rest_contract.py afirma ahora su ausencia.",
+      "campos": [
+        "GET /api/v1/admin/users 200.users"
+      ]
+    }
+  ]
+}

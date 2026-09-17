@@ -434,6 +434,50 @@ def _load(path: Path) -> dict[str, Any]:
     return document
 
 
+#: Un retiro deliberado se escribe antes de permitirse. El fichero apareado con
+#: `--declared` es esa escritura, y este par de funciones es todo el mecanismo:
+#: una línea incompatible deja de romper CI **solo** si su sujeto está listado
+#: allí junto a la ficha que lo autoriza.
+#:
+#: Deliberadamente tonto en un punto: empareja por el prefijo de la línea, que
+#: es "MÉTODO /path" o "MÉTODO /path 200.campo". Un emparejamiento más listo
+#: aceptaría cambios que nadie escribió, y el valor de esto es exactamente que
+#: no pueda.
+def _load_declared(path: Path | None) -> dict[str, str]:
+    if path is None:
+        return {}
+    if not path.exists():
+        raise SystemExit(f"{path} no existe: --declared apunta a un fichero que falta")
+    with path.open(encoding="utf-8") as handle:
+        document = json.load(handle)
+    declared: dict[str, str] = {}
+    for entry in document.get("retirements", []):
+        task = entry.get("task")
+        if not task or not entry.get("evidencia"):
+            raise SystemExit(
+                "cada retiro declarado necesita 'task' y 'evidencia': "
+                "una entrada sin ellas no es una decisión, es un permiso en blanco"
+            )
+        for subject in (*entry.get("operaciones", []), *entry.get("campos", [])):
+            declared[subject] = task
+    return declared
+
+
+def _split_declared(
+    breaking: list[str], declared: dict[str, str]
+) -> tuple[list[str], list[tuple[str, str]]]:
+    still_breaking: list[str] = []
+    accepted: list[tuple[str, str]] = []
+    for line in breaking:
+        subject = line.split(":", 1)[0].strip()
+        task = declared.get(subject)
+        if task:
+            accepted.append((line, task))
+        else:
+            still_breaking.append(line)
+    return still_breaking, accepted
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base", type=Path, help="OpenAPI de referencia (rama base)")
@@ -443,21 +487,37 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="no listar los cambios aditivos, solo los que rompen",
     )
+    parser.add_argument(
+        "--declared",
+        type=Path,
+        default=None,
+        help=(
+            "fichero de retiros que una ficha autorizó "
+            "(contract/declared_retirements.json)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     report = compare_documents(_load(args.base), _load(args.head))
+    declared = _load_declared(args.declared)
+    breaking, accepted = _split_declared(report.breaking, declared)
 
     if report.compatible and not args.quiet_compatible:
         print(f"Cambios compatibles ({len(report.compatible)}):")
         for line in report.compatible:
             print(f"  + {line}")
 
-    if not report.breaking:
+    if accepted:
+        print(f"\nRetiros declarados ({len(accepted)}):")
+        for line, task in accepted:
+            print(f"  ~ {line}  [{task}]")
+
+    if not breaking:
         print("\nContrato compatible: ningún cambio rompe a los clientes actuales.")
         return 0
 
-    print(f"\nCambios INCOMPATIBLES ({len(report.breaking)}):")
-    for line in report.breaking:
+    print(f"\nCambios INCOMPATIBLES ({len(breaking)}):")
+    for line in breaking:
         print(f"  ! {line}")
     print(
         "\nUn cambio deliberado se versiona (paths nuevos) o se retira por el "

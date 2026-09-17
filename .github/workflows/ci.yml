@@ -158,8 +158,12 @@ jobs:
             exit 0
           fi
           git show "${BASE_SHA}:contract/openapi.json" > "$RUNNER_TEMP/base-openapi.json"
+          # --declared es la única puerta: un retiro que una ficha autorizó deja
+          # de romper CI solo si está escrito en ese fichero, con su task y su
+          # evidencia. Sin él, cualquier cambio incompatible sigue fallando.
           python backend/scripts/check_openapi_compat.py \
-            "$RUNNER_TEMP/base-openapi.json" contract/openapi.json
+            "$RUNNER_TEMP/base-openapi.json" contract/openapi.json \
+            --declared contract/declared_retirements.json
 
   backend-lint:
     name: backend — lock y Ruff
@@ -328,8 +332,27 @@ jobs:
           python -m playwright install --with-deps chromium
       # Every request the page makes is fulfilled by the test's own route
       # handler, so the browser reaches no external host.
+      # TASK-059 retiró los tres casos que marcaba `browser`: los tres conducían
+      # el JS servido por Jinja (`app/static/js`) en un Chromium real, y ese JS
+      # ya no existe. Lo que probaban vive ahora en el frontend —`csrf.test.ts`
+      # y `QuestionnairePage.test.tsx`, en la lane de vitest— así que ninguna
+      # garantía se ha perdido, solo cambió de lado.
+      #
+      # La lane se conserva en vez de borrarse porque el arranque (Playwright +
+      # Chromium sin red) es lo caro de reconstruir, y el día que el backend
+      # vuelva a necesitar un caso de navegador estará lista. Exit 5 es
+      # "ningún test recogido", y aquí eso es el estado correcto, no un fallo.
       - name: Run browser lane
-        run: python -m pytest -p no:cacheprovider -m browser
+        run: |
+          set +e
+          python -m pytest -p no:cacheprovider -m browser
+          code=$?
+          set -e
+          if [ "$code" = "5" ]; then
+            echo "Sin casos marcados 'browser': nada que correr (TASK-059)."
+            exit 0
+          fi
+          exit "$code"
 
   backend-baseline:
     name: backend — baseline lane (TASK-035, fixtures + capturas)
