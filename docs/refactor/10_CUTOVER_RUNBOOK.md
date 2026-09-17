@@ -274,6 +274,40 @@ Detallado en §1. El cutover debe repuntar hacia un frontend **desplegado desde 
 SHA que se quiere cortar y verificado en su `run.app`**, no hacia la revisión del
 12/09.
 
+**Causa, encontrada al intentar desplegar y distinta de la que este documento
+supuso.** No era que nadie hubiera desplegado: era que **nadie podía**.
+`deploy.yml` se dispara por `workflow_run` sobre un `ci` en verde, y `ci` estaba
+en rojo desde `9353dc5` (17/09 02:24) por un único job, `secretos`. El último
+SHA que llegó a producción es exactamente el último que pasó ese job.
+
+| SHA | `ci` | `deploy` |
+| --- | --- | --- |
+| `cef546b` (12/09) | success | **desplegado** |
+| `9353dc5` (17/09) | failure | skipped |
+| `8897a05` | failure | skipped |
+| `d698808` | failure | skipped |
+| `b20701e` | failure | skipped |
+
+El hallazgo de gitleaks era un falso positivo: `generic-api-key` sobre
+`…/studentscompass/api:cef546b6a843…` en `TASKS.md` —`api:` seguido de 40
+hexadecimales tiene forma de clave y la entropía de un SHA lo confirma. Escribir
+el SHA completo en vez de `:latest` es lo que `deploy.yml` obliga a hacer.
+
+Dos cosas lo hicieron caro de diagnosticar, y las dos quedan corregidas:
+
+1. **El job no decía dónde.** Imprimía `leaks found: 1` y nada más: ni fichero,
+   ni regla, ni línea. Encontrarlo exigió reproducir el escaneo en local con la
+   versión que CI fija, contra un `git archive` del árbol. Ahora emite una
+   anotación por hallazgo con `RuleID`, `File` y `StartLine` —nunca el secreto,
+   porque el log del run es público.
+2. **La excepción obvia era la peligrosa.** El primer intento acotaba con
+   `paths = ['(^|/)docs/']` y `condition = "AND"`, que parece lo más estrecho.
+   No lo es: gitleaks aplica `paths` al elegir qué ficheros leer, antes de mirar
+   el contenido, así que dejaba de escanear `docs/` entero —de 10,68 MB a
+   6,04 MB— y una credencial de verdad pegada en una nota se volvía invisible.
+   Comprobado plantando una. La excepción vigente es solo el patrón, con
+   `regexTarget = "line"`, y se verificó en las dos direcciones.
+
 ### B6 — Tras el cutover, «cero tráfico» deja de significar lo mismo · CRÍTICO PARA LA FASE 3
 
 Este es el hallazgo que más condiciona el resto del plan.
@@ -802,9 +836,9 @@ completa de rutas responde lo que esta sección dice. En el repositorio:
 
 **Pendiente antes de repuntar el dominio:**
 
-- **B5** — desplegar el SHA que se quiere cortar. Producción sigue en `cef546b`
-  (12/09) y la diferencia ya no son tres commits. Nada del pre-flight llega a
-  producción hasta que esto ocurra.
+- **B5** — desplegar el SHA que se quiere cortar. La tubería quedó desbloqueada
+  al corregir el falso positivo de gitleaks; falta que un `ci` verde dispare el
+  `deploy` y comprobar el resultado en el `run.app` del frontend.
 - Recorrido autenticado completo contra `verify_parity.py`, como estudiante y
   como recruiter.
 - Elegir la franja horaria del repunte. El tráfico real de la muestra se

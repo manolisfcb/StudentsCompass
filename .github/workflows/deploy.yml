@@ -321,9 +321,16 @@ jobs:
         run: |
           FRONT="${{ steps.deploy_front.outputs.service_url }}"
 
+          # `%{redirect_url}` es la URL que curl *resuelve*, no la cabecera
+          # `Location` tal cual. Nginx manda `Location: /profile` —relativa, por
+          # `absolute_redirect off`— y curl la reporta como
+          # `https://host/profile`. Así que el destino esperado se compara
+          # absoluto contra el mismo host, lo que de paso afirma que ningún
+          # redirect se va a otro sitio.
           expect() {
             local method="$1" path="$2" want_code="$3" want_location="$4"
-            local out code location
+            local out code location want_absolute=""
+            [ -n "$want_location" ] && want_absolute="${FRONT%/}${want_location}"
             out="$(curl -s -o /dev/null -X "$method" \
               -w '%{http_code} %{redirect_url}' "${FRONT%/}${path}" || true)"
             code="${out%% *}"
@@ -332,8 +339,8 @@ jobs:
               echo "::error::${method} ${path} respondió ${code}, se esperaba ${want_code}"
               return 1
             fi
-            if [ -n "$want_location" ] && [ "$location" != "$want_location" ]; then
-              echo "::error::${method} ${path} redirigió a '${location}', se esperaba '${want_location}'"
+            if [ -n "$want_absolute" ] && [ "$location" != "$want_absolute" ]; then
+              echo "::error::${method} ${path} redirigió a '${location}', se esperaba '${want_absolute}'"
               return 1
             fi
             echo "ok: ${method} ${path} -> ${code} ${location}"
@@ -349,10 +356,27 @@ jobs:
           expect GET /roadmap            301 /roadmaps            || rc=1
 
           # La vista Jinja montada bajo /api/v1: el GET se redirige y el POST
-          # tiene que seguir llegando a la API. 403 es el CSRF rechazando una
-          # petición sin token, que es la prueba de que llegó.
-          expect GET  /api/v1/auth/register 301 /register || rc=1
-          expect POST /api/v1/auth/register 403 ""        || rc=1
+          # tiene que seguir llegando a la API.
+          expect GET /api/v1/auth/register 301 /register || rc=1
+
+          # El POST se comprueba aparte porque necesita cuerpo. Sin él, Cloud
+          # Run contesta 411 antes de que la petición llegue a la aplicación,
+          # así que un POST vacío no prueba nada sobre el enrutado. Lo que se
+          # afirma es la invariante que importa —que NO lo captura el 301— y no
+          # un código concreto, que depende del CSRF y puede cambiar sin que el
+          # routing cambie.
+          reg_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            -X POST -H 'Content-Type: application/json' -d '{}' \
+            "${FRONT%/}/api/v1/auth/register" || true)"
+          case "$reg_code" in
+            30*)
+              echo "::error::POST /api/v1/auth/register respondió ${reg_code}: el 301 del GET se está llevando también el POST y el registro está roto"
+              rc=1
+              ;;
+            *)
+              echo "ok: POST /api/v1/auth/register llega a la API (${reg_code})"
+              ;;
+          esac
 
           # Montaje /static retirado: 301 lo que tiene sucesor, 410 lo que no.
           expect GET /static/images/Logo_Ready_to_Use.png 301 /images/Logo_Ready_to_Use.png || rc=1
