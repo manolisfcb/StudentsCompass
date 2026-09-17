@@ -12,16 +12,25 @@
       "file": "screens/root.desktop.png",
       "requests": [
         "GET /",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/HomePage-C8XTp6j8.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/sections-tSZFOO2U.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
         "GET /images/goal.svg",
+        "GET /images/logo.png",
         "GET /images/resources.svg",
         "GET /images/roadmap.svg"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -30,25 +39,25 @@
         ],
         "parity_size": [
           1440,
-          3239
+          4070
         ],
-        "layout_rms": 83.67,
+        "layout_rms": 68.5,
         "ink_baseline": 0.37524,
-        "ink_parity": 0.21387,
+        "ink_parity": 0.16235,
         "palette_baseline": {
           "teal": 0.03772,
           "teal_light": 0.01552,
           "ink": 0.14417
         },
         "palette_parity": {
-          "teal": 0.06858,
-          "teal_light": 0.0188,
-          "ink": 0.00133
+          "teal": 0.00175,
+          "teal_light": 0.00124,
+          "ink": 0.12787
         },
         "palette_px_parity": {
-          "teal": 52668,
-          "teal_light": 14435,
-          "ink": 1025
+          "teal": 1344,
+          "teal_light": 953,
+          "ink": 98203
         },
         "brand_preserved": true
       }
@@ -65,16 +74,25 @@
       "file": "screens/home.desktop.png",
       "requests": [
         "GET /",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/HomePage-C8XTp6j8.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/sections-tSZFOO2U.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
         "GET /images/goal.svg",
+        "GET /images/logo.png",
         "GET /images/resources.svg",
         "GET /images/roadmap.svg"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -83,25 +101,25 @@
         ],
         "parity_size": [
           1440,
-          3239
+          4070
         ],
-        "layout_rms": 83.67,
+        "layout_rms": 68.5,
         "ink_baseline": 0.37524,
-        "ink_parity": 0.21387,
+        "ink_parity": 0.16235,
         "palette_baseline": {
           "teal": 0.03772,
           "teal_light": 0.01552,
           "ink": 0.14417
         },
         "palette_parity": {
-          "teal": 0.06858,
-          "teal_light": 0.0188,
-          "ink": 0.00133
+          "teal": 0.00175,
+          "teal_light": 0.00124,
+          "ink": 0.12787
         },
         "palette_px_parity": {
-          "teal": 52668,
-          "teal_light": 14435,
-          "ink": 1025
+          "teal": 1344,
+          "teal_light": 953,
+          "ink": 98203
         },
         "brand_preserved": true
       }
@@ -118,13 +136,22 @@
       "file": "screens/about.desktop.png",
       "requests": [
         "GET /about",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png"
+        "GET /assets/AboutPage-PdAlavOz.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/sections-tSZFOO2U.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -133,25 +160,25 @@
         ],
         "parity_size": [
           1440,
-          4261
+          5711
         ],
-        "layout_rms": 69.78,
+        "layout_rms": 46.03,
         "ink_baseline": 0.28345,
-        "ink_parity": 0.23047,
+        "ink_parity": 0.2959,
         "palette_baseline": {
           "teal": 0.07217,
           "teal_light": 0.00073,
           "ink": 0.14936
         },
         "palette_parity": {
-          "teal": 0.04069,
-          "teal_light": 0.01554,
-          "ink": 0.06262
+          "teal": 0.0069,
+          "teal_light": 0.00713,
+          "ink": 0.13772
         },
         "palette_px_parity": {
-          "teal": 31251,
-          "teal_light": 11937,
-          "ink": 48090
+          "teal": 5302,
+          "teal_light": 5478,
+          "ink": 105772
         },
         "brand_preserved": true
       }
@@ -168,14 +195,23 @@
       "file": "screens/login.desktop.png",
       "requests": [
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/LoginPage-CADKPrIG.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/formParts-D_-jBWew.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /login"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -186,23 +222,23 @@
           1440,
           900
         ],
-        "layout_rms": 104.13,
+        "layout_rms": 66.07,
         "ink_baseline": 0.73486,
-        "ink_parity": 0.30737,
+        "ink_parity": 0.51953,
         "palette_baseline": {
           "teal": 0.35748,
           "teal_light": 0.0131,
           "ink": 0.00123
         },
         "palette_parity": {
-          "teal": 0.10272,
-          "teal_light": 0.01222,
-          "ink": 0.0002
+          "teal": 0.49075,
+          "teal_light": 0.0,
+          "ink": 0.00018
         },
         "palette_px_parity": {
-          "teal": 44373,
-          "teal_light": 5279,
-          "ink": 85
+          "teal": 212006,
+          "teal_light": 0,
+          "ink": 79
         },
         "brand_preserved": true
       }
@@ -219,14 +255,23 @@
       "file": "screens/register.desktop.png",
       "requests": [
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RegisterPage-BHdI4DHY.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/formParts-D_-jBWew.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /register"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -237,23 +282,23 @@
           1440,
           900
         ],
-        "layout_rms": 99.63,
+        "layout_rms": 55.44,
         "ink_baseline": 0.66284,
-        "ink_parity": 0.31958,
+        "ink_parity": 0.52441,
         "palette_baseline": {
           "teal": 0.28518,
           "teal_light": 0.00935,
           "ink": 0.00296
         },
         "palette_parity": {
-          "teal": 0.10395,
-          "teal_light": 0.01222,
-          "ink": 0.00055
+          "teal": 0.48439,
+          "teal_light": 0.0,
+          "ink": 0.00051
         },
         "palette_px_parity": {
-          "teal": 44908,
-          "teal_light": 5280,
-          "ink": 238
+          "teal": 209256,
+          "teal_light": 0,
+          "ink": 222
         },
         "brand_preserved": true
       }
@@ -270,12 +315,21 @@
       "file": "screens/admin-login.desktop.png",
       "requests": [
         "GET /admin/login",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css"
+        "GET /assets/AdminLoginPage-Db3NbsSh.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-CudukxVF.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -286,7 +340,7 @@
           1440,
           900
         ],
-        "layout_rms": 12.16,
+        "layout_rms": 14.0,
         "ink_baseline": 1.0,
         "ink_parity": 1.0,
         "palette_baseline": {
@@ -295,16 +349,16 @@
           "ink": 0.98275
         },
         "palette_parity": {
-          "teal": 0.01049,
+          "teal": 0.0,
           "teal_light": 0.0,
-          "ink": 0.98216
+          "ink": 0.98081
         },
         "palette_px_parity": {
-          "teal": 4532,
+          "teal": 0,
           "teal_light": 0,
-          "ink": 424293
+          "ink": 423711
         },
-        "brand_preserved": true
+        "brand_preserved": false
       }
     },
     {
@@ -320,13 +374,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/questionnaire",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/QuestionnairePage-DTO5oSE9.js",
+        "GET /assets/api-DPMTPi8C.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /questionnaire"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -337,23 +401,23 @@
           1440,
           900
         ],
-        "layout_rms": 101.09,
+        "layout_rms": 107.26,
         "ink_baseline": 0.2085,
-        "ink_parity": 0.0105,
+        "ink_parity": 0.0686,
         "palette_baseline": {
           "teal": 0.0,
           "teal_light": 0.0,
           "ink": 0.00321
         },
         "palette_parity": {
-          "teal": 0.0004,
+          "teal": 0.06043,
           "teal_light": 0.0,
-          "ink": 0.0008
+          "ink": 0.00025
         },
         "palette_px_parity": {
-          "teal": 174,
+          "teal": 26106,
           "teal_light": 0,
-          "ink": 344
+          "ink": 106
         },
         "brand_preserved": true
       }
@@ -377,13 +441,26 @@
         "GET /api/v1/resume-course-audits/attempts",
         "GET /api/v1/resumes",
         "GET /api/v1/users/me",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/ProfilePage-aSRollw-.js",
+        "GET /assets/ResumeAuditWidget-NSQa9JXC.js",
+        "GET /assets/api-B_pzz9Cl.js",
+        "GET /assets/api-DPMTPi8C.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /profile"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -392,25 +469,25 @@
         ],
         "parity_size": [
           1440,
-          2012
+          1852
         ],
-        "layout_rms": 52.34,
+        "layout_rms": 46.6,
         "ink_baseline": 0.10376,
-        "ink_parity": 0.00317,
+        "ink_parity": 0.0376,
         "palette_baseline": {
           "teal": 0.01564,
           "teal_light": 0.00646,
           "ink": 0.04093
         },
         "palette_parity": {
-          "teal": 0.00117,
+          "teal": 0.031,
           "teal_light": 0.0,
-          "ink": 0.00016
+          "ink": 0.00022
         },
         "palette_px_parity": {
-          "teal": 895,
+          "teal": 23810,
           "teal_light": 0,
-          "ink": 122
+          "ink": 166
         },
         "brand_preserved": true
       }
@@ -428,13 +505,22 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/dashboard/student",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /dashboard"
+        "GET /assets/DashboardPage-BNFkoW5O.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /dashboard",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -443,25 +529,25 @@
         ],
         "parity_size": [
           1440,
-          1164
+          1099
         ],
-        "layout_rms": 62.43,
+        "layout_rms": 54.83,
         "ink_baseline": 0.14648,
-        "ink_parity": 0.01416,
+        "ink_parity": 0.06641,
         "palette_baseline": {
           "teal": 0.02637,
           "teal_light": 0.00236,
           "ink": 0.05527
         },
         "palette_parity": {
-          "teal": 0.00627,
+          "teal": 0.04971,
           "teal_light": 0.0,
-          "ink": 0.00144
+          "ink": 0.00074
         },
         "palette_px_parity": {
-          "teal": 3503,
-          "teal_light": 2,
-          "ink": 807
+          "teal": 26222,
+          "teal_light": 0,
+          "ink": 388
         },
         "brand_preserved": true
       }
@@ -479,13 +565,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/resources",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/ResourcesListPage-DVonydew.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /resources"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -496,23 +592,23 @@
           1440,
           900
         ],
-        "layout_rms": 81.15,
+        "layout_rms": 74.4,
         "ink_baseline": 0.22144,
-        "ink_parity": 0.00513,
+        "ink_parity": 0.07251,
         "palette_baseline": {
           "teal": 0.04133,
           "teal_light": 0.00341,
           "ink": 0.09441
         },
         "palette_parity": {
-          "teal": 0.0007,
+          "teal": 0.06566,
           "teal_light": 0.0,
-          "ink": 0.00047
+          "ink": 0.0003
         },
         "palette_px_parity": {
-          "teal": 303,
+          "teal": 28367,
           "teal_light": 0,
-          "ink": 205
+          "ink": 131
         },
         "brand_preserved": true
       }
@@ -531,13 +627,25 @@
         "GET /api/v1/auth/session",
         "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
         "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/progress",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/ResourceDetailPage-CFXf-f9h.js",
+        "GET /assets/ResumeAuditWidget-NSQa9JXC.js",
+        "GET /assets/api-B_pzz9Cl.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -548,23 +656,23 @@
           1440,
           900
         ],
-        "layout_rms": 82.55,
+        "layout_rms": 75.75,
         "ink_baseline": 0.22534,
-        "ink_parity": 0.00781,
+        "ink_parity": 0.0769,
         "palette_baseline": {
           "teal": 0.03713,
           "teal_light": 0.00347,
           "ink": 0.09865
         },
         "palette_parity": {
-          "teal": 0.00194,
+          "teal": 0.06506,
           "teal_light": 0.0,
-          "ink": 0.00038
+          "ink": 8e-05
         },
         "palette_px_parity": {
-          "teal": 837,
+          "teal": 28108,
           "teal_light": 0,
-          "ink": 162
+          "ink": 35
         },
         "brand_preserved": true
       }
@@ -583,13 +691,23 @@
         "GET /api/v1/auth/session",
         "GET /api/v1/me/roadmaps",
         "GET /api/v1/roadmaps",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RoadmapsListPage-Cx8mDWIw.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /roadmaps"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -598,25 +716,25 @@
         ],
         "parity_size": [
           1440,
-          900
+          1121
         ],
-        "layout_rms": 65.88,
+        "layout_rms": 58.48,
         "ink_baseline": 0.14575,
-        "ink_parity": 0.01172,
+        "ink_parity": 0.05176,
         "palette_baseline": {
           "teal": 0.02741,
           "teal_light": 0.00213,
           "ink": 0.06176
         },
         "palette_parity": {
-          "teal": 0.00023,
+          "teal": 0.04676,
           "teal_light": 0.0,
-          "ink": 0.00121
+          "ink": 0.0006
         },
         "palette_px_parity": {
-          "teal": 101,
+          "teal": 25163,
           "teal_light": 0,
-          "ink": 524
+          "ink": 321
         },
         "brand_preserved": true
       }
@@ -634,13 +752,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/roadmaps/baseline-backend-engineer",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RoadmapDetailPage-S46A70SX.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /roadmaps/baseline-backend-engineer"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -651,23 +779,23 @@
           1440,
           900
         ],
-        "layout_rms": 87.51,
+        "layout_rms": 80.36,
         "ink_baseline": 0.30518,
-        "ink_parity": 0.00684,
+        "ink_parity": 0.0752,
         "palette_baseline": {
           "teal": 0.05175,
           "teal_light": 0.01129,
           "ink": 0.09732
         },
         "palette_parity": {
-          "teal": 0.00023,
+          "teal": 0.06026,
           "teal_light": 0.0,
-          "ink": 0.00118
+          "ink": 0.00077
         },
         "palette_px_parity": {
-          "teal": 101,
+          "teal": 26033,
           "teal_light": 0,
-          "ink": 509
+          "ink": 333
         },
         "brand_preserved": true
       }
@@ -685,13 +813,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/jobs/board",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/JobsPage-Dz7jipkq.js",
+        "GET /assets/api-DepJTqle.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /jobs"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -702,23 +840,23 @@
           1440,
           900
         ],
-        "layout_rms": 80.0,
+        "layout_rms": 73.1,
         "ink_baseline": 0.21899,
-        "ink_parity": 0.00757,
+        "ink_parity": 0.07471,
         "palette_baseline": {
           "teal": 0.02977,
           "teal_light": 0.00237,
           "ink": 0.10423
         },
         "palette_parity": {
-          "teal": 0.00191,
+          "teal": 0.06295,
           "teal_light": 0.0,
-          "ink": 0.0004
+          "ink": 0.00029
         },
         "palette_px_parity": {
-          "teal": 826,
+          "teal": 27196,
           "teal_light": 0,
-          "ink": 173
+          "ink": 127
         },
         "brand_preserved": true
       }
@@ -736,13 +874,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/dashboard",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company"
+        "GET /assets/CompanyDashboardPage-D24jVa15.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -753,25 +901,25 @@
           1440,
           900
         ],
-        "layout_rms": 82.56,
+        "layout_rms": 75.64,
         "ink_baseline": 0.26147,
-        "ink_parity": 0.00635,
+        "ink_parity": 0.06787,
         "palette_baseline": {
           "teal": 0.00075,
           "teal_light": 0.00059,
           "ink": 0.06969
         },
         "palette_parity": {
-          "teal": 0.00023,
+          "teal": 0.0,
           "teal_light": 0.0,
-          "ink": 0.00103
+          "ink": 0.05738
         },
         "palette_px_parity": {
-          "teal": 98,
+          "teal": 0,
           "teal_light": 0,
-          "ink": 447
+          "ink": 24789
         },
-        "brand_preserved": true
+        "brand_preserved": false
       }
     },
     {
@@ -787,13 +935,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/applicants",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company/applicants"
+        "GET /assets/ApplicantsPage-13j1CqWD.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company/applicants",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -804,23 +962,23 @@
           1440,
           900
         ],
-        "layout_rms": 104.05,
+        "layout_rms": 94.04,
         "ink_baseline": 0.36426,
-        "ink_parity": 0.00464,
+        "ink_parity": 0.06982,
         "palette_baseline": {
           "teal": 2e-05,
           "teal_light": 0.0,
           "ink": 0.10383
         },
         "palette_parity": {
-          "teal": 0.00026,
+          "teal": 0.00281,
           "teal_light": 0.0,
-          "ink": 0.0005
+          "ink": 0.05688
         },
         "palette_px_parity": {
-          "teal": 114,
+          "teal": 1214,
           "teal_light": 0,
-          "ink": 214
+          "ink": 24571
         },
         "brand_preserved": true
       }
@@ -838,13 +996,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/recruiters",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company/recruiters"
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RecruitersPage-Bh1Ree9C.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company/recruiters",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -855,23 +1023,23 @@
           1440,
           900
         ],
-        "layout_rms": 81.17,
+        "layout_rms": 68.86,
         "ink_baseline": 0.18921,
-        "ink_parity": 0.01099,
+        "ink_parity": 0.07007,
         "palette_baseline": {
           "teal": 0.00209,
           "teal_light": 0.0,
           "ink": 0.09526
         },
         "palette_parity": {
-          "teal": 0.00297,
+          "teal": 0.00225,
           "teal_light": 0.0,
-          "ink": 0.00051
+          "ink": 0.05689
         },
         "palette_px_parity": {
-          "teal": 1285,
+          "teal": 974,
           "teal_light": 0,
-          "ink": 220
+          "ink": 24576
         },
         "brand_preserved": true
       }
@@ -889,13 +1057,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/communities",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /community"
+        "GET /assets/CommunitiesListPage-ZyTAMiRY.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /community",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -906,23 +1084,23 @@
           1440,
           900
         ],
-        "layout_rms": 79.99,
+        "layout_rms": 72.22,
         "ink_baseline": 0.20459,
-        "ink_parity": 0.0105,
+        "ink_parity": 0.07251,
         "palette_baseline": {
           "teal": 0.04306,
           "teal_light": 0.00328,
           "ink": 0.08987
         },
         "palette_parity": {
-          "teal": 0.00339,
+          "teal": 0.06198,
           "teal_light": 0.0,
-          "ink": 0.00048
+          "ink": 0.00029
         },
         "palette_px_parity": {
-          "teal": 1465,
+          "teal": 26775,
           "teal_light": 0,
-          "ink": 208
+          "ink": 124
         },
         "brand_preserved": true
       }
@@ -942,13 +1120,23 @@
         "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
         "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership",
         "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts/enriched",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /community/27cbaf93-f0d7-48ab-8c4c-4a161941a817"
+        "GET /assets/CommunityFeedPage-Bi3lG60j.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /community/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -959,23 +1147,23 @@
           1440,
           900
         ],
-        "layout_rms": 74.46,
+        "layout_rms": 66.14,
         "ink_baseline": 0.19946,
-        "ink_parity": 0.00684,
+        "ink_parity": 0.0686,
         "palette_baseline": {
           "teal": 0.03218,
           "teal_light": 0.00276,
           "ink": 0.07966
         },
         "palette_parity": {
-          "teal": 0.0016,
+          "teal": 0.0581,
           "teal_light": 0.0,
-          "ink": 0.00036
+          "ink": 0.00047
         },
         "palette_px_parity": {
-          "teal": 691,
+          "teal": 25101,
           "teal_light": 0,
-          "ink": 155
+          "ink": 202
         },
         "brand_preserved": true
       }
@@ -996,13 +1184,23 @@
         "GET /api/v1/capstone/learning-route/runs",
         "GET /api/v1/capstone/resumes/0e475b0f-a365-41fb-baea-25553c1b86fe/skills",
         "GET /api/v1/resumes",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /career-lab"
+        "GET /assets/CareerLabPage-B1yQ60sx.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-B_pzz9Cl.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /career-lab",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1011,25 +1209,25 @@
         ],
         "parity_size": [
           1440,
-          1077
+          1078
         ],
-        "layout_rms": 46.71,
+        "layout_rms": 45.65,
         "ink_baseline": 0.08057,
-        "ink_parity": 0.01611,
+        "ink_parity": 0.07593,
         "palette_baseline": {
           "teal": 0.01293,
           "teal_light": 0.00098,
           "ink": 0.02987
         },
         "palette_parity": {
-          "teal": 0.00541,
+          "teal": 0.05798,
           "teal_light": 0.0,
-          "ink": 0.00126
+          "ink": 0.00061
         },
         "palette_px_parity": {
-          "teal": 2795,
+          "teal": 29999,
           "teal_light": 0,
-          "ink": 652
+          "ink": 315
         },
         "brand_preserved": true
       }
@@ -1048,12 +1246,21 @@
         "GET /admin",
         "GET /api/v1/admin/stats",
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css"
+        "GET /assets/AdminPage-BrTp6vfE.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-CudukxVF.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1064,7 +1271,7 @@
           1440,
           900
         ],
-        "layout_rms": 13.48,
+        "layout_rms": 8.13,
         "ink_baseline": 1.0,
         "ink_parity": 1.0,
         "palette_baseline": {
@@ -1073,16 +1280,16 @@
           "ink": 0.98124
         },
         "palette_parity": {
-          "teal": 0.00195,
-          "teal_light": 0.00016,
-          "ink": 0.97966
+          "teal": 0.0,
+          "teal_light": 0.0,
+          "ink": 0.98985
         },
         "palette_px_parity": {
-          "teal": 844,
-          "teal_light": 67,
-          "ink": 423214
+          "teal": 0,
+          "teal_light": 0,
+          "ink": 427616
         },
-        "brand_preserved": true
+        "brand_preserved": false
       }
     },
     {
@@ -1098,13 +1305,23 @@
       "requests": [
         "GET /api/v1/applications/page",
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/ApplicationsPage-d8DxSp64.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-DepJTqle.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /jobs/applications"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": "listado de candidaturas; en el monolito viv\u00eda dentro de /jobs"
     },
     {
@@ -1120,13 +1337,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/job-postings",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company/postings"
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/JobPostingsPage-F71j5ExT.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company/postings",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": "gesti\u00f3n de ofertas; en el monolito viv\u00eda dentro de /company-dashboard"
     },
     {
@@ -1142,13 +1369,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/conversations",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/MessagesPage-B3BcSOZh.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /messages"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": "mensajer\u00eda; nunca tuvo pantalla legacy (TASK-024 la dej\u00f3 solo como API)"
     },
     {
@@ -1163,16 +1400,25 @@
       "file": "screens/root.mobile.png",
       "requests": [
         "GET /",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/HomePage-C8XTp6j8.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/sections-tSZFOO2U.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
         "GET /images/goal.svg",
+        "GET /images/logo.png",
         "GET /images/resources.svg",
         "GET /images/roadmap.svg"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1181,25 +1427,25 @@
         ],
         "parity_size": [
           390,
-          6745
+          7725
         ],
-        "layout_rms": 80.12,
+        "layout_rms": 56.25,
         "ink_baseline": 0.35278,
-        "ink_parity": 0.20776,
+        "ink_parity": 0.15161,
         "palette_baseline": {
           "teal": 0.02501,
           "teal_light": 0.00737,
           "ink": 0.15171
         },
         "palette_parity": {
-          "teal": 0.04347,
-          "teal_light": 0.00399,
-          "ink": 0.00462
+          "teal": 0.00344,
+          "teal_light": 0.00257,
+          "ink": 0.11955
         },
         "palette_px_parity": {
-          "teal": 27127,
-          "teal_light": 2491,
-          "ink": 2883
+          "teal": 2149,
+          "teal_light": 1604,
+          "ink": 74597
         },
         "brand_preserved": true
       }
@@ -1216,16 +1462,25 @@
       "file": "screens/home.mobile.png",
       "requests": [
         "GET /",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/HomePage-C8XTp6j8.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/sections-tSZFOO2U.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
         "GET /images/goal.svg",
+        "GET /images/logo.png",
         "GET /images/resources.svg",
         "GET /images/roadmap.svg"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1234,25 +1489,25 @@
         ],
         "parity_size": [
           390,
-          6745
+          7725
         ],
-        "layout_rms": 80.12,
+        "layout_rms": 56.25,
         "ink_baseline": 0.35278,
-        "ink_parity": 0.20776,
+        "ink_parity": 0.15161,
         "palette_baseline": {
           "teal": 0.02501,
           "teal_light": 0.00737,
           "ink": 0.15171
         },
         "palette_parity": {
-          "teal": 0.04347,
-          "teal_light": 0.00399,
-          "ink": 0.00462
+          "teal": 0.00344,
+          "teal_light": 0.00257,
+          "ink": 0.11955
         },
         "palette_px_parity": {
-          "teal": 27127,
-          "teal_light": 2491,
-          "ink": 2883
+          "teal": 2149,
+          "teal_light": 1604,
+          "ink": 74597
         },
         "brand_preserved": true
       }
@@ -1269,13 +1524,22 @@
       "file": "screens/about.mobile.png",
       "requests": [
         "GET /about",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png"
+        "GET /assets/AboutPage-PdAlavOz.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/sections-tSZFOO2U.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1284,25 +1548,25 @@
         ],
         "parity_size": [
           390,
-          8279
+          10041
         ],
-        "layout_rms": 58.63,
+        "layout_rms": 27.28,
         "ink_baseline": 0.25366,
-        "ink_parity": 0.23169,
+        "ink_parity": 0.23511,
         "palette_baseline": {
           "teal": 0.03431,
           "teal_light": 0.00045,
           "ink": 0.12497
         },
         "palette_parity": {
-          "teal": 0.03676,
-          "teal_light": 0.00624,
-          "ink": 0.06701
+          "teal": 0.00404,
+          "teal_light": 0.00686,
+          "ink": 0.11231
         },
         "palette_px_parity": {
-          "teal": 22937,
-          "teal_light": 3892,
-          "ink": 41812
+          "teal": 2522,
+          "teal_light": 4278,
+          "ink": 70080
         },
         "brand_preserved": true
       }
@@ -1319,14 +1583,23 @@
       "file": "screens/login.mobile.png",
       "requests": [
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/LoginPage-CADKPrIG.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/formParts-D_-jBWew.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /login"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1335,25 +1608,25 @@
         ],
         "parity_size": [
           390,
-          1513
+          844
         ],
-        "layout_rms": 83.37,
+        "layout_rms": 83.13,
         "ink_baseline": 0.48584,
-        "ink_parity": 0.56348,
+        "ink_parity": 0.0686,
         "palette_baseline": {
           "teal": 0.24086,
           "teal_light": 0.01569,
           "ink": 0.00527
         },
         "palette_parity": {
-          "teal": 0.21657,
-          "teal_light": 0.00459,
-          "ink": 0.00135
+          "teal": 0.05376,
+          "teal_light": 0.0,
+          "ink": 0.00308
         },
         "palette_px_parity": {
-          "teal": 127791,
-          "teal_light": 2711,
-          "ink": 798
+          "teal": 17695,
+          "teal_light": 0,
+          "ink": 1015
         },
         "brand_preserved": true
       }
@@ -1370,14 +1643,23 @@
       "file": "screens/register.mobile.png",
       "requests": [
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /images/Logo_Ready_to_Use.png",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RegisterPage-BHdI4DHY.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/formParts-D_-jBWew.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /register"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1386,25 +1668,25 @@
         ],
         "parity_size": [
           390,
-          1873
+          942
         ],
-        "layout_rms": 88.86,
+        "layout_rms": 69.6,
         "ink_baseline": 0.33813,
-        "ink_parity": 0.47949,
+        "ink_parity": 0.06909,
         "palette_baseline": {
           "teal": 0.15056,
           "teal_light": 0.01432,
           "ink": 0.01191
         },
         "palette_parity": {
-          "teal": 0.17876,
-          "teal_light": 0.00371,
-          "ink": 0.00205
+          "teal": 0.04584,
+          "teal_light": 0.0,
+          "ink": 0.00701
         },
         "palette_px_parity": {
-          "teal": 111544,
-          "teal_light": 2317,
-          "ink": 1279
+          "teal": 16842,
+          "teal_light": 0,
+          "ink": 2577
         },
         "brand_preserved": true
       }
@@ -1421,12 +1703,21 @@
       "file": "screens/admin-login.mobile.png",
       "requests": [
         "GET /admin/login",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css"
+        "GET /assets/AdminLoginPage-Db3NbsSh.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-CudukxVF.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1437,7 +1728,7 @@
           390,
           844
         ],
-        "layout_rms": 22.09,
+        "layout_rms": 25.89,
         "ink_baseline": 1.0,
         "ink_parity": 1.0,
         "palette_baseline": {
@@ -1446,16 +1737,16 @@
           "ink": 0.952
         },
         "palette_parity": {
-          "teal": 0.0319,
+          "teal": 0.0,
           "teal_light": 0.0,
-          "ink": 0.94344
+          "ink": 0.93508
         },
         "palette_px_parity": {
-          "teal": 10499,
+          "teal": 0,
           "teal_light": 0,
-          "ink": 310542
+          "ink": 307792
         },
-        "brand_preserved": true
+        "brand_preserved": false
       }
     },
     {
@@ -1471,13 +1762,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/questionnaire",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/QuestionnairePage-DTO5oSE9.js",
+        "GET /assets/api-DPMTPi8C.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /questionnaire"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1488,23 +1789,23 @@
           390,
           844
         ],
-        "layout_rms": 26.1,
+        "layout_rms": 46.56,
         "ink_baseline": 0.04199,
-        "ink_parity": 0.05225,
+        "ink_parity": 0.09814,
         "palette_baseline": {
           "teal": 0.0,
           "teal_light": 0.0,
           "ink": 0.00587
         },
         "palette_parity": {
-          "teal": 0.0029,
+          "teal": 0.06737,
           "teal_light": 0.0,
-          "ink": 0.01495
+          "ink": 0.00888
         },
         "palette_px_parity": {
-          "teal": 954,
+          "teal": 22177,
           "teal_light": 0,
-          "ink": 4921
+          "ink": 2922
         },
         "brand_preserved": true
       }
@@ -1528,13 +1829,26 @@
         "GET /api/v1/resume-course-audits/attempts",
         "GET /api/v1/resumes",
         "GET /api/v1/users/me",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/ProfilePage-aSRollw-.js",
+        "GET /assets/ResumeAuditWidget-NSQa9JXC.js",
+        "GET /assets/api-B_pzz9Cl.js",
+        "GET /assets/api-DPMTPi8C.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /profile"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1543,25 +1857,25 @@
         ],
         "parity_size": [
           390,
-          2352
+          2665
         ],
-        "layout_rms": 62.47,
+        "layout_rms": 58.27,
         "ink_baseline": 0.12207,
-        "ink_parity": 0.0144,
+        "ink_parity": 0.04761,
         "palette_baseline": {
           "teal": 0.01316,
           "teal_light": 0.01402,
           "ink": 0.07024
         },
         "palette_parity": {
-          "teal": 0.00446,
+          "teal": 0.02673,
           "teal_light": 0.0,
-          "ink": 0.0053
+          "ink": 0.00485
         },
         "palette_px_parity": {
-          "teal": 2786,
+          "teal": 16682,
           "teal_light": 0,
-          "ink": 3309
+          "ink": 3024
         },
         "brand_preserved": true
       }
@@ -1579,13 +1893,22 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/dashboard/student",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /dashboard"
+        "GET /assets/DashboardPage-BNFkoW5O.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /dashboard",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1593,26 +1916,26 @@
           2783
         ],
         "parity_size": [
-          390,
-          2044
+          403,
+          1835
         ],
-        "layout_rms": 67.34,
+        "layout_rms": 61.81,
         "ink_baseline": 0.17212,
-        "ink_parity": 0.00757,
+        "ink_parity": 0.04395,
         "palette_baseline": {
           "teal": 0.02647,
           "teal_light": 0.00393,
           "ink": 0.07794
         },
         "palette_parity": {
-          "teal": 0.00405,
-          "teal_light": 1e-05,
-          "ink": 0.00765
+          "teal": 0.03243,
+          "teal_light": 0.0,
+          "ink": 0.00565
         },
         "palette_px_parity": {
-          "teal": 2529,
-          "teal_light": 5,
-          "ink": 4772
+          "teal": 20908,
+          "teal_light": 0,
+          "ink": 3643
         },
         "brand_preserved": true
       }
@@ -1630,13 +1953,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/resources",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/ResourcesListPage-DVonydew.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /resources"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1647,23 +1980,23 @@
           390,
           844
         ],
-        "layout_rms": 99.54,
+        "layout_rms": 95.4,
         "ink_baseline": 0.31274,
-        "ink_parity": 0.02075,
+        "ink_parity": 0.12695,
         "palette_baseline": {
           "teal": 0.04981,
           "teal_light": 0.00474,
           "ink": 0.16124
         },
         "palette_parity": {
-          "teal": 0.00501,
+          "teal": 0.10192,
           "teal_light": 0.0,
-          "ink": 0.00434
+          "ink": 0.00375
         },
         "palette_px_parity": {
-          "teal": 1648,
+          "teal": 33547,
           "teal_light": 0,
-          "ink": 1429
+          "ink": 1234
         },
         "brand_preserved": true
       }
@@ -1682,13 +2015,25 @@
         "GET /api/v1/auth/session",
         "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
         "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/progress",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/ResourceDetailPage-CFXf-f9h.js",
+        "GET /assets/ResumeAuditWidget-NSQa9JXC.js",
+        "GET /assets/api-B_pzz9Cl.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1697,25 +2042,25 @@
         ],
         "parity_size": [
           390,
-          844
+          989
         ],
-        "layout_rms": 95.11,
+        "layout_rms": 88.89,
         "ink_baseline": 0.25464,
-        "ink_parity": 0.0332,
+        "ink_parity": 0.09326,
         "palette_baseline": {
           "teal": 0.02618,
           "teal_light": 0.00403,
           "ink": 0.15202
         },
         "palette_parity": {
-          "teal": 0.0118,
+          "teal": 0.07233,
           "teal_light": 0.0,
-          "ink": 0.00491
+          "ink": 0.00263
         },
         "palette_px_parity": {
-          "teal": 3884,
+          "teal": 27899,
           "teal_light": 0,
-          "ink": 1617
+          "ink": 1016
         },
         "brand_preserved": true
       }
@@ -1734,13 +2079,23 @@
         "GET /api/v1/auth/session",
         "GET /api/v1/me/roadmaps",
         "GET /api/v1/roadmaps",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RoadmapsListPage-Cx8mDWIw.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /roadmaps"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1749,25 +2104,25 @@
         ],
         "parity_size": [
           390,
-          844
+          1229
         ],
-        "layout_rms": 82.29,
+        "layout_rms": 75.87,
         "ink_baseline": 0.23071,
-        "ink_parity": 0.04492,
+        "ink_parity": 0.06812,
         "palette_baseline": {
           "teal": 0.03915,
           "teal_light": 0.00289,
           "ink": 0.11355
         },
         "palette_parity": {
-          "teal": 0.00296,
+          "teal": 0.04717,
           "teal_light": 0.0,
-          "ink": 0.01368
+          "ink": 0.00975
         },
         "palette_px_parity": {
-          "teal": 973,
+          "teal": 22611,
           "teal_light": 0,
-          "ink": 4503
+          "ink": 4674
         },
         "brand_preserved": true
       }
@@ -1785,13 +2140,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/roadmaps/baseline-backend-engineer",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RoadmapDetailPage-S46A70SX.js",
+        "GET /assets/api-DSKn7Nti.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /roadmaps/baseline-backend-engineer"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1800,25 +2165,25 @@
         ],
         "parity_size": [
           390,
-          1008
+          1037
         ],
-        "layout_rms": 98.69,
+        "layout_rms": 89.24,
         "ink_baseline": 0.36792,
-        "ink_parity": 0.01953,
+        "ink_parity": 0.10474,
         "palette_baseline": {
           "teal": 0.05063,
           "teal_light": 0.0108,
           "ink": 0.14185
         },
         "palette_parity": {
-          "teal": 0.00248,
+          "teal": 0.062,
           "teal_light": 0.0,
-          "ink": 0.00978
+          "ink": 0.00899
         },
         "palette_px_parity": {
-          "teal": 973,
+          "teal": 25076,
           "teal_light": 0,
-          "ink": 3846
+          "ink": 3636
         },
         "brand_preserved": true
       }
@@ -1836,13 +2201,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/jobs/board",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/JobsPage-Dz7jipkq.js",
+        "GET /assets/api-DepJTqle.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /jobs"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1851,25 +2226,25 @@
         ],
         "parity_size": [
           390,
-          844
+          1004
         ],
-        "layout_rms": 102.62,
+        "layout_rms": 94.4,
         "ink_baseline": 0.33154,
-        "ink_parity": 0.03149,
+        "ink_parity": 0.12622,
         "palette_baseline": {
           "teal": 0.03647,
           "teal_light": 0.00218,
           "ink": 0.20828
         },
         "palette_parity": {
-          "teal": 0.01021,
+          "teal": 0.09693,
           "teal_light": 0.0,
-          "ink": 0.00617
+          "ink": 0.00489
         },
         "palette_px_parity": {
-          "teal": 3362,
+          "teal": 37953,
           "teal_light": 0,
-          "ink": 2031
+          "ink": 1915
         },
         "brand_preserved": true
       }
@@ -1887,13 +2262,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/dashboard",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company"
+        "GET /assets/CompanyDashboardPage-D24jVa15.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1902,27 +2287,27 @@
         ],
         "parity_size": [
           390,
-          992
+          844
         ],
-        "layout_rms": 80.75,
+        "layout_rms": 78.41,
         "ink_baseline": 0.21216,
-        "ink_parity": 0.01733,
+        "ink_parity": 0.09839,
         "palette_baseline": {
           "teal": 0.00467,
           "teal_light": 0.00101,
           "ink": 0.08789
         },
         "palette_parity": {
-          "teal": 0.0026,
+          "teal": 0.0001,
           "teal_light": 0.0,
-          "ink": 0.00835
+          "ink": 0.07421
         },
         "palette_px_parity": {
-          "teal": 1004,
+          "teal": 32,
           "teal_light": 0,
-          "ink": 3232
+          "ink": 24426
         },
-        "brand_preserved": true
+        "brand_preserved": false
       }
     },
     {
@@ -1938,13 +2323,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/applicants",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company/applicants"
+        "GET /assets/ApplicantsPage-13j1CqWD.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company/applicants",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -1955,23 +2350,23 @@
           390,
           844
         ],
-        "layout_rms": 106.29,
+        "layout_rms": 98.59,
         "ink_baseline": 0.35303,
-        "ink_parity": 0.02124,
+        "ink_parity": 0.10522,
         "palette_baseline": {
           "teal": 0.00027,
           "teal_light": 0.0,
           "ink": 0.14544
         },
         "palette_parity": {
-          "teal": 0.00428,
+          "teal": 0.01236,
           "teal_light": 0.0,
-          "ink": 0.00636
+          "ink": 0.07047
         },
         "palette_px_parity": {
-          "teal": 1409,
+          "teal": 4068,
           "teal_light": 0,
-          "ink": 2092
+          "ink": 23195
         },
         "brand_preserved": true
       }
@@ -1989,13 +2384,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/recruiters",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company/recruiters"
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/RecruitersPage-Bh1Ree9C.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company/recruiters",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -2006,23 +2411,23 @@
           390,
           844
         ],
-        "layout_rms": 81.17,
+        "layout_rms": 81.16,
         "ink_baseline": 0.17163,
-        "ink_parity": 0.04858,
+        "ink_parity": 0.10522,
         "palette_baseline": {
           "teal": 0.01151,
           "teal_light": 0.0,
           "ink": 0.10088
         },
         "palette_parity": {
-          "teal": 0.0149,
+          "teal": 0.01037,
           "teal_light": 0.0,
-          "ink": 0.00469
+          "ink": 0.06976
         },
         "palette_px_parity": {
-          "teal": 4904,
+          "teal": 3412,
           "teal_light": 0,
-          "ink": 1543
+          "ink": 22962
         },
         "brand_preserved": true
       }
@@ -2040,13 +2445,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/communities",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /community"
+        "GET /assets/CommunitiesListPage-ZyTAMiRY.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /community",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -2057,23 +2472,23 @@
           390,
           844
         ],
-        "layout_rms": 99.17,
+        "layout_rms": 91.52,
         "ink_baseline": 0.29614,
-        "ink_parity": 0.04175,
+        "ink_parity": 0.10449,
         "palette_baseline": {
           "teal": 0.05987,
           "teal_light": 0.00456,
           "ink": 0.14927
         },
         "palette_parity": {
-          "teal": 0.01654,
+          "teal": 0.08344,
           "teal_light": 0.0,
-          "ink": 0.0055
+          "ink": 0.00503
         },
         "palette_px_parity": {
-          "teal": 5443,
+          "teal": 27464,
           "teal_light": 0,
-          "ink": 1809
+          "ink": 1655
         },
         "brand_preserved": true
       }
@@ -2093,13 +2508,23 @@
         "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
         "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership",
         "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts/enriched",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /community/27cbaf93-f0d7-48ab-8c4c-4a161941a817"
+        "GET /assets/CommunityFeedPage-Bi3lG60j.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /community/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -2108,25 +2533,25 @@
         ],
         "parity_size": [
           390,
-          846
+          1078
         ],
-        "layout_rms": 78.07,
+        "layout_rms": 70.78,
         "ink_baseline": 0.19556,
-        "ink_parity": 0.02832,
+        "ink_parity": 0.07715,
         "palette_baseline": {
           "teal": 0.02441,
           "teal_light": 0.00253,
           "ink": 0.10125
         },
         "palette_parity": {
-          "teal": 0.0088,
+          "teal": 0.05265,
           "teal_light": 0.0,
-          "ink": 0.00581
+          "ink": 0.00653
         },
         "palette_px_parity": {
-          "teal": 2905,
+          "teal": 22135,
           "teal_light": 0,
-          "ink": 1916
+          "ink": 2746
         },
         "brand_preserved": true
       }
@@ -2147,13 +2572,23 @@
         "GET /api/v1/capstone/learning-route/runs",
         "GET /api/v1/capstone/resumes/0e475b0f-a365-41fb-baea-25553c1b86fe/skills",
         "GET /api/v1/resumes",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /career-lab"
+        "GET /assets/CareerLabPage-B1yQ60sx.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-B_pzz9Cl.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /career-lab",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -2162,25 +2597,25 @@
         ],
         "parity_size": [
           390,
-          1618
+          1553
         ],
-        "layout_rms": 45.17,
+        "layout_rms": 50.46,
         "ink_baseline": 0.06665,
-        "ink_parity": 0.03711,
+        "ink_parity": 0.11401,
         "palette_baseline": {
           "teal": 0.00953,
           "teal_light": 0.00084,
           "ink": 0.03071
         },
         "palette_parity": {
-          "teal": 0.01449,
+          "teal": 0.08058,
           "teal_light": 0.0,
-          "ink": 0.00841
+          "ink": 0.00758
         },
         "palette_px_parity": {
-          "teal": 9039,
+          "teal": 48806,
           "teal_light": 0,
-          "ink": 5247
+          "ink": 4588
         },
         "brand_preserved": true
       }
@@ -2199,12 +2634,21 @@
         "GET /admin",
         "GET /api/v1/admin/stats",
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css"
+        "GET /assets/AdminPage-BrTp6vfE.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-CudukxVF.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": null,
       "comparison": {
         "baseline_size": [
@@ -2213,27 +2657,27 @@
         ],
         "parity_size": [
           390,
-          852
+          844
         ],
-        "layout_rms": 21.71,
+        "layout_rms": 13.67,
         "ink_baseline": 0.99976,
-        "ink_parity": 0.99951,
+        "ink_parity": 1.0,
         "palette_baseline": {
           "teal": 3e-05,
           "teal_light": 0.0,
           "ink": 0.98364
         },
         "palette_parity": {
-          "teal": 0.00289,
-          "teal_light": 0.00143,
-          "ink": 0.94461
+          "teal": 0.0,
+          "teal_light": 0.0,
+          "ink": 0.98585
         },
         "palette_px_parity": {
-          "teal": 960,
-          "teal_light": 475,
-          "ink": 313874
+          "teal": 0,
+          "teal_light": 0,
+          "ink": 324504
         },
-        "brand_preserved": true
+        "brand_preserved": false
       }
     },
     {
@@ -2249,13 +2693,23 @@
       "requests": [
         "GET /api/v1/applications/page",
         "GET /api/v1/auth/session",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/ApplicationsPage-d8DxSp64.js",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/api-DepJTqle.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /jobs/applications"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": "listado de candidaturas; en el monolito viv\u00eda dentro de /jobs"
     },
     {
@@ -2271,13 +2725,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/companies/me/job-postings",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
-        "GET /company/postings"
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/JobPostingsPage-F71j5ExT.js",
+        "GET /assets/api-KT06_TM5.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /company/postings",
+        "GET /images/logo.png"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": "gesti\u00f3n de ofertas; en el monolito viv\u00eda dentro de /company-dashboard"
     },
     {
@@ -2293,13 +2757,23 @@
       "requests": [
         "GET /api/v1/auth/session",
         "GET /api/v1/conversations",
-        "GET /assets/index-vJCjfsOR.js",
-        "GET /assets/index-vLAm1Xdm.css",
+        "GET /assets/DocumentMeta-Cq-aMKfV.js",
+        "GET /assets/MessagesPage-B3BcSOZh.js",
+        "GET /assets/api-Dr7NlNPI.js",
+        "GET /assets/client-C--s_6rh.js",
+        "GET /assets/index-BaI5pXLZ.js",
+        "GET /assets/index-m2l2RKKt.css",
+        "GET /assets/rolldown-runtime-CbXtAM7H.js",
+        "GET /assets/ui-Bz_wujTe.js",
+        "GET /assets/useTranslation-CZOZcRt5.js",
+        "GET /images/logo.png",
         "GET /messages"
       ],
       "legacy_requests": [],
       "page_errors": [],
-      "blocked_external_requests": [],
+      "blocked_external_requests": [
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      ],
       "note": "mensajer\u00eda; nunca tuvo pantalla legacy (TASK-024 la dej\u00f3 solo como API)"
     }
   ],

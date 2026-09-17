@@ -271,6 +271,27 @@ jobs:
             --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
           echo "service_url=${SERVICE_URL}" >> "$GITHUB_OUTPUT"
 
+      # Promoción explícita, igual que la API, y por una razón que costó dos
+      # despliegues descubrir: el job de `rollback` devuelve el tráfico con
+      # `update-traffic --to-revisions <anterior>=100`, y eso CLAVA el servicio
+      # en una revisión con nombre. A partir de ahí `gcloud run deploy` sigue
+      # creando revisiones sanas que reciben el 0% del tráfico, en silencio y
+      # con código de salida 0.
+      #
+      # El efecto observado: tras el rollback del despliegue de 3f1aa0a, el de
+      # c9da16f creó las revisiones 00007 y 00008 mientras el tráfico seguía en
+      # 00006. El smoke medía la URL del servicio, o sea la revisión vieja, veía
+      # el comportamiento anterior, fallaba y disparaba otro rollback. Un bucle
+      # en el que cada vuelta parece un fallo del código nuevo y ninguna lo es.
+      #
+      # Una vuelta atrás no puede ser una puerta de un solo sentido. Esto la
+      # cierra: el despliegue siguiente vuelve a mandar, sin intervención.
+      - name: Promover el frontend
+        run: |
+          gcloud run services update-traffic "$FRONT_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${{ steps.deploy_front.outputs.new_revision }}=100"
+
       # --- Smoke público -----------------------------------------------------
       #
       # Contra PUBLIC_BASE_URL si TASK-057 ya mapeó un dominio; si no, contra la

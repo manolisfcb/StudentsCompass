@@ -11268,6 +11268,44 @@ Los criterios de aceptación siguen todos sin marcar: ninguno habla del
 pre-flight, y los cuatro primeros dependen de una ventana de observación que no
 ha empezado.
 
+**Actualización 2026-09-17 (tarde) — el pre-flight queda cerrado; el repunte
+sigue sin ejecutarse, ahora por una razón distinta y menor.**
+
+Lo hecho en esta vuelta está detallado en
+[10_CUTOVER_RUNBOOK.md](10_CUTOVER_RUNBOOK.md) §11, que es el documento
+operativo de esta ficha. En resumen:
+
+- **B5 cerrado.** Los dos servicios han desplegado desde `main` sin intervención
+  manual; la causa del atasco era el falso positivo de gitleaks, no desatención.
+- **La última casilla del §5 cerrada:** una URL inexistente responde 404 y no
+  200 (`47e3bb7`). Repuntar sin esto habría metido una regresión de SEO creada
+  por el propio cutover, porque el monolito que se sustituye sí devuelve 404.
+- **Paridad medida:** cero peticiones al contrato legacy, cero violaciones de
+  permisos, 48 capturas comparadas contra la baseline de TASK-035.
+- **El único 5xx del informe de paridad, archivado con evidencia:** las 12 filas
+  de `user_questionnaires` en producción guardan `answers` y `results` como
+  array, así que el 500 de `GET /api/v1/questionnaire/profile` era un artefacto
+  de la semilla y no algo que el cutover fuera a exponer.
+
+**Un defecto de despliegue que esta ficha descubrió y que no estaba en B1–B10.**
+El job de `rollback` clava el tráfico con `update-traffic --to-revisions`, y a
+partir de ahí `gcloud run deploy` crea revisiones que reciben el 0% en silencio.
+El resultado es un bucle: el smoke mide la revisión vieja, falla, dispara otro
+rollback, y cada vuelta parece un fallo del código nuevo. Corregido con un paso
+`Promover el frontend` explícito, igual que el que la API ya tenía. Queda escrito
+en el runbook porque habría mordido al siguiente que desplegara, con cutover o
+sin él.
+
+**Lo que impide cerrar esta ficha, y es el mismo acto de siempre:** repuntar el
+mapeo de dominio al frontend. Los dos comandos están en §5 del runbook, con su
+vuelta atrás en §6. A día de hoy siguen sin ejecutarse, y con ellos siguen sin
+poder empezar la ventana de observación, la congelación y el canary.
+
+**Estado del tráfico mientras tanto, para que nadie lo lea mal:** el frontend
+sirve `52a4087` desde `00006-vp6` y la API `52a4087` desde `00032-zih`, las dos
+clavadas por el rollback descrito arriba, aunque existan revisiones sanas de
+`c9da16f`. Destrabarlas es un `update-traffic` y es el primer paso del repunte.
+
 ### Estimated Impact
 
 Security: HIGH

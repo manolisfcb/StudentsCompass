@@ -836,19 +836,100 @@ completa de rutas responde lo que esta sección dice. En el repositorio:
 
 **Pendiente antes de repuntar el dominio:**
 
-- **B5** — desplegar el SHA que se quiere cortar. La tubería quedó desbloqueada
-  al corregir el falso positivo de gitleaks; falta que un `ci` verde dispare el
-  `deploy` y comprobar el resultado en el `run.app` del frontend.
-- Recorrido autenticado completo contra `verify_parity.py`, como estudiante y
-  como recruiter.
-- Elegir la franja horaria del repunte. El tráfico real de la muestra se
-  concentra en horario diurno norteamericano, y entre borrar el mapeo y
-  recrearlo el dominio no resuelve.
+- **El repunte en sí.** Es el único paso que queda, y son dos comandos (§5).
+- Nada más. Los tres puntos que esta lista tenía el 17/09 por la mañana están
+  cerrados; lo que sigue documenta con qué.
+
+### Actualización 2026-09-17 (tarde) — el pre-flight se cierra
+
+**B5, resuelto, y con la causa correcta escrita.** No era desatención: `ci`
+llevaba rojo desde el 17/09 por un falso positivo de gitleaks, y `deploy.yml`
+solo corre sobre un `ci` verde. Corregido en `b0a1d45`. Hoy los dos servicios
+han desplegado `3f1aa0a` y `c9da16f` sin intervención manual.
+
+**La última casilla del §5 que faltaba: una URL inexistente responde 404.**
+Respondía 200 —el fallback del SPA no distingue una pantalla de una errata— y
+esto no era un detalle cosmético: el monolito que se sustituye devuelve un 404
+de verdad, medido contra el dominio vivo (`404`, 22 bytes), así que repuntar sin
+resolverlo habría metido una regresión de SEO **creada por el propio cutover**.
+
+Resuelto en `47e3bb7`: `nginx.conf` lleva ahora la tabla de rutas en
+`map $uri $spa_route_known` y el fallback la consulta *después* de que
+`try_files` no haya encontrado fichero, de modo que el mapa nunca puede vetar un
+fichero que sí está. Una ruta desconocida sale con `return 404` y `error_page`
+la devuelve con el documento del SPA: el crawler lee 404 y la persona ve la
+pantalla de NotFound. `error_page` vive dentro de `location @spa` y no a nivel de
+servidor, o las 18.068 sondas de escáner de §8 recibirían copias del documento
+de entrada en vez de la página de nginx.
+
+La dirección peligrosa de un mapa de rutas es una sola: una ruta que falte del
+mapa 404-ea una pantalla real, y en silencio, porque el SPA la sigue pintando.
+Por eso el test recorre el router y no una lista escrita a mano — añadir una
+pantalla sin añadirla a nginx rompe CI en vez de romper producción.
+
+**Verificado contra nginx, no leyendo:** el contenedor
+`nginx-unprivileged:1.29-alpine` con el bundle real. 25 rutas a 200, cinco
+desconocidas a 404 con el documento de 3.403 bytes, tres sondas de escáner a 404
+con la página de 153 bytes de nginx, y los siete 301, el mapa de `/static`, el
+410, los ficheros SEO y los assets intactos.
+
+**Paridad: medida, no supuesta.** `verify_parity.py` corrió entero sobre la
+semilla sintética archivada de TASK-035: 48 capturas (24 pantallas × 2
+viewports), 60 endpoints barridos por 4 actores, 15 rutas con guard verificado.
+**Cero peticiones al contrato legacy. Cero violaciones de permisos.** Las
+diferencias visuales son de shell —`/login` dentro de `PublicShell`, el
+cuestionario como stepper— y están razonadas una a una en
+[parity/REPORT.md](parity/REPORT.md).
+
+**El único 5xx que el informe reportaba está cerrado con el dato que le
+faltaba.** `GET /api/v1/questionnaire/profile` devuelve 500 si la fila guarda
+`answers` como diccionario en vez de como lista, y el informe decía desde
+entonces que se resolvía con una consulta que nadie había hecho. Hecha contra
+producción, solo lectura:
+
+```
+filas en user_questionnaires: 12
+  answers es array: 12
+  results es array: 12
+```
+
+Cero filas con la forma que rompe. El hallazgo queda archivado como lo que era:
+un artefacto de la semilla de 2026, no un defecto que el cutover fuera a exponer.
+
+### El bucle de despliegue que apareció al hacerlo, y que ya no puede repetirse
+
+Merece quedar escrito porque no estaba en ninguno de los diez bloqueantes y
+habría mordido al siguiente que desplegara, cutover o no.
+
+El primer despliegue de `3f1aa0a` **falló en el smoke del routing**, que
+afirmaba el 200 viejo. Eso es el smoke haciendo su trabajo: su propio comentario
+decía «quien lo cambie tiene que cambiar este smoke». El job de `rollback`
+devolvió el tráfico y ahí empezó el problema real: `rollback` usa
+`update-traffic --to-revisions <anterior>=100`, que **clava** el servicio en una
+revisión con nombre. Desde ese momento `gcloud run deploy` siguió creando
+revisiones sanas que recibían el 0% del tráfico, en silencio y con código de
+salida 0.
+
+El despliegue siguiente creó `studentscompass-front-00007` y `00008` mientras el
+tráfico seguía en `00006`. El smoke medía la URL del servicio —la revisión
+vieja—, veía el comportamiento anterior, fallaba, y disparaba otro rollback.
+Cada vuelta parece un fallo del código nuevo y ninguna lo es.
+
+La API no lo sufría porque su despliegue ya promocionaba explícitamente
+(`Promover la API`). El frontend confiaba en el comportamiento por defecto de
+`gcloud run deploy`, que deja de aplicarse en cuanto el servicio está clavado.
+Corregido añadiendo `Promover el frontend` con la misma forma, entre el
+despliegue y los dos smokes: **una vuelta atrás no puede ser una puerta de un
+solo sentido.**
+
+Consecuencia operativa mientras esto no se despliegue: el tráfico del frontend
+sigue clavado en `00006-vp6` (`52a4087`) y el de la API en `00032-zih`
+(`52a4087`), aunque existan revisiones más nuevas y sanas de `c9da16f`. Las dos
+se arreglan con un `update-traffic` explícito, que es el primer paso de §5.
 
 **Fases 2 a 6:** no iniciadas, y no planificables en detalle hasta que existan
 datos posteriores al cutover.
 
 **No se ha tocado ningún recurso de infraestructura.** El mapeo de dominio sigue
-apuntando a `studentscompass-api` y nada de lo de arriba mueve tráfico de
-usuarios por sí solo: llega a producción con el siguiente despliegue y solo
-cambia cómo responde el servicio de frontend, que hoy no tiene usuarios.
+apuntando a `studentscompass-api`. Todo lo de arriba vive en el repositorio o en
+revisiones que aún no reciben tráfico.

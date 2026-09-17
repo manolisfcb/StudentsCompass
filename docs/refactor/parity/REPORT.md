@@ -20,23 +20,23 @@ El SPA corre contra **la misma semilla sintética que la baseline de TASK-035**,
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| about.desktop | `/about` | anonymous | 200 | about | 69.78 | sí | 0 |
-| about.mobile | `/about` | anonymous | 200 | about | 58.63 | sí | 0 |
-| home.desktop | `/` | anonymous | 200 | home | 83.67 | sí | 0 |
-| home.mobile | `/` | anonymous | 200 | home | 80.12 | sí | 0 |
-| login.desktop | `/login` | anonymous | 200 | login | 104.13 | sí | 0 |
-| login.mobile | `/login` | anonymous | 200 | login | 83.37 | sí | 0 |
-| register.desktop | `/register` | anonymous | 200 | register | 99.63 | sí | 0 |
-| register.mobile | `/register` | anonymous | 200 | register | 88.86 | sí | 0 |
-| root.desktop | `/` | anonymous | 200 | root | 83.67 | sí | 0 |
-| root.mobile | `/` | anonymous | 200 | root | 80.12 | sí | 0 |
+| about.desktop | `/about` | anonymous | 200 | about | 46.03 | sí | 0 |
+| about.mobile | `/about` | anonymous | 200 | about | 27.28 | sí | 0 |
+| home.desktop | `/` | anonymous | 200 | home | 68.5 | sí | 0 |
+| home.mobile | `/` | anonymous | 200 | home | 56.25 | sí | 0 |
+| login.desktop | `/login` | anonymous | 200 | login | 66.07 | sí | 0 |
+| login.mobile | `/login` | anonymous | 200 | login | 83.13 | sí | 0 |
+| register.desktop | `/register` | anonymous | 200 | register | 55.44 | sí | 0 |
+| register.mobile | `/register` | anonymous | 200 | register | 69.6 | sí | 0 |
+| root.desktop | `/` | anonymous | 200 | root | 68.5 | sí | 0 |
+| root.mobile | `/` | anonymous | 200 | root | 56.25 | sí | 0 |
 
 - **login** — Mismo contenido y misma estructura de dos paneles (aside de marca + formulario, toggle de tipo de cuenta, ambos enlaces). Lo que sube el RMS es el shell: el monolito servía `/login` como página full-bleed sobre el degradado y sin navegación, y el SPA la sirve dentro de `PublicShell`, con nav, fondo claro y los dos paneles separados en vez de fundidos. Es una consecuencia de meter la pantalla en el shell público, no contenido perdido; cambiarlo sería rediseñar el shell, que ninguna ficha pide.
 - **register** — Igual que `login`: mismo contenido, misma estructura, el RMS es la diferencia de shell.
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 56 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 126 peticiones distintas.
 
 ### Permisos por rol
 
@@ -51,16 +51,16 @@ El SPA corre contra **la misma semilla sintética que la baseline de TASK-035**,
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| questionnaire.desktop | `/questionnaire` | student | 200 | questionnaire | 101.09 | sí | 0 |
-| questionnaire.mobile | `/questionnaire` | student | 200 | questionnaire | 26.1 | sí | 0 |
-| user-profile.desktop | `/profile` | student | 200 | user-profile | 52.34 | sí | 0 |
-| user-profile.mobile | `/profile` | student | 200 | user-profile | 62.47 | sí | 0 |
+| questionnaire.desktop | `/questionnaire` | student | 200 | questionnaire | 107.26 | sí | 0 |
+| questionnaire.mobile | `/questionnaire` | student | 200 | questionnaire | 46.56 | sí | 0 |
+| user-profile.desktop | `/profile` | student | 200 | user-profile | 46.6 | sí | 0 |
+| user-profile.mobile | `/profile` | student | 200 | user-profile | 58.27 | sí | 0 |
 
 - **questionnaire** — El monolito pintaba las 16 preguntas en una página de 1788 px de alto; el SPA es un stepper de una pregunta por paso. La diferencia de altura y de tinta entre las dos capturas es esa, no contenido perdido: el contenido y el orden de las preguntas salen de `GET /api/v1/questionnaire`, que es el mismo endpoint y la misma definición versionada. Es un cambio de presentación, no de regla.
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 32 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 70 peticiones distintas.
 
 ### Permisos por rol
 
@@ -88,20 +88,20 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| dashboard.desktop | `/dashboard` | student | 200 | dashboard | 62.43 | sí | 0 |
-| dashboard.mobile | `/dashboard` | student | 200 | dashboard | 67.34 | sí | 0 |
-| resource-detail.desktop | `/resources/{resource}` | student | 200 | resource-detail | 82.55 | sí | 0 |
-| resource-detail.mobile | `/resources/{resource}` | student | 200 | resource-detail | 95.11 | sí | 0 |
-| resources.desktop | `/resources` | student | 200 | resources | 81.15 | sí | 0 |
-| resources.mobile | `/resources` | student | 200 | resources | 99.54 | sí | 0 |
-| roadmap-detail.desktop | `/roadmaps/{slug}` | student | 200 | roadmap-detail | 87.51 | sí | 0 |
-| roadmap-detail.mobile | `/roadmaps/{slug}` | student | 200 | roadmap-detail | 98.69 | sí | 0 |
-| roadmaps.desktop | `/roadmaps` | student | 200 | roadmaps | 65.88 | sí | 0 |
-| roadmaps.mobile | `/roadmaps` | student | 200 | roadmaps | 82.29 | sí | 0 |
+| dashboard.desktop | `/dashboard` | student | 200 | dashboard | 54.83 | sí | 0 |
+| dashboard.mobile | `/dashboard` | student | 200 | dashboard | 61.81 | sí | 0 |
+| resource-detail.desktop | `/resources/{resource}` | student | 200 | resource-detail | 75.75 | sí | 0 |
+| resource-detail.mobile | `/resources/{resource}` | student | 200 | resource-detail | 88.89 | sí | 0 |
+| resources.desktop | `/resources` | student | 200 | resources | 74.4 | sí | 0 |
+| resources.mobile | `/resources` | student | 200 | resources | 95.4 | sí | 0 |
+| roadmap-detail.desktop | `/roadmaps/{slug}` | student | 200 | roadmap-detail | 80.36 | sí | 0 |
+| roadmap-detail.mobile | `/roadmaps/{slug}` | student | 200 | roadmap-detail | 89.24 | sí | 0 |
+| roadmaps.desktop | `/roadmaps` | student | 200 | roadmaps | 58.48 | sí | 0 |
+| roadmaps.mobile | `/roadmaps` | student | 200 | roadmaps | 75.87 | sí | 0 |
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 54 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 136 peticiones distintas.
 
 ### Permisos por rol
 
@@ -133,8 +133,8 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| jobs.desktop | `/jobs` | student | 200 | jobs | 80.0 | sí | 0 |
-| jobs.mobile | `/jobs` | student | 200 | jobs | 102.62 | sí | 0 |
+| jobs.desktop | `/jobs` | student | 200 | jobs | 73.1 | sí | 0 |
+| jobs.mobile | `/jobs` | student | 200 | jobs | 94.4 | sí | 0 |
 | jobs-applications.desktop | `/jobs/applications` | student | 200 | _sin baseline_ | — | — | 0 |
 | jobs-applications.mobile | `/jobs/applications` | student | 200 | _sin baseline_ | — | — | 0 |
 
@@ -142,7 +142,7 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 20 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 52 peticiones distintas.
 
 ### Permisos por rol
 
@@ -168,20 +168,20 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| company-candidates.desktop | `/company/applicants` | recruiter | 200 | company-candidates | 104.05 | sí | 0 |
-| company-candidates.mobile | `/company/applicants` | recruiter | 200 | company-candidates | 106.29 | sí | 0 |
-| company-dashboard.desktop | `/company` | recruiter | 200 | company-dashboard | 82.56 | sí | 0 |
-| company-dashboard.mobile | `/company` | recruiter | 200 | company-dashboard | 80.75 | sí | 0 |
+| company-candidates.desktop | `/company/applicants` | recruiter | 200 | company-candidates | 94.04 | sí | 0 |
+| company-candidates.mobile | `/company/applicants` | recruiter | 200 | company-candidates | 98.59 | sí | 0 |
+| company-dashboard.desktop | `/company` | recruiter | 200 | company-dashboard | 75.64 | **NO** | 0 |
+| company-dashboard.mobile | `/company` | recruiter | 200 | company-dashboard | 78.41 | **NO** | 0 |
 | company-postings.desktop | `/company/postings` | recruiter | 200 | _sin baseline_ | — | — | 0 |
 | company-postings.mobile | `/company/postings` | recruiter | 200 | _sin baseline_ | — | — | 0 |
-| company-team.desktop | `/company/recruiters` | recruiter | 200 | company-team | 81.17 | sí | 0 |
-| company-team.mobile | `/company/recruiters` | recruiter | 200 | company-team | 81.17 | sí | 0 |
+| company-team.desktop | `/company/recruiters` | recruiter | 200 | company-team | 68.86 | sí | 0 |
+| company-team.mobile | `/company/recruiters` | recruiter | 200 | company-team | 81.16 | sí | 0 |
 
 - Pantalla sin baseline: gestión de ofertas; en el monolito vivía dentro de /company-dashboard
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 40 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 104 peticiones distintas.
 
 ### Permisos por rol
 
@@ -216,10 +216,10 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| community.desktop | `/community` | student | 200 | community | 79.99 | sí | 0 |
-| community.mobile | `/community` | student | 200 | community | 99.17 | sí | 0 |
-| community-feed.desktop | `/community/{community}` | student | 200 | community-feed | 74.46 | sí | 0 |
-| community-feed.mobile | `/community/{community}` | student | 200 | community-feed | 78.07 | sí | 0 |
+| community.desktop | `/community` | student | 200 | community | 72.22 | sí | 0 |
+| community.mobile | `/community` | student | 200 | community | 91.52 | sí | 0 |
+| community-feed.desktop | `/community/{community}` | student | 200 | community-feed | 66.14 | sí | 0 |
+| community-feed.mobile | `/community/{community}` | student | 200 | community-feed | 70.78 | sí | 0 |
 | messages.desktop | `/messages` | student | 200 | _sin baseline_ | — | — | 0 |
 | messages.mobile | `/messages` | student | 200 | _sin baseline_ | — | — | 0 |
 
@@ -227,7 +227,7 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 34 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 82 peticiones distintas.
 
 ### Permisos por rol
 
@@ -268,12 +268,12 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| career-lab.desktop | `/career-lab` | student | 200 | career-lab | 46.71 | sí | 0 |
-| career-lab.mobile | `/career-lab` | student | 200 | career-lab | 45.17 | sí | 0 |
+| career-lab.desktop | `/career-lab` | student | 200 | career-lab | 45.65 | sí | 0 |
+| career-lab.mobile | `/career-lab` | student | 200 | career-lab | 50.46 | sí | 0 |
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 16 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 32 peticiones distintas.
 
 ### Permisos por rol
 
@@ -299,16 +299,16 @@ Guards del SPA (a dónde aterriza quien no es dueño de la ruta):
 
 | Pantalla | Ruta SPA | Actor | HTTP | Baseline | RMS layout | Marca | Errores JS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| admin.desktop | `/admin` | admin | 200 | admin | 13.48 | sí | 0 |
-| admin.mobile | `/admin` | admin | 200 | admin | 21.71 | sí | 0 |
-| admin-login.desktop | `/admin/login` | anonymous | 200 | admin-login | 12.16 | sí | 0 |
-| admin-login.mobile | `/admin/login` | anonymous | 200 | admin-login | 22.09 | sí | 0 |
+| admin.desktop | `/admin` | admin | 200 | admin | 8.13 | **NO** | 0 |
+| admin.mobile | `/admin` | admin | 200 | admin | 13.67 | **NO** | 0 |
+| admin-login.desktop | `/admin/login` | anonymous | 200 | admin-login | 14.0 | **NO** | 0 |
+| admin-login.mobile | `/admin/login` | anonymous | 200 | admin-login | 25.89 | **NO** | 0 |
 
 - **admin** — Fondo oscuro en ambas: ADR-002 lo trata como un scope sobre los mismos tokens, no como una cuarta paleta, y el RMS bajo (13-22) lo confirma.
 
 ### Tráfico al contrato legacy
 
-**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 16 peticiones distintas.
+**Cero.** Ninguna de las pantallas de esta vertical pidió un endpoint marcado `retire` en la matriz de TASK-034 ni un asset de `/static/`. Medido sobre 44 peticiones distintas.
 
 ### Permisos por rol
 
