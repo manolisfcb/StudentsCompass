@@ -59,11 +59,40 @@ ROUTE_TARGETS = REPO_ROOT / "docs" / "refactor" / "route_targets.csv"
 
 # --- El espejo de Nginx ----------------------------------------------------
 
-# frontend/nginx.conf, literal: todo lo que casa con esto va a la API y el resto
-# es el bundle con fallback a index.html. Se copia el regex en vez de aproximarlo
-# porque la diferencia entre «el SPA controla esta ruta» y «la controla FastAPI»
-# es justamente lo que se está midiendo.
-PROXY_RE = re.compile(r"^/(api/|health(?:z)?$|ready(?:z)?$|sitemap\.xml$|robots\.txt$)")
+# El regex se **lee** de frontend/nginx.conf, no se copia.
+#
+# Antes estaba copiado literal, con un comentario explicando que copiarlo era
+# mejor que aproximarlo. La intención era buena y el mecanismo no: en cuanto el
+# pre-flight del cutover (TASK-058) cambió esa lista —`robots.txt` y
+# `sitemap.xml` salieron porque ahora los sirve el bundle, `/auth/jwt/` entró
+# para que su tráfico siga siendo medible— esta copia quedó describiendo un
+# proxy que ya no existe, en silencio y justo en el fichero cuyo trabajo es
+# decir qué origen sirve cada ruta.
+#
+# Lo que este espejo modela y lo que no, porque la diferencia importa al leer
+# el informe: modela el reparto entre API y bundle, que es lo que se está
+# midiendo. NO modela los 301 de las pantallas legacy, el 410 de `/static/`, ni
+# el 404 por extensión. Ninguno de los tres afecta a lo que se mide —el SPA no
+# pide esas rutas— y todos están comprobados en el smoke de `deploy.yml`, que
+# corre contra el Nginx de verdad.
+NGINX_CONF = REPO_ROOT / "frontend" / "nginx.conf"
+
+
+def _proxy_regex_from_nginx() -> re.Pattern[str]:
+    conf = NGINX_CONF.read_text(encoding="utf-8")
+    # El regex de Nginx no lleva espacios, así que `\S+` lo captura entero, y
+    # anclar en `^/(api/` lo distingue de las otras `location ~` del fichero.
+    found = re.search(r"^\s*location\s+~\s+(\^/\(api/\S*)\s*\{", conf, re.MULTILINE)
+    if found is None:
+        raise SystemExit(
+            f"No se encontró la location del proxy de API en {NGINX_CONF}. "
+            "Si cambió de forma, actualizar esta extracción: un espejo que "
+            "adivina el reparto de rutas no mide nada."
+        )
+    return re.compile(found.group(1))
+
+
+PROXY_RE = _proxy_regex_from_nginx()
 
 
 class SpaMirror:
