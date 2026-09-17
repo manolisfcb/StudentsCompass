@@ -3,10 +3,9 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
+import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
   fetchApplicants,
@@ -41,44 +40,56 @@ export function ApplicantsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <PageScope name="company-dashboard" className="dashboard-container">
       <DocumentMeta
         title={t("company.applicants.seoTitle")}
         description={t("company.applicants.seoDescription")}
         path="/company/applicants"
       />
-      <h1 className="text-2xl font-bold text-ink">{t("company.applicants.title")}</h1>
+      <section className="section-card pipeline-section-card">
+        <div className="section-card-head">
+          <div>
+            <h3>{t("company.applicants.title")}</h3>
+          </div>
+        </div>
 
-      <label className="block max-w-xs space-y-1">
-        <span className="text-sm font-medium text-ink">{t("company.applicants.filterByStatus")}</span>
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
-        >
-          <option value="">{t("company.applicants.allStatuses")}</option>
-          {STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {status.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <AsyncBoundary query={query}>
-        {(applicants) =>
-          applicants.length === 0 ? (
-            <EmptyState title={t("company.applicants.empty")} />
-          ) : (
-            <div className="space-y-4">
-              {applicants.map((applicant) => (
-                <ApplicantCard key={applicant.application.id} applicant={applicant} />
+        <div className="pipeline-toolbar">
+          <div>
+            <label className="applicants-job-filter-label" htmlFor="applicant-status-filter">
+              {t("company.applicants.filterByStatus")}
+            </label>
+            <select
+              id="applicant-status-filter"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="">{t("company.applicants.allStatuses")}</option>
+              {STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status.replace(/_/g, " ")}
+                </option>
               ))}
-            </div>
-          )
-        }
-      </AsyncBoundary>
-    </div>
+            </select>
+          </div>
+        </div>
+
+        <AsyncBoundary query={query}>
+          {(applicants) =>
+            applicants.length === 0 ? (
+              <div className="empty-state">
+                <p>{t("company.applicants.empty")}</p>
+              </div>
+            ) : (
+              <div className="applicants-list">
+                {applicants.map((applicant) => (
+                  <ApplicantCard key={applicant.application.id} applicant={applicant} />
+                ))}
+              </div>
+            )
+          }
+        </AsyncBoundary>
+      </section>
+    </PageScope>
   );
 }
 
@@ -94,18 +105,59 @@ function ApplicantCard({ applicant }: { applicant: Applicant }) {
   });
 
   return (
-    <article className="rounded-lg border border-border bg-surface p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <article className="applicant-card">
+      <div className="applicant-head">
         <div>
-          <p className="font-semibold text-ink">{applicant.candidate.full_name}</p>
-          <p className="text-sm text-ink-soft">{applicant.application.job_title}</p>
-          <p className="text-xs text-ink-muted">{applicant.candidate.email}</p>
+          <p className="applicant-name">{applicant.candidate.full_name}</p>
+          <div className="applicant-meta">{applicant.application.job_title}</div>
         </div>
+        <div className="applicant-head-badges">
+          <span className={`status-pill status-pill-${applicant.application.status}`}>
+            {applicant.application.status.replace(/_/g, " ")}
+          </span>
+        </div>
+      </div>
+
+      <div className="applicant-contact">
+        <span>
+          <strong>{t("company.applicants.email")}</strong> {applicant.candidate.email}
+        </span>
+      </div>
+
+      {statusMutation.isError ? (
+        <div className="applicant-summary" role="alert">
+          {statusMutation.error instanceof ApiError && statusMutation.error.detail
+            ? statusMutation.error.detail.message
+            : t("company.applicants.statusError")}
+        </div>
+      ) : null}
+
+      {applicant.application.selected_interview_slot ? (
+        <div className="applicant-summary">
+          {t("company.applicants.interviewBooked", {
+            date: new Date(applicant.application.selected_interview_slot.starts_at).toLocaleString(),
+          })}
+        </div>
+      ) : (applicant.application.available_interview_slots ?? []).length > 0 ? (
+        <div className="applicant-summary">{t("company.applicants.waitingOnCandidate")}</div>
+      ) : null}
+
+      <div className="applicant-actions">
+        {applicant.resume ? (
+          <>
+            <a href={applicant.resume.preview_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+              {t("company.applicants.previewResume")}
+            </a>
+            <a href={applicant.resume.download_url} className="btn btn-secondary">
+              {t("company.applicants.downloadResume")}
+            </a>
+          </>
+        ) : null}
         <select
           value={applicant.application.status}
           disabled={statusMutation.isPending}
+          aria-label={t("company.applicants.statusFor", { name: applicant.candidate.full_name })}
           onChange={(event) => statusMutation.mutate(event.target.value as ApplicantPipelineUpdate["status"])}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
         >
           {STATUSES.map((status) => (
             <option key={status} value={status}>
@@ -113,46 +165,16 @@ function ApplicantCard({ applicant }: { applicant: Applicant }) {
             </option>
           ))}
         </select>
-      </div>
-
-      {applicant.resume ? (
-        <div className="mt-3 flex gap-3 text-sm">
-          <a href={applicant.resume.preview_url} target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">
-            {t("company.applicants.previewResume")}
-          </a>
-          <a href={applicant.resume.download_url} className="text-brand hover:underline">
-            {t("company.applicants.downloadResume")}
-          </a>
-        </div>
-      ) : null}
-
-      {statusMutation.isError ? (
-        <Alert tone="danger">
-          {statusMutation.error instanceof ApiError && statusMutation.error.detail
-            ? statusMutation.error.detail.message
-            : t("company.applicants.statusError")}
-        </Alert>
-      ) : null}
-
-      {applicant.application.selected_interview_slot ? (
-        <Alert tone="success">
-          {t("company.applicants.interviewBooked", {
-            date: new Date(applicant.application.selected_interview_slot.starts_at).toLocaleString(),
-          })}
-        </Alert>
-      ) : (applicant.application.available_interview_slots ?? []).length > 0 ? (
-        <Alert tone="info">{t("company.applicants.waitingOnCandidate")}</Alert>
-      ) : null}
-
-      <div className="mt-3">
-        {schedulingInterview ? (
-          <InterviewScheduleForm applicationId={applicant.application.id} onDone={() => setSchedulingInterview(false)} />
-        ) : (
-          <Button variant="secondary" onClick={() => setSchedulingInterview(true)}>
+        {schedulingInterview ? null : (
+          <button type="button" className="btn btn-primary" onClick={() => setSchedulingInterview(true)}>
             {t("company.applicants.scheduleInterview")}
-          </Button>
+          </button>
         )}
       </div>
+
+      {schedulingInterview ? (
+        <InterviewScheduleForm applicationId={applicant.application.id} onDone={() => setSchedulingInterview(false)} />
+      ) : null}
     </article>
   );
 }
@@ -185,18 +207,17 @@ function InterviewScheduleForm({ applicationId, onDone }: { applicationId: strin
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 rounded-md border border-border p-3">
+    <form onSubmit={handleSubmit} className="recruiter-form">
       {mutation.isError ? (
-        <Alert tone="danger">
+        <p className="feedback-message" role="alert">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("company.applicants.scheduleError")}
-        </Alert>
+        </p>
       ) : null}
       {slots.map((slot, index) => (
-        <div key={index} className="grid gap-2 sm:grid-cols-2">
-          <label className="space-y-1 text-xs">
-            <span className="block font-medium text-ink">{t("company.applicants.startsAt")}</span>
+        <div key={index} className="recruiter-form-grid">
+          <FormField label={t("company.applicants.startsAt")}>
             <input
               type="datetime-local"
               required
@@ -204,11 +225,9 @@ function InterviewScheduleForm({ applicationId, onDone }: { applicationId: strin
               onChange={(event) =>
                 setSlots((prev) => prev.map((s, i) => (i === index ? { ...s, starts_at: event.target.value } : s)))
               }
-              className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
             />
-          </label>
-          <label className="space-y-1 text-xs">
-            <span className="block font-medium text-ink">{t("company.applicants.endsAt")}</span>
+          </FormField>
+          <FormField label={t("company.applicants.endsAt")}>
             <input
               type="datetime-local"
               required
@@ -216,25 +235,24 @@ function InterviewScheduleForm({ applicationId, onDone }: { applicationId: strin
               onChange={(event) =>
                 setSlots((prev) => prev.map((s, i) => (i === index ? { ...s, ends_at: event.target.value } : s)))
               }
-              className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
             />
-          </label>
+          </FormField>
         </div>
       ))}
-      <div className="flex flex-wrap gap-2">
-        <Button
+      <div className="recruiter-actions">
+        <button
           type="button"
-          variant="secondary"
+          className="btn btn-secondary"
           onClick={() => setSlots((prev) => [...prev, { starts_at: "", ends_at: "" }])}
         >
           {t("company.applicants.addSlot")}
-        </Button>
-        <Button type="submit" disabled={mutation.isPending}>
+        </button>
+        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
           {mutation.isPending ? t("company.applicants.publishing") : t("company.applicants.publish")}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone}>
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onDone}>
           {t("company.applicants.cancel")}
-        </Button>
+        </button>
       </div>
     </form>
   );

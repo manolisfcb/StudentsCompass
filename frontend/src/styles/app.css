@@ -1,0 +1,237 @@
+/* The few pieces of UI the Jinja app never had.
+ *
+ * Everything else on these screens is styled by the ported sheets
+ * (`legacy/`). What is left over is either a control the templates rendered
+ * with inline styles, or a React-only affordance: a lesson body that used to
+ * be injected as a raw HTML string, the quick-apply panel that used to be a
+ * modal, the recruiter rows the legacy page built in JS, the admin paginator
+ * the legacy console did not have.
+ *
+ * They are written in the same vocabulary as the sheets they sit next to —
+ * the same radii, the same `--primary-color`, the same translucent-white
+ * cards — so they read as part of the design rather than as a second one.
+ */
+
+/* ── Lesson bodies (resource detail) ─────────────────────────────────── */
+
+.lesson-text {
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.lesson-video,
+.lesson-external {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lesson-video-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #0f172a;
+}
+
+.lesson-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ── Job board: quick apply ──────────────────────────────────────────── */
+
+.quick-apply {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.resume-picker {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.resume-picker legend {
+  padding: 0;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.resume-picker label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Applications ────────────────────────────────────────────────────── */
+
+.applications-grid + .job-card-actions {
+  margin-top: 1rem;
+}
+
+.application-slots {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.application-slots ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Company screens ─────────────────────────────────────────────────── */
+
+.applicants-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.job-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.recruiter-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.recruiter-identity {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.recruiter-identity strong {
+  color: var(--text-color);
+}
+
+.recruiter-identity span {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.recruiter-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ── Community ───────────────────────────────────────────────────────── */
+
+.form__error {
+  margin: 0 0 0.75rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.network-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* ── Admin console ───────────────────────────────────────────────────── */
+
+.admin-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.admin-form-row > * {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.admin-form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--admin-text, #f1f5f9);
+  font-weight: 600;
+}
+
+.admin-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--admin-text-secondary, #94a3b8);
+  font-size: 0.88rem;
+}
+
+.admin-empty-text {
+  color: var(--admin-text-secondary, #94a3b8);
+  font-size: 0.9rem;
+}
+
+.admin-upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px dashed var(--admin-border-hover, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  color: var(--admin-text-secondary, #94a3b8);
+  cursor: pointer;
+}
+
+.resource-lesson-list {
+  display: grid;
+  gap: 12px;
+}
+
+.resource-module-block,
+.resource-lesson-block {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
+  border-radius: 12px;
+  background: var(--admin-surface, rgba(17, 24, 39, 0.7));
+}
+
+.resource-module-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--admin-text, #f1f5f9);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}

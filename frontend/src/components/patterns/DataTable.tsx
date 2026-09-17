@@ -26,14 +26,27 @@ export function DataTable<Row>({
   rowKey,
   empty,
   caption,
+  variant = "default",
 }: {
   rows: readonly Row[];
   columns: readonly Column<Row>[];
   rowKey: (row: Row) => string;
   empty: { title: string; description?: string };
   caption: string;
+  /** "admin" renders `.admin-table-wrap`/`.admin-table` from `admin.css`. */
+  variant?: "default" | "admin";
 }) {
+  const isAdmin = variant === "admin";
+
   if (rows.length === 0) {
+    if (isAdmin) {
+      return (
+        <div className="admin-empty">
+          <div className="admin-empty-title">{empty.title}</div>
+          {empty.description ? <div className="admin-empty-text">{empty.description}</div> : null}
+        </div>
+      );
+    }
     return empty.description === undefined ? (
       <EmptyState title={empty.title} />
     ) : (
@@ -44,16 +57,16 @@ export function DataTable<Row>({
   return (
     // Tables are the one element allowed to be wider than the page; the
     // scroller keeps the body itself from scrolling sideways on a phone.
-    <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-      <table className="w-full border-collapse text-sm">
+    <div className={isAdmin ? "admin-table-wrap" : "overflow-x-auto rounded-lg border border-border bg-surface"}>
+      <table className={isAdmin ? "admin-table" : "w-full border-collapse text-sm"}>
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="border-b border-border text-left text-ink-soft">
+          <tr className={isAdmin ? undefined : "border-b border-border text-left text-ink-soft"}>
             {columns.map((column) => (
               <th
                 key={column.key}
                 scope="col"
-                className={`px-4 py-3 font-medium ${column.numeric ? "text-right" : ""}`}
+                className={isAdmin ? undefined : `px-4 py-3 font-medium ${column.numeric ? "text-right" : ""}`}
               >
                 {column.header}
               </th>
@@ -62,11 +75,13 @@ export function DataTable<Row>({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-border last:border-0">
+            <tr key={rowKey(row)} className={isAdmin ? undefined : "border-b border-border last:border-0"}>
               {columns.map((column) => (
                 <td
                   key={column.key}
-                  className={`px-4 py-3 text-ink ${column.numeric ? "text-right tabular-nums" : ""}`}
+                  className={
+                    isAdmin ? undefined : `px-4 py-3 text-ink ${column.numeric ? "text-right tabular-nums" : ""}`
+                  }
                 >
                   {column.cell(row)}
                 </td>

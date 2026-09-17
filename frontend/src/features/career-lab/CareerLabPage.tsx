@@ -9,7 +9,7 @@ import { ApiError } from "@/api/client";
 import { Alert } from "@/components/primitives/Alert";
 import { Button } from "@/components/primitives/Button";
 import { Spinner } from "@/components/primitives/Spinner";
-import { FormField, INPUT_CLASS } from "@/components/patterns/FormField";
+import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { fetchResumes, type Resume } from "@/features/profile-resumes/api";
 import {
@@ -150,7 +150,6 @@ export function CareerLabPage() {
           <section className="grid gap-4 rounded-lg border border-border bg-surface p-6 sm:grid-cols-3">
             <FormField label={t("careerLab.resumeLabel")}>
               <select
-                className={INPUT_CLASS}
                 value={resumeId}
                 onChange={(event) => setSelectedResumeId(event.target.value)}
               >
@@ -164,7 +163,6 @@ export function CareerLabPage() {
 
             <FormField label={t("careerLab.targetRoleLabel")}>
               <select
-                className={INPUT_CLASS}
                 value={targetRole}
                 onChange={(event) => setSelectedTargetRole(event.target.value)}
               >
@@ -344,7 +342,6 @@ function SkillReviewPanel({
         }}
       >
         <input
-          className={INPUT_CLASS}
           value={manualSkillText}
           onChange={(event) => onManualSkillTextChange(event.target.value)}
           placeholder={t("careerLab.skillReview.addPlaceholder")}
@@ -554,7 +551,6 @@ function RouteOptimizationPanel({
           <input
             type="number"
             min={0}
-            className={INPUT_CLASS}
             value={budget}
             onChange={(event) => onBudgetChange(Number(event.target.value))}
           />
@@ -563,7 +559,6 @@ function RouteOptimizationPanel({
           <input
             type="number"
             min={0}
-            className={INPUT_CLASS}
             value={hours}
             onChange={(event) => onHoursChange(Number(event.target.value))}
           />
@@ -573,7 +568,6 @@ function RouteOptimizationPanel({
             type="number"
             min={1}
             max={20}
-            className={INPUT_CLASS}
             value={maxCourses}
             onChange={(event) => onMaxCoursesChange(Number(event.target.value))}
           />

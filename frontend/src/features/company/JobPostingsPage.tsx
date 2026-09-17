@@ -3,11 +3,9 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
-import { FormField, INPUT_CLASS } from "@/components/patterns/FormField";
+import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
   createJobPosting,
@@ -27,35 +25,41 @@ export function JobPostingsPage() {
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <PageScope name="company-dashboard" className="dashboard-container">
       <DocumentMeta
         title={t("company.postings.seoTitle")}
         description={t("company.postings.seoDescription")}
         path="/company/postings"
       />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ink">{t("company.postings.title")}</h1>
-        <Button onClick={() => setCreating((value) => !value)}>
-          {creating ? t("company.postings.cancel") : t("company.postings.newPosting")}
-        </Button>
-      </div>
+      <section className="section-card">
+        <div className="section-card-head">
+          <div>
+            <h3>{t("company.postings.title")}</h3>
+          </div>
+          <button type="button" className="btn btn-primary" onClick={() => setCreating((value) => !value)}>
+            {creating ? t("company.postings.cancel") : t("company.postings.newPosting")}
+          </button>
+        </div>
 
-      {creating ? <JobPostingForm onDone={() => setCreating(false)} /> : null}
+        {creating ? <JobPostingForm onDone={() => setCreating(false)} /> : null}
 
-      <AsyncBoundary query={query}>
-        {(postings) =>
-          postings.length === 0 ? (
-            <EmptyState title={t("company.postings.empty")} />
-          ) : (
-            <div className="space-y-3">
-              {postings.map((posting) => (
-                <PostingRow key={posting.id} posting={posting} />
-              ))}
-            </div>
-          )
-        }
-      </AsyncBoundary>
-    </div>
+        <AsyncBoundary query={query}>
+          {(postings) =>
+            postings.length === 0 ? (
+              <div className="empty-state">
+                <p>{t("company.postings.empty")}</p>
+              </div>
+            ) : (
+              <ul className="job-list">
+                {postings.map((posting) => (
+                  <PostingRow key={posting.id} posting={posting} />
+                ))}
+              </ul>
+            )
+          }
+        </AsyncBoundary>
+      </section>
+    </PageScope>
   );
 }
 
@@ -75,40 +79,46 @@ function PostingRow({ posting }: { posting: JobPosting }) {
   });
 
   if (editing) {
-    return <JobPostingForm posting={posting} onDone={() => setEditing(false)} />;
+    return (
+      <li className="job-item">
+        <JobPostingForm posting={posting} onDone={() => setEditing(false)} />
+      </li>
+    );
   }
 
   return (
-    <article className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4">
+    <li className="job-item">
       <div>
-        <p className="font-semibold text-ink">{posting.title}</p>
-        <p className="text-sm text-ink-soft">{posting.location ?? t("company.postings.noLocation")}</p>
-        <span
-          className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-            posting.is_active ? "bg-success/10 text-success" : "bg-border text-ink-muted"
-          }`}
-        >
+        <div className="job-title">{posting.title}</div>
+        <div className="job-info">{posting.location ?? t("company.postings.noLocation")}</div>
+        <span className={`status-pill ${posting.is_active ? "active" : "inactive"}`}>
           {posting.is_active ? t("company.postings.active") : t("company.postings.inactive")}
         </span>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={() => setEditing(true)}>
+      <div className="action-buttons">
+        <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
           {t("company.postings.edit")}
-        </Button>
-        <Button variant="secondary" disabled={toggleActiveMutation.isPending} onClick={() => toggleActiveMutation.mutate()}>
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          disabled={toggleActiveMutation.isPending}
+          onClick={() => toggleActiveMutation.mutate()}
+        >
           {posting.is_active ? t("company.postings.deactivate") : t("company.postings.activate")}
-        </Button>
-        <Button
-          variant="danger"
+        </button>
+        <button
+          type="button"
+          className="btn btn-danger"
           disabled={deleteMutation.isPending}
           onClick={() => {
             if (window.confirm(t("company.postings.confirmDelete"))) deleteMutation.mutate();
           }}
         >
           {t("company.postings.delete")}
-        </Button>
+        </button>
       </div>
-    </article>
+    </li>
   );
 }
 
@@ -143,40 +153,35 @@ function JobPostingForm({ posting, onDone }: { posting?: JobPosting; onDone: () 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border bg-surface p-4">
+    <form onSubmit={handleSubmit} className="recruiter-form">
       {mutation.isError ? (
-        <Alert tone="danger">
+        <p className="feedback-message" role="alert">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("company.postings.saveError")}
-        </Alert>
+        </p>
       ) : null}
-      <FormField label={t("company.postings.form.title")}>
-        <input required value={title} onChange={(e) => setTitle(e.target.value)} className={INPUT_CLASS} />
-      </FormField>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="recruiter-form-grid">
+        <FormField label={t("company.postings.form.title")}>
+          <input required value={title} onChange={(e) => setTitle(e.target.value)} />
+        </FormField>
         <FormField label={t("company.postings.form.location")}>
-          <input value={location} onChange={(e) => setLocation(e.target.value)} className={INPUT_CLASS} />
+          <input value={location} onChange={(e) => setLocation(e.target.value)} />
         </FormField>
         <FormField label={t("company.postings.form.jobType")}>
-          <input value={jobType} onChange={(e) => setJobType(e.target.value)} className={INPUT_CLASS} />
+          <input value={jobType} onChange={(e) => setJobType(e.target.value)} />
+        </FormField>
+        <FormField className="form-field full" label={t("company.postings.form.description")}>
+          <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </FormField>
       </div>
-      <FormField label={t("company.postings.form.description")}>
-        <textarea
-          rows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className={INPUT_CLASS}
-        />
-      </FormField>
-      <div className="flex gap-2">
-        <Button type="submit" disabled={mutation.isPending}>
+      <div className="recruiter-actions">
+        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
           {mutation.isPending ? t("company.postings.saving") : t("company.postings.save")}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone}>
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onDone}>
           {t("company.postings.cancel")}
-        </Button>
+        </button>
       </div>
     </form>
   );

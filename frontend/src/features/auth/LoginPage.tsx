@@ -5,11 +5,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
 import { homePathFor } from "@/app/routes";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { type ActorKind, describeAuthError, login } from "@/features/auth/api";
-import { AccountTypeToggle, AsidePoint, Field, INPUT_CLASS } from "@/features/auth/formParts";
+import { AccountTypeToggle, AsidePoint, Field } from "@/features/auth/formParts";
 
 /** Where `RequireActor` sends an anonymous visitor it just bounced. */
 interface LocationState {
@@ -46,78 +44,78 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-2 md:items-center">
+    <div className="auth-container">
       <DocumentMeta title={t("auth.login.title")} description={t("auth.login.seoDescription")} path="/login" />
 
-      <aside className="auth-aside-gradient order-2 space-y-6 rounded-3xl p-8 text-white shadow-[0_32px_80px_rgba(15,23,42,0.24)] md:order-1">
-        <span className="inline-block rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-          {t("auth.login.kicker")}
-        </span>
-        <h1 className="text-3xl font-bold text-white">{t("auth.login.heroTitle")}</h1>
-        <p className="text-white/85">{t("auth.login.heroBody")}</p>
-        <div className="space-y-3">
-          <AsidePoint icon="🧭" title={t("auth.login.point1.title")} body={t("auth.login.point1.body")} tone="dark" />
-          <AsidePoint icon="⚡" title={t("auth.login.point2.title")} body={t("auth.login.point2.body")} tone="dark" />
-        </div>
-      </aside>
-
-      <div className="order-1 rounded-3xl border border-border bg-surface p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] md:order-2">
-        <Link to="/" className="text-sm text-ink-soft hover:text-brand">
-          {t("auth.backToHome")}
-        </Link>
-        <h2 className="mt-4 text-2xl font-semibold text-ink">{t("auth.login.title")}</h2>
-        <p className="mt-1 text-sm text-ink-soft">{t("auth.login.subtitle")}</p>
-
-        {mutation.isError ? (
-          <div className="mt-4">
-            <Alert tone="danger">{describeAuthError(mutation.error, t)}</Alert>
+      <div className="auth-shell">
+        <aside className="auth-aside">
+          <Link to="/" className="auth-brand" aria-label={t("app.name")}>
+            <img src="/images/Logo_Ready_to_Use.png" alt={t("layout.logoAlt")} className="brand-logo brand-logo--hero" />
+          </Link>
+          <span className="auth-kicker">{t("auth.login.kicker")}</span>
+          <h1>{t("auth.login.heroTitle")}</h1>
+          <p>{t("auth.login.heroBody")}</p>
+          <div className="auth-aside-points">
+            <AsidePoint icon="🧭" title={t("auth.login.point1.title")} body={t("auth.login.point1.body")} />
+            <AsidePoint icon="⚡" title={t("auth.login.point2.title")} body={t("auth.login.point2.body")} />
           </div>
-        ) : null}
+        </aside>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
-          <AccountTypeToggle value={kind} onChange={setKind} />
-
-          <Field label={t("auth.login.email")}>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              placeholder={t("auth.login.emailPlaceholder")}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className={INPUT_CLASS}
-            />
-          </Field>
-
-          <Field label={t("auth.login.password")}>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              placeholder={t("auth.login.passwordPlaceholder")}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={INPUT_CLASS}
-            />
-          </Field>
-
-          <Button type="submit" className="w-full" disabled={mutation.isPending}>
-            {mutation.isPending ? t("auth.login.submitting") : t("auth.login.submit")}
-          </Button>
-        </form>
-
-        <div className="mt-6 space-y-1 text-sm text-ink-soft">
-          <p>
-            {t("auth.login.noAccount")}{" "}
-            <Link to="/register" className="text-brand hover:underline">
-              {t("auth.login.createOne")}
+        <div className="auth-card">
+          <div className="auth-form-header">
+            <Link to="/" className="auth-back-link">
+              {t("auth.backToHome")}
             </Link>
-          </p>
-          <p>
-            <Link to="/forgot-password" className="text-brand hover:underline">
-              {t("auth.login.forgotPassword")}
-            </Link>
-          </p>
+            <h2>{t("auth.login.title")}</h2>
+            <p>{t("auth.login.subtitle")}</p>
+          </div>
+
+          {mutation.isError ? (
+            <div className="auth-message auth-message-error is-visible" role="alert">
+              {describeAuthError(mutation.error, t)}
+            </div>
+          ) : null}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <AccountTypeToggle idPrefix="type" name="login-type" value={kind} onChange={setKind} />
+
+            <Field label={t("auth.login.email")} htmlFor="login-email">
+              <input
+                id="login-email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder={t("auth.login.emailPlaceholder")}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </Field>
+
+            <Field label={t("auth.login.password")} htmlFor="login-password">
+              <input
+                id="login-password"
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder={t("auth.login.passwordPlaceholder")}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </Field>
+
+            <button type="submit" className="cta-button auth-button" disabled={mutation.isPending}>
+              {mutation.isPending ? t("auth.login.submitting") : t("auth.login.submit")}
+            </button>
+          </form>
+
+          <div className="auth-links">
+            <p>
+              {t("auth.login.noAccount")} <Link to="/register">{t("auth.login.createOne")}</Link>
+            </p>
+            <p>
+              <Link to="/forgot-password">{t("auth.login.forgotPassword")}</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

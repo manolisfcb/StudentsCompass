@@ -4,9 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
-import { FormField, INPUT_CLASS } from "@/components/patterns/FormField";
+import { FormField } from "@/components/patterns/FormField";
 import { type Profile, updateProfile } from "@/features/profile-resumes/api";
 
 const SEX_OPTIONS = ["Female", "Male", "Non-binary", "Prefer not to say"] as const;
@@ -52,52 +50,31 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <h2 className="text-lg font-semibold text-ink">{t("profile.form.title")}</h2>
+    <form onSubmit={handleSubmit}>
+      <h3>{t("profile.form.title")}</h3>
+      <p>{t("profile.form.intro")}</p>
 
-      {mutation.isError ? (
-        <Alert tone="danger">
-          {mutation.error instanceof ApiError && mutation.error.detail
-            ? mutation.error.detail.message
-            : t("profile.form.error")}
-        </Alert>
-      ) : null}
-      {mutation.isSuccess ? <Alert tone="success">{t("profile.form.success")}</Alert> : null}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label={t("profile.form.firstName")}>
-          <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className={INPUT_CLASS} />
+      <div className="profile-form-grid">
+        <FormField className="profile-field" label={t("profile.form.firstName")}>
+          <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
         </FormField>
-        <FormField label={t("profile.form.lastName")}>
-          <input value={lastName} onChange={(e) => setLastName(e.target.value)} className={INPUT_CLASS} />
+        <FormField className="profile-field" label={t("profile.form.lastName")}>
+          <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
         </FormField>
-      </div>
-
-      <FormField label={t("profile.form.nickname")}>
-        <input value={nickname} onChange={(e) => setNickname(e.target.value)} className={INPUT_CLASS} />
-      </FormField>
-
-      <FormField label={t("profile.form.email")}>
-        <input value={profile.email} disabled className={INPUT_CLASS} />
-      </FormField>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label={t("profile.form.phone")}>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} className={INPUT_CLASS} />
+        <FormField className="profile-field" label={t("profile.form.nickname")}>
+          <input value={nickname} onChange={(e) => setNickname(e.target.value)} />
         </FormField>
-        <FormField label={t("profile.form.age")}>
-          <input
-            type="number"
-            min={0}
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            className={INPUT_CLASS}
-          />
+        <FormField className="profile-field" label={t("profile.form.email")}>
+          <input value={profile.email} disabled />
         </FormField>
-      </div>
-
-      <FormField label={t("profile.form.sex")}>
-        <select value={sex} onChange={(e) => setSex(e.target.value)} className={INPUT_CLASS}>
+        <FormField className="profile-field" label={t("profile.form.phone")}>
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </FormField>
+        <FormField className="profile-field" label={t("profile.form.age")}>
+          <input type="number" min={0} value={age} onChange={(e) => setAge(e.target.value)} />
+        </FormField>
+        <FormField className="profile-field" label={t("profile.form.sex")}>
+        <select value={sex} onChange={(e) => setSex(e.target.value)}>
           <option value="">{t("profile.form.sexUnset")}</option>
           {SEX_OPTIONS.map((option) => (
             <option key={option} value={option}>
@@ -105,15 +82,30 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             </option>
           ))}
         </select>
-      </FormField>
+        </FormField>
+        <FormField
+          className="profile-field full"
+          label={t("profile.form.address")}
+          hint={t("profile.form.addressHint")}
+        >
+          <input value={address} onChange={(e) => setAddress(e.target.value)} />
+        </FormField>
+      </div>
 
-      <FormField label={t("profile.form.address")}>
-        <input value={address} onChange={(e) => setAddress(e.target.value)} className={INPUT_CLASS} />
-      </FormField>
-
-      <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? t("profile.form.saving") : t("profile.form.save")}
-      </Button>
+      <div className="profile-save-row">
+        <div className="profile-save-status" role="status">
+          {mutation.isError
+            ? mutation.error instanceof ApiError && mutation.error.detail
+              ? mutation.error.detail.message
+              : t("profile.form.error")
+            : mutation.isSuccess
+              ? t("profile.form.success")
+              : null}
+        </div>
+        <button type="submit" className="cta-button" disabled={mutation.isPending}>
+          {mutation.isPending ? t("profile.form.saving") : t("profile.form.save")}
+        </button>
+      </div>
     </form>
   );
 }

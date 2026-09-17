@@ -1,0 +1,171 @@
+/* Ported from backend/app/static/css/admin_page.css, scoped under `.pg-admin-page`. */
+.pg-admin-page {
+        background: var(--admin-bg) !important;
+    }
+
+.pg-admin-page .resource-create-modal {
+        max-width: 920px;
+        max-height: 90vh;
+        overflow-y: auto;
+        color: var(--admin-text);
+    }
+
+.pg-admin-page #resourceModal .admin-modal {
+        background: linear-gradient(180deg, #111827 0%, #0f172a 100%) !important;
+        border: 1px solid rgba(148, 163, 184, 0.3) !important;
+        box-shadow: 0 24px 64px rgba(2, 6, 23, 0.6);
+    }
+
+.pg-admin-page #resourceModal .admin-modal-title,
+.pg-admin-page #resourceModal .admin-form-label,
+.pg-admin-page #resourceModal .resource-structure-title,
+.pg-admin-page #resourceModal .resource-module-title,
+.pg-admin-page #resourceModal .resource-item-label,
+.pg-admin-page #resourceModal .module-resources-title,
+.pg-admin-page #resourceModal .resource-upload-status {
+        color: #e2e8f0 !important;
+    }
+
+.pg-admin-page #resourceModal .admin-modal-desc,
+.pg-admin-page #resourceModal .resource-structure-note {
+        color: #94a3b8 !important;
+    }
+
+.pg-admin-page #resourceModal textarea,
+.pg-admin-page #resourceModal select,
+.pg-admin-page #resourceModal .admin-form-input {
+        color: #e2e8f0 !important;
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px solid rgba(148, 163, 184, 0.35) !important;
+        -webkit-text-fill-color: #e2e8f0;
+    }
+
+.pg-admin-page #resourceModal option {
+        color: #e2e8f0;
+        background: #0f172a;
+    }
+
+.pg-admin-page #resourceModal input[type="checkbox"] {
+        accent-color: #38bdf8;
+    }
+
+.pg-admin-page #resourceModal .admin-form-input::placeholder {
+        color: #94a3b8;
+        opacity: 1;
+    }
+
+.pg-admin-page .resource-structure {
+        margin-top: 16px;
+        border-top: 1px solid rgba(148, 163, 184, 0.25);
+        padding-top: 16px;
+    }
+
+.pg-admin-page .resource-structure-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+.pg-admin-page .resource-structure-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--admin-text);
+    }
+
+.pg-admin-page .resource-structure-note {
+        margin: 0 0 12px;
+        font-size: 0.88rem;
+        color: #94a3b8;
+    }
+
+.pg-admin-page .resource-module-block {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 14px;
+        background: rgba(15, 23, 42, 0.5);
+    }
+
+.pg-admin-page .resource-module-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+.pg-admin-page .resource-module-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+.pg-admin-page .resource-items-wrap {
+        margin-top: 10px;
+    }
+
+.pg-admin-page .resource-item-row {
+        border: 1px dashed rgba(148, 163, 184, 0.45);
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: rgba(15, 23, 42, 0.35);
+    }
+
+.pg-admin-page .resource-item-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+.pg-admin-page .resource-item-label {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+.pg-admin-page .module-resources-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+.pg-admin-page .resource-upload-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+.pg-admin-page .resource-upload-status {
+        min-height: 18px;
+        font-size: 0.82rem;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+
+.pg-admin-page #resourceModal .lesson-content-view[readonly] {
+        opacity: 0.95;
+    }
+
+@media (max-width: 768px) {
+.pg-admin-page .resource-create-modal {
+            max-width: 96vw;
+        }
+
+.pg-admin-page .resource-structure-header,
+.pg-admin-page .resource-module-head,
+.pg-admin-page .resource-item-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+.pg-admin-page .resource-upload-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+}

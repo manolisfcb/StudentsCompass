@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { Button } from "@/components/primitives/Button";
 import { type ActorKind, logout } from "@/features/auth/api";
 
 /**
@@ -12,7 +11,14 @@ import { type ActorKind, logout } from "@/features/auth/api";
  * current shell represents rather than clearing every session the browser
  * holds.
  */
-export function LogoutButton({ actorKind, className }: { actorKind: ActorKind; className?: string }) {
+export function LogoutButton({
+  actorKind,
+  className = "nav-btn nav-btn-logout",
+}: {
+  actorKind: ActorKind;
+  /** Defaults to the nav's own logout pill (`includes/navbar.html`). */
+  className?: string;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -26,8 +32,8 @@ export function LogoutButton({ actorKind, className }: { actorKind: ActorKind; c
   });
 
   return (
-    <Button variant="ghost" className={className} onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+    <button type="button" className={className} onClick={() => mutation.mutate()} disabled={mutation.isPending}>
       {mutation.isPending ? t("auth.logout.pending") : t("auth.logout.label")}
-    </Button>
+    </button>
   );
 }

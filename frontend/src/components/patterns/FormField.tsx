@@ -1,14 +1,37 @@
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, useId, type ReactElement, type ReactNode } from "react";
 
-/** The input styling every form field in the app shares. */
-export const INPUT_CLASS =
-  "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:bg-canvas disabled:text-ink-muted";
+/**
+ * A labelled control in the shape the ported sheets style: a wrapper carrying
+ * the field class, a `<label>`, then the control as its sibling.
+ *
+ * `className` is the field class of whichever screen is rendering —
+ * `profile-field` on the profile page, `form-field` on the company screens,
+ * `admin-form-group` in the admin console. They differ in spacing and radius,
+ * not in structure, which is why one component serves all three.
+ */
+export function FormField({
+  label,
+  className = "form-field",
+  hint,
+  children,
+}: {
+  label: string;
+  className?: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  // The label and the control are siblings, so they are tied by id rather than
+  // by nesting; generating it here keeps every call site from inventing one.
+  const generatedId = useId();
+  const child = isValidElement(children) ? (children as ReactElement<{ id?: string }>) : null;
+  const controlId = child?.props.id ?? generatedId;
+  const control = child ? cloneElement(child, { id: controlId }) : children;
 
-export function FormField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="block space-y-1">
-      <span className="text-sm font-medium text-ink">{label}</span>
-      {children}
-    </label>
+    <div className={className}>
+      <label htmlFor={controlId}>{label}</label>
+      {control}
+      {hint ? <span className="profile-field-hint">{hint}</span> : null}
+    </div>
   );
 }

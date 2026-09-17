@@ -1,13 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
   createComment,
@@ -53,20 +51,45 @@ export function CommunityFeedPage() {
     queryFn: () => fetchCommunityMembership(communityId),
   });
 
+  const { t } = useTranslation();
   return (
-    <div className="space-y-6">
+    <PageScope name="community-feed" className="feed-page">
+      <Link to="/community" className="back-link">
+        {t("community.feed.backToCommunities")}
+      </Link>
       <AsyncBoundary query={communityQuery}>
         {(community) => (
           <>
             <DocumentMeta title={community.name} description={community.description ?? ""} path={`/community/${communityId}`} />
             <CommunityHeader community={community} />
             <AsyncBoundary query={membershipQuery}>
-              {(membership) => <CommunityBody communityId={communityId} membership={membership} />}
+              {(membership) => (
+                <div className="feed-layout">
+                  <div className="feed-main">
+                    <CommunityBody communityId={communityId} membership={membership} />
+                  </div>
+                  <aside className="feed-sidebar">
+                    <div className="sidebar-card">
+                      <h3>{t("community.feed.about")}</h3>
+                      <p>{community.description ?? t("community.list.noDescription")}</p>
+                    </div>
+                    <div className="sidebar-card">
+                      <h3>{t("community.feed.rules.title")}</h3>
+                      <ul>
+                        <li>{t("community.feed.rules.0")}</li>
+                        <li>{t("community.feed.rules.1")}</li>
+                        <li>{t("community.feed.rules.2")}</li>
+                        <li>{t("community.feed.rules.3")}</li>
+                      </ul>
+                    </div>
+                  </aside>
+                </div>
+              )}
             </AsyncBoundary>
           </>
         )}
       </AsyncBoundary>
-    </div>
+    </PageScope>
   );
 }
 
@@ -118,41 +141,40 @@ function CommunityHeader({ community }: { community: Community }) {
   const error = joinMutation.error ?? leaveMutation.error;
 
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span aria-hidden="true" className="text-3xl">
-            {community.icon ?? "👥"}
-          </span>
-          <div>
-            <h1 className="text-xl font-bold text-ink">{community.name}</h1>
-            <p className="text-sm text-ink-muted">
-              {t("community.feed.memberCount", { count: community.member_count })}
-            </p>
-          </div>
+    <div className="community-banner">
+      <div className="banner-icon" aria-hidden="true">
+        {community.icon ?? "👥"}
+      </div>
+      <div className="banner-info">
+        <h1>{community.name}</h1>
+        {community.description ? <p className="banner-desc">{community.description}</p> : null}
+        <div className="banner-meta">
+          <span className="banner-stat">{t("community.feed.memberCount", { count: community.member_count })}</span>
         </div>
+        {error ? (
+          <p className="banner-desc" role="alert">
+            {error instanceof ApiError && error.detail ? error.detail.message : t("community.feed.membershipError")}
+          </p>
+        ) : null}
+      </div>
+      <div className="banner-actions">
         {membership?.is_member ? (
-          <Button
-            variant="secondary"
+          <button
+            type="button"
+            className="btn-leave"
             disabled={leaveMutation.isPending}
             onClick={() => {
               if (window.confirm(t("community.feed.confirmLeave"))) leaveMutation.mutate();
             }}
           >
             {t("community.feed.leave")}
-          </Button>
+          </button>
         ) : (
-          <Button disabled={joinMutation.isPending} onClick={() => joinMutation.mutate()}>
+          <button type="button" className="btn-join" disabled={joinMutation.isPending} onClick={() => joinMutation.mutate()}>
             {t("community.feed.join")}
-          </Button>
+          </button>
         )}
       </div>
-      {community.description ? <p className="text-sm text-ink-soft">{community.description}</p> : null}
-      {error ? (
-        <Alert tone="danger">
-          {error instanceof ApiError && error.detail ? error.detail.message : t("community.feed.membershipError")}
-        </Alert>
-      ) : null}
     </div>
   );
 }
@@ -166,26 +188,32 @@ function CommunityBody({ communityId, membership }: { communityId: string; membe
   });
 
   if (!membership.is_member) {
-    return <EmptyState title={t("community.feed.joinToView")} />;
+    return (
+      <div className="gate-card">
+        <h2>{t("community.feed.joinToView")}</h2>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <ComposePost communityId={communityId} />
       <AsyncBoundary query={postsQuery}>
         {(posts) =>
           posts.length === 0 ? (
-            <EmptyState title={t("community.feed.empty")} />
+            <div className="empty-feed">
+              <h3>{t("community.feed.empty")}</h3>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <>
               {posts.map((post) => (
                 <PostCard key={post.id} communityId={communityId} post={post} />
               ))}
-            </div>
+            </>
           )
         }
       </AsyncBoundary>
-    </div>
+    </>
   );
 }
 
@@ -209,37 +237,43 @@ function ComposePost({ communityId }: { communityId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-border bg-surface p-4">
-      {mutation.isError ? (
-        <Alert tone="danger">
-          {mutation.error instanceof ApiError && mutation.error.detail
-            ? mutation.error.detail.message
-            : t("community.feed.postError")}
-        </Alert>
-      ) : null}
+    <form onSubmit={handleSubmit} className="composer">
+      <div className="composer-toolbar">
+        <label className="composer-select-wrap">
+          <span>{t("community.feed.postType")}</span>
+          <select
+            className="composer-select"
+            value={postType}
+            onChange={(event) => setPostType(event.target.value as CommunityPostCreate["post_type"])}
+          >
+            {POST_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </label>
+        {mutation.isError ? (
+          <p className="composer-hint" role="alert">
+            {mutation.error instanceof ApiError && mutation.error.detail
+              ? mutation.error.detail.message
+              : t("community.feed.postError")}
+          </p>
+        ) : null}
+      </div>
       <textarea
         required
         rows={3}
+        className="composer-body"
         value={content}
         onChange={(event) => setContent(event.target.value)}
         placeholder={t("community.feed.composePlaceholder")}
-        className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
+        aria-label={t("community.feed.composePlaceholder")}
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <select
-          value={postType}
-          onChange={(event) => setPostType(event.target.value as CommunityPostCreate["post_type"])}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
-        >
-          {POST_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        <Button type="submit" disabled={mutation.isPending}>
+      <div className="composer-footer">
+        <button type="submit" className="btn-primary" disabled={mutation.isPending || content.trim() === ""}>
           {mutation.isPending ? t("community.feed.posting") : t("community.feed.post")}
-        </Button>
+        </button>
       </div>
     </form>
   );
@@ -255,25 +289,47 @@ function PostCard({ communityId, post }: { communityId: string; post: CommunityP
     onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["community", communityId, "posts"] }),
   });
 
+  const initials = post.author_name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
+
   return (
-    <article className="rounded-lg border border-border bg-surface p-4">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-ink">{post.author_name}</span>
-        <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">{post.post_type}</span>
+    <article className="post-card">
+      <div className="post-card__body">
+        <div className="post-author">
+          <div className="post-avatar" aria-hidden="true">
+            {initials}
+          </div>
+          <div className="post-author-info">
+            <h4>{post.author_name}</h4>
+            <time dateTime={post.created_at}>{new Date(post.created_at).toLocaleDateString()}</time>
+          </div>
+        </div>
+        <div className="post-meta-row">
+          <span className={`post-type-badge post-type-badge--${post.post_type}`}>{post.post_type}</span>
+        </div>
+        {post.title ? <h3 className="post-title">{post.title}</h3> : null}
+        <p className="post-content">{post.content}</p>
       </div>
-      {post.title ? <h3 className="mt-1 font-semibold text-ink">{post.title}</h3> : null}
-      <p className="mt-1 whitespace-pre-wrap text-sm text-ink-soft">{post.content}</p>
-      <div className="mt-3 flex items-center gap-4 text-sm text-ink-muted">
+      <div className="post-counters">
+        <span>{t("community.feed.likes", { count: post.like_count })}</span>
+        <span>{t("community.feed.comments", { count: post.comment_count })}</span>
+      </div>
+      <div className="post-actions">
         <button
           type="button"
+          className={`btn-ghost${post.liked_by_me ? " active" : ""}`}
+          aria-pressed={post.liked_by_me}
           onClick={() => likeMutation.mutate()}
           disabled={likeMutation.isPending}
-          className={post.liked_by_me ? "font-medium text-brand" : ""}
         >
-          {t("community.feed.likes", { count: post.like_count })}
+          {t("community.feed.like")}
         </button>
-        <button type="button" onClick={() => setShowComments((value) => !value)}>
-          {t("community.feed.comments", { count: post.comment_count })}
+        <button type="button" className="btn-ghost" onClick={() => setShowComments((value) => !value)}>
+          {t("community.feed.comment")}
         </button>
       </div>
       {showComments ? <CommentsSection postId={post.id} /> : null}
@@ -301,30 +357,35 @@ function CommentsSection({ postId }: { postId: string }) {
   }
 
   return (
-    <div className="mt-3 space-y-2 border-t border-border pt-3">
+    <div className="comments-section open">
       <AsyncBoundary query={query}>
         {(comments) => (
-          <ul className="space-y-2">
+          <div>
             {comments.map((comment) => (
-              <li key={comment.id} className="text-sm">
-                <span className="font-medium text-ink">{comment.author_name}</span>{" "}
-                <span className="text-ink-soft">{comment.content}</span>
-              </li>
+              <div key={comment.id} className="comment-item">
+                <div className="comment-avatar" aria-hidden="true">
+                  {comment.author_name.charAt(0).toUpperCase()}
+                </div>
+                <div className="comment-body">
+                  <strong>{comment.author_name}</strong>
+                  <p>{comment.content}</p>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </AsyncBoundary>
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="comment-form">
         <input
           required
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder={t("community.feed.commentPlaceholder")}
-          className="flex-1 rounded-md border border-border bg-surface px-2 py-1 text-sm text-ink"
+          aria-label={t("community.feed.commentPlaceholder")}
         />
-        <Button type="submit" variant="secondary" disabled={mutation.isPending}>
+        <button type="submit" disabled={mutation.isPending}>
           {t("community.feed.reply")}
-        </Button>
+        </button>
       </form>
     </div>
   );

@@ -3,8 +3,6 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
   type ActorKind,
@@ -12,7 +10,7 @@ import {
   registerCompany,
   registerStudent,
 } from "@/features/auth/api";
-import { AccountTypeToggle, AsidePoint, Field, INPUT_CLASS } from "@/features/auth/formParts";
+import { AccountTypeToggle, AsidePoint, Field } from "@/features/auth/formParts";
 
 const MIN_PASSWORD_LENGTH = 8;
 /** How long the success message shows before redirecting, matching the legacy page. */
@@ -23,44 +21,46 @@ export function RegisterPage() {
   const [kind, setKind] = useState<ActorKind>("student");
 
   return (
-    <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-2 md:items-center">
+    <div className={`auth-container${kind === "company" ? " company-mode" : ""}`}>
       <DocumentMeta
         title={t("auth.register.title")}
         description={t("auth.register.seoDescription")}
         path="/register"
       />
 
-      <aside className="auth-aside-gradient order-2 space-y-6 rounded-3xl p-8 text-white shadow-[0_32px_80px_rgba(15,23,42,0.24)] md:order-1">
-        <span className="inline-block rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-          {t("auth.register.kicker")}
-        </span>
-        <h1 className="text-3xl font-bold text-white">{t("auth.register.heroTitle")}</h1>
-        <p className="text-white/85">{t("auth.register.heroBody")}</p>
-        <div className="space-y-3">
-          <AsidePoint icon="🎯" title={t("auth.register.point1.title")} body={t("auth.register.point1.body")} tone="dark" />
-          <AsidePoint icon="🏢" title={t("auth.register.point2.title")} body={t("auth.register.point2.body")} tone="dark" />
-        </div>
-      </aside>
-
-      <div className="order-1 rounded-3xl border border-border bg-surface p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] md:order-2">
-        <Link to="/" className="text-sm text-ink-soft hover:text-brand">
-          {t("auth.backToHome")}
-        </Link>
-        <h2 className="mt-4 text-2xl font-semibold text-ink">{t("auth.register.title")}</h2>
-        <p className="mt-1 text-sm text-ink-soft">{t("auth.register.subtitle")}</p>
-
-        <div className="mt-6">
-          <AccountTypeToggle value={kind} onChange={setKind} />
-        </div>
-
-        <div className="mt-4">{kind === "student" ? <StudentForm /> : <CompanyForm />}</div>
-
-        <p className="mt-6 text-sm text-ink-soft">
-          {t("auth.register.haveAccount")}{" "}
-          <Link to="/login" className="text-brand hover:underline">
-            {t("auth.register.login")}
+      <div className="auth-shell">
+        <aside className="auth-aside">
+          <Link to="/" className="auth-brand" aria-label={t("app.name")}>
+            <img src="/images/Logo_Ready_to_Use.png" alt={t("layout.logoAlt")} className="brand-logo brand-logo--hero" />
           </Link>
-        </p>
+          <span className="auth-kicker">{t("auth.register.kicker")}</span>
+          <h1>{t("auth.register.heroTitle")}</h1>
+          <p>{t("auth.register.heroBody")}</p>
+          <div className="auth-aside-points">
+            <AsidePoint icon="🎯" title={t("auth.register.point1.title")} body={t("auth.register.point1.body")} />
+            <AsidePoint icon="🏢" title={t("auth.register.point2.title")} body={t("auth.register.point2.body")} />
+          </div>
+        </aside>
+
+        <div className="auth-card">
+          <div className="auth-form-header">
+            <Link to="/" className="auth-back-link">
+              {t("auth.backToHome")}
+            </Link>
+            <h2>{t("auth.register.title")}</h2>
+            <p>{t("auth.register.subtitle")}</p>
+          </div>
+
+          <AccountTypeToggle idPrefix="reg-type" name="account-type" value={kind} onChange={setKind} />
+
+          {kind === "student" ? <StudentForm /> : <CompanyForm />}
+
+          <div className="auth-links">
+            <p>
+              {t("auth.register.haveAccount")} <Link to="/login">{t("auth.register.login")}</Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -124,18 +124,25 @@ function StudentForm() {
   const errorMessage = validationError ?? (mutation.isError ? describeAuthError(mutation.error, t) : null);
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
-      {mutation.isSuccess ? <Alert tone="success">{t("auth.register.success.student")}</Alert> : null}
+    <form className="registration-form" onSubmit={handleSubmit} noValidate>
+      {errorMessage ? (
+        <div className="auth-message auth-message-error is-visible" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {mutation.isSuccess ? (
+        <div className="auth-message auth-message-success is-visible" role="status">
+          {t("auth.register.success.student")}
+        </div>
+      ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-grid-two">
         <Field label={t("auth.register.student.firstName")}>
           <input
             required
             autoComplete="given-name"
             value={firstName}
             onChange={(event) => setFirstName(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
         <Field label={t("auth.register.student.lastName")}>
@@ -144,7 +151,6 @@ function StudentForm() {
             autoComplete="family-name"
             value={lastName}
             onChange={(event) => setLastName(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
       </div>
@@ -155,7 +161,6 @@ function StudentForm() {
           placeholder={t("auth.register.student.nicknamePlaceholder")}
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
-          className={INPUT_CLASS}
         />
       </Field>
 
@@ -166,11 +171,10 @@ function StudentForm() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className={INPUT_CLASS}
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-grid-two">
         <Field label={t("auth.register.student.password")}>
           <input
             type="password"
@@ -179,7 +183,6 @@ function StudentForm() {
             placeholder={t("auth.register.student.passwordPlaceholder")}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
         <Field label={t("auth.register.student.confirmPassword")}>
@@ -190,14 +193,13 @@ function StudentForm() {
             placeholder={t("auth.register.student.confirmPasswordPlaceholder")}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
       </div>
 
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <button type="submit" className="cta-button auth-button" disabled={mutation.isPending}>
         {mutation.isPending ? t("auth.register.submitting") : t("auth.register.student.submit")}
-      </Button>
+      </button>
     </form>
   );
 }
@@ -245,21 +247,28 @@ function CompanyForm() {
   const errorMessage = validationError ?? (mutation.isError ? describeAuthError(mutation.error, t) : null);
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-      {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
-      {mutation.isSuccess ? <Alert tone="success">{t("auth.register.success.company")}</Alert> : null}
+    <form className="registration-form" onSubmit={handleSubmit} noValidate>
+      {errorMessage ? (
+        <div className="auth-message auth-message-error is-visible" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {mutation.isSuccess ? (
+        <div className="auth-message auth-message-success is-visible" role="status">
+          {t("auth.register.success.company")}
+        </div>
+      ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-grid-two">
         <Field label={t("auth.register.company.name")}>
           <input
             required
             value={companyName}
             onChange={(event) => setCompanyName(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
         <Field label={t("auth.register.company.industry")}>
-          <input value={industry} onChange={(event) => setIndustry(event.target.value)} className={INPUT_CLASS} />
+          <input value={industry} onChange={(event) => setIndustry(event.target.value)} />
         </Field>
       </div>
 
@@ -267,11 +276,10 @@ function CompanyForm() {
         <input
           value={contactPerson}
           onChange={(event) => setContactPerson(event.target.value)}
-          className={INPUT_CLASS}
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-grid-two">
         <Field label={t("auth.register.company.email")}>
           <input
             type="email"
@@ -279,7 +287,6 @@ function CompanyForm() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
         <Field label={t("auth.register.company.phone")}>
@@ -287,25 +294,22 @@ function CompanyForm() {
             type="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-grid-two">
         <Field label={t("auth.register.company.website")}>
           <input
             type="url"
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
         <Field label={t("auth.register.company.location")}>
           <input
             value={location}
             onChange={(event) => setLocation(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
       </div>
@@ -315,11 +319,10 @@ function CompanyForm() {
           rows={5}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          className={INPUT_CLASS}
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-grid-two">
         <Field label={t("auth.register.company.password")}>
           <input
             type="password"
@@ -328,7 +331,6 @@ function CompanyForm() {
             placeholder={t("auth.register.student.passwordPlaceholder")}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
         <Field label={t("auth.register.company.confirmPassword")}>
@@ -339,14 +341,13 @@ function CompanyForm() {
             placeholder={t("auth.register.student.confirmPasswordPlaceholder")}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className={INPUT_CLASS}
           />
         </Field>
       </div>
 
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <button type="submit" className="cta-button auth-button" disabled={mutation.isPending}>
         {mutation.isPending ? t("auth.register.submitting") : t("auth.register.company.submit")}
-      </Button>
+      </button>
     </form>
   );
 }

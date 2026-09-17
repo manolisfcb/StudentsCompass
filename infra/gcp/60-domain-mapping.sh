@@ -23,9 +23,34 @@ if [ -z "${DOMAIN:-}" ]; then
   exit 1
 fi
 
-if gcloud beta run domain-mappings describe "$DOMAIN" \
-      --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
-  echo "El mapeo de $DOMAIN ya existe"
+# Comprobar el nombre y no el destino no es idempotencia: un mapeo creado a mano
+# contra otro servicio hacía que este script dijera "ya existe" y saliera con
+# éxito sin haber mapeado nada. Así es como `studentscompass.ca` estuvo
+# apuntando a la API —sirviendo el monolito Jinja— mientras esta tarea figuraba
+# como hecha. Ahora se lee el destino real.
+# `describe` no expone spec.routeName en esta versión de gcloud (devuelve vacío
+# sin error, que es la peor forma de no devolver algo); `list` sí lo trae.
+CURRENT_ROUTE="$(gcloud beta run domain-mappings list \
+  --project "$PROJECT_ID" --region "$REGION" \
+  --format='value(spec.routeName)' \
+  --filter="metadata.name=${DOMAIN}" 2>/dev/null | head -n1 || true)"
+
+if [ -n "$CURRENT_ROUTE" ] && [ "$CURRENT_ROUTE" != "$FRONT_SERVICE" ]; then
+  echo "ERROR: $DOMAIN está mapeado a '$CURRENT_ROUTE', no a '$FRONT_SERVICE'." >&2
+  echo >&2
+  echo "Este script NO lo repunta solo. Mover el dominio de un servicio a otro" >&2
+  echo "cambia lo que ve todo usuario en la siguiente petición: si el destino" >&2
+  echo "actual es la API, ese cambio ES el cutover de TASK-058, no un ajuste de" >&2
+  echo "infraestructura, y se hace con su ventana y su plan de vuelta atrás." >&2
+  echo >&2
+  echo "Para hacerlo deliberadamente:" >&2
+  echo "  gcloud beta run domain-mappings delete $DOMAIN --project $PROJECT_ID --region $REGION" >&2
+  echo "  ./60-domain-mapping.sh" >&2
+  exit 1
+fi
+
+if [ -n "$CURRENT_ROUTE" ]; then
+  echo "El mapeo de $DOMAIN ya existe y apunta a $FRONT_SERVICE"
 else
   gcloud beta run domain-mappings create \
     --service "$FRONT_SERVICE" \

@@ -5,12 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { fetchAdminStats } from "@/features/admin/api";
 import { login } from "@/features/auth/api";
-import { Field, INPUT_CLASS } from "@/features/auth/formParts";
 
 export function AdminLoginPage() {
   const { t } = useTranslation();
@@ -43,44 +41,61 @@ export function AdminLoginPage() {
     : t("admin.login.invalid");
 
   return (
-    <div className="admin-console flex min-h-screen items-center justify-center bg-ink px-4 py-10">
+    <PageScope name={["admin", "admin-page"]} className="admin-login-page">
       <DocumentMeta title={t("admin.login.seoTitle")} description={t("admin.login.subtitle")} path="/admin/login" />
-      <main className="admin-card w-full max-w-md rounded-xl border p-7 shadow-xl">
-        <div className="text-center">
-          <span aria-hidden="true" className="text-4xl">🛡️</span>
-          <h1 className="mt-3 text-2xl font-bold text-ink">{t("admin.login.title")}</h1>
-          <p className="mt-1 text-sm text-ink-soft">{t("admin.login.subtitle")}</p>
+      <main className="admin-login-card">
+        <div className="admin-login-header">
+          <div className="admin-login-icon" aria-hidden="true">
+            🛡️
+          </div>
+          <h1 className="admin-login-title">{t("admin.login.title")}</h1>
+          <p className="admin-login-subtitle">{t("admin.login.subtitle")}</p>
         </div>
-        {mutation.isError ? <div className="mt-5"><Alert tone="danger">{message}</Alert></div> : null}
-        <form className="mt-6 space-y-4" onSubmit={submit}>
-          <Field label={t("admin.login.email")}>
+
+        {mutation.isError ? (
+          <div className="admin-login-error visible" role="alert">
+            {message}
+          </div>
+        ) : null}
+
+        <form onSubmit={submit}>
+          <div className="admin-form-group">
+            <label className="admin-form-label" htmlFor="adminEmail">
+              {t("admin.login.email")}
+            </label>
             <input
+              className="admin-form-input"
+              id="adminEmail"
               type="email"
               required
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className={INPUT_CLASS}
             />
-          </Field>
-          <Field label={t("admin.login.password")}>
+          </div>
+          <div className="admin-form-group">
+            <label className="admin-form-label" htmlFor="adminPassword">
+              {t("admin.login.password")}
+            </label>
             <input
+              className="admin-form-input"
+              id="adminPassword"
               type="password"
               required
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className={INPUT_CLASS}
             />
-          </Field>
-          <Button type="submit" className="w-full" disabled={mutation.isPending}>
+          </div>
+          <button type="submit" className="admin-login-btn" disabled={mutation.isPending}>
             {mutation.isPending ? t("admin.login.submitting") : t("admin.login.submit")}
-          </Button>
+          </button>
         </form>
-        <Link to="/" className="mt-5 block text-center text-sm text-ink-soft hover:text-brand">
+
+        <Link to="/" className="admin-login-subtitle">
           {t("admin.backToSite")}
         </Link>
       </main>
-    </div>
+    </PageScope>
   );
 }

@@ -3,10 +3,9 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { FormField, INPUT_CLASS } from "@/components/patterns/FormField";
+import { FormField } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
   createRecruiter,
@@ -32,31 +31,44 @@ export function RecruitersPage() {
   const [inviting, setInviting] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <PageScope name="company-team" className="team-shell">
       <DocumentMeta
         title={t("company.recruiters.seoTitle")}
         description={t("company.recruiters.seoDescription")}
         path="/company/recruiters"
       />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ink">{t("company.recruiters.title")}</h1>
-        <Button onClick={() => setInviting((value) => !value)}>
-          {inviting ? t("company.recruiters.cancel") : t("company.recruiters.invite")}
-        </Button>
+      <div className="page-hero">
+        <div>
+          <h2>{t("company.recruiters.title")}</h2>
+          <p>{t("company.recruiters.subtitle")}</p>
+        </div>
+        <div className="owner-badge">{t("company.recruiters.ownerBadge")}</div>
       </div>
 
-      {inviting ? <InviteForm onDone={() => setInviting(false)} /> : null}
-
-      <AsyncBoundary query={query}>
-        {(recruiters) => (
-          <div className="space-y-3">
-            {recruiters.map((recruiter) => (
-              <RecruiterRow key={recruiter.id} recruiter={recruiter} />
-            ))}
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h3>{t("company.recruiters.accessTitle")}</h3>
+            <p>{t("company.recruiters.accessSubtitle")}</p>
           </div>
-        )}
-      </AsyncBoundary>
-    </div>
+          <button type="button" className="btn btn-primary" onClick={() => setInviting((value) => !value)}>
+            {inviting ? t("company.recruiters.cancel") : t("company.recruiters.invite")}
+          </button>
+        </div>
+
+        {inviting ? <InviteForm onDone={() => setInviting(false)} /> : null}
+
+        <AsyncBoundary query={query}>
+          {(recruiters) => (
+            <div className="recruiter-list">
+              {recruiters.map((recruiter) => (
+                <RecruiterRow key={recruiter.id} recruiter={recruiter} />
+              ))}
+            </div>
+          )}
+        </AsyncBoundary>
+      </section>
+    </PageScope>
   );
 }
 
@@ -79,47 +91,50 @@ function RecruiterRow({ recruiter }: { recruiter: Recruiter }) {
     return error instanceof ApiError && error.detail ? error.detail.message : t(fallbackKey);
   };
 
+  const name = `${recruiter.first_name ?? ""} ${recruiter.last_name ?? ""}`.trim() || recruiter.email;
+
   return (
-    <article className="space-y-2 rounded-lg border border-border bg-surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="font-semibold text-ink">
-            {`${recruiter.first_name ?? ""} ${recruiter.last_name ?? ""}`.trim() || recruiter.email}
-          </p>
-          <p className="text-sm text-ink-soft">{recruiter.email}</p>
-          <span className="text-xs text-ink-muted">
-            {recruiter.is_active ? t("company.recruiters.active") : t("company.recruiters.inactive")}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={recruiter.role}
-            disabled={roleMutation.isPending}
-            onChange={(event) => roleMutation.mutate(event.target.value)}
-            className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
-          >
-            {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
-          <Button
-            variant="danger"
-            disabled={deleteMutation.isPending}
-            onClick={() => {
-              if (window.confirm(t("company.recruiters.confirmRemove"))) deleteMutation.mutate();
-            }}
-          >
-            {t("company.recruiters.remove")}
-          </Button>
-        </div>
+    <article className="recruiter-item">
+      <div className="recruiter-identity">
+        <strong>{name}</strong>
+        <span>{recruiter.email}</span>
+        <span className={`status-pill ${recruiter.is_active ? "active" : "inactive"}`}>
+          {recruiter.is_active ? t("company.recruiters.active") : t("company.recruiters.inactive")}
+        </span>
+      </div>
+      <div className="recruiter-item-actions">
+        <select
+          value={recruiter.role}
+          disabled={roleMutation.isPending}
+          aria-label={t("company.recruiters.roleFor", { name })}
+          onChange={(event) => roleMutation.mutate(event.target.value)}
+        >
+          {ROLES.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="btn btn-danger"
+          disabled={deleteMutation.isPending}
+          onClick={() => {
+            if (window.confirm(t("company.recruiters.confirmRemove"))) deleteMutation.mutate();
+          }}
+        >
+          {t("company.recruiters.remove")}
+        </button>
       </div>
       {roleMutation.isError ? (
-        <Alert tone="danger">{errorMessage(roleMutation.error, "company.recruiters.roleError")}</Alert>
+        <p className="feedback-message" role="alert">
+          {errorMessage(roleMutation.error, "company.recruiters.roleError")}
+        </p>
       ) : null}
       {deleteMutation.isError ? (
-        <Alert tone="danger">{errorMessage(deleteMutation.error, "company.recruiters.removeError")}</Alert>
+        <p className="feedback-message" role="alert">
+          {errorMessage(deleteMutation.error, "company.recruiters.removeError")}
+        </p>
       ) : null}
     </article>
   );
@@ -149,37 +164,28 @@ function InviteForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border bg-surface p-4">
+    <form onSubmit={handleSubmit} className="recruiter-form">
       {mutation.isError ? (
-        <Alert tone="danger">
+        <p className="feedback-message" role="alert">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("company.recruiters.inviteError")}
-        </Alert>
+        </p>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="recruiter-form-grid">
         <FormField label={t("company.recruiters.form.firstName")}>
-          <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className={INPUT_CLASS} />
+          <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
         </FormField>
         <FormField label={t("company.recruiters.form.lastName")}>
-          <input value={lastName} onChange={(e) => setLastName(e.target.value)} className={INPUT_CLASS} />
+          <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
         </FormField>
-      </div>
-      <FormField label={t("company.recruiters.form.email")}>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={INPUT_CLASS}
-        />
-      </FormField>
-      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField label={t("company.recruiters.form.email")}>
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        </FormField>
         <FormField label={t("company.recruiters.form.role")}>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as (typeof ROLES)[number])}
-            className={INPUT_CLASS}
           >
             {ROLES.map((option) => (
               <option key={option} value={option}>
@@ -189,22 +195,16 @@ function InviteForm({ onDone }: { onDone: () => void }) {
           </select>
         </FormField>
         <FormField label={t("company.recruiters.form.password")}>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={INPUT_CLASS}
-          />
+          <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </FormField>
       </div>
-      <div className="flex gap-2">
-        <Button type="submit" disabled={mutation.isPending}>
+      <div className="recruiter-actions">
+        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
           {mutation.isPending ? t("company.recruiters.sending") : t("company.recruiters.sendInvite")}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone}>
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={onDone}>
           {t("company.recruiters.cancel")}
-        </Button>
+        </button>
       </div>
     </form>
   );

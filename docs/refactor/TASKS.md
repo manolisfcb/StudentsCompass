@@ -128,9 +128,9 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | COMPLETED | TASK-013, TASK-037 | TASK-055 |
 | TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | COMPLETED | TASK-002, TASK-036, TASK-039 | TASK-054 |
 | TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | COMPLETED | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
-| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | COMPLETED | TASK-028, TASK-056 | NONE |
+| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | IN PROGRESS | TASK-028, TASK-056 | NONE |
 | TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | BLOCKED | TASK-031, TASK-053, TASK-057 | NONE |
-| TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
+| TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | BLOCKED | TASK-058 | NONE |
 | TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | COMPLETED | TASK-039 | NONE |
 | TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | COMPLETED | TASK-024 | TASK-062 |
 | TASK-062 | Paginar el listado de candidaturas del estudiante | MEDIUM | PHASE-4 | COMPLETED | TASK-024, TASK-025 | TASK-061 |
@@ -10757,7 +10757,7 @@ Risk: HIGH
 
 ## TASK-057 — Configurar dominio, TLS, alertas, budgets y rollback por revisión
 
-Status: COMPLETED
+Status: IN PROGRESS
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure / Observability
@@ -10824,7 +10824,7 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] El dominio público apunta al frontend y el navegador ve un solo origen.
+- [ ] El dominio público apunta al frontend y el navegador ve un solo origen. **NO se cumple: apunta a la API.** Ver la corrección al final de las Completion Notes.
 - [x] Existen alertas con umbral justificado y runbook para 5xx, p95, 429, jobs vencidos y gasto IA. **El pool de DB no tiene alerta propia y eso es deliberado** — ver Completion Notes.
 - [x] El rollback por revisión fue ejecutado y medido. **No en staging: no existe** — se ejecutó en producción con autorización explícita, ver Completion Notes.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
@@ -10979,6 +10979,42 @@ con autorización explícita, entre dos revisiones sanas, y el tráfico quedó
 donde estaba. Que la ficha pidiera staging y se resolviera en producción es una
 desviación, y va escrita aquí en vez de disimulada.
 
+**Corrección 2026-09-16, misma sesión: el dominio apunta a la API, no al
+frontend. La ficha vuelve a IN PROGRESS.**
+
+Unas horas antes marqué ese criterio como cumplido tras comprobar que el mapeo
+existía, que el DNS resolvía a los A records de Google y que el certificado
+validaba. No comprobé **a qué servicio apuntaba**, que es justo lo que el
+criterio pide. Apunta a `studentscompass-api`:
+
+```
+DOMAIN              ROUTE_NAME           STATUS
+studentscompass.ca  studentscompass-api  True
+```
+
+El mapeo es anterior a `60-domain-mapping.sh` y lo creó alguien a mano contra la
+API. El script mapea `--service "$FRONT_SERVICE"` y por eso, cuando lo ejecuté,
+no cambió nada: vio un mapeo con ese nombre ya existente y salió por la rama
+«ya existe». **Idempotencia que comprueba el nombre pero no el destino no es
+idempotencia**, y ese es un defecto del script, no solo mío al leerlo.
+
+**Consecuencia, que es exactamente la que la sección «Why this is a problem» de
+esta ficha anticipaba.** `studentscompass.ca` sirve hoy el **monolito Jinja**
+—HTML renderizado en servidor con assets de `/static/`— y no el bundle de React,
+que solo recibe tráfico en su URL `run.app`. El diseño de mismo origen que hace
+que las cookies sean first-party no está en pie: no porque el dominio apunte
+«a otro sitio», sino porque apunta a la mitad vieja del sistema.
+
+**Lo que sí queda cerrado de esta ficha** y no depende del dominio: las seis
+alertas con su canal, las cuatro métricas de log, el budget y el rollback por
+revisión ensayado y medido. Nada de eso se retira.
+
+**Lo que falta es un solo acto**, y no es de configuración sino de producto:
+repuntar el mapeo al frontend es **el cutover**, es decir, TASK-058. Por eso esta
+ficha no puede cerrarse antes que aquella, aunque el orden del plan diga lo
+contrario. Se deja registrado como desviación del plan en vez de forzar el
+mapeo para poder marcar la casilla.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -11104,6 +11140,57 @@ el proyecto, no técnica:
 
 Nada de esto se declara hecho ni se estima.
 
+**Actualización 2026-09-16 (segunda revisión, misma sesión): el bloqueo real no
+era la falta de staging.** La nota de arriba decía que faltaba una copia
+anonimizada. Sigue faltando, pero es el segundo obstáculo, no el primero.
+
+**El primero es que el cutover no ha empezado: producción es el monolito Jinja.**
+`studentscompass.ca` mapea a `studentscompass-api`, no al frontend (ver la
+corrección en TASK-057). Medido sobre 20.000 peticiones al servicio de API
+registradas en Cloud Logging entre 2026-08-28 y 2026-09-17:
+
+| Clase de tráfico | Peticiones |
+| --- | --- |
+| Ruido de escáneres (`/wp-admin`, `/.env`, `.php`, 404) | 18.068 |
+| **Páginas Jinja servidas con 200** | **1.392** |
+| **Assets `/static/` servidos con 200** | **424** |
+| Contrato REST `/api/v1` | 90 |
+| **Endpoints legacy de la matriz de retiro** | **26** |
+
+Las páginas con más tráfico son `/` (650), `/login` (63), `/about` (53),
+`/register` (26) y `/dashboard` (10). Entre los endpoints legacy hay **10
+`POST /auth/jwt/login`**: son personas autenticándose de verdad contra la ruta
+de auth antigua.
+
+**Esto reordena la ficha.** «Ejecutar el cutover en orden migrate → API →
+frontend» ya está hecho por TASK-056 en cuanto a *desplegar*; lo que no se ha
+hecho es **mover a los usuarios**, que es un solo cambio: repuntar el mapeo de
+dominio al servicio de frontend. Todo lo demás de esta ficha —ventana de
+observación, congelación, canary— cuelga de ese momento y no puede ensayarse
+antes.
+
+**Sigue faltando la copia anonimizada** para el ensayo previo, con las tres
+decisiones ya anotadas arriba (dónde vive, cómo se anonimiza, qué umbrales
+cierran la ventana). Pero conviene decirlo con precisión: el ensayo protege
+sobre todo contra sorpresas de **datos y de schema**, y el schema ya corre
+migrado por el Job desde el 12/09 sirviendo a ambas mitades. El riesgo dominante
+del repunte es de **presentación y de sesión** —que una pantalla React no tenga
+paridad, o que la cookie de sesión no viaje igual— y eso se ensaya contra el
+`run.app` del frontend, que existe y funciona, no contra una copia de la base.
+
+**Lo que se puede hacer sin copia anonimizada, y queda propuesto, no hecho:**
+
+1. Recorrer el `run.app` del frontend autenticado como usuario real y comparar
+   contra `verify_parity.py`, que ya existe y ya produce
+   [parity/REPORT.md](parity/REPORT.md).
+2. Repuntar el dominio en una ventana de bajo tráfico, con el mapeo anterior
+   documentado para revertir: volver a la API es el mismo comando, y el DNS no
+   cambia porque ambos servicios viven tras el mismo mapeo.
+3. Observar las seis alertas de TASK-057 durante la ventana acordada.
+
+Nada de esto se ha ejecutado. **Repuntar el dominio es la decisión con más
+consecuencia de todo el plan y no se toma desde una sesión de herramientas.**
+
 ### Estimated Impact
 
 Security: HIGH
@@ -11114,7 +11201,7 @@ Risk: HIGH
 
 ## TASK-059 — Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados
 
-Status: TODO
+Status: BLOCKED
 Priority: MEDIUM
 Phase: PHASE-M5
 Category: Cleanup / Structure
@@ -11198,6 +11285,59 @@ Comprobar que la suite completa pasa tras cada borrado. Verificar por métricas 
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+**Actualización 2026-09-16 — pasa de TODO a BLOCKED, con la medición que la ficha
+exigía ya hecha y dando el resultado contrario al que autorizaría el borrado.**
+
+La ficha dice que «la medición de tráfico es la única evidencia que autoriza el
+borrado». Esa medición ya se puede hacer, porque desde TASK-056 hay un entorno
+desplegado con Cloud Logging. Se hizo, sobre 20.000 peticiones entre
+2026-08-28 y 2026-09-17, y **el resultado es cero-tráfico rotundamente falso**:
+
+- **1.392 páginas Jinja servidas con HTTP 200** — `/` (650), `/login` (63),
+  `/about` (53), `/register` (26), `/dashboard` (10), y ocho pantallas más.
+- **424 assets de `/static/` servidos con 200**, incluidos `base.js`, `home.js`
+  y el logo.
+- **26 llamadas a endpoints de la matriz de retiro**, de las cuales **10 son
+  `POST /auth/jwt/login`**: inicios de sesión reales contra la ruta antigua.
+
+El motivo está en TASK-057 y TASK-058: `studentscompass.ca` mapea a la API, así
+que **el monolito Jinja es lo que hoy ve un usuario**. Borrar `app/views`,
+`app/templates`, `app/static` y el montaje de StaticFiles ahora mismo apagaría
+el sitio en producción. No es una precaución teórica: es lo que dicen los logs.
+
+**Hallazgo que hay que resolver antes del retiro, y que no estaba anotado en
+ningún sitio.** `frontend/nginx.conf:67` proxea a la API cinco familias de
+rutas: `/api/`, `/health(z)`, `/ready(z)`, **`/sitemap.xml`** y
+**`/robots.txt`**. Las dos últimas están marcadas `retire` en la matriz de
+TASK-034 con destino «frontend Nginx», pero Nginx **no las sirve, las reenvía**.
+Es decir: incluso después del cutover, retirarlas de FastAPI las rompe, porque
+el destino que la matriz les asigna todavía no está implementado. El smoke
+público de `deploy.yml` comprueba `/robots.txt` == 200, así que el fallo
+aparecería como un deploy roto y no como una página perdida en silencio — lo
+cual es una suerte, no un diseño.
+
+`/favicon.ico` está en el mismo grupo de tres, pero ese sí lo resuelve el
+bundle: `location /` cae en `try_files`, que encuentra el fichero estático.
+
+**Orden obligado para desbloquear esta ficha:**
+
+1. TASK-058 mueve el dominio al frontend.
+2. Nginx pasa a **servir** `robots.txt` y `sitemap.xml` en vez de proxearlos, o
+   se decide explícitamente que sigan viviendo en la API y salen de la matriz de
+   retiro.
+3. Se vuelve a medir sobre una ventana completa **posterior** al cutover, ya con
+   los usuarios en React.
+4. Solo entonces se borra, pantalla por pantalla, citando la vertical que
+   sustituye a cada una.
+
+**No se ha borrado ni un fichero.** El inventario para cuando toque: `app/views/`
+(1 módulo), `app/templates/` (23 ficheros), `app/static/` (css, images, js), los
+imports de `Jinja2Templates` y `StaticFiles` en `app/app.py:13-14`, el montaje de
+`/static` en `app/app.py:265` y las 33 rutas `retire` de
+[route_targets.csv](route_targets.csv). El sitemap tiene además una dependencia
+declarada: `09_ROUTE_MATRIX.md:197` avisa de que `_get_last_modified_date`
+devolverá `None` para cuatro entradas cuando los templates dejen de existir.
 
 ### Estimated Impact
 

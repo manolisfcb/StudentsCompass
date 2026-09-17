@@ -1,20 +1,29 @@
 @import "tailwindcss";
 
-/* Design tokens — the single palette of the migration.
+/* Inter, which `admin.css` pulls in for the admin console. It is declared here
+ * rather than inside the ported sheet because `@import` has to come before any
+ * rule, and the port strips the statement out of the sheets it rewrites. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+/* The shipped design system, ported out of the Jinja app.
  *
- * These values are not new. They are lifted verbatim from the stylesheets the
- * product ships today, which declare the same colours three times under three
- * naming schemes: `--primary-color` in `style.css`, `--clr-teal-dark` in
- * `community_feed.css` and `--admin-primary` in `admin.css`. #0F766E is the
- * brand teal in two of them; the admin sheet drifted to indigo on a dark
- * ground. Consolidating them here is what stops the React app from inheriting
- * three sources of truth for one colour.
+ * `legacy/base.css` is `backend/app/static/css/style.css` verbatim and
+ * `legacy/pages/*` are the per-page sheets, each scoped under the `.pg-<name>`
+ * class its route renders (see `styles/legacy/README.md`). Both are imported
+ * unlayered, so they win over Tailwind's `@layer utilities` the same way the
+ * page sheets won over the shell sheet in the multipage build.
  *
- * Tailwind v4 compiles `@theme` entries into plain CSS custom properties *and*
- * into utilities, so `--color-brand` is reachable as `bg-brand` from a
- * component and as `var(--color-brand)` from any hand-written CSS that still
- * needs it. See docs/refactor/ADR-002-frontend-styling-and-i18n.md.
+ * The React screens carry the same class names as the templates they replace,
+ * which is what makes these files a port and not a second design system.
  */
+@import "./legacy/index.css";
+
+/* The handful of components with no counterpart in the Jinja app. */
+@import "./app.css";
+
+/* Design tokens — the same palette the legacy sheets declare in `:root`,
+ * restated as Tailwind theme entries so `bg-brand`/`text-ink` and
+ * `var(--primary-color)` name one colour rather than two. */
 @theme {
   --color-brand: #0f766e;
   --color-brand-strong: #0b5d57;
@@ -37,106 +46,28 @@
   --font-sans: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* The admin console is the one screen that ships a dark ground today. It
- * becomes a scope on the same tokens rather than a fourth palette; the
- * vertical that migrates admin (TASK-053) fills it in against the captured
- * baseline. */
-@layer base {
-  body {
-    background-color: var(--color-canvas);
-    color: var(--color-ink);
-    font-family: var(--font-sans);
-  }
+/* The skip link is the one piece of chrome the Jinja templates never had (they
+ * had no SPA shell to skip past), so it is the one piece styled here. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 300;
 }
 
-/* Marketing/auth gradients (TASK-046). Literal values from
- * `backend/app/static/css/style.css` (`.marketing-header`, `--auth-card-top`
- * companion background) — not a redesign, the same brand gradient the public
- * shell and login/register cards already ship, given one definition instead
- * of being re-typed as a hex string in every component that needs it. */
-@layer components {
-  .hero-gradient {
-    background:
-      radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 20%),
-      linear-gradient(110deg, #0f766e 0%, #14b8a6 52%, #5eead4 100%);
-  }
-
-  .auth-gradient {
-    background:
-      radial-gradient(circle at top left, rgba(94, 234, 212, 0.14), transparent 22%),
-      linear-gradient(135deg, #0a4f48 0%, #0f766e 38%, #0d9488 70%, #5eead4 100%);
-  }
-
-  /* The login/register aside panel (`.auth-aside` in the legacy sheet). */
-  .auth-aside-gradient {
-    background:
-      radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 28%),
-      linear-gradient(160deg, rgba(8, 59, 55, 0.96) 0%, rgba(11, 95, 88, 0.94) 100%);
-  }
-
-  /* Breaks a section out of the shell's centred `max-w-6xl` column so a
-   * gradient band can reach the viewport edge, the way `.marketing-header`
-   * does with a fluid parent instead of a fixed-width one. */
-  .full-bleed {
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-  }
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--primary-color);
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
 }
 
-/* Admin keeps the captured dark presentation while reusing the shared
- * components. The overrides are scoped so DataTable remains light elsewhere. */
-@layer components {
-  .admin-console .admin-dark-table > div {
-    border-color: color-mix(in srgb, white 10%, transparent) !important;
-    background: color-mix(in srgb, white 4%, transparent) !important;
-  }
-
-  .admin-console .admin-dark-table thead,
-  .admin-console .admin-dark-table tr {
-    border-color: color-mix(in srgb, white 10%, transparent) !important;
-  }
-
-  .admin-console .admin-dark-table th,
-  .admin-console .admin-dark-table td {
-    color: var(--color-ink-muted) !important;
-  }
-
-  /* The admin sign-in card. The baseline (`admin_login.html` over
-   * `admin.css`) is a dark card on the dark ground; migrating it as a white
-   * card on that ground was the one piece of the admin presentation TASK-053
-   * had not filled in. Scoped like the table above so the shared `Field` and
-   * `INPUT_CLASS` keep their light presentation on `/login` and `/register`,
-   * which are the same components on a light ground.
-   *
-   * `!important` for the same reason the table above needs it, and it is worth
-   * stating once: these rules sit in `@layer components`, and the classes they
-   * are overriding (`text-ink`, `bg-surface`) are utilities, which Tailwind
-   * orders after components. Without it the card turned dark while the heading
-   * and the labels stayed `--color-ink` on top of it — dark text on a dark
-   * ground, which is worse than the white card it replaced. */
-  .admin-console .admin-card {
-    border-color: color-mix(in srgb, white 10%, transparent) !important;
-    background: color-mix(in srgb, white 4%, transparent) !important;
-  }
-
-  /* `label > span` and not just `label`: `Field` puts the caption in a span of
-   * its own carrying `text-ink`, so colouring only the label left the caption
-   * reading as dark grey on the dark card. */
-  .admin-console .admin-card :is(h1, label, label > span) {
-    color: white !important;
-  }
-
-  .admin-console .admin-card :is(p, a) {
-    color: color-mix(in srgb, white 62%, transparent) !important;
-  }
-
-  .admin-console .admin-card input {
-    border-color: color-mix(in srgb, white 12%, transparent) !important;
-    background: color-mix(in srgb, black 22%, transparent) !important;
-    color: white !important;
-  }
+/* Route scopes double as the page frame: a page sheet was written against a
+ * full-height document, and in the SPA it is a div inside the shell. */
+[class*="pg-"] {
+  min-width: 0;
 }

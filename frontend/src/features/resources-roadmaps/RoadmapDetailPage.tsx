@@ -5,8 +5,7 @@ import { useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
@@ -45,24 +44,26 @@ export function RoadmapDetailPage() {
   const query = useQuery({ queryKey: queryKeys.roadmaps.detail(slug), queryFn: () => fetchRoadmapDetail(slug) });
 
   return (
-    <div className="space-y-8">
+    <PageScope name={["roadmaps", "roadmap"]}>
       <AsyncBoundary query={query}>
         {(roadmap) => (
-          <>
+          <section className="roadmap-detail-page">
             <DocumentMeta title={roadmap.title} description={roadmap.description} path={`/roadmaps/${slug}`} />
             <RoadmapHeader roadmap={roadmap} />
-            <div className="space-y-6">
-              {roadmap.stages
-                .slice()
-                .sort((a, b) => a.order_index - b.order_index)
-                .map((stage) => (
-                  <StageCard key={stage.id} slug={slug} stage={stage} />
-                ))}
+            <div className="detail-layout">
+              <section className="stages-column">
+                {roadmap.stages
+                  .slice()
+                  .sort((a, b) => a.order_index - b.order_index)
+                  .map((stage) => (
+                    <StageCard key={stage.id} slug={slug} stage={stage} />
+                  ))}
+              </section>
             </div>
-          </>
+          </section>
         )}
       </AsyncBoundary>
-    </div>
+    </PageScope>
   );
 }
 
@@ -82,67 +83,77 @@ function RoadmapHeader({ roadmap }: { roadmap: RoadmapDetail }) {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <>
+      <div className="detail-topbar">
         <div>
-          <h1 className="text-2xl font-bold text-ink">{roadmap.title}</h1>
-          <p className="mt-1 text-ink-soft">{roadmap.description}</p>
+          <p className="eyebrow">{roadmap.difficulty}</p>
+          <h2>{roadmap.title}</h2>
+          <p>{roadmap.description}</p>
         </div>
-        <Button
-          variant={roadmap.is_saved ? "secondary" : "primary"}
-          disabled={mutation.isPending}
-          onClick={() => mutation.mutate()}
-        >
-          {roadmap.is_saved ? t("roadmaps.detail.unsave") : t("roadmaps.detail.save")}
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-3 text-sm text-ink-muted">
-        <span>{roadmap.difficulty}</span>
-        <span>
-          {roadmap.duration_weeks_min}–{roadmap.duration_weeks_max} {t("roadmaps.weeks")}
-        </span>
-        <span>{t("roadmaps.saveCount", { count: roadmap.popularity })}</span>
-      </div>
-      <div>
-        <p className="text-sm text-ink-soft">
-          {t("roadmaps.tasksCompleted", { completed: roadmap.completed_tasks, total: roadmap.total_tasks })}
-        </p>
-        <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-border">
-          <div className="h-full bg-brand" style={{ width: `${roadmap.overall_progress_percent}%` }} />
+        <div className="topbar-actions">
+          <button
+            type="button"
+            className="save-button"
+            data-saved={roadmap.is_saved ? 1 : 0}
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            {roadmap.is_saved ? t("roadmaps.detail.unsave") : t("roadmaps.detail.save")}
+          </button>
+          <span className="save-counter">{t("roadmaps.saveCount", { count: roadmap.popularity })}</span>
         </div>
       </div>
-    </div>
+
+      <div className="overall-progress">
+        <div className="progress-head">
+          <span>{t("roadmaps.detail.overallProgress")}</span>
+          <span>{roadmap.overall_progress_percent}%</span>
+        </div>
+        <div className="progress-track">
+          <span className="roadmap-progress-fill" style={{ width: `${roadmap.overall_progress_percent}%` }} />
+        </div>
+        <small>{t("roadmaps.tasksCompleted", { completed: roadmap.completed_tasks, total: roadmap.total_tasks })}</small>
+      </div>
+    </>
   );
 }
 
 function StageCard({ slug, stage }: { slug: string; stage: RoadmapDetail["stages"][number] }) {
   const { t } = useTranslation();
   return (
-    <section className="rounded-lg border border-border bg-surface p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-ink">{stage.title}</h2>
-        <span className="text-sm text-ink-muted">{stage.progress_percent}%</span>
-      </div>
-      <p className="mt-1 text-sm text-ink-soft">{stage.objective}</p>
-
-      <div className="mt-4 space-y-2">
-        {stage.tasks
-          .slice()
-          .sort((a, b) => a.order_index - b.order_index)
-          .map((task) => (
-            <TaskRow key={task.id} slug={slug} stageId={stage.id} task={task} />
-          ))}
-      </div>
-
-      {stage.projects.length > 0 ? (
-        <div className="mt-4 space-y-4">
-          <h3 className="text-sm font-semibold text-ink">{t("roadmaps.detail.projects")}</h3>
-          {stage.projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
+    <article className="stage-card">
+      <div className="stage-header">
+        <div>
+          <h3>{t("roadmaps.detail.stageLabel", { order: stage.order_index, title: stage.title })}</h3>
+          <p>{t("roadmaps.weeksCount", { count: stage.duration_weeks })}</p>
         </div>
-      ) : null}
-    </section>
+        <div className="stage-progress-wrap">
+          <span>{stage.progress_percent}%</span>
+          <div className="progress-track stage-track">
+            <span className="roadmap-progress-fill" style={{ width: `${stage.progress_percent}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="stage-body">
+        <p className="stage-objective">{stage.objective}</p>
+
+        <div className="task-group">
+          <ul className="task-list">
+            {stage.tasks
+              .slice()
+              .sort((a, b) => a.order_index - b.order_index)
+              .map((task) => (
+                <TaskRow key={task.id} slug={slug} stageId={stage.id} task={task} />
+              ))}
+          </ul>
+        </div>
+
+        {stage.projects.map((project) => (
+          <ProjectCard key={project.id} project={project} />
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -185,24 +196,35 @@ function TaskRow({
   });
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
-      <div>
-        <p className="text-sm font-medium text-ink">{task.title}</p>
-        <p className="text-xs text-ink-muted">{task.description}</p>
+    <li className="task-item">
+      <div className="task-main">
+        <input
+          type="checkbox"
+          className="task-checkbox"
+          checked={task.status === "completed"}
+          disabled={mutation.isPending}
+          aria-label={task.title}
+          onChange={(event) => mutation.mutate(event.target.checked ? "completed" : "not_started")}
+        />
+        <span className="task-open">{task.title}</span>
       </div>
-      <select
-        value={task.status}
-        disabled={mutation.isPending}
-        onChange={(event) => mutation.mutate(event.target.value as TaskProgressStatus)}
-        className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
-      >
-        {TASK_STATUSES.map((status) => (
-          <option key={status} value={status}>
-            {taskStatusLabel(status, t)}
-          </option>
-        ))}
-      </select>
-    </div>
+      <div className="task-meta">
+        {task.estimated_hours ? <span>{t("roadmaps.detail.hours", { count: task.estimated_hours })}</span> : null}
+        <select
+          className="task-status"
+          value={task.status}
+          disabled={mutation.isPending}
+          aria-label={t("roadmaps.detail.statusFor", { title: task.title })}
+          onChange={(event) => mutation.mutate(event.target.value as TaskProgressStatus)}
+        >
+          {TASK_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {taskStatusLabel(status, t)}
+            </option>
+          ))}
+        </select>
+      </div>
+    </li>
   );
 }
 
@@ -227,41 +249,42 @@ function ProjectCard({ project }: { project: RoadmapDetail["stages"][number]["pr
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 rounded-md border border-border p-3">
-      <p className="text-sm font-medium text-ink">{project.title}</p>
-      <p className="text-xs text-ink-soft">{project.brief}</p>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <input
-          value={repoUrl}
-          onChange={(event) => setRepoUrl(event.target.value)}
-          placeholder={t("roadmaps.detail.repoUrl")}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
-        />
-        <input
-          value={liveUrl}
-          onChange={(event) => setLiveUrl(event.target.value)}
-          placeholder={t("roadmaps.detail.liveUrl")}
-          className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="submission-form">
+      <p className="project-label">{t("roadmaps.detail.projects")}</p>
+      <h4>{project.title}</h4>
+      <p>{project.brief}</p>
+      <input
+        type="url"
+        value={repoUrl}
+        onChange={(event) => setRepoUrl(event.target.value)}
+        placeholder={t("roadmaps.detail.repoUrl")}
+        aria-label={t("roadmaps.detail.repoUrl")}
+      />
+      <input
+        type="url"
+        value={liveUrl}
+        onChange={(event) => setLiveUrl(event.target.value)}
+        placeholder={t("roadmaps.detail.liveUrl")}
+        aria-label={t("roadmaps.detail.liveUrl")}
+      />
       <textarea
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
         placeholder={t("roadmaps.detail.notes")}
-        rows={2}
-        className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink"
+        aria-label={t("roadmaps.detail.notes")}
+        rows={4}
       />
       {mutation.isError ? (
-        <Alert tone="danger">
+        <small role="alert">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("roadmaps.detail.submitError")}
-        </Alert>
+        </small>
       ) : null}
-      {mutation.isSuccess ? <Alert tone="success">{t("roadmaps.detail.submitSuccess")}</Alert> : null}
-      <Button type="submit" variant="secondary" disabled={mutation.isPending}>
+      {mutation.isSuccess ? <small role="status">{t("roadmaps.detail.submitSuccess")}</small> : null}
+      <button type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? t("roadmaps.detail.submitting") : t("roadmaps.detail.submit")}
-      </Button>
+      </button>
     </form>
   );
 }

@@ -49,23 +49,26 @@ export const router = createBrowserRouter([
       { path: "/", element: <HomePage /> },
       { path: "/about", element: <AboutPage /> },
       { path: "/__smoke", element: <SmokePage /> },
-      {
-        path: "/login",
-        element: (
-          <RequireAnonymous>
-            <LoginPage />
-          </RequireAnonymous>
-        ),
-      },
-      {
-        path: "/register",
-        element: (
-          <RequireAnonymous>
-            <RegisterPage />
-          </RequireAnonymous>
-        ),
-      },
     ],
+  },
+  // `login.html` and `register.html` set `include_app_shell` aside and render
+  // a full-bleed `.auth-container` with their own brand mark: no site nav, no
+  // footer. They are siblings of the public shell rather than children of it.
+  {
+    path: "/login",
+    element: (
+      <RequireAnonymous>
+        <LoginPage />
+      </RequireAnonymous>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <RequireAnonymous>
+        <RegisterPage />
+      </RequireAnonymous>
+    ),
   },
   {
     element: (

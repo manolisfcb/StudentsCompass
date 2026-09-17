@@ -68,9 +68,11 @@ describe("ResourcesListPage", () => {
 
     renderPage();
 
-    const lockedCard = await screen.findByText("Advanced Interviewing");
-    expect(lockedCard.closest("a")).toBeNull();
-    const unlockedCard = screen.getByText("Resume Basics");
-    expect(unlockedCard.closest("a")).toHaveAttribute("href", "/resources/r1");
+    // The card itself is not a link in either the template or the port: the
+    // "Open course" control is, and a locked resource renders it as a disabled
+    // button so there is nothing to follow.
+    await screen.findByText("Advanced Interviewing");
+    expect(screen.getByRole("button", { name: "Access locked" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: /Resume Basics/ })).toHaveAttribute("href", "/resources/r1");
   });
 });

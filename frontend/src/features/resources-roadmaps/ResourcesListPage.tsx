@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { fetchResources, type Resource } from "@/features/resources-roadmaps/api";
 
@@ -14,28 +14,44 @@ import { fetchResources, type Resource } from "@/features/resources-roadmaps/api
  * client-side category/search filtering over the fixed result set — the
  * legacy page never re-queries the API on a filter change, only server-renders
  * once, so this keeps the same shape rather than adding a query per keystroke.
+ *
+ * Markup and classes are the template's (`.resources-container`,
+ * `.filter-bar > .filter-chip`, `.control-bar`, `.resources-grid` of
+ * `.resource-card`s), which is what `resources.css` styles.
  */
 export function ResourcesListPage() {
   const { t } = useTranslation();
   const query = useQuery({ queryKey: queryKeys.resources.list, queryFn: fetchResources });
 
   return (
-    <div className="space-y-6">
+    <PageScope name="resources">
       <DocumentMeta
         title={t("resources.seoTitle")}
         description={t("resources.seoDescription")}
         path="/resources"
       />
-      <h1 className="text-2xl font-bold text-ink">{t("resources.title")}</h1>
-      <AsyncBoundary query={query}>{(resources) => <ResourceBrowser resources={resources} />}</AsyncBoundary>
-    </div>
+      <div className="resources-container">
+        <div className="resources-header page-shell-header">
+          <div className="resources-header-row page-shell-header-row">
+            <div className="page-shell-header-copy">
+              <h2>{t("resources.title")}</h2>
+              <p>{t("resources.subtitle")}</p>
+            </div>
+          </div>
+        </div>
+        <AsyncBoundary query={query}>{(resources) => <ResourceBrowser resources={resources} />}</AsyncBoundary>
+      </div>
+    </PageScope>
   );
 }
+
+type SortKey = "recent" | "name" | "duration";
 
 function ResourceBrowser({ resources }: { resources: Resource[] }) {
   const { t } = useTranslation();
   const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortKey>("recent");
 
   const categories = useMemo(
     () => Array.from(new Set(resources.map((resource) => resource.category))).sort(),
@@ -44,92 +60,122 @@ function ResourceBrowser({ resources }: { resources: Resource[] }) {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return resources.filter((resource) => {
+    const matches = resources.filter((resource) => {
       if (category && resource.category !== category) return false;
       if (!term) return true;
       return (
-        resource.title.toLowerCase().includes(term) || resource.description.toLowerCase().includes(term)
+        resource.title.toLowerCase().includes(term) ||
+        resource.description.toLowerCase().includes(term) ||
+        (resource.tags ?? []).some((tag) => tag.toLowerCase().includes(term))
       );
     });
-  }, [resources, category, search]);
+
+    // Same three orders the `#resource-sort` control offered.
+    return [...matches].sort((left, right) => {
+      if (sort === "name") return left.title.localeCompare(right.title);
+      if (sort === "duration") {
+        return (left.estimated_duration_minutes ?? Number.MAX_SAFE_INTEGER) -
+          (right.estimated_duration_minutes ?? Number.MAX_SAFE_INTEGER);
+      }
+      return right.created_at.localeCompare(left.created_at);
+    });
+  }, [resources, category, search, sort]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
+    <>
+      <div className="filter-bar">
+        <button
+          type="button"
+          className={`filter-chip${category === null ? " active" : ""}`}
+          onClick={() => setCategory(null)}
+        >
+          {t("resources.allCategories")}
+        </button>
+        {categories.map((value) => (
+          <button
+            key={value}
+            type="button"
+            className={`filter-chip${category === value ? " active" : ""}`}
+            onClick={() => setCategory(value)}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+
+      <div className="control-bar">
         <input
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t("resources.searchPlaceholder")}
           aria-label={t("resources.searchPlaceholder")}
-          className="w-full max-w-xs rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
-        <div className="flex flex-wrap gap-2">
-          <CategoryChip label={t("resources.allCategories")} active={category === null} onClick={() => setCategory(null)} />
-          {categories.map((value) => (
-            <CategoryChip key={value} label={value} active={category === value} onClick={() => setCategory(value)} />
-          ))}
-        </div>
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as SortKey)}
+          aria-label={t("resources.sortLabel")}
+        >
+          <option value="recent">{t("resources.sort.recent")}</option>
+          <option value="name">{t("resources.sort.name")}</option>
+          <option value="duration">{t("resources.sort.duration")}</option>
+        </select>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title={t("resources.empty")} />
+        <div className="empty-state">{t("resources.empty")}</div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((resource) => (
-            <ResourceCard key={resource.id} resource={resource} />
-          ))}
-        </div>
+        <section className="resource-group" aria-label={t("resources.title")}>
+          <div className="resources-grid resources-grid-group">
+            {filtered.map((resource) => (
+              <ResourceCard key={resource.id} resource={resource} />
+            ))}
+          </div>
+        </section>
       )}
-    </div>
-  );
-}
-
-function CategoryChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-        active ? "bg-brand text-white" : "border border-border text-ink-soft hover:bg-canvas"
-      }`}
-    >
-      {label}
-    </button>
+    </>
   );
 }
 
 function ResourceCard({ resource }: { resource: Resource }) {
   const { t } = useTranslation();
-  const content = (
-    <article
-      className={`h-full rounded-lg border border-border bg-surface p-5 ${
-        resource.is_locked ? "opacity-60" : "hover:border-brand"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <span aria-hidden="true" className="text-2xl">
-          {resource.icon ?? "📘"}
-        </span>
-        {resource.is_locked ? (
-          <span className="text-xs font-medium text-ink-muted">{t("resources.locked")}</span>
+  return (
+    <article className={`resource-card${resource.is_locked ? " resource-card-locked" : ""}`}>
+      <div className="resource-icon" aria-hidden="true">
+        {resource.icon ?? "📚"}
+      </div>
+      <h3 className="resource-title">{resource.title}</h3>
+      <p className="resource-description">{resource.description}</p>
+      <div className="resource-meta">
+        {resource.is_locked ? <span className="meta-pill meta-pill-locked">{t("resources.locked")}</span> : null}
+        <span className="meta-pill">{resource.category}</span>
+        {resource.level ? <span className="meta-pill">{resource.level}</span> : null}
+        {resource.estimated_duration_minutes ? (
+          <span className="meta-pill">{t("resources.minutes", { count: resource.estimated_duration_minutes })}</span>
         ) : null}
       </div>
-      <h2 className="mt-2 font-semibold text-ink">{resource.title}</h2>
-      <p className="mt-1 text-sm text-ink-soft">{resource.description}</p>
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink-muted">
-        <span>{resource.category}</span>
-        {resource.level ? <span>· {resource.level}</span> : null}
-        {resource.estimated_duration_minutes ? <span>· {resource.estimated_duration_minutes} min</span> : null}
-      </div>
+      {resource.tags && resource.tags.length > 0 ? (
+        <div className="resource-tags">
+          {resource.tags.map((tag) => (
+            <span key={tag} className="tag">
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {resource.is_locked ? (
+        <button type="button" className="resource-open-btn resource-open-btn-locked" disabled aria-disabled="true">
+          {t("resources.accessLocked")}
+        </button>
+      ) : (
+        <Link
+          className="resource-open-btn"
+          to={`/resources/${resource.id}`}
+          aria-label={t("resources.openCourseNamed", { title: resource.title })}
+        >
+          {t("resources.openCourse")}
+        </Link>
+      )}
     </article>
-  );
-
-  if (resource.is_locked) return content;
-  return (
-    <Link to={`/resources/${resource.id}`} className="block h-full">
-      {content}
-    </Link>
   );
 }

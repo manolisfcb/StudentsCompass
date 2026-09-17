@@ -1,0 +1,16 @@
+@import "./base.css";
+@import "./pages/about.css";
+@import "./pages/admin.css";
+@import "./pages/admin_page.css";
+@import "./pages/career_lab.css";
+@import "./pages/community.css";
+@import "./pages/community_feed.css";
+@import "./pages/company-dashboard.css";
+@import "./pages/company-team.css";
+@import "./pages/dashboard.css";
+@import "./pages/jobs.css";
+@import "./pages/questionnaire.css";
+@import "./pages/resources.css";
+@import "./pages/roadmap.css";
+@import "./pages/roadmaps.css";
+@import "./pages/userProfile.css";

@@ -3,9 +3,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
-import { FormField, INPUT_CLASS } from "@/components/patterns/FormField";
+import { FormField } from "@/components/patterns/FormField";
 import {
   type AdminResourceCreate,
   type AdminResourceDetail,
@@ -128,98 +126,97 @@ export function ResourceEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/80 p-4" role="dialog" aria-modal="true">
-      <form onSubmit={submit} className="mx-auto max-w-4xl space-y-5 rounded-xl bg-surface p-6 text-ink shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold">
-              {resource ? t("admin.resources.editor.editTitle") : t("admin.resources.editor.createTitle")}
-            </h2>
-            <p className="mt-1 text-sm text-ink-soft">{t("admin.resources.editor.description")}</p>
-          </div>
-          <Button variant="ghost" onClick={onCancel} aria-label={t("admin.resources.editor.close")}>×</Button>
+    <div className="admin-modal-overlay" role="dialog" aria-modal="true">
+      <form onSubmit={submit} className="admin-modal resource-create-modal">
+        <div className="admin-modal-title">
+          {resource ? t("admin.resources.editor.editTitle") : t("admin.resources.editor.createTitle")}
         </div>
+        <div className="admin-modal-desc">{t("admin.resources.editor.description")}</div>
 
         {save.isError ? (
-          <Alert tone="danger">
+          <p className="admin-login-error visible" role="alert">
             {save.error instanceof ApiError && save.error.detail
               ? save.error.detail.message
               : t("admin.resources.editor.saveError")}
-          </Alert>
+          </p>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label={t("admin.resources.editor.title")}>
-            <input required value={title} onChange={(e) => setTitle(e.target.value)} className={INPUT_CLASS} />
+        <div className="admin-form-row">
+          <FormField className="admin-form-group" label={t("admin.resources.editor.title")}>
+            <input required value={title} onChange={(e) => setTitle(e.target.value)} />
           </FormField>
-          <FormField label={t("admin.resources.editor.category")}>
-            <input required value={category} onChange={(e) => setCategory(e.target.value)} className={INPUT_CLASS} />
-          </FormField>
-        </div>
-        <FormField label={t("admin.resources.editor.resourceDescription")}>
-          <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className={INPUT_CLASS} />
-        </FormField>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label={t("admin.resources.editor.level")}>
-            <input value={level} onChange={(e) => setLevel(e.target.value)} className={INPUT_CLASS} />
-          </FormField>
-          <FormField label={t("admin.resources.editor.icon")}>
-            <input value={icon} onChange={(e) => setIcon(e.target.value)} className={INPUT_CLASS} />
-          </FormField>
-          <FormField label={t("admin.resources.editor.duration")}>
-            <input min="0" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} className={INPUT_CLASS} />
+          <FormField className="admin-form-group" label={t("admin.resources.editor.category")}>
+            <input required value={category} onChange={(e) => setCategory(e.target.value)} />
           </FormField>
         </div>
-        <FormField label={t("admin.resources.editor.externalUrl")}>
-          <input type="url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} className={INPUT_CLASS} />
+        <FormField className="admin-form-group" label={t("admin.resources.editor.resourceDescription")}>
+          <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </FormField>
-        <FormField label={t("admin.resources.editor.tags")}>
-          <input value={tags} onChange={(e) => setTags(e.target.value)} className={INPUT_CLASS} />
+        <div className="admin-form-row">
+          <FormField className="admin-form-group" label={t("admin.resources.editor.level")}>
+            <input value={level} onChange={(e) => setLevel(e.target.value)} />
+          </FormField>
+          <FormField className="admin-form-group" label={t("admin.resources.editor.icon")}>
+            <input value={icon} onChange={(e) => setIcon(e.target.value)} />
+          </FormField>
+          <FormField className="admin-form-group" label={t("admin.resources.editor.duration")}>
+            <input min="0" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+          </FormField>
+        </div>
+        <FormField className="admin-form-group" label={t("admin.resources.editor.externalUrl")}>
+          <input type="url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} />
         </FormField>
-        <div className="flex flex-wrap gap-6 text-sm font-medium">
-          <label className="flex items-center gap-2">
+        <FormField className="admin-form-group" label={t("admin.resources.editor.tags")}>
+          <input value={tags} onChange={(e) => setTags(e.target.value)} />
+        </FormField>
+        <div className="admin-form-row">
+          <label className="admin-form-checkbox">
             <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
             {t("admin.resources.editor.published")}
           </label>
-          <label className="flex items-center gap-2">
+          <label className="admin-form-checkbox">
             <input type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)} />
             {t("admin.resources.editor.locked")}
           </label>
         </div>
 
-        <section className="space-y-4 rounded-lg border border-border bg-canvas p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold">{t("admin.resources.editor.structure")}</h3>
-            <Button variant="secondary" onClick={() => setModules((current) => [...current, emptyModule()])}>
+        <section className="resource-structure">
+          <div className="resource-structure-header">
+            <h4 className="resource-structure-title">{t("admin.resources.editor.structure")}</h4>
+            <button
+              type="button"
+              className="admin-btn admin-btn-ghost"
+              onClick={() => setModules((current) => [...current, emptyModule()])}
+            >
               {t("admin.resources.editor.addModule")}
-            </Button>
+            </button>
           </div>
           {modules.map((module, moduleIndex) => (
-            <article key={module.key} className="space-y-3 rounded-lg border border-border bg-surface p-4">
-              <div className="flex items-center gap-3">
-                <strong className="text-sm">{t("admin.resources.editor.module", { number: moduleIndex + 1 })}</strong>
-                <Button
-                  variant="ghost"
-                  className="ml-auto"
+            <article key={module.key} className="resource-module-block">
+              <div className="resource-module-head">
+                <strong>{t("admin.resources.editor.module", { number: moduleIndex + 1 })}</strong>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-ghost"
                   onClick={() => setModules((current) => current.filter((item) => item.key !== module.key))}
                 >
                   {t("admin.resources.editor.remove")}
-                </Button>
+                </button>
               </div>
               <input
                 required
+                className="admin-form-input"
                 aria-label={t("admin.resources.editor.moduleTitle")}
                 value={module.title}
                 onChange={(e) => updateModule(module.key, { title: e.target.value })}
-                className={INPUT_CLASS}
               />
               <textarea
+                className="admin-form-input"
                 aria-label={t("admin.resources.editor.moduleDescription")}
                 value={module.description ?? ""}
                 onChange={(e) => updateModule(module.key, { description: e.target.value || null })}
-                className={INPUT_CLASS}
               />
-              <div className="space-y-3">
+              <div className="resource-lesson-list">
                 {(module.lessons ?? []).map((lesson, lessonIndex) => (
                   <LessonRow
                     key={lesson.key}
@@ -234,21 +231,24 @@ export function ResourceEditor({
                   />
                 ))}
               </div>
-              <Button
-                variant="secondary"
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost"
                 onClick={() => updateModule(module.key, { lessons: [...(module.lessons ?? []), emptyLesson()] })}
               >
                 {t("admin.resources.editor.addLesson")}
-              </Button>
+              </button>
             </article>
           ))}
         </section>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onCancel}>{t("admin.resources.editor.cancel")}</Button>
-          <Button type="submit" disabled={save.isPending}>
+        <div className="admin-modal-actions">
+          <button type="button" className="admin-btn admin-btn-ghost" onClick={onCancel}>
+            {t("admin.resources.editor.cancel")}
+          </button>
+          <button type="submit" className="admin-btn admin-btn-primary" disabled={save.isPending}>
             {save.isPending ? t("admin.resources.editor.saving") : t("admin.resources.editor.save")}
-          </Button>
+          </button>
         </div>
       </form>
     </div>
@@ -278,48 +278,52 @@ function LessonRow({
   }
 
   return (
-    <div className="space-y-3 rounded-md border border-border p-3">
-      <div className="flex items-center gap-2">
-        <strong className="text-xs uppercase tracking-wide text-ink-soft">
-          {t("admin.resources.editor.lesson", { number })}
-        </strong>
-        <Button variant="ghost" className="ml-auto" onClick={onRemove}>{t("admin.resources.editor.remove")}</Button>
+    <div className="resource-lesson-block">
+      <div className="resource-module-head">
+        <strong>{t("admin.resources.editor.lesson", { number })}</strong>
+        <button type="button" className="admin-btn admin-btn-ghost" onClick={onRemove}>
+          {t("admin.resources.editor.remove")}
+        </button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="admin-form-row">
         <input
           required
+          className="admin-form-input"
           aria-label={t("admin.resources.editor.lessonTitle")}
           value={lesson.title}
           onChange={(e) => onChange({ title: e.target.value })}
-          className={INPUT_CLASS}
         />
         <input
+          className="admin-form-input"
           aria-label={t("admin.resources.editor.lessonType")}
           list={`admin-lesson-types-${lesson.key}`}
           value={lesson.content_type}
           onChange={(e) => onChange({ content_type: e.target.value })}
-          className={INPUT_CLASS}
         />
       </div>
       <textarea
+        className="admin-form-input"
         aria-label={t("admin.resources.editor.lessonContent")}
         value={lesson.content ?? ""}
         onChange={(e) => onChange({ content: e.target.value })}
-        className={INPUT_CLASS}
       />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="admin-form-row">
         <input
+          className="admin-form-input"
           aria-label={t("admin.resources.editor.resourceUrl")}
           value={lesson.resource_url ?? ""}
           onChange={(e) => onChange({ resource_url: e.target.value || null })}
-          className={INPUT_CLASS}
         />
-        <label className="flex cursor-pointer items-center justify-center rounded-md border border-border px-3 py-2 text-sm">
+        <label className="admin-upload-label">
           {upload.isPending ? t("admin.resources.editor.uploading") : t("admin.resources.editor.upload")}
           <input type="file" className="sr-only" disabled={upload.isPending} onChange={chooseFile} />
         </label>
       </div>
-      {upload.isError ? <Alert tone="danger">{t("admin.resources.editor.uploadError")}</Alert> : null}
+      {upload.isError ? (
+        <p className="admin-login-error visible" role="alert">
+          {t("admin.resources.editor.uploadError")}
+        </p>
+      ) : null}
       <datalist id={`admin-lesson-types-${lesson.key}`}>
         {[
           "text",

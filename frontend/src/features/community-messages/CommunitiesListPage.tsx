@@ -4,11 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
-import { FormField, INPUT_CLASS } from "@/components/patterns/FormField";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 
 import { apiRequest } from "@/api/client";
@@ -24,32 +21,39 @@ export function CommunitiesListPage() {
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <PageScope name="community" className="communities-container">
       <DocumentMeta
         title={t("community.list.seoTitle")}
         description={t("community.list.seoDescription")}
         path="/community"
       />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{t("community.list.title")}</h1>
-        <Button onClick={() => setCreating((value) => !value)}>
-          {creating ? t("community.list.cancel") : t("community.list.create")}
-        </Button>
+
+      <div className="communities-header page-shell-header">
+        <div className="communities-header-row page-shell-header-row">
+          <div className="page-shell-header-copy">
+            <h2>{t("community.list.title")}</h2>
+            <p>{t("community.list.subtitle")}</p>
+          </div>
+          <button type="button" className="create-community-btn" onClick={() => setCreating((value) => !value)}>
+            {creating ? t("community.list.cancel") : t("community.list.create")}
+          </button>
+        </div>
       </div>
 
       {creating ? <CreateCommunityForm onDone={() => setCreating(false)} /> : null}
 
-      <input
-        type="search"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder={t("community.list.searchPlaceholder")}
-        aria-label={t("community.list.searchPlaceholder")}
-        className={`${INPUT_CLASS} max-w-sm`}
-      />
+      <div className="filter-bar">
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={t("community.list.searchPlaceholder")}
+          aria-label={t("community.list.searchPlaceholder")}
+        />
+      </div>
 
       <AsyncBoundary query={query}>{(communities) => <CommunityGrid communities={communities} search={search} />}</AsyncBoundary>
-    </div>
+    </PageScope>
   );
 }
 
@@ -64,27 +68,32 @@ function CommunityGrid({ communities, search }: { communities: Community[]; sear
     );
   }, [communities, search]);
 
-  if (filtered.length === 0) return <EmptyState title={t("community.list.empty")} />;
+  if (filtered.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>{t("community.list.empty")}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="communities-grid">
       {filtered.map((community) => (
-        <Link
-          key={community.id}
-          to={`/community/${community.id}`}
-          className="block rounded-lg border border-border bg-surface p-5 hover:border-brand"
-        >
-          <div className="flex items-center gap-2">
-            <span aria-hidden="true" className="text-2xl">
-              {community.icon ?? "👥"}
-            </span>
-            <h2 className="font-semibold text-ink">{community.name}</h2>
+        <article key={community.id} className="community-card">
+          <div className="community-icon" aria-hidden="true">
+            {community.icon ?? "👥"}
           </div>
-          {community.description ? <p className="mt-2 text-sm text-ink-soft">{community.description}</p> : null}
-          <p className="mt-3 text-xs text-ink-muted">
-            {t("community.list.memberCount", { count: community.member_count })}
-          </p>
-        </Link>
+          <h3 className="community-title">{community.name}</h3>
+          <p className="community-description">{community.description ?? t("community.list.noDescription")}</p>
+          <div className="community-stats">
+            <div className="stat-item">
+              <span>{t("community.list.memberCount", { count: community.member_count })}</span>
+            </div>
+          </div>
+          <Link to={`/community/${community.id}`} className="join-btn">
+            {t("community.list.view", { name: community.name })}
+          </Link>
+        </article>
       ))}
     </div>
   );
@@ -116,42 +125,65 @@ function CreateCommunityForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border bg-surface p-4">
+    <form onSubmit={handleSubmit} className="community-form">
       {mutation.isError ? (
-        <Alert tone="danger">
+        <p className="form__error" role="alert">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("community.list.createError")}
-        </Alert>
+        </p>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
-        <FormField label={t("community.list.form.icon")}>
-          <input
-            value={icon}
-            onChange={(event) => setIcon(event.target.value)}
-            maxLength={4}
-            className={`${INPUT_CLASS} w-16 text-center text-xl`}
-          />
-        </FormField>
-        <FormField label={t("community.list.form.name")}>
-          <input required value={name} onChange={(event) => setName(event.target.value)} className={INPUT_CLASS} />
-        </FormField>
+
+      <div className="form__group">
+        <label className="form__label" htmlFor="community-name">
+          {t("community.list.form.name")}
+        </label>
+        <input
+          id="community-name"
+          className="form__field"
+          required
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
       </div>
-      <FormField label={t("community.list.form.description")}>
+
+      <div className="form__group">
+        <label className="form__label" htmlFor="community-description">
+          {t("community.list.form.description")}
+        </label>
         <textarea
+          id="community-description"
+          className="form__field"
           rows={3}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          className={INPUT_CLASS}
         />
-      </FormField>
-      <div className="flex gap-2">
-        <Button type="submit" disabled={mutation.isPending}>
+      </div>
+
+      <div className="form__group">
+        <label className="form__label" htmlFor="community-icon">
+          {t("community.list.form.icon")}
+        </label>
+        <div className="icon-input">
+          <div className="icon-input__group">
+            <span className="icon-input__preview" aria-hidden="true">
+              {icon || "👥"}
+            </span>
+            <input
+              id="community-icon"
+              className="icon-input__field"
+              value={icon}
+              maxLength={4}
+              onChange={(event) => setIcon(event.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="modal__footer">
+        <button type="submit" className="primary-btn" disabled={mutation.isPending}>
           {mutation.isPending ? t("community.list.creating") : t("community.list.createSubmit")}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone}>
-          {t("community.list.cancel")}
-        </Button>
+        </button>
       </div>
     </form>
   );

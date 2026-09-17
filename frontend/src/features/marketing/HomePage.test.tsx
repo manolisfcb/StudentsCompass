@@ -3,19 +3,23 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import "@/i18n";
+import { HomeHero } from "@/features/marketing/HomeHero";
 import { HomePage } from "@/features/marketing/HomePage";
 
 describe("HomePage", () => {
   it("renders the hero and links to registration", () => {
+    // The hero renders inside the shell's header, the way `home.html` nests it
+    // under `.marketing-header`; `PublicShell` is what pairs the two.
     render(
       <MemoryRouter>
+        <HomeHero />
         <HomePage />
       </MemoryRouter>,
     );
 
     expect(
       screen.getByRole("heading", {
-        level: 1,
+        level: 2,
         name: "From confused student to job-ready candidate, with one clear system.",
       }),
     ).toBeInTheDocument();

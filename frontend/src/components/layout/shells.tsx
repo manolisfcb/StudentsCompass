@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useMatch, useSearchParams } from "react-router-dom";
 
 import { useSession } from "@/app/useSession";
-import { AppShell, type NavItem } from "@/components/layout/AppShell";
+import { AppShell, StudentSidebar, type NavItem } from "@/components/layout/AppShell";
 import { LogoutButton } from "@/features/auth/LogoutButton";
+import { HomeHero } from "@/features/marketing/HomeHero";
 
 /**
  * One shell per actor (plan 08 §7). They are layout routes: the router nests
@@ -12,18 +13,36 @@ import { LogoutButton } from "@/features/auth/LogoutButton";
  * `RequireActor` does the navigation part and the API does the authorization
  * part.
  *
- * The nav entries name routes the verticals of §9 will register. Listing them
- * here rather than in each vertical is what keeps one menu instead of eight.
+ * The frames are the ported ones. A student screen sits in
+ * `.dashboard-layout > .dashboard-sidebar + main.dashboard`, which is what
+ * `dashboard.html`, `resources.html`, `roadmap.html` and the rest all render;
+ * a company screen sits in a bare `<main>` like `company-dashboard.html`. The
+ * page sheets were written against those frames, so the frames come first.
  */
 
-function useShellStrings() {
-  const { t } = useTranslation();
-  return { app: t("app.name"), skip: t("layout.skipToContent") };
+/**
+ * The student screens that ran without the rail. The community feed, a
+ * resource's detail page and the job board each want the full width for their
+ * own multi-column layout, and none of the three includes `sidebar.html`
+ * (`community_feed.html`, `resource_detail.html`, `jobs.html`).
+ */
+function useStudentSidebarVisible() {
+  const { pathname } = useLocation();
+  const inCommunityFeed = Boolean(useMatch("/community/:communityId"));
+  const inResourceDetail = Boolean(useMatch("/resources/:resourceId"));
+  const inMessages = pathname.startsWith("/messages");
+  const inJobs = pathname.startsWith("/jobs");
+  return !(inCommunityFeed || inResourceDetail || inMessages || inJobs);
 }
 
 export function PublicShell() {
   const { t } = useTranslation();
-  const { app, skip } = useShellStrings();
+  const { pathname } = useLocation();
+  // `home.html` and `about.html` differ in two places only: the hero sits
+  // inside the header on the homepage, and `<main>` carries the page's own
+  // class. Everything else — nav, gradient, footer — is the same shell.
+  const isHome = pathname === "/";
+  const mainClass = pathname === "/about" ? "about-page" : "marketing-main";
   const nav: NavItem[] = [
     { to: "/#for-students", label: t("layout.nav.forStudents") },
     { to: "/#for-companies", label: t("layout.nav.forCompanies") },
@@ -31,128 +50,192 @@ export function PublicShell() {
     { to: "/about", label: t("layout.nav.about") },
   ];
   return (
-    <AppShell
-      title={app}
-      titleHref="/"
-      nav={nav}
-      skipLabel={skip}
-      variant="marketing"
-      logoSrc="/images/Logo_Ready_to_Use.png"
-      actions={
-        <div className="flex items-center gap-2">
-          <Link
-            to="/login"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 bg-ink/30 px-4 py-2 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_24px_rgba(15,23,42,0.12)] transition hover:bg-ink/40"
-          >
-            {t("layout.nav.login")}
-          </Link>
-          <Link
-            to="/register"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white bg-white px-4 py-2 text-sm font-bold text-brand shadow-[0_14px_28px_rgba(15,23,42,0.16)] transition hover:bg-[#f0fdfa]"
-          >
-            {t("layout.nav.getStarted")}
-          </Link>
-        </div>
-      }
-    >
-      <Outlet />
-    </AppShell>
+    <div className="marketing-page">
+      <AppShell
+        variant="marketing"
+        brandHref="/"
+        nav={nav}
+        actions={
+          <>
+            <li>
+              <Link to="/login" className="marketing-nav-login">
+                {t("layout.nav.login")}
+              </Link>
+            </li>
+            <li>
+              <Link to="/register" className="marketing-nav-cta">
+                {t("layout.nav.getStarted")}
+              </Link>
+            </li>
+          </>
+        }
+        headerExtra={isHome ? <HomeHero /> : null}
+      >
+        <main id="main" className={mainClass}>
+          <Outlet />
+        </main>
+      </AppShell>
+    </div>
   );
 }
 
 export function StudentShell() {
   const { t } = useTranslation();
-  const { app, skip } = useShellStrings();
+  const withSidebar = useStudentSidebarVisible();
   const nav: NavItem[] = [
     { to: "/dashboard", label: t("layout.nav.dashboard") },
-    { to: "/resources", label: t("layout.nav.resources") },
     { to: "/roadmaps", label: t("layout.nav.roadmaps") },
-    { to: "/jobs", label: t("layout.nav.jobs") },
-    { to: "/career-lab", label: t("layout.nav.careerLab") },
+    { to: "/resources", label: t("layout.nav.resources") },
     { to: "/community", label: t("layout.nav.community") },
-    { to: "/messages", label: t("layout.nav.messages") },
-    { to: "/profile", label: t("layout.nav.profile") },
+    { to: "/jobs", label: t("layout.nav.jobs") },
   ];
   return (
-    <AppShell title={app} nav={nav} skipLabel={skip} actions={<LogoutButton actorKind="student" />}>
-      <Outlet />
+    <AppShell
+      variant="student"
+      brandHref="/dashboard"
+      nav={nav}
+      actions={
+        <li>
+          <LogoutButton actorKind="student" />
+        </li>
+      }
+    >
+      <div className="dashboard-layout">
+        {withSidebar ? <StudentSidebar /> : null}
+        <main id="main" className="dashboard">
+          <Outlet />
+        </main>
+      </div>
     </AppShell>
   );
 }
 
 export function CompanyShell() {
   const { t } = useTranslation();
-  const { app, skip } = useShellStrings();
   const nav: NavItem[] = [
-    { to: "/company", label: t("layout.nav.companyDashboard") },
+    { to: "/company", label: t("layout.nav.companyDashboard"), end: true },
     { to: "/company/postings", label: t("layout.nav.postings") },
     { to: "/company/applicants", label: t("layout.nav.applicants") },
     { to: "/company/recruiters", label: t("layout.nav.recruiters") },
   ];
   return (
-    <AppShell title={app} nav={nav} skipLabel={skip} actions={<LogoutButton actorKind="company" />}>
-      <Outlet />
+    <AppShell
+      variant="company"
+      brandHref="/company"
+      nav={nav}
+      actions={
+        <li>
+          <LogoutButton actorKind="company" />
+        </li>
+      }
+    >
+      <main id="main">
+        <Outlet />
+      </main>
     </AppShell>
   );
 }
 
+/**
+ * `admin.html`, which is the one screen that opts out of the site shell
+ * (`include_app_shell = false`) and brings its own dark chrome. The scope class
+ * carries both admin sheets because `admin_page.css` was an `@import` on top of
+ * `admin.css`.
+ */
 export function AdminShell() {
   const { t } = useTranslation();
   const session = useSession();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [params] = useSearchParams();
+  const section = params.get("section") ?? "dashboard";
+
   const actor = session.data?.actors.find((candidate) => candidate.actor_type === "student");
   const adminName = actor?.display_name || actor?.email || t("admin.shell.admin");
   const initial = adminName.charAt(0).toUpperCase();
-  const nav = [
-    { to: "/admin", icon: "📊", label: t("admin.section.dashboard") },
-    { to: "/admin?section=users", icon: "👥", label: t("admin.section.users") },
-    { to: "/admin?section=resources", icon: "📚", label: t("admin.section.resources") },
+
+  const sections = [
+    { key: "dashboard", to: "/admin", icon: "📊", label: t("admin.section.dashboard") },
+    { key: "users", to: "/admin?section=users", icon: "👥", label: t("admin.section.users") },
+    { key: "resources", to: "/admin?section=resources", icon: "📚", label: t("admin.section.resources") },
   ];
+  const headerTitle = sections.find((entry) => entry.key === section)?.label ?? t("admin.section.dashboard");
+
   return (
-    <div className="admin-console min-h-screen bg-ink text-white">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-3 focus:text-ink">
+    <div className="pg-admin pg-admin-page admin-body">
+      <a href="#main" className="skip-link">
         {t("layout.skipToContent")}
       </a>
-      <aside id="admin-navigation" className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-white/10 bg-ink p-5 transition-transform lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <Link to="/admin" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
-          <span className="rounded-lg bg-brand p-2 text-xl" aria-hidden="true">🧭</span>
-          <span>
-            <strong className="block text-sm">{t("app.name")}</strong>
-            <small className="block text-xs uppercase tracking-widest text-brand-soft">{t("admin.shell.panel")}</small>
-          </span>
-        </Link>
-        <nav aria-label={t("admin.shell.navigation")} className="mt-10 space-y-2">
-          {nav.map((item) => (
-            <Link key={item.to} to={item.to} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-ink-muted hover:bg-white/10 hover:text-white">
-              <span aria-hidden="true">{item.icon}</span>{item.label}
-            </Link>
-          ))}
-        </nav>
-        <Link to="/" className="absolute bottom-6 left-5 text-sm text-ink-muted hover:text-white">🌐 {t("admin.backToSite")}</Link>
-      </aside>
-      {menuOpen ? <button type="button" aria-label={t("admin.shell.closeMenu")} className="fixed inset-0 z-30 bg-ink/70 lg:hidden" onClick={() => setMenuOpen(false)} /> : null}
-      <div className="lg:pl-64">
-        <header className="flex min-h-16 items-center border-b border-white/10 px-4 sm:px-8">
-          <button
-            type="button"
-            className="mr-4 rounded p-2 text-xl lg:hidden"
-            aria-label={menuOpen ? t("admin.shell.closeMenu") : t("admin.shell.openMenu")}
-            aria-expanded={menuOpen}
-            aria-controls="admin-navigation"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            ☰
-          </button>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <strong className="block text-sm">{adminName}</strong>
-              <span className="block text-xs text-brand-soft">{t("admin.shell.superAdmin")}</span>
+
+      <div
+        className={`admin-sidebar-overlay${sidebarOpen ? " active" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
+      <div className="admin-layout">
+        <aside className={`admin-sidebar${sidebarOpen ? " active" : ""}`} id="sidebar">
+          <div className="admin-sidebar-brand">
+            <div className="brand-icon" aria-hidden="true">
+              🧭
             </div>
-            <span className="flex size-9 items-center justify-center rounded-full bg-brand text-sm font-bold">{initial}</span>
-            <LogoutButton actorKind="student" className="text-white hover:bg-white/10" />
+            <div className="brand-text">
+              <span className="brand-title">{t("app.name")}</span>
+              <span className="brand-subtitle">{t("admin.shell.panel")}</span>
+            </div>
           </div>
-        </header>
-        <main id="main" className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-8">
+
+          <nav className="admin-sidebar-nav" aria-label={t("admin.shell.navigation")}>
+            <div className="admin-nav-section">
+              {sections.map((entry) => (
+                <NavLink
+                  key={entry.key}
+                  to={entry.to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`admin-nav-item${entry.key === section ? " active" : ""}`}
+                >
+                  <span className="nav-icon" aria-hidden="true">
+                    {entry.icon}
+                  </span>
+                  {entry.label}
+                </NavLink>
+              ))}
+            </div>
+          </nav>
+
+          <div className="admin-sidebar-footer">
+            <Link to="/">
+              <span aria-hidden="true">🌐</span> {t("admin.backToSite")}
+            </Link>
+          </div>
+        </aside>
+
+        <main className="admin-main" id="main">
+          <header className="admin-header">
+            <div className="admin-header-left">
+              <button
+                type="button"
+                className="admin-menu-toggle"
+                aria-label={sidebarOpen ? t("admin.shell.closeMenu") : t("admin.shell.openMenu")}
+                aria-expanded={sidebarOpen}
+                aria-controls="sidebar"
+                onClick={() => setSidebarOpen((open) => !open)}
+              >
+                ☰
+              </button>
+              <h2 className="admin-header-title">{headerTitle}</h2>
+            </div>
+            <div className="admin-header-right">
+              <div className="admin-header-user">
+                <div className="admin-header-user-info">
+                  <div className="admin-header-user-name">{adminName}</div>
+                  <div className="admin-header-user-role">{t("admin.shell.superAdmin")}</div>
+                </div>
+                <div className="admin-header-avatar">{initial}</div>
+              </div>
+              <LogoutButton actorKind="student" className="admin-btn admin-btn-ghost" />
+            </div>
+          </header>
+
           <Outlet />
         </main>
       </div>

@@ -4,10 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
-import { EmptyState } from "@/components/patterns/EmptyState";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { CvAnalysisPanel } from "@/features/jobs-applications/CvAnalysisPanel";
 import {
@@ -36,6 +34,7 @@ export function JobsPage() {
   const [location, setLocation] = useState("");
   const [limit, setLimit] = useState<(typeof LIMIT_OPTIONS)[number]>(25);
   const [results, setResults] = useState<JobSearchResults | null>(null);
+  const [tab, setTab] = useState<"home" | "cv">("home");
 
   const searchMutation = useMutation({
     mutationFn: () => searchJobs({ keywords, location, limit, remote: false }),
@@ -47,85 +46,194 @@ export function JobsPage() {
     searchMutation.mutate();
   }
 
+  const resultCount = results ? results.students_compass.length + results.linkedin.length : 0;
+
   return (
-    <div className="space-y-6">
+    <PageScope name="jobs" className="container jobs-page">
       <DocumentMeta title={t("jobs.seoTitle")} description={t("jobs.seoDescription")} path="/jobs" />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ink">{t("jobs.title")}</h1>
-        <Link to="/jobs/applications" className="text-sm font-medium text-brand hover:underline">
-          {t("jobs.myApplications")}
-        </Link>
-      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-        <label className="space-y-1">
-          <span className="block text-sm font-medium text-ink">{t("jobs.keywords")}</span>
-          <input
-            value={keywords}
-            onChange={(event) => setKeywords(event.target.value)}
-            className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-sm font-medium text-ink">{t("jobs.location")}</span>
-          <input
-            value={location}
-            onChange={(event) => setLocation(event.target.value)}
-            className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-sm font-medium text-ink">{t("jobs.perSearch")}</span>
-          <select
-            value={limit}
-            onChange={(event) => setLimit(Number(event.target.value) as (typeof LIMIT_OPTIONS)[number])}
-            className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink"
-          >
-            {LIMIT_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button type="submit" disabled={searchMutation.isPending}>
-          {searchMutation.isPending ? t("jobs.searching") : t("jobs.search")}
-        </Button>
-      </form>
+      <section className="jobs-shell">
+        <header className="jobs-topbar">
+          <form className="jobs-searchbar" onSubmit={handleSubmit}>
+            <label className="search-field">
+              <SearchIcon />
+              <span className="sr-only">{t("jobs.keywords")}</span>
+              <input
+                type="search"
+                value={keywords}
+                onChange={(event) => setKeywords(event.target.value)}
+                placeholder={t("jobs.keywordsPlaceholder")}
+              />
+            </label>
+            <label className="search-field">
+              <PinIcon />
+              <span className="sr-only">{t("jobs.location")}</span>
+              <input
+                type="search"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder={t("jobs.locationPlaceholder")}
+              />
+            </label>
+            <button type="submit" className="search-action" disabled={searchMutation.isPending}>
+              {searchMutation.isPending ? t("jobs.searching") : t("jobs.search")}
+            </button>
+          </form>
 
-      <CvAnalysisPanel
-        onKeywords={(value) => {
-          setKeywords(value);
-          searchMutation.mutate();
-        }}
-      />
+          <div className="jobs-utilitybar">
+            <nav className="jobs-tabs" aria-label={t("jobs.tabs.label")}>
+              <button
+                type="button"
+                className={`jobs-tab${tab === "home" ? " active" : ""}`}
+                onClick={() => setTab("home")}
+              >
+                {t("jobs.tabs.home")}
+              </button>
+              <button type="button" className={`jobs-tab${tab === "cv" ? " active" : ""}`} onClick={() => setTab("cv")}>
+                {t("jobs.tabs.cv")}
+              </button>
+              <Link className="jobs-profile-link" to="/jobs/applications">
+                {t("jobs.myApplications")}
+              </Link>
+            </nav>
 
-      {searchMutation.isError ? (
-        <Alert tone="danger">
-          {searchMutation.error instanceof ApiError && searchMutation.error.detail
-            ? searchMutation.error.detail.message
-            : t("jobs.searchError")}
-        </Alert>
-      ) : null}
+            <div className="toolbar-meta">
+              <label className="toolbar-select">
+                <span className="toolbar-label">{t("jobs.perSearch")}</span>
+                <select
+                  value={limit}
+                  onChange={(event) => setLimit(Number(event.target.value) as (typeof LIMIT_OPTIONS)[number])}
+                >
+                  {LIMIT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="toolbar-status" aria-live="polite">
+                {searchMutation.isError
+                  ? searchMutation.error instanceof ApiError && searchMutation.error.detail
+                    ? searchMutation.error.detail.message
+                    : t("jobs.searchError")
+                  : null}
+              </div>
+            </div>
+          </div>
+        </header>
 
-      {results ? (
-        <SearchResults results={results} />
-      ) : (
-        <AsyncBoundary query={boardQuery}>{(board) => <JobBoard postings={board} />}</AsyncBoundary>
-      )}
-    </div>
+        <div className="jobs-body">
+          {tab === "home" ? (
+            <section className="tab-panel active">
+              <div className="hero-panel">
+                <div className="hero-copy">
+                  <span className="hero-eyebrow">{t("jobs.hero.eyebrow")}</span>
+                  <h1 className="hero-title">{t("jobs.title")}</h1>
+                  <p className="hero-description">{t("jobs.hero.description")}</p>
+                </div>
+                <div className="hero-stats">
+                  <div className="hero-stat">
+                    <span className="hero-stat-label">{t("jobs.hero.lastResults")}</span>
+                    <span className="hero-stat-value">{resultCount}</span>
+                    <div className="hero-stat-copy">{t("jobs.hero.lastResultsCopy")}</div>
+                  </div>
+                </div>
+              </div>
+
+              <section>
+                <div className="section-head">
+                  <div>
+                    <h2>{t("jobs.topPicks.title")}</h2>
+                    <p>{t("jobs.topPicks.subtitle")}</p>
+                  </div>
+                  <span className="jobs-count">
+                    {results ? t("jobs.countResults", { count: resultCount }) : t("jobs.noSearchYet")}
+                  </span>
+                </div>
+
+                <div className="board-layout">
+                  <div className="results-stack">
+                    {results ? (
+                      <SearchResults results={results} />
+                    ) : (
+                      <AsyncBoundary query={boardQuery}>{(board) => <JobBoard postings={board} />}</AsyncBoundary>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </section>
+          ) : (
+            <section className="tab-panel active">
+              <div className="section-head">
+                <div>
+                  <h2>{t("jobs.tabs.cv")}</h2>
+                  <p>{t("jobs.cvPanel.subtitle")}</p>
+                </div>
+              </div>
+              <div className="highlights-grid">
+                <article className="feature-card ai-card">
+                  <span className="feature-badge">{t("jobs.cvPanel.badge")}</span>
+                  <h2 className="feature-title">{t("jobs.cvPanel.title")}</h2>
+                  <p className="feature-copy">{t("jobs.cvPanel.copy")}</p>
+                  <div className="feature-actions">
+                    <CvAnalysisPanel
+                      onKeywords={(value) => {
+                        setKeywords(value);
+                        setTab("home");
+                        searchMutation.mutate();
+                      }}
+                    />
+                  </div>
+                </article>
+              </div>
+            </section>
+          )}
+        </div>
+      </section>
+    </PageScope>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
   );
 }
 
 function JobBoard({ postings }: { postings: JobBoardPosting[] }) {
   const { t } = useTranslation();
-  if (postings.length === 0) return <EmptyState title={t("jobs.empty")} />;
+  if (postings.length === 0) {
+    return (
+      <div className="empty-state">
+        <h3>{t("jobs.empty")}</h3>
+        <p>{t("jobs.emptyHint")}</p>
+      </div>
+    );
+  }
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {postings.map((posting) => (
-        <BoardCard key={posting.id} posting={posting} />
-      ))}
-    </div>
+    <section className="result-group">
+      <div className="result-group-header">
+        <h3 className="result-group-title">{t("jobs.studentsCompassResults")}</h3>
+        <span className="result-group-meta">{t("jobs.countResults", { count: postings.length })}</span>
+      </div>
+      <div className="job-results-grid">
+        {postings.map((posting) => (
+          <BoardCard key={posting.id} posting={posting} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -143,13 +251,25 @@ function BoardCard({ posting }: { posting: JobBoardPosting }) {
 function SearchResults({ results }: { results: JobSearchResults }) {
   const { t } = useTranslation();
   const total = results.students_compass.length + results.linkedin.length;
-  if (total === 0) return <EmptyState title={t("jobs.empty")} />;
+  if (total === 0) {
+    return (
+      <div className="empty-state">
+        <h3>{t("jobs.empty")}</h3>
+        <p>{t("jobs.emptyHint")}</p>
+      </div>
+    );
+  }
   return (
-    <div className="space-y-6">
+    <>
       {results.students_compass.length > 0 ? (
-        <div>
-          <h2 className="mb-3 text-lg font-semibold text-ink">{t("jobs.studentsCompassResults")}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="result-group">
+          <div className="result-group-header">
+            <h3 className="result-group-title">{t("jobs.studentsCompassResults")}</h3>
+            <span className="result-group-meta">
+              {t("jobs.countResults", { count: results.students_compass.length })}
+            </span>
+          </div>
+          <div className="job-results-grid">
             {results.students_compass.map((job) => (
               <JobCard
                 key={job.id ?? job.title}
@@ -164,12 +284,20 @@ function SearchResults({ results }: { results: JobSearchResults }) {
               />
             ))}
           </div>
+        </section>
+      ) : null}
+      {results.students_compass.length > 0 && results.linkedin.length > 0 ? (
+        <div className="jobs-source-divider">
+          <span>{t("jobs.moreFromLinkedin")}</span>
         </div>
       ) : null}
       {results.linkedin.length > 0 ? (
-        <div>
-          <h2 className="mb-3 text-lg font-semibold text-ink">{t("jobs.linkedinResults")}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="result-group">
+          <div className="result-group-header">
+            <h3 className="result-group-title">{t("jobs.linkedinResults")}</h3>
+            <span className="result-group-meta">{t("jobs.countResults", { count: results.linkedin.length })}</span>
+          </div>
+          <div className="job-results-grid">
             {results.linkedin.map((job) => (
               <JobCard
                 key={job.url ?? job.title}
@@ -181,9 +309,9 @@ function SearchResults({ results }: { results: JobSearchResults }) {
               />
             ))}
           </div>
-        </div>
+        </section>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -210,11 +338,25 @@ function JobCard({
   const [applying, setApplying] = useState(false);
 
   return (
-    <article className="rounded-lg border border-border bg-surface p-4">
-      <h3 className="font-semibold text-ink">{title}</h3>
-      {company ? <p className="text-sm text-ink-soft">{company}</p> : null}
-      {location ? <p className="text-xs text-ink-muted">{location}</p> : null}
-      <div className="mt-3">
+    <article className="job-result-card">
+      <div className="job-result-head">
+        <div className="job-detail-company">
+          <div className="company-mark" aria-hidden="true">
+            {companyInitials(company)}
+          </div>
+          <div className="job-result-main">
+            {company ? <p className="job-result-company">{company}</p> : null}
+            <h3 className="job-result-title">{title}</h3>
+          </div>
+        </div>
+        <span className="bookmark-pill">{externalUrl ? t("jobs.sourceLinkedin") : t("jobs.sourceInternal")}</span>
+      </div>
+      {location ? (
+        <div className="job-meta">
+          <span className="meta-pill">{location}</span>
+        </div>
+      ) : null}
+      <div className="job-card-actions">
         {applyContext ? (
           applying ? (
             <QuickApplyForm
@@ -224,23 +366,29 @@ function JobCard({
               onDone={() => setApplying(false)}
             />
           ) : (
-            <Button variant="secondary" onClick={() => setApplying(true)}>
+            <button type="button" className="primary-link" onClick={() => setApplying(true)}>
               {t("jobs.quickApply")}
-            </Button>
+            </button>
           )
         ) : externalUrl ? (
-          <a
-            href={externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-brand hover:underline"
-          >
+          <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="primary-link">
             {t("jobs.viewOnLinkedin")}
           </a>
         ) : null}
       </div>
     </article>
   );
+}
+
+/** `getCompanyInitials` from `jobs.js`: the mark shown where a logo would be. */
+function companyInitials(company: string | undefined): string {
+  if (!company) return "?";
+  return company
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 function QuickApplyForm({
@@ -272,30 +420,35 @@ function QuickApplyForm({
   });
 
   return (
-    <div className="space-y-2 rounded-md border border-border p-3">
+    <div className="quick-apply">
       <AsyncBoundary query={resumesQuery}>
         {(resumes) =>
           resumes.length === 0 ? (
-            <p className="text-xs text-ink-muted">{t("jobs.noEligibleResumes")}</p>
+            <p className="job-result-snippet">{t("jobs.noEligibleResumes")}</p>
           ) : (
             <ResumePicker resumes={resumes} value={resumeId} onChange={setResumeId} />
           )
         }
       </AsyncBoundary>
       {mutation.isError ? (
-        <Alert tone="danger">
+        <p className="job-result-snippet" role="alert">
           {mutation.error instanceof ApiError && mutation.error.detail
             ? mutation.error.detail.message
             : t("jobs.applyError")}
-        </Alert>
+        </p>
       ) : null}
-      <div className="flex gap-2">
-        <Button disabled={!resumeId || mutation.isPending} onClick={() => mutation.mutate()}>
+      <div className="job-card-actions">
+        <button
+          type="button"
+          className="primary-link"
+          disabled={!resumeId || mutation.isPending}
+          onClick={() => mutation.mutate()}
+        >
           {mutation.isPending ? t("jobs.applying") : t("jobs.submitApplication")}
-        </Button>
-        <Button variant="ghost" onClick={onDone}>
+        </button>
+        <button type="button" className="secondary-link" onClick={onDone}>
           {t("jobs.cancel")}
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -312,10 +465,10 @@ function ResumePicker({
 }) {
   const { t } = useTranslation();
   return (
-    <fieldset className="space-y-1">
-      <legend className="text-xs font-medium text-ink">{t("jobs.chooseResume")}</legend>
+    <fieldset className="resume-picker">
+      <legend>{t("jobs.chooseResume")}</legend>
       {resumes.map((resume) => (
-        <label key={resume.id} className="flex items-center gap-2 text-xs text-ink-soft">
+        <label key={resume.id}>
           <input
             type="radio"
             name="resume"

@@ -1,0 +1,34 @@
+/* Ported from backend/app/static/css/about.css, scoped under `.pg-about`. */
+.pg-about .ref-modal__extra-link {
+    margin-top: 0.5rem;
+}
+
+.pg-about .about-partnership {
+    border-bottom: 1px solid rgba(15, 118, 110, 0.14);
+    background: #f7fbfa;
+    color: #475569;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.pg-about .about-partnership .container {
+    padding-block: 0.85rem;
+}
+
+.pg-about .about-partnership p {
+    margin: 0;
+}
+
+.pg-about .about-partnership a {
+    color: #0f766e;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba(15, 118, 110, 0.35);
+    text-underline-offset: 0.18em;
+}
+
+.pg-about .about-partnership a:hover,
+.pg-about .about-partnership a:focus-visible {
+    color: #115e59;
+    text-decoration-color: currentColor;
+}

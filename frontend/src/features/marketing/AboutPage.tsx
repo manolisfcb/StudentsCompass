@@ -133,7 +133,7 @@ export function AboutPage() {
   ];
 
   return (
-    <div className="space-y-20">
+    <>
       <DocumentMeta
         title={t("about.seoTitle")}
         description={t("about.seoDescription")}
@@ -141,54 +141,65 @@ export function AboutPage() {
         jsonLd={ABOUT_JSON_LD}
       />
 
-      <section className="full-bleed hero-gradient -mt-8 space-y-6 px-4 py-14 text-center md:py-20">
-        <h1 className="text-4xl font-bold text-white">
-          {t("about.hero.titleLine1")}
-          <br />
-          {t("about.hero.titleLine2")}
-        </h1>
-        <p className="mx-auto max-w-2xl text-lg text-white/85">{t("about.hero.tagline")}</p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link
-            to="/register"
-            className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand shadow-[0_14px_28px_rgba(15,23,42,0.16)] hover:bg-[#f0fdfa]"
-          >
-            {t("about.hero.primaryCta")}
-          </Link>
-          <a
-            href="#for-employers"
-            className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-          >
-            {t("about.hero.secondaryCta")}
-          </a>
+      <section className="about-hero">
+        <div className="container">
+          <h1>
+            {t("about.hero.titleLine1")}
+            <br />
+            {t("about.hero.titleLine2")}
+          </h1>
+          <p className="about-tagline">{t("about.hero.tagline")}</p>
+          <div className="hero-dual-cta">
+            <Link to="/register" className="about-btn about-btn--primary">
+              {t("about.hero.primaryCta")}
+            </Link>
+            <a href="#for-employers" className="about-btn about-btn--ghost">
+              {t("about.hero.secondaryCta")}
+            </a>
+          </div>
         </div>
       </section>
 
-      <aside className="rounded-lg border border-border bg-surface p-4 text-center text-sm text-ink-soft">
-        {t("about.partnership.prefix")}{" "}
-        <a href="https://qevuno.com/" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">
-          qevuno
-        </a>
-        , {t("about.partnership.suffix")}
+      <aside className="about-partnership" aria-label={t("about.partnership.label")}>
+        <div className="container">
+          <p>
+            {t("about.partnership.prefix")}{" "}
+            <a href="https://qevuno.com/" target="_blank" rel="noopener noreferrer">
+              qevuno
+            </a>
+            , {t("about.partnership.suffix")}
+          </p>
+        </div>
       </aside>
 
-      <section className="space-y-8">
-        <SectionHead eyebrow={t("about.stats.eyebrow")} title={t("about.stats.title")} />
-        <div className="grid gap-4 sm:grid-cols-3">
-          {stats.map((stat, index) => (
-            <button
-              key={stat.value}
-              type="button"
-              onClick={() => setOpenStat(index)}
-              className="rounded-lg border border-border bg-surface p-6 text-left hover:border-brand"
-            >
-              <span className="text-3xl font-bold text-brand">{stat.value}</span>
-              <p className="mt-2 text-sm text-ink-soft">{stat.body}</p>
-              <span className="mt-3 block text-xs font-medium text-brand">{t("about.stats.viewSource")}</span>
-            </button>
-          ))}
+      <section className="about-section about-section--stats">
+        <div className="container">
+          <span className="section-eyebrow">{t("about.stats.eyebrow")}</span>
+          <h2>{t("about.stats.title")}</h2>
+          <div className="about-problem-grid">
+            {stats.map((stat, index) => (
+              <div
+                key={stat.value}
+                className="problem-card problem-card--clickable"
+                role="button"
+                tabIndex={0}
+                aria-label={t("about.stats.viewSourceFor", { value: stat.value })}
+                onClick={() => setOpenStat(index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setOpenStat(index);
+                  }
+                }}
+              >
+                <span className="problem-stat">{stat.value}</span>
+                <p>{stat.body}</p>
+                <span className="problem-card__source-hint">{t("about.stats.viewSource")}</span>
+              </div>
+            ))}
+          </div>
+          <p className="problem-conclusion">{t("about.stats.conclusion")}</p>
         </div>
-        <p className="text-center text-ink-soft">{t("about.stats.conclusion")}</p>
       </section>
 
       {openStat !== null && stats[openStat] ? (
@@ -201,182 +212,173 @@ export function AboutPage() {
         />
       ) : null}
 
-      <section id="for-employers" className="space-y-8">
-        <Badge>{t("about.employers.badge")}</Badge>
-        <SectionHead title={t("about.employers.title")} intro={t("about.employers.intro")} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {employerValues.map((item) => (
-            <FeatureCard key={item.title} {...item} />
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-lg bg-ink p-8 text-white">
-        <SectionHead
-          eyebrow={t("about.roi.eyebrow")}
-          title={t("about.roi.title")}
-          eyebrowClassName="text-brand-soft"
-          titleClassName="text-white"
-        />
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <div>
-            <h3 className="font-semibold text-white/80">{t("about.roi.traditional.title")}</h3>
-            <ul className="mt-3 space-y-2 text-sm text-white/70">
-              {traditionalHiring.map((item) => (
-                <li key={item}>✕ {item}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-lg bg-white/10 p-4">
-            <span className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
-              {t("about.roi.compass.recommended")}
-            </span>
-            <h3 className="mt-1 font-semibold text-white">{t("about.roi.compass.title")}</h3>
-            <ul className="mt-3 space-y-2 text-sm text-white/90">
-              {compassHiring.map((item) => (
-                <li key={item}>✓ {item}</li>
-              ))}
-            </ul>
+      <section id="for-employers" className="about-section about-section-employer">
+        <div className="container">
+          <div className="employer-badge">{t("about.employers.badge")}</div>
+          <h2>{t("about.employers.title")}</h2>
+          <p className="section-intro">{t("about.employers.intro")}</p>
+          <div className="employer-value-grid">
+            {employerValues.map((item) => (
+              <div key={item.title} className="employer-value-card">
+                <div className="evc-icon-wrap">
+                  <span className="evc-icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="space-y-8">
-        <SectionHead
-          eyebrow={t("about.framework.eyebrow")}
-          title={t("about.framework.title")}
-          intro={t("about.framework.intro")}
-        />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {frameworkItems.map((item) => (
-            <FeatureCard key={item.title} {...item} />
-          ))}
-        </div>
-        <p className="text-sm italic text-ink-muted">{t("about.framework.disclaimer")}</p>
-      </section>
-
-      <section className="space-y-8">
-        <SectionHead eyebrow={t("about.outcomes.eyebrow")} title={t("about.outcomes.title")} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          {outcomes.map((outcome) => (
-            <div key={outcome.body} className="flex gap-3 rounded-lg border border-border bg-surface p-4">
-              <span aria-hidden="true" className="text-xl">
-                {outcome.icon}
-              </span>
-              <p className="text-sm text-ink-soft">{outcome.body}</p>
+      <section className="about-section about-roi">
+        <div className="container">
+          <span className="section-eyebrow section-eyebrow--light">{t("about.roi.eyebrow")}</span>
+          <h2>{t("about.roi.title")}</h2>
+          <div className="roi-comparison">
+            <div className="roi-column roi-traditional">
+              <h3>{t("about.roi.traditional.title")}</h3>
+              <ul>
+                {traditionalHiring.map((item) => (
+                  <li key={item}>
+                    <span className="roi-x" aria-hidden="true">
+                      ✕
+                    </span>{" "}
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-8">
-        <Badge>{t("about.students.badge")}</Badge>
-        <SectionHead title={t("about.students.title")} intro={t("about.students.intro")} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {studentFeatures.map((item) => (
-            <FeatureCard key={item.title} {...item} />
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-8">
-        <SectionHead
-          eyebrow={t("about.philosophy.eyebrow")}
-          title={t("about.philosophy.title")}
-          intro={t("about.philosophy.intro")}
-        />
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <h3 className="font-semibold text-ink">{t("about.philosophy.believe.title")}</h3>
-            <ul className="mt-3 space-y-2 text-sm text-ink-soft">
-              {believeList.map((item) => (
-                <li key={item}>✅ {item}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-ink">{t("about.philosophy.not.title")}</h3>
-            <ul className="mt-3 space-y-2 text-sm text-ink-soft">
-              {notList.map((item) => (
-                <li key={item}>❌ {item}</li>
-              ))}
-            </ul>
+            <div className="roi-column roi-compass">
+              <div className="roi-recommended">{t("about.roi.compass.recommended")}</div>
+              <h3>{t("about.roi.compass.title")}</h3>
+              <ul>
+                {compassHiring.map((item) => (
+                  <li key={item}>
+                    <span className="roi-check" aria-hidden="true">
+                      ✓
+                    </span>{" "}
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg bg-brand p-8 text-white">
-          <span className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
-            {t("about.dualCta.employer.label")}
-          </span>
-          <h2 className="mt-2 text-xl font-bold">{t("about.dualCta.employer.title")}</h2>
-          <p className="mt-2 text-sm text-white/90">{t("about.dualCta.employer.body")}</p>
-          <Link
-            to="/register"
-            className="mt-4 inline-block rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand hover:bg-canvas"
-          >
-            {t("about.dualCta.employer.button")}
-          </Link>
-        </div>
-        <div className="rounded-lg bg-ink p-8 text-white">
-          <span className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
-            {t("about.dualCta.student.label")}
-          </span>
-          <h2 className="mt-2 text-xl font-bold">{t("about.dualCta.student.title")}</h2>
-          <p className="mt-2 text-sm text-white/90">{t("about.dualCta.student.body")}</p>
-          <Link
-            to="/register"
-            className="mt-4 inline-block rounded-md bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-canvas"
-          >
-            {t("about.dualCta.student.button")}
-          </Link>
+      <section className="about-section about-section-alt about-section--framework">
+        <div className="container">
+          <span className="section-eyebrow">{t("about.framework.eyebrow")}</span>
+          <h2>{t("about.framework.title")}</h2>
+          <p className="section-intro">{t("about.framework.intro")}</p>
+          <div className="framework-grid">
+            {frameworkItems.map((item) => (
+              <div key={item.title} className="framework-card">
+                <div className="evc-icon-wrap">
+                  <span className="evc-icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </div>
+            ))}
+          </div>
+          <p className="framework-disclaimer">{t("about.framework.disclaimer")}</p>
         </div>
       </section>
-    </div>
-  );
-}
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
-      {children}
-    </span>
-  );
-}
+      <section className="about-section about-section--outcomes">
+        <div className="container">
+          <span className="section-eyebrow">{t("about.outcomes.eyebrow")}</span>
+          <h2>{t("about.outcomes.title")}</h2>
+          <div className="about-outcomes employer-outcomes">
+            {outcomes.map((outcome) => (
+              <div key={outcome.body} className="outcome-item">
+                <div className="outcome-icon-wrap">
+                  <span className="outcome-icon" aria-hidden="true">
+                    {outcome.icon}
+                  </span>
+                </div>
+                <p>{outcome.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-function SectionHead({
-  eyebrow,
-  title,
-  intro,
-  eyebrowClassName = "text-brand",
-  titleClassName = "text-ink",
-}: {
-  eyebrow?: string;
-  title: string;
-  intro?: string;
-  eyebrowClassName?: string;
-  titleClassName?: string;
-}) {
-  return (
-    <div className="max-w-2xl space-y-2">
-      {eyebrow ? (
-        <span className={`text-sm font-semibold uppercase tracking-wide ${eyebrowClassName}`}>{eyebrow}</span>
-      ) : null}
-      <h2 className={`text-2xl font-bold ${titleClassName}`}>{title}</h2>
-      {intro ? <p className="text-ink-soft">{intro}</p> : null}
-    </div>
-  );
-}
+      <section className="about-section about-section-alt about-section--students">
+        <div className="container">
+          <div className="employer-badge student-badge">{t("about.students.badge")}</div>
+          <h2>{t("about.students.title")}</h2>
+          <p className="section-intro">{t("about.students.intro")}</p>
+          <div className="about-features-grid">
+            {studentFeatures.map((item) => (
+              <div key={item.title} className="about-feature">
+                <div className="about-feature-icon-wrap">
+                  <span className="about-feature-icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-function FeatureCard({ icon, title, body }: { icon: string; title: string; body: string }) {
-  return (
-    <article className="rounded-lg border border-border bg-surface p-5">
-      <span aria-hidden="true" className="text-2xl">
-        {icon}
-      </span>
-      <h3 className="mt-2 font-semibold text-ink">{title}</h3>
-      <p className="mt-1 text-sm text-ink-soft">{body}</p>
-    </article>
+      <section className="about-section about-section--philosophy">
+        <div className="container">
+          <span className="section-eyebrow">{t("about.philosophy.eyebrow")}</span>
+          <h2>{t("about.philosophy.title")}</h2>
+          <p className="section-intro">{t("about.philosophy.intro")}</p>
+          <div className="about-philosophy">
+            <div className="philosophy-item philosophy-positive">
+              <h3>{t("about.philosophy.believe.title")}</h3>
+              <ul>
+                {believeList.map((item) => (
+                  <li key={item}>✅ {item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="philosophy-item philosophy-negative">
+              <h3>{t("about.philosophy.not.title")}</h3>
+              <ul>
+                {notList.map((item) => (
+                  <li key={item}>❌ {item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="about-dual-cta">
+        <div className="container">
+          <div className="dual-cta-grid">
+            <div className="dual-cta-card dual-cta-employer">
+              <span className="dual-cta-label">{t("about.dualCta.employer.label")}</span>
+              <h2>{t("about.dualCta.employer.title")}</h2>
+              <p>{t("about.dualCta.employer.body")}</p>
+              <Link to="/register" className="about-btn about-btn--white">
+                {t("about.dualCta.employer.button")}
+              </Link>
+            </div>
+            <div className="dual-cta-card dual-cta-student">
+              <span className="dual-cta-label">{t("about.dualCta.student.label")}</span>
+              <h2>{t("about.dualCta.student.title")}</h2>
+              <p>{t("about.dualCta.student.body")}</p>
+              <Link to="/register" className="about-btn about-btn--white">
+                {t("about.dualCta.student.button")}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

@@ -56,10 +56,11 @@ describe("RoadmapsListPage", () => {
     renderPage();
 
     expect(await screen.findByText("You have not saved any roadmaps yet.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Frontend Engineer/ })).toHaveAttribute(
-      "href",
-      "/roadmaps/frontend-engineer",
-    );
+    // A roadmap in the top three is listed twice, under "Most In-Demand" and
+    // again under "Explore All", exactly as `roadmaps_list.html` renders it.
+    for (const link of screen.getAllByRole("link", { name: /Frontend Engineer/ })) {
+      expect(link).toHaveAttribute("href", "/roadmaps/frontend-engineer");
+    }
   });
 
   it("renders a saved roadmap's progress from the backend response", async () => {

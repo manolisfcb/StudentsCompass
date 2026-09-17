@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/client";
 import { Alert } from "@/components/primitives/Alert";
-import { Button } from "@/components/primitives/Button";
 import {
   fetchCvAnalysisStatus,
   startCvAnalysis,
@@ -77,14 +76,15 @@ export function CvAnalysisPanel({ onKeywords }: { onKeywords: (keywords: string)
   }, [status, onKeywords]);
 
   return (
-    <div className="space-y-2">
-      <Button
-        variant="secondary"
+    <div className="cv-summary">
+      <button
+        type="button"
+        className="feature-button"
         disabled={startMutation.isPending || (jobId !== null && !isSettled(status))}
         onClick={() => startMutation.mutate()}
       >
         {jobId !== null && !isSettled(status) ? t("jobs.cvAnalysis.analyzing") : t("jobs.cvAnalysis.useMyCv")}
-      </Button>
+      </button>
 
       {startMutation.isError ? (
         <Alert tone="danger">

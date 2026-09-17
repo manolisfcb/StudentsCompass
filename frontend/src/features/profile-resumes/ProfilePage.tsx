@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { queryKeys } from "@/api/queryKeys";
+import { PageScope } from "@/components/layout/PageScope";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { FriendsPanel } from "@/features/community-messages/FriendsPanel";
@@ -21,13 +22,37 @@ export function ProfilePage() {
   const query = useQuery({ queryKey: queryKeys.profile.current, queryFn: fetchProfile });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-10">
+    <PageScope name="userprofile" className="container">
       <DocumentMeta title={t("profile.seoTitle")} description={t("profile.seoDescription")} path="/profile" />
-      <AsyncBoundary query={query}>{(profile) => <ProfileForm profile={profile} />}</AsyncBoundary>
-      <CareerSummary />
-      <FriendsPanel />
-      <ResumeList />
-      <ResumeAuditWidget />
-    </div>
+
+      <div className="dashboard-header page-shell-header">
+        <div className="page-shell-header-row">
+          <div className="page-shell-header-copy">
+            <h2>{t("profile.title")}</h2>
+            <p>{t("profile.subtitle")}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-edit-card profile-card fade-in">
+        <AsyncBoundary query={query}>{(profile) => <ProfileForm profile={profile} />}</AsyncBoundary>
+      </div>
+
+      <div className="info-card profile-card fade-in">
+        <CareerSummary />
+      </div>
+
+      <section className="network-card profile-card fade-in">
+        <FriendsPanel />
+      </section>
+
+      <div className="info-card profile-card fade-in">
+        <ResumeList />
+      </div>
+
+      <div className="info-card profile-card fade-in">
+        <ResumeAuditWidget />
+      </div>
+    </PageScope>
   );
 }
