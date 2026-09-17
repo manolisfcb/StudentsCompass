@@ -277,6 +277,13 @@ jobs:
       # URL run.app del frontend, que existe desde el primer despliegue. De
       # cualquiera de las dos formas esto prueba lo mismo que un usuario real
       # golpea: el proxy de Nginx llegando a la API por su URL pública.
+      #
+      # Reintenta, como el smoke previo a la promoción. Antes no lo hacía, y esa
+      # asimetría era un falso rojo esperando a ocurrir: con min-instances=0,
+      # la primera petición tras un rato de inactividad arranca la instancia y
+      # abre la conexión a la base, y /ready contesta 503 hasta que la tiene.
+      # Reproducido en la auditoría de TASK-058 — 503 en la primera, 200 en las
+      # seis siguientes a ~0,4 s. Un deploy rojo tiene que significar algo.
       - name: Smoke público
         run: |
           BASE="${{ vars.PUBLIC_BASE_URL }}"
@@ -284,12 +291,130 @@ jobs:
             BASE="${{ steps.deploy_front.outputs.service_url }}"
           fi
           for path in ready robots.txt; do
-            code="$(curl -s -o /dev/null -w '%{http_code}' "${BASE%/}/${path}")"
-            if [ "$code" != "200" ]; then
-              echo "::error::${BASE%/}/${path} respondió ${code}, se esperaba 200"
+            ok=""
+            for _ in $(seq 1 10); do
+              code="$(curl -s -o /dev/null -w '%{http_code}' "${BASE%/}/${path}" || true)"
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              sleep 3
+            done
+            if [ -z "$ok" ]; then
+              echo "::error::${BASE%/}/${path} no respondió 200 tras 10 intentos (último: ${code:-sin respuesta})"
               exit 1
             fi
           done
+
+      # --- Smoke del routing del cutover (TASK-058) --------------------------
+      #
+      # Siempre contra la URL del *servicio* de frontend, nunca contra
+      # PUBLIC_BASE_URL. Mientras el dominio siga mapeado a la API —que es el
+      # estado hasta que se ejecute el cutover— PUBLIC_BASE_URL sirve el
+      # monolito Jinja, donde /user-profile es una pantalla con 200 y no un
+      # 301. Apuntar estas comprobaciones al dominio las haría fallar por tener
+      # razón.
+      #
+      # Lo que fijan es el reparto de dueños de URL que hace posible retirar el
+      # legacy: un 301 por cada pantalla que cambió de dirección, 410 para el
+      # montaje estático retirado, y un 404 de verdad para lo que no existe
+      # —sin eso, el fallback del SPA contesta 200 a cualquier cosa y ni un
+      # crawler ni la ventana de observación pueden distinguir nada.
+      - name: Smoke del routing del cutover
+        run: |
+          FRONT="${{ steps.deploy_front.outputs.service_url }}"
+
+          expect() {
+            local method="$1" path="$2" want_code="$3" want_location="$4"
+            local out code location
+            out="$(curl -s -o /dev/null -X "$method" \
+              -w '%{http_code} %{redirect_url}' "${FRONT%/}${path}" || true)"
+            code="${out%% *}"
+            location="${out#* }"
+            if [ "$code" != "$want_code" ]; then
+              echo "::error::${method} ${path} respondió ${code}, se esperaba ${want_code}"
+              return 1
+            fi
+            if [ -n "$want_location" ] && [ "$location" != "$want_location" ]; then
+              echo "::error::${method} ${path} redirigió a '${location}', se esperaba '${want_location}'"
+              return 1
+            fi
+            echo "ok: ${method} ${path} -> ${code} ${location}"
+          }
+
+          rc=0
+          # Pantallas que cambiaron de dirección.
+          expect GET /user-profile       301 /profile             || rc=1
+          expect GET /company-dashboard  301 /company             || rc=1
+          expect GET /company-candidates 301 /company/applicants  || rc=1
+          expect GET /company-team       301 /company/recruiters  || rc=1
+          expect GET /home               301 /                    || rc=1
+          expect GET /roadmap            301 /roadmaps            || rc=1
+
+          # La vista Jinja montada bajo /api/v1: el GET se redirige y el POST
+          # tiene que seguir llegando a la API. 403 es el CSRF rechazando una
+          # petición sin token, que es la prueba de que llegó.
+          expect GET  /api/v1/auth/register 301 /register || rc=1
+          expect POST /api/v1/auth/register 403 ""        || rc=1
+
+          # Montaje /static retirado: 301 lo que tiene sucesor, 410 lo que no.
+          expect GET /static/images/Logo_Ready_to_Use.png 301 /images/Logo_Ready_to_Use.png || rc=1
+          expect GET /static/images/favicon.ico           301 /favicon.ico                  || rc=1
+          expect GET /static/js/base.js                   410 ""                            || rc=1
+          expect GET /static/css/about.css                410 ""                            || rc=1
+
+          # Un asset del mapa que faltara del bundle debe fallar como asset,
+          # no caer en el fallback del SPA y contestar 200 de HTML.
+          expect GET /images/Logo_Ready_to_Use.png 200 "" || rc=1
+          expect GET /images/no-existe.png         404 "" || rc=1
+
+          # El fallback del SPA sigue sirviendo deep links...
+          expect GET /dashboard          200 "" || rc=1
+          expect GET /resources/abc-123  200 "" || rc=1
+
+          # ...y lo que nunca puede ser una ruta de cliente es un 404 de
+          # verdad. Es donde va a parar el ruido de escáneres, que era el 39%
+          # del tráfico de entrada.
+          expect GET /wp-admin/install.php 404 "" || rc=1
+          expect GET /.env                 404 "" || rc=1
+          expect GET /index.php            404 "" || rc=1
+
+          # Una ruta de app desconocida y sin extensión SÍ responde 200: la
+          # sirve el fallback y el 404 lo pinta NotFoundPage con `noindex`.
+          # Nginx no puede distinguirla sin una segunda copia de la tabla de
+          # rutas. Se afirma aquí para que el compromiso sea deliberado y no
+          # una sorpresa; quien lo cambie tiene que cambiar este smoke.
+          expect GET /no-existe-esta-ruta 200 "" || rc=1
+
+          # robots.txt y sitemap.xml los sirve el bundle, ya no los reenvía el
+          # proxy (runbook §7). Un 200 no basta para saberlo: el proxy también
+          # daba 200. Lo que distingue a uno del otro es de dónde sale, así que
+          # se comprueba el contenido.
+          if ! curl -s --max-time 20 "${FRONT%/}/robots.txt" | grep -q "^Sitemap: https://studentscompass.ca/sitemap.xml$"; then
+            echo "::error::/robots.txt no declara el sitemap del dominio público"
+            rc=1
+          else
+            echo "ok: /robots.txt apunta al sitemap del dominio"
+          fi
+          if ! curl -s --max-time 20 "${FRONT%/}/sitemap.xml" | grep -q "<loc>https://studentscompass.ca/</loc>"; then
+            echo "::error::/sitemap.xml no contiene la home del dominio público"
+            rc=1
+          else
+            echo "ok: /sitemap.xml contiene la home"
+          fi
+
+          # El montaje de auth legacy sigue llegando a la API durante la
+          # ventana de observación (runbook §4, B4). 403 es el CSRF rechazando
+          # una petición sin token — es decir, llegó. Un 405 significaría que
+          # se cayó del proxy y que su contador de tráfico ya no mide nada.
+          auth_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            -X POST -d 'username=smoke@example.invalid&password=x' \
+            "${FRONT%/}/auth/jwt/login" || true)"
+          if [ "$auth_code" = "405" ] || [ "$auth_code" = "404" ]; then
+            echo "::error::/auth/jwt/login respondió ${auth_code}: ya no llega a la API y su tráfico dejaría de medirse"
+            rc=1
+          else
+            echo "ok: /auth/jwt/login llega a la API (${auth_code})"
+          fi
+
+          exit $rc
 
     outputs:
       api_previous_revision: ${{ steps.deploy_api.outputs.previous_revision }}

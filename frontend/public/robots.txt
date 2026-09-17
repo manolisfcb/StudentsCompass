@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://studentscompass.ca/sitemap.xml

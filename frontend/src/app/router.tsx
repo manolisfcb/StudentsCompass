@@ -6,7 +6,7 @@
  * would put the routes and the screens they point at in two places. */
 import { lazy, Suspense, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, type RouteObject } from "react-router-dom";
 
 import { RequireActor, RequireAdmin, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
@@ -41,6 +41,7 @@ const ApplicationsPage = lazy(() => import("@/features/jobs-applications/Applica
 const JobsPage = lazy(() => import("@/features/jobs-applications/JobsPage").then((m) => ({ default: m.JobsPage })));
 const AboutPage = lazy(() => import("@/features/marketing/AboutPage").then((m) => ({ default: m.AboutPage })));
 const HomePage = lazy(() => import("@/features/marketing/HomePage").then((m) => ({ default: m.HomePage })));
+const NotFoundPage = lazy(() => import("@/features/marketing/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
 const ProfilePage = lazy(() => import("@/features/profile-resumes/ProfilePage").then((m) => ({ default: m.ProfilePage })));
 const QuestionnairePage = lazy(() => import("@/features/questionnaire/QuestionnairePage").then((m) => ({ default: m.QuestionnairePage })));
 const ResourceDetailPage = lazy(() => import("@/features/resources-roadmaps/ResourceDetailPage").then((m) => ({ default: m.ResourceDetailPage })));
@@ -82,7 +83,15 @@ function page(element: ReactNode): ReactNode {
   return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
 }
 
-export const router = createBrowserRouter([
+/**
+ * The route table, exported apart from the router it builds.
+ *
+ * `createBrowserRouter` needs a real History, which a test does not have, so
+ * keeping the array addressable is what lets a test mount the same routes
+ * through `createMemoryRouter` and assert on what an unmatched URL actually
+ * renders — rather than on this file still containing the right line.
+ */
+export const routes: RouteObject[] = [
   { path: "/admin/login", element: page(<AdminLoginPage />) },
   {
     element: <PublicShell />,
@@ -90,6 +99,18 @@ export const router = createBrowserRouter([
       { path: "/", element: page(<HomePage />) },
       { path: "/about", element: page(<AboutPage />) },
       { path: "/__smoke", element: page(<SmokePage />) },
+      // The catch-all lives here, inside the shell, so someone who lands on a
+      // dead link still has the nav and the footer to leave by. Declared last
+      // because a splat matches anything; every sibling above must be tried
+      // first.
+      //
+      // It replaces `<Navigate to="/__smoke" replace />`, which sent every
+      // unmatched URL to the proxy-diagnostics page. Harmless while the domain
+      // still pointed at the Jinja monolith; the cutover is what would have
+      // put that screen in front of real users, crawlers following retired
+      // URLs, and the scanner traffic that is 39% of all inbound requests
+      // (docs/refactor/10_CUTOVER_RUNBOOK.md §4, B1).
+      { path: "*", element: page(<NotFoundPage />) },
     ],
   },
   // `login.html` and `register.html` set `include_app_shell` aside and render
@@ -147,5 +168,6 @@ export const router = createBrowserRouter([
     ),
     children: [{ path: "/admin", element: page(<AdminPage />) }],
   },
-  { path: "*", element: <Navigate to="/__smoke" replace /> },
-]);
+];
+
+export const router = createBrowserRouter(routes);

@@ -492,7 +492,7 @@ Hay además un acoplamiento ya documentado: `_build_sitemap_xml`
 plantillas, `_get_last_modified_date` devolverá `None` para las cuatro y el
 `lastmod` desaparecerá del sitemap **sin error y sin test que lo note**.
 
-**Recomendación: Opción A — que nginx los sirva desde el bundle.**
+**Decisión: Opción A — nginx los sirve desde el bundle. Implementada.**
 
 El argumento es que no hay nada dinámico que perder. El sitemap tiene exactamente
 cuatro entradas —`/`, `/about`, `/login`, `/register`— y las cuatro son páginas
@@ -501,10 +501,21 @@ autenticación y no debe indexarse. Un sitemap generado en tiempo de ejecución
 para cuatro URLs constantes es una fuente de verdad partida a cambio de nada, y
 encima es la que arrastra la dependencia de las plantillas.
 
-Concretamente: `frontend/public/robots.txt` y `frontend/public/sitemap.xml`,
-`sitemap.xml` y `robots.txt` fuera del regex del proxy en `nginx.conf`, y en
-TASK-059 fuera de `app/app.py`. Con eso el dueño es uno solo y el acoplamiento
-desaparece antes de que pueda morder.
+Concretamente, y ya hecho: `frontend/public/robots.txt` y
+`frontend/public/sitemap.xml` existen, ambos salieron del regex del proxy y
+tienen su propio `location =` (exacto, porque acaban en extensión y si no los
+atraparía la regla de 404). El `content-type` del sitemap se fija a
+`application/xml` a mano: el mapa de tipos de nginx habría dado `text/xml`,
+y aunque los dos son legales, la regla de esta migración es que el
+comportamiento no cambia salvo cuando cambiarlo es el objetivo.
+
+Queda para TASK-059 sacarlos de `app/app.py`, que ahora ya se puede hacer sin
+romper nada.
+
+De paso queda anotado por qué el `lastmod` generado no era información: salía
+del mtime de las plantillas *dentro de la imagen*, así que era la fecha de build
+y se movía en cada despliegue hubiera cambiado la página o no. El estático lo
+lleva a mano.
 
 Verificación después del cambio: 200, `text/plain` y `application/xml`
 respectivamente, contenido correcto, `https://studentscompass.ca` como base y la
@@ -661,8 +672,32 @@ Decidir por ruta, nunca por defecto:
 - **301** cuando hay sustituta: las siete de §2.2 y `/static/images/*`.
 - **410** cuando la página desapareció sin equivalente: `/static/js/*`,
   `/static/css/*`.
-- **404** para lo que nunca existió (escáneres) — que es justo lo que hoy no pasa
-  por culpa de **B1**.
+- **404** para lo que nunca existió (escáneres).
+
+**Compromiso aceptado sobre el 404, y conviene que esté escrito.** Un SPA no
+puede contestar 404 a una URL desconocida: nginx ya mandó `200` con el documento
+de entrada mucho antes de que React tenga una tabla de rutas que consultar. Hay
+dos formas de arreglarlo y se eligió la segunda:
+
+1. Listar en `nginx.conf` todas las rutas del SPA para que el proxy pueda
+   devolver 404 al resto. Da 404 de verdad, y pone la tabla de rutas en dos
+   sitios que se separan en silencio la primera vez que alguien añade una
+   pantalla.
+2. Dejar que nginx decida solo lo que puede decidir sin conocer las rutas —**una
+   ruta con extensión de fichero nunca es una pantalla**— y que el SPA pinte el
+   resto con `noindex`.
+
+La opción 2 no duplica nada y se lleva lo que de verdad importaba: el ruido de
+escáneres, que es el 39% del tráfico de entrada, prueba ficheros
+(`/wp-admin/install.php`, `/.env`, `/index.php`) y vuelve a ser 404. Lo que
+queda en 200 es una URL desconocida sin extensión (`/wp/`, `/blog/`, una errata
+al teclear), y ahí `noindex` es lo que impide que un crawler lea ese 200 como
+una página.
+
+Consecuencia para la Fase 3 que hay que tener presente al leer los logs: en el
+servicio de frontend, **un 404 es señal limpia y un 200 no distingue** entre una
+pantalla servida y una URL inexistente sin extensión. Para separarlas hay que
+mirar el `referer` y el user-agent, no solo el status.
 
 ### Retiro, pantalla por pantalla
 
@@ -715,12 +750,71 @@ Si alguno es falso: **DO NOT DELETE**.
 
 ## 11. Estado
 
-Fase 0 (auditoría): **completa**. Este documento es su entregable.
+**Fase 0 (auditoría): completa.** Las secciones 1 a 10 son su entregable, y se
+escribieron antes de tocar nada.
 
-Fase 1 (cutover): **no iniciada**. Bloqueada por B1, B2, B3, B5 y B10, que
-son condiciones previas de su propia lista de verificación.
+**Fase 1 (cutover): pre-flight hecho, repunte NO ejecutado.**
 
-Fases 2 a 6: no iniciadas, y no planificables en detalle hasta que existan datos
-posteriores al cutover.
+Resuelto en el repositorio, verificado corriendo `nginx.conf` en un contenedor
+con el bundle real delante de la API de producción:
 
-Nada de infraestructura ni de código se ha modificado para producir este informe.
+| | Qué se hizo |
+| --- | --- |
+| B1 | `NotFoundPage` sustituye a `Navigate to="/__smoke"` en el catch-all, dentro de `PublicShell`. Cuatro tests en `src/app/notFound.test.tsx` sobre la tabla de rutas real |
+| B2 | Los siete 301 en `nginx.conf`, uno por `location =` |
+| B3 | `/static/*` retirado: 301 con mapa explícito a los cinco assets que existen en el bundle, 410 para el resto |
+| B7 | El smoke público de `deploy.yml` ya reintenta, como el previo a la promoción |
+| B10 | `GET /api/v1/auth/register` → 301 `/register`; el `POST` sigue llegando a la API (403 del CSRF, que es la prueba de que llegó) |
+| B4 | `/auth/jwt/` **se añade** al proxy en vez de dejarlo morir: ver abajo |
+| §7 | Opción A implementada — `robots.txt` y `sitemap.xml` salen del proxy y los sirve el bundle |
+| — | Ruido de escáneres: una regla de extensión devuelve 404 real a `/wp-admin/install.php`, `/.env`, `/index.php` |
+| — | `src/app/cutoverRouting.test.ts`: 15 tests que cruzan `nginx.conf` con la tabla de rutas, para que un 301 nunca apunte a una ruta que el SPA no conoce |
+
+**Sobre B4, porque es la decisión menos evidente de las de arriba.** Las dos
+opciones eran dejar `/auth/jwt/*` morir con el dominio o proxearlo durante la
+ventana. Se eligió proxearlo, por el argumento de **B6**: si no llega a
+FastAPI, su contador de tráfico se pone a cero el día del cutover *por
+construcción*, y TASK-059 exige evidencia de cero tráfico para retirarlo. Una
+evidencia que no distingue «nadie lo llama» de «nadie puede llamarlo» no es
+evidencia. Además mantiene viva la sesión de quien tuviera la página de login
+antigua abierta en una pestaña en el momento del repunte. Sale del proxy en
+TASK-059, junto con su montaje en `app/app.py`, cuando la ventana lo haya
+medido.
+
+Dos defectos aparecieron al probarlo y están corregidos:
+
+- **`Location` con el puerto interno.** `return 301 /profile` hacía que nginx
+  construyera una URL absoluta con el puerto en el que escucha — 8080, no 443 —
+  produciendo `https://studentscompass.ca:8080/profile` detrás de Cloud Run.
+  Resuelto con `absolute_redirect off`.
+- **Cabeceras de seguridad perdidas.** `add_header` solo se hereda si el nivel
+  inferior no declara ninguna, así que `location /assets/` y
+  `= /index.html` —las dos que fijan `Cache-Control`— venían tirando
+  `X-Frame-Options: DENY`, `X-Content-Type-Options` y `Referrer-Policy` del
+  documento de entrada. Va rotulado **Bug Fix** en el fichero, separado del
+  movimiento de routing.
+
+**Verificación del pre-flight.** Todo lo anterior se comprobó levantando
+`nginx.conf` en un contenedor `nginx-unprivileged:1.29-alpine` con el bundle
+real delante de la API de producción, no leyendo la configuración. La matriz
+completa de rutas responde lo que esta sección dice. En el repositorio:
+`tsc -b`, `eslint`, `i18n:check`, **260 tests** y `vite build`, verdes.
+
+**Pendiente antes de repuntar el dominio:**
+
+- **B5** — desplegar el SHA que se quiere cortar. Producción sigue en `cef546b`
+  (12/09) y la diferencia ya no son tres commits. Nada del pre-flight llega a
+  producción hasta que esto ocurra.
+- Recorrido autenticado completo contra `verify_parity.py`, como estudiante y
+  como recruiter.
+- Elegir la franja horaria del repunte. El tráfico real de la muestra se
+  concentra en horario diurno norteamericano, y entre borrar el mapeo y
+  recrearlo el dominio no resuelve.
+
+**Fases 2 a 6:** no iniciadas, y no planificables en detalle hasta que existan
+datos posteriores al cutover.
+
+**No se ha tocado ningún recurso de infraestructura.** El mapeo de dominio sigue
+apuntando a `studentscompass-api` y nada de lo de arriba mueve tráfico de
+usuarios por sí solo: llega a producción con el siguiente despliegue y solo
+cambia cómo responde el servicio de frontend, que hoy no tiene usuarios.

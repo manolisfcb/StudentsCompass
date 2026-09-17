@@ -72,6 +72,7 @@ export function DocumentMeta({
   description,
   path,
   jsonLd,
+  noindex = false,
 }: {
   /** Page title, without the "Students Compass | " prefix `base.html` added. */
   title: string;
@@ -79,6 +80,17 @@ export function DocumentMeta({
   /** Path only; `PUBLIC_BASE_URL` is prepended, matching `base.html`'s `canonical_url`. */
   path: string;
   jsonLd?: object;
+  /**
+   * Emits `<meta name="robots" content="noindex">` while the page is mounted.
+   *
+   * This exists for the not-found screen. A client-rendered SPA cannot answer
+   * an unknown URL with a real 404: by the time the router knows the route does
+   * not exist, nginx has already sent `200` with the entry document. `noindex`
+   * is how you tell a crawler that the 200 it just received is not a page —
+   * without it, every retired URL and every scanner probe reads as a live page
+   * that happens to say "not found" (runbook §4, B1).
+   */
+  noindex?: boolean;
 }) {
   useEffect(() => {
     const previousTitle = document.title;
@@ -92,6 +104,7 @@ export function DocumentMeta({
       upsertMeta("property", "og:title", fullTitle),
       upsertMeta("property", "og:description", description),
       upsertMeta("property", "og:url", canonicalUrl),
+      noindex ? upsertMeta("name", "robots", "noindex") : null,
       jsonLd ? injectJsonLd(jsonLd) : null,
     ];
 
@@ -99,7 +112,7 @@ export function DocumentMeta({
       document.title = previousTitle;
       for (const restore of restores) restore?.();
     };
-  }, [title, description, path, jsonLd]);
+  }, [title, description, path, jsonLd, noindex]);
 
   return null;
 }

@@ -879,5 +879,12 @@
   "company.recruiters.accessSubtitle": "Create, update, activate or remove recruiters in your company account.",
   "company.recruiters.roleFor": "Role for {{name}}",
   "careerLab.kicker": "Career optimization",
-  "careerLab.metrics.label": "Career readiness metrics"
+  "careerLab.metrics.label": "Career readiness metrics",
+  "notFound.seoTitle": "Page not found",
+  "notFound.seoDescription": "That page does not exist on Students Compass. Head back to the homepage or your dashboard.",
+  "notFound.kicker": "404",
+  "notFound.title": "We couldn't find that page",
+  "notFound.body": "The link may be out of date, or the page may have moved since you saved it.",
+  "notFound.goHome": "Go to homepage",
+  "notFound.goDashboard": "Go to my dashboard"
 }
