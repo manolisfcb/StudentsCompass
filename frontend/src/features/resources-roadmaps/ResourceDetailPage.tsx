@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { queryKeys } from "@/api/queryKeys";
-import { Alert, Badge, Button, Card, Input, ProgressBar } from "@/components/ui";
+import { Alert, Arrow, Badge, Button, Card, Input, ProgressBar } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import { ResumeAuditWidget } from "@/features/profile-resumes/ResumeAuditWidget";
@@ -86,6 +86,7 @@ function LessonViewer({ resource, progress }: { resource: ResourceDetail; progre
       <aside className="order-2 flex w-full shrink-0 flex-col gap-3 lg:order-1 lg:w-72">
         <Card className="flex flex-col gap-3">
           <Link to="/resources" className="text-body-sm text-ink-soft transition-colors hover:text-ink">
+            <Arrow direction="back" />
             {t("resources.detail.back")}
           </Link>
 

@@ -47,7 +47,10 @@
    * `border` is the hairline that separates; `border-strong` is the one that
    * outlines an interactive control so it looks pressable. */
   --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
+  /* 3.3:1 on every surface. WCAG 1.4.11 asks for 3:1 on anything that
+   * identifies a control, and an input on a white card has nothing but its
+   * border to identify it — the old #cbd5e1 managed 1.5:1. */
+  --color-border-strong: #7f8ea1;
   --color-border-subtle: #f1f5f9;
 
   /* ── Text ─────────────────────────────────────────────────────────────
@@ -55,6 +58,9 @@
    * one-line fix. All four clear 4.5:1 on `surface` except `ink-muted`,
    * which is 3.1:1 and therefore only ever used for non-essential text. */
   --color-ink: #0f172a;
+  /* The second stop of the dark marketing bands. It is a surface value, not a
+   * text one, and it lives here so no hex is authored outside this file. */
+  --color-ink-deep: #111827;
   --color-ink-soft: #475569;
   --color-ink-muted: #64748b;
   --color-ink-inverse: #f8fafc;
@@ -70,8 +76,11 @@
   --color-warning-subtle: #fffbeb;
   --color-warning-border: #fde68a;
 
-  --color-danger: #dc2626;
-  --color-danger-hover: #b91c1c;
+  /* Darkened from #dc2626, which read at 4.4:1 on its own tint — just under
+   * AA, and the danger badge is the one badge you cannot afford to misread. */
+  --color-danger: #c81e1e;
+  --color-danger-hover: #a81919;
+  --color-danger-fg: #ffffff;
   --color-danger-subtle: #fef2f2;
   --color-danger-border: #fecaca;
 
@@ -172,12 +181,17 @@
  * panel and not in the student product.
  * ══════════════════════════════════════════════════════════════════════ */
 .theme-dark {
-  --color-primary: #6366f1;
-  --color-primary-hover: #818cf8;
-  --color-primary-active: #4f46e5;
+  /* Dark mode inverts the relationship between a fill and its label. On a
+   * near-black canvas the indigo has to be light enough to read as text
+   * (#6366f1 was 4.0:1 — under AA), and once it is that light, a white label
+   * on it fails instead. So the accent brightens and its foreground goes
+   * dark: bright fill, dark text, which is the usual dark-mode pattern. */
+  --color-primary: #818cf8;
+  --color-primary-hover: #a5b4fc;
+  --color-primary-active: #c7d2fe;
   --color-primary-subtle: rgba(99, 102, 241, 0.12);
   --color-primary-muted: rgba(99, 102, 241, 0.2);
-  --color-primary-fg: #ffffff;
+  --color-primary-fg: #0f172a;
 
   --color-canvas: #0a0e1a;
   --color-surface: #111827;
@@ -185,7 +199,8 @@
   --color-surface-hover: #1f2937;
 
   --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.16);
+  /* 3.2:1 on the dark surface, for the same reason as the light theme. */
+  --color-border-strong: rgba(255, 255, 255, 0.35);
   --color-border-subtle: rgba(255, 255, 255, 0.04);
 
   --color-ink: #f1f5f9;
@@ -206,6 +221,9 @@
 
   --color-danger: #f87171;
   --color-danger-hover: #ef4444;
+  /* Same inversion as `primary-fg`: the dark-mode red is light, so its label
+   * is dark rather than white. */
+  --color-danger-fg: #0f172a;
   --color-danger-subtle: rgba(239, 68, 68, 0.12);
   --color-danger-border: rgba(239, 68, 68, 0.3);
 
@@ -220,30 +238,4 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
-}
-
-/* ══════════════════════════════════════════════════════════════════════
- * Legacy bridge.
- *
- * The ported sheets read `var(--primary-color)`, `var(--text-color)` and
- * friends in ~960 places. Pointing those old names at the new tokens means a
- * screen that has not been migrated yet still recolours when the brand
- * changes — so the design system is authoritative from day one rather than
- * only after the last page lands.
- *
- * This block shrinks as pages migrate and is deleted with the last sheet.
- * ══════════════════════════════════════════════════════════════════════ */
-:root {
-  --primary-color: var(--color-primary);
-  --secondary-color: var(--color-primary-bright);
-  --accent-color: var(--color-accent);
-  --background-color: var(--color-canvas);
-  --text-color: var(--color-ink);
-  --text-secondary: var(--color-ink-soft);
-  --muted: var(--color-ink-muted);
-  --white: var(--color-surface);
-  --gray: var(--color-ink-soft);
-  --light-gray: var(--color-border);
-  --border: var(--color-border);
-  --card-bg: var(--color-surface);
 }

@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { DocumentMeta, PUBLIC_BASE_URL } from "@/components/seo/DocumentMeta";
+import { Arrow, Badge, Button } from "@/components/ui";
 import { ReferenceModal } from "@/features/marketing/ReferenceModal";
+import { Band, CardGrid, MarketingCard, SectionHead } from "@/features/marketing/sections";
 
 /**
  * `/about` (TASK-046). Content carried over verbatim from
@@ -141,66 +143,73 @@ export function AboutPage() {
         jsonLd={ABOUT_JSON_LD}
       />
 
-      <section className="about-hero">
-        <div className="container">
-          <h1>
+      <Band tone="brand" className="py-20 sm:py-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="text-4xl leading-[1.1] font-bold tracking-tight text-balance text-white sm:text-5xl">
             {t("about.hero.titleLine1")}
             <br />
             {t("about.hero.titleLine2")}
           </h1>
-          <p className="about-tagline">{t("about.hero.tagline")}</p>
-          <div className="hero-dual-cta">
-            <Link to="/register" className="about-btn about-btn--primary">
-              {t("about.hero.primaryCta")}
+          <p className="mx-auto mt-5 max-w-xl text-lg text-pretty text-white/75">{t("about.hero.tagline")}</p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link to="/register">
+              <Button size="lg" className="bg-primary-bright text-ink hover:bg-primary-muted">
+                {t("about.hero.primaryCta")}
+              </Button>
             </Link>
-            <a href="#for-employers" className="about-btn about-btn--ghost">
-              {t("about.hero.secondaryCta")}
+            <a href="#for-employers">
+              <Button size="lg" className="border border-white/30 bg-white/10 text-white hover:bg-white/20">
+                {t("about.hero.secondaryCta")} <span aria-hidden="true">↓</span>
+              </Button>
             </a>
           </div>
         </div>
-      </section>
+      </Band>
 
-      <aside className="about-partnership" aria-label={t("about.partnership.label")}>
-        <div className="container">
-          <p>
-            {t("about.partnership.prefix")}{" "}
-            <a href="https://qevuno.com/" target="_blank" rel="noopener noreferrer">
-              qevuno
-            </a>
-            , {t("about.partnership.suffix")}
-          </p>
-        </div>
+      <aside aria-label={t("about.partnership.label")} className="border-b border-border bg-surface px-4 py-3">
+        <p className="mx-auto max-w-content text-center text-caption text-ink-soft">
+          {t("about.partnership.prefix")}{" "}
+          <a
+            href="https://qevuno.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+          >
+            qevuno
+          </a>
+          , {t("about.partnership.suffix")}
+        </p>
       </aside>
 
-      <section className="about-section about-section--stats">
-        <div className="container">
-          <span className="section-eyebrow">{t("about.stats.eyebrow")}</span>
-          <h2>{t("about.stats.title")}</h2>
-          <div className="about-problem-grid">
-            {stats.map((stat, index) => (
-              <div
-                key={stat.value}
-                className="problem-card problem-card--clickable"
-                role="button"
-                tabIndex={0}
-                aria-label={t("about.stats.viewSourceFor", { value: stat.value })}
-                onClick={() => setOpenStat(index)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setOpenStat(index);
-                  }
-                }}
-              >
-                <span className="problem-stat">{stat.value}</span>
-                <p>{stat.body}</p>
-                <span className="problem-card__source-hint">{t("about.stats.viewSource")}</span>
-              </div>
-            ))}
-          </div>
-          <p className="problem-conclusion">{t("about.stats.conclusion")}</p>
+      <Band tone="canvas">
+        <SectionHead kicker={t("about.stats.eyebrow")} title={t("about.stats.title")} />
+
+        <div className="grid gap-5 sm:grid-cols-3">
+          {stats.map((stat, index) => (
+            // A real button, not a `role="button"` div with a hand-rolled
+            // keydown handler: Enter, Space, focus and the announced role all
+            // come free, and there is no keyboard behaviour left to get wrong.
+            <button
+              key={stat.value}
+              type="button"
+              aria-label={t("about.stats.viewSourceFor", { value: stat.value })}
+              onClick={() => setOpenStat(index)}
+              className="group flex flex-col items-center rounded-lg border border-border bg-surface p-6 text-center shadow-xs transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
+            >
+              <span className="text-display text-primary tabular-nums">{stat.value}</span>
+              <p className="mt-3 text-body-sm text-ink-soft">{stat.body}</p>
+              <span className="mt-4 text-caption font-medium text-primary group-hover:text-primary-hover">
+                {t("about.stats.viewSource")}
+              </span>
+            </button>
+          ))}
         </div>
-      </section>
+
+        <p className="mx-auto mt-10 max-w-2xl text-center text-body font-medium text-balance text-ink">
+          {t("about.stats.conclusion")}
+        </p>
+      </Band>
 
       {openStat !== null && stats[openStat] ? (
         <ReferenceModal
@@ -212,173 +221,172 @@ export function AboutPage() {
         />
       ) : null}
 
-      <section id="for-employers" className="about-section about-section-employer">
-        <div className="container">
-          <div className="employer-badge">{t("about.employers.badge")}</div>
-          <h2>{t("about.employers.title")}</h2>
-          <p className="section-intro">{t("about.employers.intro")}</p>
-          <div className="employer-value-grid">
-            {employerValues.map((item) => (
-              <div key={item.title} className="employer-value-card">
-                <div className="evc-icon-wrap">
-                  <span className="evc-icon" aria-hidden="true">
-                    {item.icon}
+      <Band id="for-employers" tone="tint">
+        <div className="mb-4 flex justify-center">
+          <Badge tone="brand" size="md">
+            {t("about.employers.badge")}
+          </Badge>
+        </div>
+        <SectionHead title={t("about.employers.title")} intro={t("about.employers.intro")} />
+        <CardGrid>
+          {employerValues.map((item) => (
+            <MarketingCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+          ))}
+        </CardGrid>
+      </Band>
+
+      <Band tone="dark">
+        <SectionHead kicker={t("about.roi.eyebrow")} title={t("about.roi.title")} onDark />
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="rounded-lg border border-white/10 bg-white/5 p-6">
+            <h3 className="text-section-title text-white">{t("about.roi.traditional.title")}</h3>
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {traditionalHiring.map((item) => (
+                <li key={item} className="flex gap-2.5 text-body-sm text-white/70">
+                  <span aria-hidden="true" className="text-danger">
+                    ✕
                   </span>
-                </div>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </div>
-            ))}
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      </section>
 
-      <section className="about-section about-roi">
-        <div className="container">
-          <span className="section-eyebrow section-eyebrow--light">{t("about.roi.eyebrow")}</span>
-          <h2>{t("about.roi.title")}</h2>
-          <div className="roi-comparison">
-            <div className="roi-column roi-traditional">
-              <h3>{t("about.roi.traditional.title")}</h3>
-              <ul>
-                {traditionalHiring.map((item) => (
-                  <li key={item}>
-                    <span className="roi-x" aria-hidden="true">
-                      ✕
-                    </span>{" "}
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="roi-column roi-compass">
-              <div className="roi-recommended">{t("about.roi.compass.recommended")}</div>
-              <h3>{t("about.roi.compass.title")}</h3>
-              <ul>
-                {compassHiring.map((item) => (
-                  <li key={item}>
-                    <span className="roi-check" aria-hidden="true">
-                      ✓
-                    </span>{" "}
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="about-section about-section-alt about-section--framework">
-        <div className="container">
-          <span className="section-eyebrow">{t("about.framework.eyebrow")}</span>
-          <h2>{t("about.framework.title")}</h2>
-          <p className="section-intro">{t("about.framework.intro")}</p>
-          <div className="framework-grid">
-            {frameworkItems.map((item) => (
-              <div key={item.title} className="framework-card">
-                <div className="evc-icon-wrap">
-                  <span className="evc-icon" aria-hidden="true">
-                    {item.icon}
+          {/* The recommended column is outlined in the brand colour rather than
+            * merely tinted, so the comparison has a visible winner. */}
+          <div className="relative rounded-lg border-2 border-primary-bright bg-white/10 p-6">
+            <span className="absolute -top-3 left-6 rounded-full bg-primary-bright px-3 py-0.5 text-overline text-ink uppercase">
+              {t("about.roi.compass.recommended")}
+            </span>
+            <h3 className="text-section-title text-white">{t("about.roi.compass.title")}</h3>
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {compassHiring.map((item) => (
+                <li key={item} className="flex gap-2.5 text-body-sm text-white/85">
+                  <span aria-hidden="true" className="text-primary-bright">
+                    ✓
                   </span>
-                </div>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </div>
-            ))}
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="framework-disclaimer">{t("about.framework.disclaimer")}</p>
         </div>
-      </section>
+      </Band>
 
-      <section className="about-section about-section--outcomes">
-        <div className="container">
-          <span className="section-eyebrow">{t("about.outcomes.eyebrow")}</span>
-          <h2>{t("about.outcomes.title")}</h2>
-          <div className="about-outcomes employer-outcomes">
-            {outcomes.map((outcome) => (
-              <div key={outcome.body} className="outcome-item">
-                <div className="outcome-icon-wrap">
-                  <span className="outcome-icon" aria-hidden="true">
-                    {outcome.icon}
+      <Band tone="surface">
+        <SectionHead
+          kicker={t("about.framework.eyebrow")}
+          title={t("about.framework.title")}
+          intro={t("about.framework.intro")}
+        />
+        <div className="grid gap-5 sm:grid-cols-2">
+          {frameworkItems.map((item) => (
+            <MarketingCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+          ))}
+        </div>
+        <p className="mt-8 text-center text-caption text-ink-muted">{t("about.framework.disclaimer")}</p>
+      </Band>
+
+      <Band tone="canvas">
+        <SectionHead kicker={t("about.outcomes.eyebrow")} title={t("about.outcomes.title")} />
+        <ul className="grid gap-4 sm:grid-cols-2">
+          {outcomes.map((outcome) => (
+            <li
+              key={outcome.body}
+              className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 shadow-xs"
+            >
+              <span
+                aria-hidden="true"
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-lg"
+              >
+                {outcome.icon}
+              </span>
+              <p className="text-body-sm text-ink-soft">{outcome.body}</p>
+            </li>
+          ))}
+        </ul>
+      </Band>
+
+      <Band tone="tint">
+        <div className="mb-4 flex justify-center">
+          <Badge tone="brand" size="md">
+            {t("about.students.badge")}
+          </Badge>
+        </div>
+        <SectionHead title={t("about.students.title")} intro={t("about.students.intro")} />
+        <CardGrid>
+          {studentFeatures.map((item) => (
+            <MarketingCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+          ))}
+        </CardGrid>
+      </Band>
+
+      <Band tone="surface">
+        <SectionHead
+          kicker={t("about.philosophy.eyebrow")}
+          title={t("about.philosophy.title")}
+          intro={t("about.philosophy.intro")}
+        />
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="rounded-lg border border-success-border bg-success-subtle p-6">
+            <h3 className="text-section-title text-ink">{t("about.philosophy.believe.title")}</h3>
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {believeList.map((item) => (
+                <li key={item} className="flex gap-2.5 text-body-sm text-ink-soft">
+                  <span aria-hidden="true" className="text-success">
+                    ✓
                   </span>
-                </div>
-                <p>{outcome.body}</p>
-              </div>
-            ))}
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      </section>
-
-      <section className="about-section about-section-alt about-section--students">
-        <div className="container">
-          <div className="employer-badge student-badge">{t("about.students.badge")}</div>
-          <h2>{t("about.students.title")}</h2>
-          <p className="section-intro">{t("about.students.intro")}</p>
-          <div className="about-features-grid">
-            {studentFeatures.map((item) => (
-              <div key={item.title} className="about-feature">
-                <div className="about-feature-icon-wrap">
-                  <span className="about-feature-icon" aria-hidden="true">
-                    {item.icon}
+          <div className="rounded-lg border border-danger-border bg-danger-subtle p-6">
+            <h3 className="text-section-title text-ink">{t("about.philosophy.not.title")}</h3>
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {notList.map((item) => (
+                <li key={item} className="flex gap-2.5 text-body-sm text-ink-soft">
+                  <span aria-hidden="true" className="text-danger">
+                    ✕
                   </span>
-                </div>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </div>
-            ))}
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </section>
+      </Band>
 
-      <section className="about-section about-section--philosophy">
-        <div className="container">
-          <span className="section-eyebrow">{t("about.philosophy.eyebrow")}</span>
-          <h2>{t("about.philosophy.title")}</h2>
-          <p className="section-intro">{t("about.philosophy.intro")}</p>
-          <div className="about-philosophy">
-            <div className="philosophy-item philosophy-positive">
-              <h3>{t("about.philosophy.believe.title")}</h3>
-              <ul>
-                {believeList.map((item) => (
-                  <li key={item}>✅ {item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="philosophy-item philosophy-negative">
-              <h3>{t("about.philosophy.not.title")}</h3>
-              <ul>
-                {notList.map((item) => (
-                  <li key={item}>❌ {item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="about-dual-cta">
-        <div className="container">
-          <div className="dual-cta-grid">
-            <div className="dual-cta-card dual-cta-employer">
-              <span className="dual-cta-label">{t("about.dualCta.employer.label")}</span>
-              <h2>{t("about.dualCta.employer.title")}</h2>
-              <p>{t("about.dualCta.employer.body")}</p>
-              <Link to="/register" className="about-btn about-btn--white">
-                {t("about.dualCta.employer.button")}
+      <Band tone="dark">
+        <div className="grid gap-5 lg:grid-cols-2">
+          {[
+            {
+              label: t("about.dualCta.employer.label"),
+              title: t("about.dualCta.employer.title"),
+              body: t("about.dualCta.employer.body"),
+              button: t("about.dualCta.employer.button"),
+            },
+            {
+              label: t("about.dualCta.student.label"),
+              title: t("about.dualCta.student.title"),
+              body: t("about.dualCta.student.body"),
+              button: t("about.dualCta.student.button"),
+            },
+          ].map((cta) => (
+            <div key={cta.label} className="rounded-xl border border-white/15 bg-white/5 p-8">
+              <span className="text-overline text-primary-bright uppercase">{cta.label}</span>
+              <h2 className="mt-3 text-section-title text-balance text-white">{cta.title}</h2>
+              <p className="mt-2 text-body-sm text-white/70">{cta.body}</p>
+              <Link to="/register" className="mt-6 inline-flex">
+                <Button className="bg-surface text-ink hover:bg-white/90">
+                  {cta.button} <Arrow direction="forward" />
+                </Button>
               </Link>
             </div>
-            <div className="dual-cta-card dual-cta-student">
-              <span className="dual-cta-label">{t("about.dualCta.student.label")}</span>
-              <h2>{t("about.dualCta.student.title")}</h2>
-              <p>{t("about.dualCta.student.body")}</p>
-              <Link to="/register" className="about-btn about-btn--white">
-                {t("about.dualCta.student.button")}
-              </Link>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </Band>
     </>
   );
 }

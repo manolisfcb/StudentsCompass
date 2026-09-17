@@ -1,31 +1,53 @@
+/* eslint-disable react-refresh/only-export-components --
+ * This file is a route table, not a component module. It declares one lazy
+ * component per screen and exports the router object, which is exactly the
+ * shape the fast-refresh rule warns about — and exactly what a route table
+ * is. Splitting the `lazy()` calls into a second file to satisfy the rule
+ * would put the routes and the screens they point at in two places. */
+import { lazy, Suspense, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { RequireActor, RequireAdmin, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
-import { AdminLoginPage } from "@/features/admin/AdminLoginPage";
-import { AdminPage } from "@/features/admin/AdminPage";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { RegisterPage } from "@/features/auth/RegisterPage";
-import { CareerLabPage } from "@/features/career-lab/CareerLabPage";
-import { ApplicantsPage } from "@/features/company/ApplicantsPage";
-import { CompanyDashboardPage } from "@/features/company/CompanyDashboardPage";
-import { JobPostingsPage } from "@/features/company/JobPostingsPage";
-import { RecruitersPage } from "@/features/company/RecruitersPage";
-import { CommunitiesListPage } from "@/features/community-messages/CommunitiesListPage";
-import { CommunityFeedPage } from "@/features/community-messages/CommunityFeedPage";
-import { MessagesPage } from "@/features/community-messages/MessagesPage";
-import { DashboardPage } from "@/features/dashboard/DashboardPage";
-import { ApplicationsPage } from "@/features/jobs-applications/ApplicationsPage";
-import { JobsPage } from "@/features/jobs-applications/JobsPage";
-import { AboutPage } from "@/features/marketing/AboutPage";
-import { HomePage } from "@/features/marketing/HomePage";
-import { ProfilePage } from "@/features/profile-resumes/ProfilePage";
-import { QuestionnairePage } from "@/features/questionnaire/QuestionnairePage";
-import { ResourceDetailPage } from "@/features/resources-roadmaps/ResourceDetailPage";
-import { ResourcesListPage } from "@/features/resources-roadmaps/ResourcesListPage";
-import { RoadmapDetailPage } from "@/features/resources-roadmaps/RoadmapDetailPage";
-import { RoadmapsListPage } from "@/features/resources-roadmaps/RoadmapsListPage";
-import { SmokePage } from "@/features/smoke/SmokePage";
+import { LoadingState } from "@/components/ui";
+
+/**
+ * Every screen is code-split.
+ *
+ * The app shipped as one 688 kB bundle, which meant a visitor landing on the
+ * marketing page downloaded the admin console, the recruiter pipeline and the
+ * career lab's optimiser before anything rendered. Each route now arrives
+ * when it is asked for, and the shells — which every route needs — stay in the
+ * entry chunk so navigation between screens does not flash.
+ *
+ * Named exports, so each import picks the component out of its module.
+ */
+
+const AdminLoginPage = lazy(() => import("@/features/admin/AdminLoginPage").then((m) => ({ default: m.AdminLoginPage })));
+const AdminPage = lazy(() => import("@/features/admin/AdminPage").then((m) => ({ default: m.AdminPage })));
+const LoginPage = lazy(() => import("@/features/auth/LoginPage").then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("@/features/auth/RegisterPage").then((m) => ({ default: m.RegisterPage })));
+const CareerLabPage = lazy(() => import("@/features/career-lab/CareerLabPage").then((m) => ({ default: m.CareerLabPage })));
+const ApplicantsPage = lazy(() => import("@/features/company/ApplicantsPage").then((m) => ({ default: m.ApplicantsPage })));
+const CompanyDashboardPage = lazy(() => import("@/features/company/CompanyDashboardPage").then((m) => ({ default: m.CompanyDashboardPage })));
+const JobPostingsPage = lazy(() => import("@/features/company/JobPostingsPage").then((m) => ({ default: m.JobPostingsPage })));
+const RecruitersPage = lazy(() => import("@/features/company/RecruitersPage").then((m) => ({ default: m.RecruitersPage })));
+const CommunitiesListPage = lazy(() => import("@/features/community-messages/CommunitiesListPage").then((m) => ({ default: m.CommunitiesListPage })));
+const CommunityFeedPage = lazy(() => import("@/features/community-messages/CommunityFeedPage").then((m) => ({ default: m.CommunityFeedPage })));
+const MessagesPage = lazy(() => import("@/features/community-messages/MessagesPage").then((m) => ({ default: m.MessagesPage })));
+const DashboardPage = lazy(() => import("@/features/dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const ApplicationsPage = lazy(() => import("@/features/jobs-applications/ApplicationsPage").then((m) => ({ default: m.ApplicationsPage })));
+const JobsPage = lazy(() => import("@/features/jobs-applications/JobsPage").then((m) => ({ default: m.JobsPage })));
+const AboutPage = lazy(() => import("@/features/marketing/AboutPage").then((m) => ({ default: m.AboutPage })));
+const HomePage = lazy(() => import("@/features/marketing/HomePage").then((m) => ({ default: m.HomePage })));
+const ProfilePage = lazy(() => import("@/features/profile-resumes/ProfilePage").then((m) => ({ default: m.ProfilePage })));
+const QuestionnairePage = lazy(() => import("@/features/questionnaire/QuestionnairePage").then((m) => ({ default: m.QuestionnairePage })));
+const ResourceDetailPage = lazy(() => import("@/features/resources-roadmaps/ResourceDetailPage").then((m) => ({ default: m.ResourceDetailPage })));
+const ResourcesListPage = lazy(() => import("@/features/resources-roadmaps/ResourcesListPage").then((m) => ({ default: m.ResourcesListPage })));
+const RoadmapDetailPage = lazy(() => import("@/features/resources-roadmaps/RoadmapDetailPage").then((m) => ({ default: m.RoadmapDetailPage })));
+const RoadmapsListPage = lazy(() => import("@/features/resources-roadmaps/RoadmapsListPage").then((m) => ({ default: m.RoadmapsListPage })));
+const SmokePage = lazy(() => import("@/features/smoke/SmokePage").then((m) => ({ default: m.SmokePage })));
 
 /**
  * The route skeleton the eight verticals of plan 08 §9 fill in.
@@ -41,14 +63,33 @@ import { SmokePage } from "@/features/smoke/SmokePage";
  * 403. That is the intended division: the guard chooses navigation, the
  * backend decides authorization. TASK-053 builds the screens behind it.
  */
+
+/**
+ * The fallback shown while a route's chunk is in flight.
+ *
+ * It is the same skeleton `AsyncBoundary` shows while a query is loading, so
+ * a chunk fetch and a slow request look identical to the person waiting —
+ * neither is a blank screen. A component rather than a bare element because
+ * the label is translated.
+ */
+function RouteFallback() {
+  const { t } = useTranslation();
+  return <LoadingState label={t("async.loading")} className="m-4" />;
+}
+
+/** Wraps a lazily-loaded screen in its own boundary. */
+function page(element: ReactNode): ReactNode {
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
+}
+
 export const router = createBrowserRouter([
-  { path: "/admin/login", element: <AdminLoginPage /> },
+  { path: "/admin/login", element: page(<AdminLoginPage />) },
   {
     element: <PublicShell />,
     children: [
-      { path: "/", element: <HomePage /> },
-      { path: "/about", element: <AboutPage /> },
-      { path: "/__smoke", element: <SmokePage /> },
+      { path: "/", element: page(<HomePage />) },
+      { path: "/about", element: page(<AboutPage />) },
+      { path: "/__smoke", element: page(<SmokePage />) },
     ],
   },
   // `login.html` and `register.html` set `include_app_shell` aside and render
@@ -56,19 +97,11 @@ export const router = createBrowserRouter([
   // footer. They are siblings of the public shell rather than children of it.
   {
     path: "/login",
-    element: (
-      <RequireAnonymous>
-        <LoginPage />
-      </RequireAnonymous>
-    ),
+    element: <RequireAnonymous>{page(<LoginPage />)}</RequireAnonymous>,
   },
   {
     path: "/register",
-    element: (
-      <RequireAnonymous>
-        <RegisterPage />
-      </RequireAnonymous>
-    ),
+    element: <RequireAnonymous>{page(<RegisterPage />)}</RequireAnonymous>,
   },
   {
     element: (
@@ -77,20 +110,20 @@ export const router = createBrowserRouter([
       </RequireActor>
     ),
     children: [
-      { path: "/dashboard", element: <DashboardPage /> },
-      { path: "/profile", element: <ProfilePage /> },
-      { path: "/questionnaire", element: <QuestionnairePage /> },
-      { path: "/resources", element: <ResourcesListPage /> },
-      { path: "/resources/:resourceId", element: <ResourceDetailPage /> },
-      { path: "/roadmaps", element: <RoadmapsListPage /> },
-      { path: "/roadmaps/:slug", element: <RoadmapDetailPage /> },
-      { path: "/jobs", element: <JobsPage /> },
-      { path: "/jobs/applications", element: <ApplicationsPage /> },
-      { path: "/career-lab", element: <CareerLabPage /> },
-      { path: "/community", element: <CommunitiesListPage /> },
-      { path: "/community/:communityId", element: <CommunityFeedPage /> },
-      { path: "/messages", element: <MessagesPage /> },
-      { path: "/messages/:conversationId", element: <MessagesPage /> },
+      { path: "/dashboard", element: page(<DashboardPage />) },
+      { path: "/profile", element: page(<ProfilePage />) },
+      { path: "/questionnaire", element: page(<QuestionnairePage />) },
+      { path: "/resources", element: page(<ResourcesListPage />) },
+      { path: "/resources/:resourceId", element: page(<ResourceDetailPage />) },
+      { path: "/roadmaps", element: page(<RoadmapsListPage />) },
+      { path: "/roadmaps/:slug", element: page(<RoadmapDetailPage />) },
+      { path: "/jobs", element: page(<JobsPage />) },
+      { path: "/jobs/applications", element: page(<ApplicationsPage />) },
+      { path: "/career-lab", element: page(<CareerLabPage />) },
+      { path: "/community", element: page(<CommunitiesListPage />) },
+      { path: "/community/:communityId", element: page(<CommunityFeedPage />) },
+      { path: "/messages", element: page(<MessagesPage />) },
+      { path: "/messages/:conversationId", element: page(<MessagesPage />) },
     ],
   },
   {
@@ -100,10 +133,10 @@ export const router = createBrowserRouter([
       </RequireActor>
     ),
     children: [
-      { path: "/company", element: <CompanyDashboardPage /> },
-      { path: "/company/postings", element: <JobPostingsPage /> },
-      { path: "/company/applicants", element: <ApplicantsPage /> },
-      { path: "/company/recruiters", element: <RecruitersPage /> },
+      { path: "/company", element: page(<CompanyDashboardPage />) },
+      { path: "/company/postings", element: page(<JobPostingsPage />) },
+      { path: "/company/applicants", element: page(<ApplicantsPage />) },
+      { path: "/company/recruiters", element: page(<RecruitersPage />) },
     ],
   },
   {
@@ -112,7 +145,7 @@ export const router = createBrowserRouter([
         <AdminShell />
       </RequireAdmin>
     ),
-    children: [{ path: "/admin", element: <AdminPage /> }],
+    children: [{ path: "/admin", element: page(<AdminPage />) }],
   },
   { path: "*", element: <Navigate to="/__smoke" replace /> },
 ]);

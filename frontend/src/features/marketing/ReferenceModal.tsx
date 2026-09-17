@@ -1,12 +1,17 @@
-import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Badge, Button, Modal } from "@/components/ui";
+
 /**
- * The citation modal from `about.js`: three stat cards on `/about` open a
- * dialog naming the source. Reimplemented with the same keyboard contract
- * (Escape closes, Tab loops inside, focus returns to the card that opened it)
- * rather than `dangerouslySetInnerHTML` for the body — the citation text is
- * plain paragraphs, so there is nothing markup needs to carry.
+ * The citation dialog the three stat cards on `/about` open.
+ *
+ * This used to hand-roll everything a dialog needs: a focus trap that walked
+ * `querySelectorAll('button, [href], …')` on every Tab, an Escape listener on
+ * `document`, a `body.style.overflow` lock, and a ref to restore focus on
+ * unmount — about forty lines that the native `<dialog>` behind the design
+ * system's `Modal` provides correctly and for free.
+ *
+ * The citation text stays plain paragraphs rather than `dangerouslySetInnerHTML`.
  */
 export function ReferenceModal({
   title,
@@ -22,88 +27,50 @@ export function ReferenceModal({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const previousFocus = useRef<Element | null>(null);
-
-  useEffect(() => {
-    previousFocus.current = document.activeElement;
-    closeButtonRef.current?.focus();
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-      if (previousFocus.current instanceof HTMLElement) previousFocus.current.focus();
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (event.key !== "Tab") return;
-
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
 
   return (
-    <div
-      className="ref-modal-backdrop active"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <Modal
+      open
+      onClose={onClose}
+      title={title}
+      footer={
+        <Button variant="outline" onClick={onClose}>
+          {t("about.stats.modal.dismiss")}
+        </Button>
+      }
     >
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="reference-modal-title" className="ref-modal">
-        <button
-          ref={closeButtonRef}
-          type="button"
-          onClick={onClose}
-          aria-label={t("about.stats.modal.close")}
-          className="ref-modal__close"
-        >
-          &times;
-        </button>
-        <div className="ref-modal__badge">{t("about.stats.modal.badge")}</div>
-        <h3 id="reference-modal-title" className="ref-modal__title">
-          {title}
-        </h3>
-        <div className="ref-modal__body">
+      <div className="flex flex-col gap-4">
+        <Badge tone="brand" size="md" className="self-start">
+          {t("about.stats.modal.badge")}
+        </Badge>
+
+        <div className="flex flex-col gap-2 text-body-sm text-ink-soft">
           {paragraphs.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
         </div>
-        <div className="ref-modal__footer">
-          <a href={url} target="_blank" rel="noopener noreferrer" className="ref-modal__link">
+
+        <div className="flex flex-col gap-1.5">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-body-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+          >
             {t("about.stats.modal.viewSource")}
           </a>
           {secondaryUrl ? (
-            <a href={secondaryUrl} target="_blank" rel="noopener noreferrer" className="ref-modal__link">
+            <a
+              href={secondaryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-body-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+            >
               {t("about.stats.modal.viewAdditionalSource")}
             </a>
           ) : null}
-          <button type="button" onClick={onClose} className="ref-modal__btn">
-            {t("about.stats.modal.dismiss")}
-          </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

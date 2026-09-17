@@ -17,12 +17,16 @@ describe("HomePage", () => {
       </MemoryRouter>,
     );
 
+    // Level 1, not the 2 the ported markup used. The shell's brand is a link
+    // and an image now rather than a heading, so the hero title is the page's
+    // only `h1` — which is where a document outline should start.
     expect(
       screen.getByRole("heading", {
-        level: 2,
+        level: 1,
         name: "From confused student to job-ready candidate, with one clear system.",
       }),
     ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Get Started for Free" })).toHaveAttribute("href", "/register");
     expect(screen.getByRole("link", { name: "See how it works" })).toHaveAttribute("href", "/about");
   });

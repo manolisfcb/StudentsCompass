@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "test:admin:e2e": "node tools/admin-qa.mjs",
     "i18n:check": "node tools/check-i18n.mjs",
+    "contrast:check": "node tools/check-contrast.mjs",
     "api:types": "openapi-typescript ../contract/openapi.json -o src/api/generated/openapi.ts --alphabetize",
     "api:check": "npm run api:types -- --check"
   },

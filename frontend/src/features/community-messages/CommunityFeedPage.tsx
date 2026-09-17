@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { Alert, Badge, Button, Card, EmptyState, Input, Select, Textarea } from "@/components/ui";
+import { Alert, Arrow, Badge, Button, Card, EmptyState, Input, Select, Textarea } from "@/components/ui";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
 import {
@@ -55,6 +55,7 @@ export function CommunityFeedPage() {
   return (
     <div className="flex flex-col gap-4">
       <Link to="/community" className="text-body-sm text-ink-soft transition-colors hover:text-ink">
+        <Arrow direction="back" />
         {t("community.feed.backToCommunities")}
       </Link>
       <AsyncBoundary query={communityQuery}>

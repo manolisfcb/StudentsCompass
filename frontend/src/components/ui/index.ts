@@ -7,6 +7,7 @@
  * missing a piece — not a reason to write another stylesheet.
  */
 export { Alert, type AlertTone } from "@/components/ui/Alert";
+export { Arrow } from "@/components/ui/Arrow";
 export { Badge, type BadgeProps, type BadgeSize, type BadgeTone } from "@/components/ui/Badge";
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from "@/components/ui/Button";
 export { Card, CardFooter, CardHeader, type CardPadding, type CardProps } from "@/components/ui/Card";

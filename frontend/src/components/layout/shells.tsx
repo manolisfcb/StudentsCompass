@@ -50,7 +50,7 @@ export function PublicShell() {
     { to: "/about", label: t("layout.nav.about") },
   ];
   return (
-    <div className="marketing-page flex min-h-screen flex-col bg-canvas">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <AppShell
         variant="marketing"
         brandHref="/"

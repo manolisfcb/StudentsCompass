@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Badge, Card, EmptyState, Input, PageHeader, ProgressBar, SectionHeader, Select } from "@/components/ui";
+import { Arrow, Badge, Card, EmptyState, Input, PageHeader, ProgressBar, SectionHeader, Select } from "@/components/ui";
 import { fetchRoadmaps, fetchSavedRoadmaps, type Roadmap, type SavedRoadmap } from "@/features/resources-roadmaps/api";
 
 /**
@@ -176,7 +176,7 @@ function DemandCard({ roadmap, icon }: { roadmap: Roadmap; icon?: string }) {
         aria-label={t("roadmaps.openRoadmapNamed", { title: roadmap.title })}
         className="mt-auto border-t border-border pt-3 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
       >
-        {t("roadmaps.openRoadmap")} →
+        {t("roadmaps.openRoadmap")} <Arrow direction="forward" />
       </Link>
     </Card>
   );
@@ -207,7 +207,7 @@ function SavedRoadmapCard({ saved }: { saved: SavedRoadmap }) {
         aria-label={t("roadmaps.continueRoadmapNamed", { title: roadmap.title })}
         className="mt-auto border-t border-border pt-3 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
       >
-        {t("roadmaps.continueRoadmap")} →
+        {t("roadmaps.continueRoadmap")} <Arrow direction="forward" />
       </Link>
     </Card>
   );

@@ -1,3 +1,4 @@
+import { Arrow } from "@/components/ui";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -58,6 +59,7 @@ export function AuthLayout({
             to="/"
             className="mb-6 inline-flex items-center gap-1 text-body-sm text-ink-soft transition-colors hover:text-ink"
           >
+            <Arrow direction="back" />
             {t("auth.backToHome")}
           </Link>
 

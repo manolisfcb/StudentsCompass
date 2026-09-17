@@ -1,5 +1,38 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/**
+ * The design system's type scale, by name.
+ *
+ * `tailwind-merge` has to be told about these. Out of the box it decides what
+ * a `text-*` class means by looking at the value: a t-shirt size or a length
+ * is a font size, and anything else is a colour. Our scale is named by role,
+ * so `text-card-title` was being filed as a colour — which put it in the same
+ * conflict group as `text-ink`, and `cn("text-card-title", "text-ink")`
+ * silently returned just `text-ink`. Every heading rendered at body size and
+ * nothing anywhere reported an error.
+ *
+ * Kept in sync with the `--text-*` entries in `styles/theme.css`.
+ */
+const FONT_SIZES = [
+  "display",
+  "page-title",
+  "section-title",
+  "card-title",
+  "body",
+  "body-sm",
+  "label",
+  "caption",
+  "overline",
+] as const;
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [{ text: [...FONT_SIZES] }],
+    },
+  },
+});
 
 /**
  * Join class names, letting the last conflicting utility win.

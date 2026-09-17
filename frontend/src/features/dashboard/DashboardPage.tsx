@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { queryKeys } from "@/api/queryKeys";
 import { AsyncBoundary } from "@/components/patterns/AsyncBoundary";
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
-import { Alert, Card, CardHeader, PageHeader, ProgressBar, StatCard } from "@/components/ui";
+import { Alert, Arrow, Card, CardHeader, PageHeader, ProgressBar, StatCard } from "@/components/ui";
 import { fetchStudentDashboard, type StudentDashboard } from "@/features/dashboard/api";
 
 /**
@@ -90,7 +90,7 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
             to="/resources"
             className="mt-4 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
           >
-            {t("dashboard.careerProgress.viewResources")} →
+            {t("dashboard.careerProgress.viewResources")} <Arrow direction="forward" />
           </Link>
         </Card>
 
@@ -108,7 +108,7 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
             to="/jobs/applications"
             className="mt-4 text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
           >
-            {t("dashboard.applications.viewAll")} →
+            {t("dashboard.applications.viewAll")} <Arrow direction="forward" />
           </Link>
         </Card>
       </div>
@@ -123,7 +123,7 @@ function DashboardContent({ dashboard }: { dashboard: StudentDashboard }) {
                 to="/resources"
                 className="text-body-sm font-medium text-primary transition-colors hover:text-primary-hover"
               >
-                {t("dashboard.recommended.explore")} →
+                {t("dashboard.recommended.explore")} <Arrow direction="forward" />
               </Link>
             }
           />

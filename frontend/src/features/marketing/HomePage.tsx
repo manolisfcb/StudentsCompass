@@ -2,24 +2,21 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { DocumentMeta } from "@/components/seo/DocumentMeta";
+import { Arrow, Button } from "@/components/ui";
+import { Band, CardGrid, MarketingCard, SectionHead } from "@/features/marketing/sections";
 
 /**
- * The homepage, ported from `home.html` over `style.css`'s marketing rules.
- * The hero is not here: it belongs inside the shell's `<header>`, so it lives
- * in `HomeHero` and `PublicShell` places it (see that file for why).
+ * The homepage. The hero is not here: it belongs inside the shell's
+ * `<header>`, so it lives in `HomeHero` and `PublicShell` places it.
  *
- * (TASK-046). Content is carried over verbatim from
- * `backend/app/templates/home.html`: this vertical moves the presentation
- * layer, not the copy — inventing marketing copy here would be exactly the
- * kind of undocumented change Scope forbids.
+ * Content is carried over verbatim from the Jinja templates — this vertical
+ * moves the presentation layer, not the copy.
  *
  * Every card below is built from literal translation calls rather than a
  * template-literal key: `tools/check-i18n.mjs` only recognises literal keys,
  * on purpose — a computed key is exactly the kind of reference a static
- * checker cannot verify against the catalogue, so the codebase does not use
- * them.
+ * checker cannot verify against the catalogue.
  */
-
 export function HomePage() {
   const { t } = useTranslation();
 
@@ -58,146 +55,115 @@ export function HomePage() {
     { quote: t("home.testimonials.items.1.quote"), author: t("home.testimonials.items.1.author") },
   ];
 
+  const valuePills = [
+    { title: t("home.value.students.title"), body: t("home.value.students.body") },
+    { title: t("home.value.companies.title"), body: t("home.value.companies.body") },
+    { title: t("home.value.platform.title"), body: t("home.value.platform.body") },
+  ];
+
   return (
     <>
       <DocumentMeta title={t("home.seoTitle")} description={t("home.seoDescription")} path="/" />
 
-      <section className="home-value-strip">
-        <div className="container">
-          <div className="value-strip-grid">
-            <ValuePill title={t("home.value.students.title")} body={t("home.value.students.body")} />
-            <ValuePill title={t("home.value.companies.title")} body={t("home.value.companies.body")} />
-            <ValuePill title={t("home.value.platform.title")} body={t("home.value.platform.body")} />
-          </div>
-        </div>
-      </section>
+      <Band tone="surface" className="py-6 sm:py-8">
+        <ul className="grid gap-3 sm:grid-cols-3">
+          {valuePills.map((pill) => (
+            <li key={pill.title} className="rounded-lg border border-border bg-surface px-4 py-3">
+              <p className="text-label text-ink">{pill.title}</p>
+              <p className="mt-0.5 text-caption text-ink-soft">{pill.body}</p>
+            </li>
+          ))}
+        </ul>
+      </Band>
 
-      <section id="for-students" className="home-audience-section home-audience-section-students">
-        <div className="container">
-          <SectionHead
-            kicker={t("home.students.kicker")}
-            title={t("home.students.title")}
-            intro={t("home.students.intro")}
-          />
-          <div className="feature-cards feature-cards-home">
-            {studentFeatures.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <Band id="for-students" tone="canvas">
+        <SectionHead
+          kicker={t("home.students.kicker")}
+          title={t("home.students.title")}
+          intro={t("home.students.intro")}
+        />
+        <CardGrid>
+          {studentFeatures.map((feature) => (
+            <MarketingCard key={feature.title} {...feature} />
+          ))}
+        </CardGrid>
+      </Band>
 
-      <section id="for-companies" className="home-audience-section home-audience-section-companies">
-        <div className="container">
-          <SectionHead
-            kicker={t("home.companies.kicker")}
-            title={t("home.companies.title")}
-            intro={t("home.companies.intro")}
-            kickerDark
-          />
-          <div className="feature-cards feature-cards-home">
-            {companyFeatures.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <Band id="for-companies" tone="tint">
+        <SectionHead
+          kicker={t("home.companies.kicker")}
+          title={t("home.companies.title")}
+          intro={t("home.companies.intro")}
+        />
+        <CardGrid>
+          {companyFeatures.map((feature) => (
+            <MarketingCard key={feature.title} {...feature} />
+          ))}
+        </CardGrid>
+      </Band>
 
-      <section id="features" className="home-platform-section">
-        <div className="container">
-          <SectionHead
-            kicker={t("home.platform.kicker")}
-            title={t("home.platform.title")}
-            intro={t("home.platform.intro")}
-          />
-          <div className="feature-cards feature-cards-home feature-cards-visual">
-            {platformItems.map((item) => (
-              <div key={item.image} className="card home-card home-card-visual">
-                <img src={`/images/${item.image}.svg`} alt={item.title} />
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Band id="features" tone="surface">
+        <SectionHead
+          kicker={t("home.platform.kicker")}
+          title={t("home.platform.title")}
+          intro={t("home.platform.intro")}
+        />
+        <CardGrid>
+          {platformItems.map((item) => (
+            <MarketingCard key={item.image} title={item.title} body={item.body} className="items-start">
+              {/* The illustration precedes the heading visually but follows it
+                * in source order, so the heading still opens the card for a
+                * screen reader. `alt=""` because the title already says it. */}
+              <img src={`/images/${item.image}.svg`} alt="" className="order-first mb-4 size-12" />
+            </MarketingCard>
+          ))}
+        </CardGrid>
+      </Band>
 
-      <section id="how-it-works" className="how-it-works home-journey-section">
-        <div className="container">
-          <SectionHead kicker={t("home.steps.kicker")} title={t("home.steps.title")} />
-          <div className="steps">
-            {steps.map((step) => (
-              <div key={step.number} className="step home-step">
-                <span>{step.number}</span>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Band id="how-it-works" tone="dark">
+        <SectionHead kicker={t("home.steps.kicker")} title={t("home.steps.title")} onDark />
+        <ol className="grid gap-5 sm:grid-cols-3">
+          {steps.map((step) => (
+            <li key={step.number}>
+              <MarketingCard onDark className="h-full">
+                <span
+                  aria-hidden="true"
+                  className="mb-4 flex size-9 items-center justify-center rounded-full bg-primary text-body-sm font-semibold text-primary-fg"
+                >
+                  {step.number}
+                </span>
+                <h3 className="text-card-title text-white">{step.title}</h3>
+                <p className="mt-2 text-body-sm text-white/70">{step.body}</p>
+              </MarketingCard>
+            </li>
+          ))}
+        </ol>
+      </Band>
 
-      <section id="testimonials" className="testimonials home-social-proof">
-        <div className="container">
-          <SectionHead kicker={t("home.testimonials.kicker")} title={t("home.testimonials.title")} />
-          <div className="testimonial-cards">
-            {testimonials.map((testimonial) => (
-              <div key={testimonial.author} className="card home-card testimonial-card">
-                <p>{testimonial.quote}</p>
-                <span>{testimonial.author}</span>
-              </div>
-            ))}
-          </div>
-          <div className="home-final-cta">
-            <h3>{t("home.finalCta.title")}</h3>
-            <Link to="/register" className="cta-button">
-              {t("home.finalCta.button")}
-            </Link>
-          </div>
+      <Band id="testimonials" tone="canvas">
+        <SectionHead kicker={t("home.testimonials.kicker")} title={t("home.testimonials.title")} />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          {testimonials.map((testimonial) => (
+            <figure
+              key={testimonial.author}
+              className="rounded-lg border border-border bg-surface p-6 shadow-xs"
+            >
+              <blockquote className="text-body text-pretty text-ink-soft">{testimonial.quote}</blockquote>
+              <figcaption className="mt-4 text-label text-ink">{testimonial.author}</figcaption>
+            </figure>
+          ))}
         </div>
-      </section>
+
+        <div className="mt-10 rounded-xl border border-primary-muted bg-gradient-to-br from-primary-subtle to-surface p-8 text-center">
+          <h3 className="text-section-title text-balance text-ink">{t("home.finalCta.title")}</h3>
+          <Link to="/register" className="mt-5 inline-flex">
+            <Button size="lg">
+              {t("home.finalCta.button")} <Arrow direction="forward" />
+            </Button>
+          </Link>
+        </div>
+      </Band>
     </>
-  );
-}
-
-function ValuePill({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="value-pill">
-      <strong>{title}</strong>
-      <span>{body}</span>
-    </div>
-  );
-}
-
-function SectionHead({
-  kicker,
-  title,
-  intro,
-  kickerDark = false,
-}: {
-  kicker: string;
-  title: string;
-  intro?: string;
-  /** `.section-kicker-dark` — the variant the companies band uses. */
-  kickerDark?: boolean;
-}) {
-  return (
-    <div className="home-section-head">
-      <span className={`section-kicker${kickerDark ? " section-kicker-dark" : ""}`}>{kicker}</span>
-      <h2>{title}</h2>
-      {intro ? <p className="section-intro">{intro}</p> : null}
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, body }: { icon: string; title: string; body: string }) {
-  return (
-    <div className="card home-card">
-      <span className="home-card-icon" aria-hidden="true">
-        {icon}
-      </span>
-      <h3>{title}</h3>
-      <p>{body}</p>
-    </div>
   );
 }

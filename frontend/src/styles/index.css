@@ -4,19 +4,17 @@
  *   1. Tailwind    — the utility engine and its layers
  *   2. theme.css   — the design tokens everything else reads
  *   3. globals.css — document baseline (typography, focus, resets)
- *   4. legacy/     — the marketing pages' own sheet (see its README)
  *
- * The layer order below is what made the migration possible one screen at a
- * time: `legacy` sits between Tailwind's `base` and `components`, so every
- * utility class beats every ported rule. The moment a component started using
- * `bg-surface` and `rounded-lg`, the old `.resource-card` rule stopped
- * applying to it — no deletions up front, no `!important` to fight through —
- * while screens that had not moved yet kept rendering exactly as before.
+ * That is the whole stylesheet layer now. The nineteen ported sheets this
+ * project started with — ~14,800 lines carrying 960 hand-written hexes, 38
+ * border radii and 120 shadows — are gone; every screen is built from the
+ * components in `components/ui`, which read the tokens above.
  *
- * Item 4 is what remains. Every product screen is on the design system; the
- * marketing and About pages are bespoke landing-page layouts with no reuse to
- * gain from componentisation, so their sheet stays. It reads design tokens
- * rather than its own hexes, so a rebrand still reaches it.
+ * The `legacy` layer between `base` and `components` is what made that
+ * possible one screen at a time: utilities outranked every ported rule, so a
+ * migrated component stopped matching the old CSS without anyone deleting it
+ * first. It is kept in the order below because it costs nothing and is the
+ * right place for any sheet a future integration has to drop in.
  * ══════════════════════════════════════════════════════════════════════ */
 
 @layer theme, base, legacy, components, utilities;
@@ -29,5 +27,3 @@
 
 @import "./theme.css";
 @import "./globals.css";
-
-@import "./legacy/index.css" layer(legacy);
