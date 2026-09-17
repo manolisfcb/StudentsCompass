@@ -109,3 +109,84 @@ describe("cutover redirects", () => {
     expect(proxyRegex).toContain("auth/jwt/");
   });
 });
+
+/**
+ * The `map $uri $spa_route_known` block, as regexes. Nginx writes a regex entry
+ * with a leading `~`; the rest is PCRE and survives being read by JavaScript's
+ * engine unchanged, because these patterns use nothing the two spell
+ * differently.
+ */
+function knownRoutePatterns(): RegExp[] {
+  const body = NGINX_CONF.match(/map \$uri \$spa_route_known \{([\s\S]*?)\n\}/)?.[1];
+  if (!body) return [];
+  const patterns: RegExp[] = [];
+  for (const [, source] of body.matchAll(/^\s*~(\S+)\s+1;/gm)) {
+    if (source !== undefined) patterns.push(new RegExp(source));
+  }
+  return patterns;
+}
+
+function nginxWouldServe(path: string): boolean {
+  return knownRoutePatterns().some((pattern) => pattern.test(path));
+}
+
+/** Every path in the route table, with `:params` filled in with a sample. */
+function everyRoutePath(): string[] {
+  const paths: string[] = [];
+  const walk = (nodes: typeof routes): void => {
+    for (const node of nodes) {
+      if (node.path !== undefined && node.path !== "*") paths.push(node.path);
+      if (node.children) walk(node.children as typeof routes);
+    }
+  };
+  walk(routes);
+  return paths.map((path) => path.replace(/:[^/]+/g, "sample-id"));
+}
+
+describe("the not-found status", () => {
+  /**
+   * Runbook §4 B1 and its acceptance item "una URL inexistente responde 404, no
+   * 200". The history fallback cannot tell a screen from a typo on its own, so
+   * nginx carries the route table and these tests are what keep the copy true.
+   *
+   * The dangerous direction is one-sided. A path missing from the map 404s a
+   * real screen in production — silently, because the SPA still renders it.
+   * A stale extra entry only costs a soft 404 on a route that no longer exists.
+   * So the first test is the one that matters, and it runs over the router
+   * rather than over a list written by hand.
+   */
+  it("finds the route map it is meant to be checking", () => {
+    expect(knownRoutePatterns().length).toBeGreaterThanOrEqual(20);
+  });
+
+  it.each(everyRoutePath())("nginx knows %s is a real screen", (path) => {
+    expect(nginxWouldServe(path)).toBe(true);
+  });
+
+  it.each([
+    "/no-existe-esta-pagina",
+    "/dashboardd",
+    "/company/nope",
+    "/jobs/applications/extra",
+    "/user-profile",
+  ])("nginx does not mistake %s for a screen", (path) => {
+    expect(nginxWouldServe(path)).toBe(false);
+  });
+
+  it("answers an unknown path with 404 carrying the entry document", () => {
+    // Both halves matter: `return 404` alone would send nginx's own page and
+    // lose the not-found screen, and `error_page` alone would never fire.
+    const fallback = NGINX_CONF.match(/location @spa \{([\s\S]*?)\n {4}\}/)?.[1] ?? "";
+    expect(fallback).toContain("error_page 404 /index.html;");
+    expect(fallback).toMatch(/if \(\$spa_route_known = 0\) \{\s*return 404;/);
+    // And the history fallback has to reach it, or none of the above runs.
+    expect(NGINX_CONF).toMatch(/try_files \$uri \$uri\/ @spa;/);
+  });
+
+  it("does not turn the scanner 404s into the entry document", () => {
+    // error_page at server level would catch the extension rule too, and every
+    // probe for /.env would come back looking like the application.
+    const serverLevel = NGINX_CONF.replace(/location @spa \{[\s\S]*?\n {4}\}/, "");
+    expect(serverLevel).not.toContain("error_page 404");
+  });
+});
