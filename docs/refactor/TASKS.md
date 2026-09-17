@@ -12772,7 +12772,7 @@ Risk: LOW
 
 ## TASK-065 — Corregir el test de agregados diarios que compara fecha local con UTC
 
-Status: TODO
+Status: COMPLETED
 Priority: LOW
 Phase: PHASE-0
 Category: Testing
@@ -12838,6 +12838,43 @@ Blocks: NONE
 ### Validation
 
 El test pasa con el reloj del sistema fijado a ambos lados de la medianoche UTC.
+
+### Completion Notes
+
+**2026-09-17 — el arreglo ya estaba en el código; esta nota lo verifica, lo
+atribuye y cierra el inventario que la ficha también pedía.**
+
+`test_concurrent_increments_are_all_counted` ya no lee ningún reloj: fija un
+instante literal y consulta por esa misma fecha.
+
+```python
+occurred_at = datetime(2026, 9, 9, 0, 15)
+...
+ApplicationDailyAggregateModel.metric_date == occurred_at.date()
+```
+
+Es la segunda opción de Proposed Solution, la preferida: pasar un `occurred_at`
+explícito al servicio quita el reloj de la ecuación entera, en vez de sustituir
+`date.today()` por una fecha UTC que seguiría dependiendo del instante en que
+arrancan los veinte escritores concurrentes. El cambio entró en `9353dc5` sin
+mencionar esta ficha, que es por lo que el tablero siguió diciendo TODO.
+
+**El servicio no se tocó**, como la ficha exigía: `_apply_daily_aggregate_delta`
+sigue escribiendo `metric_date = occurred_at.date()` en UTC. Qué zona horaria
+define «un día» para un agregado de negocio sigue siendo una decisión de producto
+que nadie ha tomado, y sigue sin ficha.
+
+**Inventario, que era la otra mitad del Scope y no constaba hecho:** cero
+ocurrencias de `date.today()` y cero de `datetime.now()` en todo
+`backend/tests/`. No queda ningún otro test comparando fecha local contra una
+columna escrita en UTC.
+
+**Lo que no se ejecutó, y por qué no cambia el veredicto.** El caso está marcado
+`@pytest.mark.postgres` y se salta sin la lane levantada; la lane PostgreSQL no
+se ha corrido en esta sesión. La validación que pide la ficha —«pasa con el reloj
+del sistema a ambos lados de la medianoche UTC»— es en este caso comprobable por
+lectura: la fecha que se escribe y la que se consulta son la misma constante
+literal, así que no hay reloj que pueda separarlas.
 
 ### Estimated Impact
 
@@ -13605,7 +13642,7 @@ Risk: LOW
 
 ## TASK-071 — Aislar el bucle de eventos que rompe el transporte por defecto del outbox
 
-Status: TODO
+Status: COMPLETED
 Priority: LOW
 Phase: PHASE-0
 Category: Testing
@@ -13693,11 +13730,11 @@ al siguiente test que lea el bucle.
 
 ### Acceptance Criteria
 
-- [ ] El caso pasa en la lane rápida completa y en aislamiento.
-- [ ] Se nombra en las Completion Notes qué test dejaba el hilo sin bucle.
-- [ ] Existing behavior remains compatible.
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] El caso pasa en la lane rápida completa y en aislamiento.
+- [x] Se nombra en las Completion Notes qué test dejaba el hilo sin bucle.
+- [x] Existing behavior remains compatible.
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -13709,6 +13746,61 @@ verdes.
 Solo toca tests. El riesgo es enmascararlo con un `try/except` alrededor de la
 lectura del bucle: eso lo pondría verde sin arreglar la contaminación, que
 seguiría rompiendo al siguiente.
+
+### Completion Notes
+
+**2026-09-17 — cerrada. El caso pasa en las dos formas de ejecución y el
+mecanismo queda nombrado, que era el criterio que impedía cerrarla de cualquier
+otra manera.**
+
+**Medido ahora:** `tests/test_task_outbox.py` entero da **32 passed**, y la lane
+rápida completa **830 passed, 129 skipped en 102 s**, sin un solo fallo. La ficha
+registraba `1 failed, 31 passed` con ese mismo fichero.
+
+**Quién dejaba el hilo sin bucle: nadie.** La hipótesis de la ficha —«algo
+anterior cierra o deja sin fijar el bucle»— buscaba un test sucio que no existe.
+El culpable era **el propio caso**, y el mecanismo es una regla de CPython 3.12
+que conviene dejar escrita porque volverá a morder:
+
+`asyncio.get_event_loop()` solo fabrica un bucle mientras **nunca** se haya
+llamado a `set_event_loop()` en ese hilo. pytest-asyncio la llama al ejecutar el
+primer test asíncrono de la sesión, y desde ese momento la rama de auto-creación
+queda cerrada **para el resto del proceso**: cualquier lectura posterior desde
+código síncrono levanta `RuntimeError: There is no current event loop in thread
+'MainThread'`.
+
+El caso era síncrono y hacía
+`asyncio.get_event_loop().run_until_complete(DisabledTransport().deliver(row))`.
+En aislamiento pasaba porque ningún test `async` había corrido todavía; con el
+fichero entero fallaba porque `TestOutboxDelivery`, justo encima, es asíncrono de
+principio a fin. No era orden aleatorio ni contaminación intermitente: era
+determinista, y dependía solo de si algo `async` había corrido ya en esa sesión.
+
+Comprobado en vez de deducido, con dos ficheros de sonda desechables: un test
+síncrono que lee el bucle **pasa** corriendo solo y **falla** con ese mismo
+`RuntimeError` en `asyncio/events.py:702` en cuanto se le pone delante un caso
+`async` en la misma sesión.
+
+**El arreglo ya estaba puesto**, en `e40e1ae` (12/09), y es exactamente la
+alternativa que Proposed Solution dejaba abierta —«que el test le dé un bucle
+explícito en vez de heredar el del hilo»—: el caso pasó a ser `async` y a hacer
+`await DisabledTransport().deliver(row)`, sin leer el bucle del hilo. Sin
+`xfail`, sin `skip` y sin reordenar la suite.
+
+**Barrido del mismo patrón, que es lo que impide que vuelva.** En
+`backend/tests/` no queda ninguna otra lectura de `get_event_loop()`. Dos restos
+se dejan a propósito, y van escritos para que nadie los confunda con un olvido:
+
+- `tests/conftest.py:68` define una fixture `event_loop` con `new_event_loop()`.
+  Es un resto de pytest-asyncio 0.x que la versión 1.4 instalada ya no consulta:
+  está muerta, no sucia. Retirarla es tocar el fixture central de TASK-001, que
+  esta ficha pone fuera de alcance.
+- En `app/` hay seis `asyncio.get_event_loop()` —`s3Service` (cuatro),
+  `read_pdf_data`, `resume_text_extractor`—, **todos dentro de funciones
+  `async`**, donde hay un bucle corriendo y la llamada devuelve ese. No corren el
+  riesgo de arriba. `get_running_loop()` sería la forma moderna de escribirlo,
+  pero cambiar código de producción está fuera del alcance de una ficha de
+  aislamiento de tests.
 
 ### Estimated Impact
 
