@@ -14,6 +14,10 @@ source ./config.env
 # sts               - the federated token exchange itself
 # cloudtasks        - the CV-analysis dispatch (TASK-054)
 # cloudscheduler    - the reconciliation tick (TASK-054)
+# monitoring        - alert policies and notification channels (TASK-057).
+#                     Logging is on by default; Monitoring is not, and
+#                     70-observability.sh fails on its first call without it.
+# billingbudgets    - the spend budget of TASK-057, when BILLING_ACCOUNT_ID is set
 # sqladmin          - the managed database, if one is used
 gcloud services enable \
   artifactregistry.googleapis.com \
@@ -23,6 +27,8 @@ gcloud services enable \
   sts.googleapis.com \
   cloudtasks.googleapis.com \
   cloudscheduler.googleapis.com \
+  monitoring.googleapis.com \
+  billingbudgets.googleapis.com \
   --project "$PROJECT_ID"
 
 echo "APIs enabled for $PROJECT_ID"

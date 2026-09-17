@@ -3,11 +3,14 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { RequireActor, RequireAnonymous } from "@/app/guards";
+import { RequireActor, RequireAdmin, RequireAnonymous } from "@/app/guards";
 import type { Session } from "@/api/session";
 import "@/i18n";
 
-function sessionFor(actorType: "student" | "recruiter"): Session {
+function sessionFor(
+  actorType: "student" | "recruiter",
+  { isSuperuser = false }: { isSuperuser?: boolean } = {},
+): Session {
   const actor = {
     id: "00000000-0000-0000-0000-000000000001",
     actor_type: actorType,
@@ -15,6 +18,7 @@ function sessionFor(actorType: "student" | "recruiter"): Session {
     display_name: null,
     is_active: true,
     is_verified: true,
+    is_superuser: isSuperuser,
   };
   return { actor, actors: [actor], csrf_token: "t" } as unknown as Session;
 }
@@ -122,5 +126,56 @@ describe("RequireAnonymous", () => {
     renderAt("/login-page", <RequireAnonymous><p>sign-in form</p></RequireAnonymous>);
 
     expect(await screen.findByText("student home")).toBeInTheDocument();
+  });
+});
+
+describe("RequireAdmin", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("renders the panel for a superuser", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(jsonResponse(200, sessionFor("student", { isSuperuser: true }))),
+      ),
+    );
+
+    renderAt("/admin", <RequireAdmin><p>panel</p></RequireAdmin>);
+
+    expect(await screen.findByText("panel")).toBeInTheDocument();
+  });
+
+  // The regression TASK-053 shipped and this guard exists to close: guarding
+  // `/admin` on `actor_type` alone let any signed-in student onto the admin
+  // shell, where every call answered 403. The monolith redirected instead.
+  it("sends a signed-in student who is not a superuser to the admin sign-in", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(jsonResponse(200, sessionFor("student")))),
+    );
+
+    renderAt("/admin", <RequireAdmin><p>panel</p></RequireAdmin>);
+
+    expect(await screen.findByText("admin sign in")).toBeInTheDocument();
+    expect(screen.queryByText("panel")).not.toBeInTheDocument();
+  });
+
+  it("sends a recruiter to the admin sign-in rather than the company home", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(jsonResponse(200, sessionFor("recruiter")))),
+    );
+
+    renderAt("/admin", <RequireAdmin><p>panel</p></RequireAdmin>);
+
+    expect(await screen.findByText("admin sign in")).toBeInTheDocument();
+  });
+
+  it("sends an anonymous visitor to the admin sign-in", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(jsonResponse(401, null))));
+
+    renderAt("/admin", <RequireAdmin><p>panel</p></RequireAdmin>);
+
+    expect(await screen.findByText("admin sign in")).toBeInTheDocument();
   });
 });

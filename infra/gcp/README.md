@@ -165,29 +165,47 @@ comprueba `99-verify.sh` contra el proyecto.
 
 ## Estado de la verificación
 
-Ejecutados el **2026-09-10** contra `gen-lang-client-0908704200` (nombre: `teko`,
-región `us-central1`), con `mmedinac26@gmail.com`:
+Actualizado el **2026-09-16** contra `gen-lang-client-0908704200` (nombre: `teko`,
+región `us-central1`), con `mmedinac26@gmail.com`. `99-verify.sh` pasa entero.
 
 | Script | Estado |
 | --- | --- |
-| `00-enable-apis.sh` | ✅ ejecutado |
+| `00-enable-apis.sh` | ✅ re-ejecutado — añadidas `monitoring` y `billingbudgets` |
 | `10-artifact-registry.sh` | ✅ ejecutado |
 | `20-service-accounts.sh` | ✅ ejecutado — cinco identidades creadas |
-| `30-workload-identity.sh` | ✅ ejecutado — pool y provider acotados al repo |
-| `40-secrets.sh` | ⛔ **pendiente** |
+| `30-workload-identity.sh` | ✅ ejecutado — condición con `repository` **y** `ref` activa en el proyecto |
+| `40-secrets.sh` | ✅ ejecutado — ocho contenedores, siete con versión |
 | `50-cloud-tasks.sh` | ✅ ejecutado — cola creada |
-| `99-verify.sh` | ⚠️ todo en verde salvo los secretos |
+| `60-domain-mapping.sh` | ✅ `studentscompass.ca` mapeado al frontend, TLS válido |
+| `70-observability.sh` | ✅ ejecutado — canal, 4 métricas, 6 políticas, budget |
+| `99-verify.sh` | ✅ **All checks passed** |
 
-`99-verify.sh` pasa Artifact Registry, la ausencia de claves JSON en las cinco
-cuentas, el pool y la condición de repositorio de WIF, la cola y el binding de
-impersonación de Cloud Tasks. Falla, y debe fallar, en los ocho secretos: no
-existen todavía.
+`REDIS_URL` es el único secreto sin versión, y lo es a propósito: ninguna
+revisión lo cablea (`deploy.yml` despliega la API con `--max-instances=1` y
+`AI_ALLOW_UNSHARED_COUNTER=1` porque no hay Memorystore en el proyecto).
+`_secrets.sh` lo declara en `OPTIONAL_SECRETS` y `99-verify.sh` lo reporta como
+WARN, no como FAIL — un verificador que sale en rojo por algo correcto enseña a
+ignorar el rojo.
 
-### El proyecto ya tenía un despliegue, hecho a mano
+### Dos defectos que solo aparecían en la segunda ejecución
 
-Esto no es un proyecto vacío. `studentscompass-api` lleva sirviendo desde el
+`70-observability.sh` no era idempotente, al contrario de lo que promete este
+README, y ninguno de los dos fallos era visible en un proyecto limpio:
+
+1. Los filtros de Monitoring iban entre **comillas simples**, que esa API no
+   acepta como literal de cadena: interpreta el valor como nombre de campo y
+   responde `INVALID_ARGUMENT`. Con la lista vacía el error no se alcanzaba
+   nunca; con el recurso ya creado el script moría en la primera línea.
+2. `gcloud billing budgets` factura la cuota contra el proyecto de
+   `core/project`, no contra `--billing-account`. Quien tuviera otro proyecto
+   por defecto recibía `USER_PROJECT_DENIED` nombrando un proyecto ajeno a este
+   repositorio. Anclado con `--billing-project="$PROJECT_ID"`.
+
+### El proyecto tenía un despliegue hecho a mano, y ya está corregido
+
+**Histórico, resuelto el 2026-09-12.** `studentscompass-api` sirvió desde el
 commit `f9ca382` (2026-09-06) con `gcloud run deploy --source`, y su
-configuración es lo contrario de lo que este directorio construye:
+configuración era lo contrario de lo que este directorio construye:
 
 - los ocho valores están como **env vars literales**, no como referencias a
   Secret Manager, de modo que cualquiera con `run.viewer` los lee en claro y para
@@ -197,22 +215,30 @@ configuración es lo contrario de lo que este directorio construye:
 - no tiene `REDIS_URL` y sí `max-instances=20`, así que los rate limits por IP
   cuentan por proceso y no son los límites que dicen ser.
 
-Los valores actuales **no deben copiarse** a Secret Manager: ya estuvieron
-expuestos. La carga es también la rotación.
+Los valores **no debían copiarse** a Secret Manager: ya estuvieron expuestos, así
+que la carga era también la rotación.
 
-### Evidencia pendiente para que TASK-055 pase a COMPLETED
+**Estado hoy:** corregido por el pipeline, no por un parche aparte, que es como
+TASK-056 dijo que se haría. El servicio corre como `sc-api`, declara seis
+secretos como referencias `valueFrom` de Secret Manager y ninguna credencial
+literal, y `--max-instances=1` deja los rate limits por IP siendo los que dicen
+ser sin necesidad de Redis.
 
-1. `40-secrets.sh` ejecutado y los ocho valores cargados, rotados, con
-   `gcloud secrets versions add … --data-file=-`.
-2. Un run del workflow que publique una imagen autenticándose por WIF, sin
-   credencial estática almacenada. Necesita `deploy.yml`, que es TASK-056.
-3. Los permisos efectivos de cada service account revisados contra la tabla de
-   arriba (`gcloud projects get-iam-policy`).
-4. Inspección de las dos imágenes construidas buscando secretos
-   (`docker history` y `docker run --rm <img> env`).
+### Evidencia que cerró TASK-055
 
-Los puntos 2 a 4 dependen de que exista el pipeline; el 1 solo depende de tener
-los valores rotados a mano.
+1. ✅ Los ocho contenedores existen; siete tienen versión cargada y rotada.
+2. ✅ `deploy.yml` publicó imágenes autenticándose por WIF — runs del
+   2026-09-12, sin credencial estática almacenada.
+3. ✅ Permisos efectivos leídos con `gcloud projects get-iam-policy` y
+   coincidentes con la tabla de mínimo privilegio: `sc-deployer` sin
+   `secretAccessor`, `sc-front` sin ningún rol, ningún `cloudsql.client`.
+4. ⚠️ La inspección de las dos imágenes con `docker history` / `docker run --rm
+   <img> env` **no se ha hecho**. Los tests de
+   `backend/tests/test_deployment_configuration.py` cubren lo equivalente sobre
+   los Dockerfile —que ninguna etapa declara `ARG`/`ENV` con forma de credencial
+   y que el runtime del frontend copia solo `nginx.conf` y `dist/`—, pero eso
+   afirma sobre la receta, no sobre la imagen construida. Queda como lo único
+   sin cerrar de la lista.
 
 ## TASK-056 — `deploy.yml`
 

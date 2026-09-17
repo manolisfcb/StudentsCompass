@@ -48,6 +48,13 @@ deliverables/
 # Ver docs/refactor/baseline/README.md.
 docs/refactor/baseline/screens/
 
+# Paridad de TASK-046..053: las capturas del SPA y las tiras comparativas
+# (~39 MB) se regeneran con `cd backend && python scripts/verify_parity.py`.
+# Lo versionado es el informe y su JSON, que es lo que se revisa y lo que fija
+# el veredicto. Ver docs/refactor/parity/README.md.
+docs/refactor/parity/screens/
+docs/refactor/parity/sidebyside/
+
 
 data/
 data/*

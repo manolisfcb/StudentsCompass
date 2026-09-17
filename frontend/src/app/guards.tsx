@@ -53,6 +53,44 @@ export function RequireActor({
   );
 }
 
+/**
+ * Renders `children` only for a signed-in student who is also a superuser.
+ *
+ * `RequireActor allow={["student"]}` is not enough for `/admin`, and the
+ * difference is not cosmetic: the monolith bounced `user is None or not
+ * user.is_superuser` to `/admin/login` (`backend/app/views/views.py`), so an
+ * ordinary student never saw the panel. Guarding only on `actor_type`
+ * reproduced the *permissions* faithfully — every `/api/v1/admin/*` call still
+ * answers 403 to a non-admin, and nothing leaks — but not the *navigation*: the
+ * student landed on the admin shell and watched it fill with errors instead of
+ * being sent away. TASK-053 asks for "el acceso prohibido responde igual", and
+ * that was a different answer.
+ *
+ * This still decides rendering only. `is_superuser` arrives from the session
+ * for the same reason `actor_type` does, and carries no more authority.
+ */
+export function RequireAdmin({ children }: { children: ReactNode }) {
+  const session = useSession();
+  const location = useLocation();
+
+  return (
+    <AsyncBoundary query={session}>
+      {(value) => {
+        const admin = value?.actors.find(
+          (actor) => actor.actor_type === "student" && actor.is_superuser,
+        );
+        if (!admin) {
+          // Same destination for "not signed in" and "signed in without
+          // rights", as in the monolith: the admin sign-in screen does not
+          // confirm that some other account would have got in.
+          return <Navigate to="/admin/login" replace state={{ from: location }} />;
+        }
+        return <>{children}</>;
+      }}
+    </AsyncBoundary>
+  );
+}
+
 /** The mirror image: keeps a signed-in actor off the sign-in screen. */
 export function RequireAnonymous({ children }: { children: ReactNode }) {
   const session = useSession();

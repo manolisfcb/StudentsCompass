@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import { RequireActor, RequireAnonymous } from "@/app/guards";
+import { RequireActor, RequireAdmin, RequireAnonymous } from "@/app/guards";
 import { AdminShell, CompanyShell, PublicShell, StudentShell } from "@/components/layout/shells";
 import { AdminLoginPage } from "@/features/admin/AdminLoginPage";
 import { AdminPage } from "@/features/admin/AdminPage";
@@ -105,9 +105,9 @@ export const router = createBrowserRouter([
   },
   {
     element: (
-      <RequireActor allow={["student"]} signInPath="/admin/login">
+      <RequireAdmin>
         <AdminShell />
-      </RequireActor>
+      </RequireAdmin>
     ),
     children: [{ path: "/admin", element: <AdminPage /> }],
   },

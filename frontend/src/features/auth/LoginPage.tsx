@@ -49,7 +49,7 @@ export function LoginPage() {
     <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-2 md:items-center">
       <DocumentMeta title={t("auth.login.title")} description={t("auth.login.seoDescription")} path="/login" />
 
-      <aside className="auth-aside-gradient space-y-6 rounded-3xl p-8 text-white shadow-[0_32px_80px_rgba(15,23,42,0.24)]">
+      <aside className="auth-aside-gradient order-2 space-y-6 rounded-3xl p-8 text-white shadow-[0_32px_80px_rgba(15,23,42,0.24)] md:order-1">
         <span className="inline-block rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
           {t("auth.login.kicker")}
         </span>
@@ -61,7 +61,7 @@ export function LoginPage() {
         </div>
       </aside>
 
-      <div className="rounded-3xl border border-border bg-surface p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
+      <div className="order-1 rounded-3xl border border-border bg-surface p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] md:order-2">
         <Link to="/" className="text-sm text-ink-soft hover:text-brand">
           {t("auth.backToHome")}
         </Link>

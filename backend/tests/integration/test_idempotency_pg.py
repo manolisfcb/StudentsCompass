@@ -32,11 +32,7 @@ def _models():
 async def schema(pg_engine, _models):
     async with pg_engine.begin() as conn:
         await conn.run_sync(_models.metadata.create_all)
-    try:
-        yield
-    finally:
-        async with pg_engine.begin() as conn:
-            await conn.run_sync(_models.metadata.drop_all)
+    yield
 
 
 def _record(*, key: str, fingerprint: str = "f" * 64, actor: str = "user:alice"):

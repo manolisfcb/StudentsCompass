@@ -45,6 +45,7 @@ def _student_actor(user: User) -> SessionActor:
         display_name=display_name or user.nickname or None,
         is_active=bool(user.is_active),
         is_verified=bool(user.is_verified),
+        is_superuser=bool(user.is_superuser),
     )
 
 

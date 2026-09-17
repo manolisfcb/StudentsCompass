@@ -104,4 +104,39 @@
   .admin-console .admin-dark-table td {
     color: var(--color-ink-muted) !important;
   }
+
+  /* The admin sign-in card. The baseline (`admin_login.html` over
+   * `admin.css`) is a dark card on the dark ground; migrating it as a white
+   * card on that ground was the one piece of the admin presentation TASK-053
+   * had not filled in. Scoped like the table above so the shared `Field` and
+   * `INPUT_CLASS` keep their light presentation on `/login` and `/register`,
+   * which are the same components on a light ground.
+   *
+   * `!important` for the same reason the table above needs it, and it is worth
+   * stating once: these rules sit in `@layer components`, and the classes they
+   * are overriding (`text-ink`, `bg-surface`) are utilities, which Tailwind
+   * orders after components. Without it the card turned dark while the heading
+   * and the labels stayed `--color-ink` on top of it — dark text on a dark
+   * ground, which is worse than the white card it replaced. */
+  .admin-console .admin-card {
+    border-color: color-mix(in srgb, white 10%, transparent) !important;
+    background: color-mix(in srgb, white 4%, transparent) !important;
+  }
+
+  /* `label > span` and not just `label`: `Field` puts the caption in a span of
+   * its own carrying `text-ink`, so colouring only the label left the caption
+   * reading as dark grey on the dark card. */
+  .admin-console .admin-card :is(h1, label, label > span) {
+    color: white !important;
+  }
+
+  .admin-console .admin-card :is(p, a) {
+    color: color-mix(in srgb, white 62%, transparent) !important;
+  }
+
+  .admin-console .admin-card input {
+    border-color: color-mix(in srgb, white 12%, transparent) !important;
+    background: color-mix(in srgb, black 22%, transparent) !important;
+    color: white !important;
+  }
 }

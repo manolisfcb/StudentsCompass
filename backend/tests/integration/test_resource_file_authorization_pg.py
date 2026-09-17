@@ -62,25 +62,21 @@ async def test_only_visible_resources_authorize_their_files(pg_engine, pg_sessio
 
     async with pg_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    try:
-        async with pg_sessionmaker() as session:
-            await _seed(session, key=VISIBLE_KEY, is_published=True, is_locked=False)
-            await _seed(session, key=LOCKED_KEY, is_published=True, is_locked=True)
+    async with pg_sessionmaker() as session:
+        await _seed(session, key=VISIBLE_KEY, is_published=True, is_locked=False)
+        await _seed(session, key=LOCKED_KEY, is_published=True, is_locked=True)
 
-            service = ResourceService(session=session, storage_service=None)
+        service = ResourceService(session=session, storage_service=None)
 
-            assert await service.resolve_authorized_file_key(VISIBLE_KEY) == VISIBLE_KEY
-            assert await service.resolve_authorized_file_key(LOCKED_KEY) is None
-            assert await service.resolve_authorized_file_key("resources/unknown.pdf") is None
+        assert await service.resolve_authorized_file_key(VISIBLE_KEY) == VISIBLE_KEY
+        assert await service.resolve_authorized_file_key(LOCKED_KEY) is None
+        assert await service.resolve_authorized_file_key("resources/unknown.pdf") is None
 
-            # "_" is a LIKE wildcard: a key that differs only where the visible
-            # key has an underscore must not match through the prefilter.
-            assert (
-                await service.resolve_authorized_file_key(
-                    "resources/20260101X120000_ab12cd34_guide.pdf"
-                )
-                is None
+        # "_" is a LIKE wildcard: a key that differs only where the visible
+        # key has an underscore must not match through the prefilter.
+        assert (
+            await service.resolve_authorized_file_key(
+                "resources/20260101X120000_ab12cd34_guide.pdf"
             )
-    finally:
-        async with pg_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
+            is None
+        )

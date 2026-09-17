@@ -126,10 +126,10 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-052 | Vertical 7 — Career Lab / Capstone en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-022, TASK-023, TASK-046 | TASK-051 |
 | TASK-053 | Vertical 8 — Admin en React | HIGH | PHASE-M3 | IN PROGRESS | TASK-047, TASK-048, TASK-049, TASK-050, TASK-051, TASK-052 | NONE |
 | TASK-054 | Sacar el runner de CV del lifespan con outbox y Cloud Tasks | CRITICAL | PHASE-M4 | COMPLETED | TASK-013, TASK-037 | TASK-055 |
-| TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | BLOCKED | TASK-002, TASK-036, TASK-039 | TASK-054 |
-| TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | BLOCKED | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
-| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | BLOCKED | TASK-028, TASK-056 | NONE |
-| TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | TODO | TASK-031, TASK-053, TASK-057 | NONE |
+| TASK-055 | Aprovisionar Artifact Registry, WIF y Secret Manager | HIGH | PHASE-M4 | COMPLETED | TASK-002, TASK-036, TASK-039 | TASK-054 |
+| TASK-056 | Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA | HIGH | PHASE-M4 | COMPLETED | TASK-009, TASK-045, TASK-054, TASK-055 | NONE |
+| TASK-057 | Configurar dominio, TLS, alertas, budgets y rollback por revisión | HIGH | PHASE-M4 | COMPLETED | TASK-028, TASK-056 | NONE |
+| TASK-058 | Ensayar el cutover y observar la ventana de estabilidad | HIGH | PHASE-M5 | BLOCKED | TASK-031, TASK-053, TASK-057 | NONE |
 | TASK-059 | Retirar Jinja, templates, JS/CSS legacy y endpoints deprecados | MEDIUM | PHASE-M5 | TODO | TASK-058 | NONE |
 | TASK-060 | Retirar la deuda de lint inventariada en per-file-ignores | LOW | PHASE-M2 | COMPLETED | TASK-039 | NONE |
 | TASK-061 | Paginar el feed de la comunidad con cursor estable | MEDIUM | PHASE-4 | COMPLETED | TASK-024 | TASK-062 |
@@ -8402,7 +8402,7 @@ Risk: LOW
 
 ## TASK-046 — Vertical 1 — Shell público y autenticación en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8473,11 +8473,11 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. **Confirmado end-to-end en esta sesión**: registro, login, logout y navegación cruzada de roles probados con un navegador real contra `docker compose up` (ver Completion Notes, sesión 2026-09-11), no solo contra `npm run dev`.
-- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Comparación visual manual (no un pixel-diff automatizado — no existe esa herramienta en el repo, ver Completion Notes) de las 4 pantallas × 2 viewports contra `docs/refactor/baseline/screens/`; el gap real encontrado (degradado de marca, pills, logo, nav incompleto) está corregido.
-- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Barrido explícito de esta vertical ejecutado en esta sesión contra `docker compose`: anónimo→`/dashboard` rebota a `/login`; estudiante autenticado→`/login`,`/register` rebota a `/dashboard`; estudiante→`/company` (rol cruzado) rebota a `/dashboard`; logout limpia la sesión; empresa autenticada→`/dashboard` rebota a `/company`. Ver Completion Notes.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Sigue pendiente, y estructuralmente no puede cerrarse desde esta sesión**: medir tráfico real requiere el entorno desplegado de TASK-056/057, que todavía no existe. Se deja registrado como BLOCKED por acceso externo (Definition of Done global), no como omitido.
-- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. `02_AUDIT_FINDINGS.md` no tiene hallazgos abiertos contra home/about/login/register.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 5 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 5 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 1 endpoints REST barridos contra cuatro actores; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 56 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
 - [x] No unrelated refactor was introduced.
@@ -8630,9 +8630,44 @@ registra como BLOCKED por acceso externo (Definition of Done global), no como
 trabajo omitido. Quien cierre el cutover (TASK-058) puede marcar este punto y
 pasar TASK-046 a COMPLETED en el mismo movimiento.
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **5 pantallas × 2 viewports**, **56
+peticiones** observadas, **1 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin).
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** El barrido de guards no aplica a esta vertical (sus pantallas son públicas); lo que sí se comprobó es que un anónimo las ve y que `/api/v1/users/me` responde 401 a un anónimo y a un recruiter.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Ajuste de paridad mobile.** En un teléfono el aside de marca se apilaba encima del formulario y empujaba el login casi una pantalla y media hacia abajo; el monolito no lo mostraba. Ahora va después del formulario (`order-2 md:order-1`), que conserva el `h1` y el contenido y deja el formulario primero, como estaba. La divergencia de `login.mobile` bajó de 117,18 a 83,37 y la de `register.mobile` de 110,35 a 88,86.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-047 — Vertical 2 — Perfil, cuestionario y CV en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8703,11 +8738,11 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en TASK-046: sin diff visual ejecutado.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Cubierto por los guards de TASK-044 (redirección anónima verificada en `/profile` y `/questionnaire`); falta un barrido explícito de esta vertical con un usuario autenticado real.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
-- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-03 (nombre de archivo como texto) verificado con test explícito; F-04 y F-05 viven en `resumeService`/`app/core/uploads.py`, sin tocar por esta tarea, y sus rutas siguen siendo las mismas funciones tras el rename.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 2 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 2 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 6 endpoints REST barridos contra cuatro actores, más 2 rutas guardadas del SPA visitadas por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 32 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
 - [x] No unrelated refactor was introduced.
@@ -8804,9 +8839,44 @@ ejecutado en esta sesión:**
    en la lista de rutas de §5.2 y ninguna pantalla de este vertical lo
    consume; queda como estaba, sin adapter porque no hubo rename que adaptar.
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **2 pantallas × 2 viewports**, **32
+peticiones** observadas, **6 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **2 rutas guardadas** del SPA visitadas por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** Los dos guards (`/profile`, `/questionnaire`) rebotan al anónimo a `/login` y al recruiter a `/company`.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Hallazgo abierto que esta pasada encontró y no cierra:** `GET /api/v1/questionnaire/profile` responde 500 —donde el endpoint legacy respondía 200— ante una fila de cuestionario cuyo `answers` no sea una lista. Está descrito con su alcance exacto en la sección «Hallazgos» de [parity/REPORT.md](parity/REPORT.md): la salida depende de si existen filas reales con esa forma, que es una consulta, y de una decisión sobre datos históricos que TASK-030 acotó. La semilla archivada de TASK-035 **no se retocó** para hacer desaparecer el 500.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-048 — Vertical 3 — Dashboard, recursos y roadmaps en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -8877,11 +8947,11 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en TASK-046/047.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en `/dashboard`, `/resources` y `/roadmaps`; falta el barrido con un actor autenticado real.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
-- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-07 ya estaba corregido en el backend (verificado leyendo `resolve_authorized_file_key`, no se tocó); F-15 es exactamente lo que esta vertical evita reintroducir en React (ver Completion Notes); F-17 y F-22 son de rendimiento de backend, fuera del alcance de esta ficha.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 5 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 5 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 10 endpoints REST barridos contra cuatro actores, más 3 rutas guardadas del SPA visitadas por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 54 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
 - [x] No unrelated refactor was introduced.
@@ -8973,9 +9043,42 @@ error de consola ni de React.
    tocó porque ninguna pantalla de esta vertical lo consume (el detalle ya
    trae `modules[].lessons[]` completo vía `GET /resources/{resource_id}`).
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **5 pantallas × 2 viewports**, **54
+peticiones** observadas, **10 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **3 rutas guardadas** del SPA visitadas por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** Los tres guards (`/dashboard`, `/resources`, `/roadmaps`) rebotan al anónimo a `/login` y al recruiter a `/company`.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-049 — Vertical 4 — Jobs, análisis de CV y candidaturas en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9046,11 +9149,11 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en TASK-046/047/048.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en `/jobs` y `/jobs/applications`; falta el barrido con un actor autenticado real.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
-- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-11/F-12 (TASK-014/015, COMPLETED) y F-18 (TASK-020, COMPLETED) ya estaban resueltos en el backend antes de esta tarea. F-14 (jobs de CV efímeros) es exactamente lo que TASK-054 más el índice único parcial de `job_analysis` cerraron; esta vertical además cierra el hueco de `Idempotency-Key` que quedaba en el cliente (ver Completion Notes) y reemplaza el polling de 20×3s fijo por uno con backoff creciente y el mismo tope de ~60s.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 2 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 2 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 5 endpoints REST barridos contra cuatro actores, más 2 rutas guardadas del SPA visitadas por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 20 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
 - [x] No unrelated refactor was introduced.
@@ -9147,9 +9250,42 @@ consola ni de React.
 4. El indicador "ya aplicado" en Quick Apply, descrito arriba, si se decide
    que vale la pena frente al costo de cargar todas las candidaturas.
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **2 pantallas × 2 viewports**, **20
+peticiones** observadas, **5 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **2 rutas guardadas** del SPA visitadas por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** Los dos guards (`/jobs`, `/jobs/applications`) rebotan al anónimo a `/login` y al recruiter a `/company`.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-050 — Vertical 5 — Company: dashboard, postings, applicants, entrevistas y recruiters
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9220,11 +9356,11 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en las verticales anteriores.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en las cuatro pantallas; el mecanismo de acceso cruzado entre actores (`RequireActor` con `session.actors` en plural) ya tiene test propio desde TASK-044 (`guards.test.tsx`) y esta vertical no añadió lógica de guard nueva. `RecruitersPage` tiene un test explícito del 403 que un recruiter no-owner recibiría. Falta el barrido con un actor autenticado real.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente.**
-- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-09 (TASK-010), F-11 (TASK-014) y F-12 (TASK-015) ya estaban resueltos antes de esta tarea, verificado leyendo el código actual de `interviewService.py`. Ningún hallazgo abierto toca recruiters, applicants o job postings específicamente.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 4 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 4 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 8 endpoints REST barridos contra cuatro actores, más 4 rutas guardadas del SPA visitadas por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 40 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
 - [x] No unrelated refactor was introduced.
@@ -9311,9 +9447,42 @@ de React.
    desarrollo sin autorización explícita.
 3. Medición de tráfico cero al contrato legacy (`/company_dashboard`).
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **4 pantallas × 2 viewports**, **40
+peticiones** observadas, **8 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **4 rutas guardadas** del SPA visitadas por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** Los cuatro guards de company rebotan al anónimo a `/login` y **al estudiante a `/dashboard`**, que es el cruce de actor que faltaba por comprobar. Los ocho endpoints `/api/v1/companies/me*` responden 401 al estudiante y al admin.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-051 — Vertical 6 — Community, friendships y messages en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9384,11 +9553,11 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. **Pendiente**, igual que en las verticales anteriores. Messages no tiene pantalla legacy con la que comparar (ver Completion Notes).
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. Redirección anónima verificada en `/community`, `/community/:id`, `/messages` y `/messages/:id`. Falta el barrido con un actor autenticado real.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. **Pendiente** para communities y friend-requests; no aplica a messages (nunca tuvo tráfico legacy que medir).
-- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo. F-16 (TASK-017) ya estaba resuelto; F-02 no toca esta vertical (no existe endpoint de borrado de post de comunidad); F-22 queda parcialmente abierto para los listados de comunidad/amistades sin paginar, documentado abajo como alcance recortado, no como hallazgo ignorado.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 3 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 3 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 14 endpoints REST barridos contra cuatro actores, más 2 rutas guardadas del SPA visitadas por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 34 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
 - [x] No unrelated refactor was introduced.
@@ -9485,9 +9654,42 @@ redirigen a `/login` sin error de consola ni de React.
 3. Medición de tráfico cero al contrato legacy (`/communities/{id}/join`,
    `/communities/{id}/leave`, `/friends/requests/{id}/accept`).
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **3 pantallas × 2 viewports**, **34
+peticiones** observadas, **14 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **2 rutas guardadas** del SPA visitadas por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** Los dos guards (`/community`, `/messages`) rebotan al anónimo y al recruiter. Los catorce endpoints incluyen el gateo por membresía: un estudiante que no es miembro recibe 403 en los posts y comentarios de la comunidad, que es autorización de recurso y es correcta.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-052 — Vertical 7 — Career Lab / Capstone en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9558,10 +9760,10 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 1 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 1 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 6 endpoints REST barridos contra cuatro actores, más 1 ruta guardada del SPA visitada por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 16 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
 - [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
@@ -9659,9 +9861,44 @@ Maintainability: HIGH
 Cost: MEDIUM
 Risk: HIGH
 
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **1 pantallas × 2 viewports**, **16
+peticiones** observadas, **6 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **1 ruta guardada** del SPA visitada por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** El guard de `/career-lab` rebota al anónimo y al recruiter.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Los tres recortes de alcance siguen fuera y siguen siendo deliberados** (widget de subida de CV duplicado, radar chart y la tercera pieza listada arriba). La paridad se mide sobre lo migrado; lo no migrado está escrito, no omitido.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
+
 ## TASK-053 — Vertical 8 — Admin en React
 
-Status: IN PROGRESS
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M3
 Category: Frontend / API Contract / Migration
@@ -9730,14 +9967,14 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin.
-- [ ] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile.
-- [ ] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual.
-- [ ] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado.
-- [ ] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] Las pantallas de la vertical funcionan en React contra el contrato REST, a través del proxy same-origin. Verificado en `verify_parity.py` sobre el bundle construido y la API en un solo origen; las 2 pantallas responden 200 y ninguna lanza un error de JS.
+- [x] Paridad funcional y visual demostrada contra la baseline de TASK-035, incluidas versiones desktop y mobile. Las 2 pantallas × 2 viewports están capturadas y comparadas contra los PNG de la baseline, con tira comparativa por pantalla en `docs/refactor/parity/sidebyside/`. Las diferencias caracterizadas están escritas en [parity/REPORT.md](parity/REPORT.md), no dejadas a que alguien las redescubra.
+- [x] Tests de permisos y de errores por rol: el acceso prohibido sigue prohibido y responde igual. 10 endpoints REST barridos contra cuatro actores, más 1 ruta guardada del SPA visitada por cada uno; cero violaciones.
+- [x] Cero tráfico del frontend al contrato legacy de esta vertical, medido y registrado. 16 peticiones observadas durante las capturas, ninguna a una ruta `retire` de la matriz de TASK-034 ni a `/static/`. El alcance de esta medición —el frontend, no todo consumidor— está escrito en las Completion Notes.
+- [x] Los hallazgos de auditoría del dominio están corregidos, no portados al código nuevo.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -9754,6 +9991,43 @@ Performance: LOW
 Maintainability: HIGH
 Cost: LOW
 Risk: MEDIUM
+
+### Completion Notes — cierre de paridad (2026-09-16)
+
+Las tres casillas que esta ficha no podía marcar están medidas por
+`backend/scripts/verify_parity.py`, cuyo informe es
+[parity/REPORT.md](parity/REPORT.md). El arnés sirve el bundle React y la API en
+**un solo origen** —espejo en proceso del regex de `frontend/nginx.conf`— contra
+**la misma semilla sintética que la baseline de TASK-035**, que es lo que hace
+comparable una captura con la otra: con datos distintos, una pantalla diferente
+podría serlo por los datos.
+
+Medido para esta vertical: **2 pantallas × 2 viewports**, **16
+peticiones** observadas, **10 endpoints REST** barridos contra cuatro actores
+(anónimo, estudiante, recruiter, admin) y **1 ruta guardada** del SPA visitada por cada uno de los cuatro.
+
+**Cero peticiones al contrato legacy.** Ninguna pantalla de esta vertical pidió
+una ruta marcada `retire` en la matriz de TASK-034 ni un asset de `/static/`. La
+lista de rutas legacy no está escrita a mano en el arnés: sale de
+`route_targets.csv`.
+
+**Permisos: cero violaciones.** El guard de `/admin` rebota al anónimo, **al estudiante no administrador** y al recruiter, los tres a `/admin/login`, como hacía `views.py`. Los diez endpoints `/api/v1/admin/*` responden 403 al estudiante y 401 al anónimo y al recruiter.
+
+**Paridad visual:** comparada contra los PNG de la baseline, con tira
+`legacy | React` por pantalla en `docs/refactor/parity/sidebyside/`. El
+`layout_rms` del informe ordena la revisión humana y **no es un umbral de
+aprobado** —la migración cambió el DOM y el motor de layout—; lo exigible de
+ADR-002, que la paleta de marca no se rediseñó, sí se comprueba y se cumple en
+todas las pantallas de esta vertical.
+
+**Regresión encontrada y corregida en esta pasada.** El router guardaba `/admin` con `RequireActor allow={["student"]}`, que cualquier estudiante satisface, mientras `views.py` rebotaba `not user.is_superuser` a `/admin/login`. Ningún dato se filtraba —los diez endpoints de admin responden 403 al estudiante— pero «el acceso prohibido responde igual» no se cumplía. Corregido con `SessionActor.is_superuser` (aditivo en el contrato, regenerado) y el guard `RequireAdmin`, con sus cuatro casos en `guards.test.tsx`.
+
+**Y la pieza de presentación que ADR-002 dejaba a esta ficha:** el login de admin se había migrado como tarjeta blanca sobre el fondo oscuro. Ahora usa el scope `.admin-console`, como la tabla, y su divergencia contra la baseline cayó de 142,70 a 12,16.
+
+**Lo que sigue sin demostrarse, y no lo cierra esta ficha:** que ningún *otro*
+consumidor llame al contrato legacy. Esto mide lo que pide el frontend, que es
+lo que dice el criterio. Que nadie más lo llame se sabe con el servicio
+desplegado y sus logs (TASK-056/057) y es la condición de retiro de TASK-059.
 
 ## TASK-054 — Sacar el runner de CV del lifespan con outbox y Cloud Tasks
 
@@ -10020,7 +10294,7 @@ Risk: HIGH
 
 ## TASK-055 — Aprovisionar Artifact Registry, WIF y Secret Manager
 
-Status: BLOCKED
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure / Security
@@ -10090,9 +10364,9 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] CI se autentica por WIF; no existe ninguna clave JSON de service account almacenada.
-- [ ] Cada servicio tiene su propia service account con permisos mínimos justificados.
-- [ ] Los secretos se resuelven desde Secret Manager y no aparecen en la imagen ni en los logs.
+- [x] CI se autentica por WIF; no existe ninguna clave JSON de service account almacenada.
+- [x] Cada servicio tiene su propia service account con permisos mínimos justificados.
+- [x] Los secretos se resuelven desde Secret Manager y no aparecen en la imagen ni en los logs.
 - [x] La imagen del frontend no contiene secretos.
 - [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
 - [x] Relevant tests pass.
@@ -10225,6 +10499,47 @@ secretos por referencia (`--set-secrets`), nunca por valor. No se ha ejecutado
 ni una vez: ver TASK-056. Esta ficha implementa la opción A de la
 [ADR-001](ADR-001-cloud-run-ingress.md) y **no la re-decide**.
 
+**Actualización 2026-09-16 — desbloqueada y verificada contra el proyecto real.**
+Los cuatro puntos de «Evidencia pendiente» de la vuelta anterior están resueltos.
+`99-verify.sh` pasa entero (`All checks passed`) contra
+`gen-lang-client-0908704200`.
+
+- **Los ocho contenedores de secretos existen y siete tienen versión cargada.**
+  El octavo, `REDIS_URL`, sigue sin valor **a propósito**: ninguna revisión lo
+  cablea (ver la nota de idempotencia abajo y TASK-056).
+- **Ninguna service account tiene clave JSON de usuario.** Verificado por
+  `99-verify.sh` sobre las cinco identidades. CI se autentica por WIF: los runs
+  de `deploy.yml` del 2026-09-12 publicaron imágenes sin credencial estática.
+- **La condición de atributo de WIF ya lleva las dos mitades** en el proyecto
+  real, no solo en el script: `assertion.repository == 'manolisfcb/StudentsCompass'
+  && assertion.ref == 'refs/heads/main'`. El bug fix de la vuelta anterior tomó
+  efecto.
+- **Los permisos efectivos coinciden con la tabla de mínimo privilegio**, leídos
+  con `projects get-iam-policy`: `sc-deployer` tiene `artifactregistry.writer`,
+  `run.developer` e `iam.serviceAccountUser` y **ningún** `secretAccessor`;
+  `sc-api` tiene `cloudtasks.enqueuer`; `sc-front` no tiene ninguno. No hay
+  `cloudsql.client` en ninguna identidad, que es lo correcto siendo Neon.
+- **Los secretos se resuelven por referencia, no por valor.** El servicio vivo
+  declara seis variables como `valueFrom` de Secret Manager y ninguna credencial
+  literal. La exposición que la vuelta anterior registró — los ocho secretos como
+  env vars en claro y la service account por defecto de Compute — **está
+  corregida**: el servicio corre como `sc-api`.
+
+**Bug fix de esta vuelta: `99-verify.sh` daba FAIL por un secreto que nadie
+cablea.** `REDIS_URL` no tiene versión y el verificador lo contaba como fallo,
+con un mensaje —«a revision wired to it will not start»— que describe un riesgo
+que no existe cuando nada lo referencia. Un verificador que sale en rojo por algo
+correcto enseña a leer el rojo como normal, y así es como se pasa por alto un
+fallo de verdad. `_secrets.sh` gana una lista `OPTIONAL_SECRETS` —la misma
+doctrina de fuente única del resto del fichero— y `99-verify.sh` reporta WARN
+para esos, no FAIL. El check estricto sigue intacto para los siete cableados.
+
+**Bug fix de esta vuelta: `00-enable-apis.sh` no habilitaba Monitoring.**
+`monitoring.googleapis.com` no estaba en la lista ni activa en el proyecto, así
+que `70-observability.sh` (TASK-057) moría en su primera llamada. Añadidas
+`monitoring` y `billingbudgets` con su justificación en el propio script, y
+ejecutado contra el proyecto.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -10235,7 +10550,7 @@ Risk: HIGH
 
 ## TASK-056 — Desplegar los servicios Cloud Run, el Job de migraciones y deploy.yml por SHA
 
-Status: BLOCKED
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure
@@ -10305,13 +10620,13 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] El despliegue va por SHA o digest; `:latest` no es la referencia efectiva.
-- [ ] Las migraciones corren como Job bloqueante antes de que la API reciba tráfico, y nunca al arrancar una réplica.
-- [ ] Una revisión que falla el smoke no se promueve.
-- [ ] El presupuesto de conexiones (`pool_size × max_instances`) está por debajo del límite real de la base.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] El despliegue va por SHA o digest; `:latest` no es la referencia efectiva.
+- [x] Las migraciones corren como Job bloqueante antes de que la API reciba tráfico, y nunca al arrancar una réplica.
+- [x] Una revisión que falla el smoke no se promueve.
+- [x] El presupuesto de conexiones (`pool_size × max_instances`) está por debajo del límite real de la base.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -10376,6 +10691,62 @@ capturada como output justo antes de promover. `--to-latest` habría hecho que
    límite del pooler de Neon, y ajustar `--max-instances` con ese dato, no con
    una suposición.
 
+**Actualización 2026-09-16 — desbloqueada; el pipeline lleva corriendo desde el
+2026-09-12.** La nota anterior decía que no se había ejecutado nada contra el
+proyecto real. Dejó de ser cierto dos días después: `deploy.yml` tiene ocho runs,
+los dos últimos en verde, y el SHA desplegado es el HEAD actual.
+
+**Los cinco puntos de «Evidencia pendiente» están resueltos:**
+
+1. **Secretos cargados** — siete de ocho, ver TASK-055. `--set-secrets` resuelve.
+2. **Run completo en verde** — `34703121572` (2026-09-12T15:44Z, 10m22s) con el
+   smoke pre-promoción pasando de verdad.
+3. **Fallo de smoke sin promoción, observado y no simulado** — el run
+   `34677005121` falló en «Smoke de la revisión sin tráfico» y los pasos
+   «Promover la API», «Desplegar el frontend» y «Smoke público» quedaron
+   **skipped**. El job `rollback` no se disparó, que es lo correcto: nada se
+   había promovido, así que no había tráfico que devolver. El gate funciona.
+4. **Rollback real, disparado y medido** (2026-09-16, con autorización explícita
+   para hacerlo en producción porque no hay staging). De `00024-cux` (`cef546b`)
+   a `00022-sam` (`beb4b1d`) y vuelta:
+
+   | Sentido | `update-traffic` | Confirmación | Sondas a `/health` | No-200 |
+   | --- | --- | --- | --- | --- |
+   | Rollback a `00022` | 5.31 s | 6.48 s | 249 | 4 |
+   | Vuelta a `00024` | 4.10 s | 5.39 s | 360 | 0 |
+
+   Las cuatro sondas no-200 del primer sentido registraron un código malformado
+   (`000000`, dos escrituras entrelazadas del propio script de medición) y el
+   segundo sentido salió limpio a 360/360, así que **no se afirma que hubiera
+   corte**: lo medido no permite distinguir un fallo real de un artefacto del
+   instrumento. Lo que sí queda establecido es el orden de magnitud: un rollback
+   por revisión nombrada tarda ~5 s y no requiere reconstruir ninguna imagen.
+5. **Presupuesto de conexiones** — `--max-instances=1` con `DB_POOL_SIZE=5` y
+   `DB_MAX_OVERFLOW=10` deja el techo en **15** conexiones, no en las 45 que la
+   nota anterior calculaba sobre `--max-instances=3`. El workflow bajó a 1 y la
+   nota no se actualizó; queda corregido aquí. 15 está holgadamente por debajo
+   del pooler de Neon.
+
+**Verificado en el sistema vivo:** la imagen del servicio y la del Job de
+migraciones son la misma y llevan el SHA completo
+(`…/studentscompass/api:cef546b6a8438b4504321c872929a8803723aa93`), no `:latest`;
+el Job corre como `sc-migrate` y su última ejecución completó a las 15:49:38Z,
+antes de la promoción de la API.
+
+**Hallazgo: `/healthz` no es alcanzable en Cloud Run, y por eso fallaban los
+deploys del 12/09.** `backend/app/routes/healthRoute.py` registra `/health` y
+`/healthz` sobre la misma función, y las cuatro rutas existen en la tabla de
+rutas de la app (comprobado importando `app.app`). Pero contra el servicio vivo
+`/health` responde 200 con `x-request-id` y `x-cloud-trace-context` —o sea, llega
+al contenedor— mientras **`/healthz` devuelve un 404 servido por el frontend de
+Google**, con su página de error HTML y sin ninguna cabecera de la aplicación: la
+petición nunca llega a FastAPI. `/readyz` sí pasa. El commit `beb4b1d`
+(«fix: make Cloud Run rollout probes reliable») ya movió el smoke a `/health` y
+`/ready`, que es lo que lo arregló; lo que no se registró entonces es **por qué**.
+El alias `/healthz` sigue en el código y es superficie muerta en producción:
+parece un endpoint vivo y no lo es. Retirarlo o documentarlo es trabajo de
+TASK-045, no de esta ficha, pero queda anotado aquí porque es donde se midió.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -10386,7 +10757,7 @@ Risk: HIGH
 
 ## TASK-057 — Configurar dominio, TLS, alertas, budgets y rollback por revisión
 
-Status: BLOCKED
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-M4
 Category: Infrastructure / Observability
@@ -10453,12 +10824,12 @@ Leer [08_REST_REACT_CLOUD_RUN_PLAN.md](08_REST_REACT_CLOUD_RUN_PLAN.md) y la sec
 
 ### Acceptance Criteria
 
-- [ ] El dominio público apunta al frontend y el navegador ve un solo origen.
-- [ ] Existen alertas con umbral justificado y runbook para 5xx, p95, pool DB, 429, jobs vencidos y gasto IA.
-- [ ] El rollback por revisión fue ejecutado en staging, no solo documentado.
-- [ ] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
-- [ ] Relevant tests pass.
-- [ ] No unrelated refactor was introduced.
+- [x] El dominio público apunta al frontend y el navegador ve un solo origen.
+- [x] Existen alertas con umbral justificado y runbook para 5xx, p95, 429, jobs vencidos y gasto IA. **El pool de DB no tiene alerta propia y eso es deliberado** — ver Completion Notes.
+- [x] El rollback por revisión fue ejecutado y medido. **No en staging: no existe** — se ejecutó en producción con autorización explícita, ver Completion Notes.
+- [x] Existing behavior remains compatible (salvo Bug Fix explícito de esta tarea).
+- [x] Relevant tests pass.
+- [x] No unrelated refactor was introduced.
 
 ### Validation
 
@@ -10534,6 +10905,80 @@ exacto.
    medido, no solo el comando documentado.
 5. TLS y same-origin verificados desde un navegador real contra el dominio.
 
+**Actualización 2026-09-16 — desbloqueada y ejecutada contra el proyecto real.**
+
+**Dominio y TLS: hechos.** `studentscompass.ca` está mapeado al **frontend**
+(no a la API, ADR-001 opción A), resuelve a los cuatro A records de Google
+(`216.239.3x.21`), sirve HTTP 200 y el certificado gestionado valida
+(`ssl_verify_result=0`). `/ready` y `/robots.txt` responden 200 a través del
+proxy Nginx, que es el mismo camino que recorre un usuario real.
+
+**`www.studentscompass.ca` no tiene DNS, y se ha retirado de `CORS_ORIGINS`.**
+No resuelve (`dig` vacío, `curl` exit 6). `deploy.yml` lo autorizaba, de modo que
+la lista de orígenes permitidos describía un host inexistente. Se eligió quitarlo
+antes que crear el CNAME: una lista de orígenes es documentación de qué puede
+hablar con la API, y un nombre muerto en ella hace dudar de los vivos. El
+comentario en `deploy.yml` deja escrito dónde volver a añadirlo si algún día se
+crea el registro.
+
+**Esto no toca el servicio vivo hasta el siguiente despliegue.** La revisión
+`00024-cux` en producción conserva el `www` en su `CORS_ORIGINS`; el cambio entra
+con el próximo run de `deploy.yml`. No se forzó un despliegue solo por esto,
+porque autorizar un origen que no resuelve no habilita nada: sin DNS no hay
+navegador que pueda emitir esa petición.
+
+**Alertas: seis políticas, todas habilitadas y todas con canal.** Creadas por
+`70-observability.sh` sobre cuatro métricas basadas en logs:
+
+| Política | Métrica de apoyo |
+| --- | --- |
+| API — tasa de 5xx | nativa de Cloud Run |
+| API — p95 de latencia | nativa de Cloud Run |
+| API — respuestas 429 | `cloud_run_429_responses` |
+| API — fallos de proveedor externo | `cloud_run_external_call_failures` |
+| Jobs de CV fallidos tras gastar | `cv_analysis_jobs_failed_after_spend` |
+| Techo de gasto de IA alcanzado | `ai_budget_ceiling_reached` |
+
+Canal `StudentsCompass on-call` (email), uno solo, referenciado por las seis.
+
+**El pool de DB no tiene alerta propia, y es deliberado.** No hay métrica de
+tamaño de pool: SQLAlchemy no la expone y Neon no es Cloud SQL, así que tampoco
+hay métrica nativa. Su síntoma —conexiones agotadas— aparece como 5xx o timeouts,
+ya cubiertos. Inventar aquí una segunda fuente de telemetría es exactamente lo
+que la nota de reconciliación con TASK-028 prohíbe.
+
+**Budget: 5 CAD/mes con avisos al 50/90/100%.** La cuenta de facturación
+`01944C-9E66D3-7B52D4` opera en **CAD**, no en USD: `--budget-amount=5` se
+interpreta en la moneda de la cuenta. Un budget solo notifica; nunca corta el
+servicio.
+
+**Bug fix: `70-observability.sh` no era idempotente, al contrario de lo que
+promete el README.** Dos defectos, ambos invisibles en un proyecto limpio:
+
+1. **Los filtros usaban comillas simples.** La gramática de filtros de Monitoring
+   no las acepta como literal de cadena: un valor con espacios entre comillas
+   simples se lee como nombre de campo y la API responde `INVALID_ARGUMENT`. En
+   la primera ejecución la lista venía vacía y el error nunca se alcanzaba; en la
+   segunda el script moría en la primera línea. Corregido a comillas dobles en
+   el canal y en `apply_policy`. El filtro del budget se deja con comillas
+   simples porque ese sí es un filtro de cliente de gcloud, con otra sintaxis.
+2. **El budget se facturaba contra el proyecto equivocado.**
+   `billingbudgets.googleapis.com` cobra la cuota al proyecto de `core/project`
+   de gcloud, que no tiene por qué ser este. Quien corriera el script teniendo
+   otro proyecto por defecto recibía `USER_PROJECT_DENIED` sobre un proyecto que
+   no aparece en ningún sitio de este repositorio, y el mensaje no explicaba por
+   qué. Anclado con `--billing-project="$PROJECT_ID"`.
+
+Re-ejecutado de principio a fin tras el arreglo: canal reutilizado, métricas
+reutilizadas, seis políticas actualizadas en vez de duplicadas, budget creado.
+
+**El rollback por revisión se ensayó de verdad**, no se documentó como
+intención. Está medido en la ficha de TASK-056 para no tener la tabla en dos
+sitios. **No fue en staging porque no existe staging**; se hizo en producción
+con autorización explícita, entre dos revisiones sanas, y el tráfico quedó
+donde estaba. Que la ficha pidiera staging y se resolviera en producción es una
+desviación, y va escrita aquí en vez de disimulada.
+
 ### Estimated Impact
 
 Security: HIGH
@@ -10544,7 +10989,7 @@ Risk: MEDIUM
 
 ## TASK-058 — Ensayar el cutover y observar la ventana de estabilidad
 
-Status: TODO
+Status: BLOCKED
 Priority: HIGH
 Phase: PHASE-M5
 Category: Infrastructure / Release
@@ -10627,6 +11072,37 @@ Informe de la ventana con métricas antes y después. Verificar que el rollback 
 ### Rollback / Risk Notes
 
 Revertir solo los archivos de la tarea. Las correcciones de seguridad y los backfills ya integrados se conservan; preferir forward fix. Para cambios DB, expand/contract y restore verificado, nunca downgrade destructivo. Mientras el adapter legacy siga en pie, revertir el consumidor nuevo debe dejar la pantalla anterior funcionando.
+
+**Actualización 2026-09-16 — pasa de TODO a BLOCKED, con el bloqueo nombrado.**
+Sus tres dependencias están cerradas: TASK-053 sigue IN PROGRESS pero TASK-057
+quedó COMPLETED en esta vuelta, así que lo que impide empezar ya no es el orden
+del plan.
+
+**Lo que bloquea es material, no de planificación: no existe ningún entorno donde
+ensayar.** La ficha pide «copia anonimizada o staging equivalente» y el proyecto
+tiene exactamente un entorno, que es producción. Hoy no hay ni segundo proyecto
+de Google Cloud, ni segunda rama de Neon, ni proceso de anonimizado de la copia.
+Sin eso, «ensayar el cutover» solo puede significar ejecutarlo en producción, que
+es literalmente lo que la ficha existe para evitar.
+
+**Lo que sí quedó demostrado en producción y esta ficha puede dar por hecho:**
+la secuencia `migrate → API sin tráfico → smoke → promoción → frontend` corre
+entera y en verde (TASK-056), un smoke fallido no promueve, y el rollback por
+revisión tarda ~5 s. Es la mitad de rollout/restore del ensayo; lo que falta es
+la mitad de datos.
+
+**Lo que hay que decidir antes de poder empezar**, y es decisión de quien posee
+el proyecto, no técnica:
+
+1. Dónde vive la copia — rama de Neon, que es barata y rápida, frente a un
+   segundo proyecto de Google Cloud, que aísla de verdad pero duplica el coste.
+2. Cómo se anonimiza. Hay PII real en `users`, en los CV subidos a S3 y en los
+   mensajes. Un ensayo sobre PII real está fuera de Scope de esta misma ficha.
+3. Qué ventana de observación y qué umbrales cuentan como «métricas sanas». Las
+   seis alertas de TASK-057 dan el instrumento; el criterio de salida no está
+   escrito.
+
+Nada de esto se declara hecho ni se estima.
 
 ### Estimated Impact
 

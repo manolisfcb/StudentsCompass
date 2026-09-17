@@ -43,9 +43,9 @@ export function AdminLoginPage() {
     : t("admin.login.invalid");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink px-4 py-10">
+    <div className="admin-console flex min-h-screen items-center justify-center bg-ink px-4 py-10">
       <DocumentMeta title={t("admin.login.seoTitle")} description={t("admin.login.subtitle")} path="/admin/login" />
-      <main className="w-full max-w-md rounded-xl border border-white/10 bg-white p-7 shadow-xl">
+      <main className="admin-card w-full max-w-md rounded-xl border p-7 shadow-xl">
         <div className="text-center">
           <span aria-hidden="true" className="text-4xl">🛡️</span>
           <h1 className="mt-3 text-2xl font-bold text-ink">{t("admin.login.title")}</h1>

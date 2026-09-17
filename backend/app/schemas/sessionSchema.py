@@ -26,6 +26,14 @@ class SessionActor(BaseModel):
     # client cannot mistake "no company" for "company not loaded".
     company_id: Optional[uuid.UUID] = None
     role: Optional[str] = None
+    # Student-only, and navigation-only, like everything else here: the admin
+    # endpoints re-check it for themselves and answer 403 regardless of what a
+    # client believes. It is exposed because without it the SPA cannot make the
+    # navigation decision the monolith made — `views.py` bounced
+    # `not user.is_superuser` off `/admin` to `/admin/login`, and a client that
+    # cannot tell an admin from a student has to show the admin shell to both
+    # and let it fill with 403s (TASK-053).
+    is_superuser: bool = False
 
 
 class SessionRead(BaseModel):

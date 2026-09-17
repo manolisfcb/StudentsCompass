@@ -28,9 +28,16 @@ fi
 API_LOG_FILTER='resource.type="cloud_run_revision" AND resource.labels.service_name="'"$API_SERVICE"'"'
 
 # --- Canal de notificación ---------------------------------------------------
+# El filtro va en comillas DOBLES por dentro. La gramática de filtros de
+# Monitoring no acepta comillas simples como literal de cadena: un valor con
+# espacios entre comillas simples se interpreta como un nombre de campo y la API
+# responde INVALID_ARGUMENT. Con comillas simples esto "funcionaba" en un
+# proyecto limpio sólo porque la lista venía vacía y el error nunca se
+# alcanzaba; fallaba en la segunda ejecución, que es justo cuando la
+# idempotencia importa.
 CHANNEL_NAME="$(gcloud beta monitoring channels list \
   --project "$PROJECT_ID" \
-  --filter="displayName='StudentsCompass on-call' AND type='email'" \
+  --filter="displayName=\"StudentsCompass on-call\" AND type=\"email\"" \
   --format='value(name)' | head -n1)"
 
 if [ -z "$CHANNEL_NAME" ]; then
@@ -90,7 +97,7 @@ apply_policy() {
   local existing
   existing="$(gcloud alpha monitoring policies list \
     --project "$PROJECT_ID" \
-    --filter="displayName='${display_name}'" \
+    --filter="displayName=\"${display_name}\"" \
     --format='value(name)' | head -n1)"
   if [ -n "$existing" ]; then
     gcloud alpha monitoring policies update "$existing" \
@@ -290,9 +297,18 @@ apply_policy "StudentsCompass — techo de gasto de IA alcanzado" "$POLICY_DIR/a
 # Un budget de proyecto, no solo de un SKU de IA: Gemini no es el único coste
 # variable (Cloud Run escala con tráfico), y un budget que solo mirara IA
 # dejaría un pico de tráfico normal sin ningún aviso.
+#
+# --billing-project es obligatorio, no cosmético. billingbudgets.googleapis.com
+# factura la cuota contra el proyecto que gcloud tenga en core/project, que no
+# tiene por qué ser este: si quien corre el script trabaja a diario en otro
+# proyecto, la llamada falla con USER_PROJECT_DENIED sobre un proyecto que no
+# aparece en ningún sitio de este repositorio, y el mensaje no dice por qué.
+# Anclarlo a PROJECT_ID hace que el script no dependa del estado global de
+# gcloud de quien lo ejecute.
 if [ -n "${BILLING_ACCOUNT_ID:-}" ] && [ -n "${BUDGET_AMOUNT:-}" ]; then
   EXISTING_BUDGET="$(gcloud billing budgets list \
     --billing-account="$BILLING_ACCOUNT_ID" \
+    --billing-project="$PROJECT_ID" \
     --filter="displayName='StudentsCompass monthly'" \
     --format='value(name)' 2>/dev/null | head -n1 || true)"
   if [ -n "$EXISTING_BUDGET" ]; then
@@ -300,6 +316,7 @@ if [ -n "${BILLING_ACCOUNT_ID:-}" ] && [ -n "${BUDGET_AMOUNT:-}" ]; then
   else
     gcloud billing budgets create \
       --billing-account="$BILLING_ACCOUNT_ID" \
+      --billing-project="$PROJECT_ID" \
       --display-name="StudentsCompass monthly" \
       --budget-amount="${BUDGET_AMOUNT}" \
       --filter-projects="projects/${PROJECT_ID}" \

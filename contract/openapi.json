@@ -9023,6 +9023,11 @@
             "title": "Is Active",
             "type": "boolean"
           },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
           "is_verified": {
             "title": "Is Verified",
             "type": "boolean"

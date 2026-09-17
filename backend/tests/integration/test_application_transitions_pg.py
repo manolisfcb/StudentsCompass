@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 
 import pytest
 from sqlalchemy import func, select
@@ -35,11 +35,7 @@ def _models():
 async def schema(pg_engine, _models):
     async with pg_engine.begin() as conn:
         await conn.run_sync(_models.metadata.create_all)
-    try:
-        yield
-    finally:
-        async with pg_engine.begin() as conn:
-            await conn.run_sync(_models.metadata.drop_all)
+    yield
 
 
 async def _seed(session):
@@ -92,11 +88,16 @@ async def test_concurrent_increments_are_all_counted(schema, pg_sessionmaker):
     async with pg_sessionmaker() as setup:
         _, company, _, _ = await _seed(setup)
 
+    # Keep the assertion independent of both the local clock and the instant at
+    # which the concurrent writers happen to start. Aggregates are deliberately
+    # bucketed by the UTC timestamp supplied to the service.
+    occurred_at = datetime(2026, 9, 9, 0, 15)
+
     async def bump():
         async with pg_sessionmaker() as session:
             await ApplicationService(session)._apply_daily_aggregate_delta(
                 company_id=company.id,
-                occurred_at=datetime.utcnow(),
+                occurred_at=occurred_at,
                 delta={"status_change_events_count": 1, "entered_in_review_count": 1},
             )
             await session.commit()
@@ -107,7 +108,7 @@ async def test_concurrent_increments_are_all_counted(schema, pg_sessionmaker):
         aggregate = await reader.scalar(
             select(ApplicationDailyAggregateModel).where(
                 ApplicationDailyAggregateModel.company_id == company.id,
-                ApplicationDailyAggregateModel.metric_date == date.today(),
+                ApplicationDailyAggregateModel.metric_date == occurred_at.date(),
             )
         )
         rows = await reader.scalar(

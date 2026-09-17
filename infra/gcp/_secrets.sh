@@ -65,6 +65,24 @@ declare -a SECRETS=(
 #                           endpoint (config.py:248): a shared secret is not an
 #                           identity. Production authenticates with sc-tasks.
 
+# Secretos cuyo contenedor existe y está concedido, pero que ninguna revisión
+# cablea todavía. No es lo mismo que "falta un valor": un contenedor sin versión
+# solo tumba un arranque si algo lo referencia con --set-secrets, y nada lo hace.
+#
+# REDIS_URL es el caso: deploy.yml despliega la API con --max-instances=1 y
+# AI_ALLOW_UNSHARED_COUNTER=1 precisamente porque no hay Memorystore en el
+# proyecto. Con una sola réplica hay un solo contador y los límites por IP son
+# los que dicen ser. Redis es el gate para *subir* max-instances, y ese es el
+# momento de cargar el valor — no antes, porque un Redis pagado y sin usar es
+# coste sin función.
+#
+# Está aquí, y no borrado, para que concederlo y cablearlo sea un solo paso el
+# día que haga falta, y para que 99-verify.sh pueda decir "pendiente a
+# propósito" en vez de "roto".
+declare -a OPTIONAL_SECRETS=(
+  "REDIS_URL"
+)
+
 SECRET_NAMES=()
 for _entry in "${SECRETS[@]}"; do SECRET_NAMES+=("${_entry%%:*}"); done
 unset _entry

@@ -1,0 +1,3933 @@
+{
+  "screens": [
+    {
+      "name": "root",
+      "baseline": "root",
+      "spa_route": "/",
+      "viewport": "desktop",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/",
+      "file": "screens/root.desktop.png",
+      "requests": [
+        "GET /",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /images/goal.svg",
+        "GET /images/resources.svg",
+        "GET /images/roadmap.svg"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          4514
+        ],
+        "parity_size": [
+          1440,
+          3239
+        ],
+        "layout_rms": 83.67,
+        "ink_baseline": 0.37524,
+        "ink_parity": 0.21387,
+        "palette_baseline": {
+          "teal": 0.03772,
+          "teal_light": 0.01552,
+          "ink": 0.14417
+        },
+        "palette_parity": {
+          "teal": 0.06858,
+          "teal_light": 0.0188,
+          "ink": 0.00133
+        },
+        "palette_px_parity": {
+          "teal": 52668,
+          "teal_light": 14435,
+          "ink": 1025
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "home",
+      "baseline": "home",
+      "spa_route": "/",
+      "viewport": "desktop",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/",
+      "file": "screens/home.desktop.png",
+      "requests": [
+        "GET /",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /images/goal.svg",
+        "GET /images/resources.svg",
+        "GET /images/roadmap.svg"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          4514
+        ],
+        "parity_size": [
+          1440,
+          3239
+        ],
+        "layout_rms": 83.67,
+        "ink_baseline": 0.37524,
+        "ink_parity": 0.21387,
+        "palette_baseline": {
+          "teal": 0.03772,
+          "teal_light": 0.01552,
+          "ink": 0.14417
+        },
+        "palette_parity": {
+          "teal": 0.06858,
+          "teal_light": 0.0188,
+          "ink": 0.00133
+        },
+        "palette_px_parity": {
+          "teal": 52668,
+          "teal_light": 14435,
+          "ink": 1025
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "about",
+      "baseline": "about",
+      "spa_route": "/about",
+      "viewport": "desktop",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/about",
+      "file": "screens/about.desktop.png",
+      "requests": [
+        "GET /about",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          6441
+        ],
+        "parity_size": [
+          1440,
+          4261
+        ],
+        "layout_rms": 69.78,
+        "ink_baseline": 0.28345,
+        "ink_parity": 0.23047,
+        "palette_baseline": {
+          "teal": 0.07217,
+          "teal_light": 0.00073,
+          "ink": 0.14936
+        },
+        "palette_parity": {
+          "teal": 0.04069,
+          "teal_light": 0.01554,
+          "ink": 0.06262
+        },
+        "palette_px_parity": {
+          "teal": 31251,
+          "teal_light": 11937,
+          "ink": 48090
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "login",
+      "baseline": "login",
+      "spa_route": "/login",
+      "viewport": "desktop",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/login",
+      "file": "screens/login.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /login"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          900
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 104.13,
+        "ink_baseline": 0.73486,
+        "ink_parity": 0.30737,
+        "palette_baseline": {
+          "teal": 0.35748,
+          "teal_light": 0.0131,
+          "ink": 0.00123
+        },
+        "palette_parity": {
+          "teal": 0.10272,
+          "teal_light": 0.01222,
+          "ink": 0.0002
+        },
+        "palette_px_parity": {
+          "teal": 44373,
+          "teal_light": 5279,
+          "ink": 85
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "register",
+      "baseline": "register",
+      "spa_route": "/register",
+      "viewport": "desktop",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/register",
+      "file": "screens/register.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /register"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          900
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 99.63,
+        "ink_baseline": 0.66284,
+        "ink_parity": 0.31958,
+        "palette_baseline": {
+          "teal": 0.28518,
+          "teal_light": 0.00935,
+          "ink": 0.00296
+        },
+        "palette_parity": {
+          "teal": 0.10395,
+          "teal_light": 0.01222,
+          "ink": 0.00055
+        },
+        "palette_px_parity": {
+          "teal": 44908,
+          "teal_light": 5280,
+          "ink": 238
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "admin-login",
+      "baseline": "admin-login",
+      "spa_route": "/admin/login",
+      "viewport": "desktop",
+      "as": "anonymous",
+      "vertical": "V8-TASK-053",
+      "status": 200,
+      "final_url": "/admin/login",
+      "file": "screens/admin-login.desktop.png",
+      "requests": [
+        "GET /admin/login",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          956
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 12.16,
+        "ink_baseline": 1.0,
+        "ink_parity": 1.0,
+        "palette_baseline": {
+          "teal": 0.0,
+          "teal_light": 0.0,
+          "ink": 0.98275
+        },
+        "palette_parity": {
+          "teal": 0.01049,
+          "teal_light": 0.0,
+          "ink": 0.98216
+        },
+        "palette_px_parity": {
+          "teal": 4532,
+          "teal_light": 0,
+          "ink": 424293
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "questionnaire",
+      "baseline": "questionnaire",
+      "spa_route": "/questionnaire",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V2-TASK-047",
+      "status": 200,
+      "final_url": "/questionnaire",
+      "file": "screens/questionnaire.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/questionnaire",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /questionnaire"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1788
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 101.09,
+        "ink_baseline": 0.2085,
+        "ink_parity": 0.0105,
+        "palette_baseline": {
+          "teal": 0.0,
+          "teal_light": 0.0,
+          "ink": 0.00321
+        },
+        "palette_parity": {
+          "teal": 0.0004,
+          "teal_light": 0.0,
+          "ink": 0.0008
+        },
+        "palette_px_parity": {
+          "teal": 174,
+          "teal_light": 0,
+          "ink": 344
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "user-profile",
+      "baseline": "user-profile",
+      "spa_route": "/profile",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V2-TASK-047",
+      "status": 200,
+      "final_url": "/profile",
+      "file": "screens/user-profile.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/friends",
+        "GET /api/v1/friends/requests/incoming",
+        "GET /api/v1/friends/requests/outgoing",
+        "GET /api/v1/questionnaire/profile",
+        "GET /api/v1/resume-course-audits/attempts",
+        "GET /api/v1/resumes",
+        "GET /api/v1/users/me",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /profile"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          2769
+        ],
+        "parity_size": [
+          1440,
+          2012
+        ],
+        "layout_rms": 52.34,
+        "ink_baseline": 0.10376,
+        "ink_parity": 0.00317,
+        "palette_baseline": {
+          "teal": 0.01564,
+          "teal_light": 0.00646,
+          "ink": 0.04093
+        },
+        "palette_parity": {
+          "teal": 0.00117,
+          "teal_light": 0.0,
+          "ink": 0.00016
+        },
+        "palette_px_parity": {
+          "teal": 895,
+          "teal_light": 0,
+          "ink": 122
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "dashboard",
+      "baseline": "dashboard",
+      "spa_route": "/dashboard",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/dashboard",
+      "file": "screens/dashboard.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/dashboard/student",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /dashboard"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          2118
+        ],
+        "parity_size": [
+          1440,
+          1164
+        ],
+        "layout_rms": 62.43,
+        "ink_baseline": 0.14648,
+        "ink_parity": 0.01416,
+        "palette_baseline": {
+          "teal": 0.02637,
+          "teal_light": 0.00236,
+          "ink": 0.05527
+        },
+        "palette_parity": {
+          "teal": 0.00627,
+          "teal_light": 0.0,
+          "ink": 0.00144
+        },
+        "palette_px_parity": {
+          "teal": 3503,
+          "teal_light": 2,
+          "ink": 807
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "resources",
+      "baseline": "resources",
+      "spa_route": "/resources",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/resources",
+      "file": "screens/resources.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/resources",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /resources"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1213
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 81.15,
+        "ink_baseline": 0.22144,
+        "ink_parity": 0.00513,
+        "palette_baseline": {
+          "teal": 0.04133,
+          "teal_light": 0.00341,
+          "ink": 0.09441
+        },
+        "palette_parity": {
+          "teal": 0.0007,
+          "teal_light": 0.0,
+          "ink": 0.00047
+        },
+        "palette_px_parity": {
+          "teal": 303,
+          "teal_light": 0,
+          "ink": 205
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "resource-detail",
+      "baseline": "resource-detail",
+      "spa_route": "/resources/{resource}",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "file": "screens/resource-detail.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+        "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/progress",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1135
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 82.55,
+        "ink_baseline": 0.22534,
+        "ink_parity": 0.00781,
+        "palette_baseline": {
+          "teal": 0.03713,
+          "teal_light": 0.00347,
+          "ink": 0.09865
+        },
+        "palette_parity": {
+          "teal": 0.00194,
+          "teal_light": 0.0,
+          "ink": 0.00038
+        },
+        "palette_px_parity": {
+          "teal": 837,
+          "teal_light": 0,
+          "ink": 162
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "roadmaps",
+      "baseline": "roadmaps",
+      "spa_route": "/roadmaps",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/roadmaps",
+      "file": "screens/roadmaps.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/me/roadmaps",
+        "GET /api/v1/roadmaps",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /roadmaps"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1817
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 65.88,
+        "ink_baseline": 0.14575,
+        "ink_parity": 0.01172,
+        "palette_baseline": {
+          "teal": 0.02741,
+          "teal_light": 0.00213,
+          "ink": 0.06176
+        },
+        "palette_parity": {
+          "teal": 0.00023,
+          "teal_light": 0.0,
+          "ink": 0.00121
+        },
+        "palette_px_parity": {
+          "teal": 101,
+          "teal_light": 0,
+          "ink": 524
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "roadmap-detail",
+      "baseline": "roadmap-detail",
+      "spa_route": "/roadmaps/{slug}",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/roadmaps/baseline-backend-engineer",
+      "file": "screens/roadmap-detail.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/roadmaps/baseline-backend-engineer",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /roadmaps/baseline-backend-engineer"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1151
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 87.51,
+        "ink_baseline": 0.30518,
+        "ink_parity": 0.00684,
+        "palette_baseline": {
+          "teal": 0.05175,
+          "teal_light": 0.01129,
+          "ink": 0.09732
+        },
+        "palette_parity": {
+          "teal": 0.00023,
+          "teal_light": 0.0,
+          "ink": 0.00118
+        },
+        "palette_px_parity": {
+          "teal": 101,
+          "teal_light": 0,
+          "ink": 509
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "jobs",
+      "baseline": "jobs",
+      "spa_route": "/jobs",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V4-TASK-049",
+      "status": 200,
+      "final_url": "/jobs",
+      "file": "screens/jobs.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/jobs/board",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /jobs"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1637
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 80.0,
+        "ink_baseline": 0.21899,
+        "ink_parity": 0.00757,
+        "palette_baseline": {
+          "teal": 0.02977,
+          "teal_light": 0.00237,
+          "ink": 0.10423
+        },
+        "palette_parity": {
+          "teal": 0.00191,
+          "teal_light": 0.0,
+          "ink": 0.0004
+        },
+        "palette_px_parity": {
+          "teal": 826,
+          "teal_light": 0,
+          "ink": 173
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "company-dashboard",
+      "baseline": "company-dashboard",
+      "spa_route": "/company",
+      "viewport": "desktop",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company",
+      "file": "screens/company-dashboard.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/dashboard",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1755
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 82.56,
+        "ink_baseline": 0.26147,
+        "ink_parity": 0.00635,
+        "palette_baseline": {
+          "teal": 0.00075,
+          "teal_light": 0.00059,
+          "ink": 0.06969
+        },
+        "palette_parity": {
+          "teal": 0.00023,
+          "teal_light": 0.0,
+          "ink": 0.00103
+        },
+        "palette_px_parity": {
+          "teal": 98,
+          "teal_light": 0,
+          "ink": 447
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "company-candidates",
+      "baseline": "company-candidates",
+      "spa_route": "/company/applicants",
+      "viewport": "desktop",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company/applicants",
+      "file": "screens/company-candidates.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/applicants",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company/applicants"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1185
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 104.05,
+        "ink_baseline": 0.36426,
+        "ink_parity": 0.00464,
+        "palette_baseline": {
+          "teal": 2e-05,
+          "teal_light": 0.0,
+          "ink": 0.10383
+        },
+        "palette_parity": {
+          "teal": 0.00026,
+          "teal_light": 0.0,
+          "ink": 0.0005
+        },
+        "palette_px_parity": {
+          "teal": 114,
+          "teal_light": 0,
+          "ink": 214
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "company-team",
+      "baseline": "company-team",
+      "spa_route": "/company/recruiters",
+      "viewport": "desktop",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company/recruiters",
+      "file": "screens/company-team.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/recruiters",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company/recruiters"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1304
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 81.17,
+        "ink_baseline": 0.18921,
+        "ink_parity": 0.01099,
+        "palette_baseline": {
+          "teal": 0.00209,
+          "teal_light": 0.0,
+          "ink": 0.09526
+        },
+        "palette_parity": {
+          "teal": 0.00297,
+          "teal_light": 0.0,
+          "ink": 0.00051
+        },
+        "palette_px_parity": {
+          "teal": 1285,
+          "teal_light": 0,
+          "ink": 220
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "community",
+      "baseline": "community",
+      "spa_route": "/community",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V6-TASK-051",
+      "status": 200,
+      "final_url": "/community",
+      "file": "screens/community.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/communities",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /community"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1269
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 79.99,
+        "ink_baseline": 0.20459,
+        "ink_parity": 0.0105,
+        "palette_baseline": {
+          "teal": 0.04306,
+          "teal_light": 0.00328,
+          "ink": 0.08987
+        },
+        "palette_parity": {
+          "teal": 0.00339,
+          "teal_light": 0.0,
+          "ink": 0.00048
+        },
+        "palette_px_parity": {
+          "teal": 1465,
+          "teal_light": 0,
+          "ink": 208
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "community-feed",
+      "baseline": "community-feed",
+      "spa_route": "/community/{community}",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V6-TASK-051",
+      "status": 200,
+      "final_url": "/community/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+      "file": "screens/community-feed.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership",
+        "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts/enriched",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /community/27cbaf93-f0d7-48ab-8c4c-4a161941a817"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          1432
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 74.46,
+        "ink_baseline": 0.19946,
+        "ink_parity": 0.00684,
+        "palette_baseline": {
+          "teal": 0.03218,
+          "teal_light": 0.00276,
+          "ink": 0.07966
+        },
+        "palette_parity": {
+          "teal": 0.0016,
+          "teal_light": 0.0,
+          "ink": 0.00036
+        },
+        "palette_px_parity": {
+          "teal": 691,
+          "teal_light": 0,
+          "ink": 155
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "career-lab",
+      "baseline": "career-lab",
+      "spa_route": "/career-lab",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V7-TASK-052",
+      "status": 200,
+      "final_url": "/career-lab",
+      "file": "screens/career-lab.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/capstone/analytics/roles",
+        "GET /api/v1/capstone/learning-route/runs",
+        "GET /api/v1/capstone/resumes/0e475b0f-a365-41fb-baea-25553c1b86fe/skills",
+        "GET /api/v1/resumes",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /career-lab"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          3799
+        ],
+        "parity_size": [
+          1440,
+          1077
+        ],
+        "layout_rms": 46.71,
+        "ink_baseline": 0.08057,
+        "ink_parity": 0.01611,
+        "palette_baseline": {
+          "teal": 0.01293,
+          "teal_light": 0.00098,
+          "ink": 0.02987
+        },
+        "palette_parity": {
+          "teal": 0.00541,
+          "teal_light": 0.0,
+          "ink": 0.00126
+        },
+        "palette_px_parity": {
+          "teal": 2795,
+          "teal_light": 0,
+          "ink": 652
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "admin",
+      "baseline": "admin",
+      "spa_route": "/admin",
+      "viewport": "desktop",
+      "as": "admin",
+      "vertical": "V8-TASK-053",
+      "status": 200,
+      "final_url": "/admin",
+      "file": "screens/admin.desktop.png",
+      "requests": [
+        "GET /admin",
+        "GET /api/v1/admin/stats",
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          1440,
+          900
+        ],
+        "parity_size": [
+          1440,
+          900
+        ],
+        "layout_rms": 13.48,
+        "ink_baseline": 1.0,
+        "ink_parity": 1.0,
+        "palette_baseline": {
+          "teal": 1e-05,
+          "teal_light": 0.0,
+          "ink": 0.98124
+        },
+        "palette_parity": {
+          "teal": 0.00195,
+          "teal_light": 0.00016,
+          "ink": 0.97966
+        },
+        "palette_px_parity": {
+          "teal": 844,
+          "teal_light": 67,
+          "ink": 423214
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "jobs-applications",
+      "baseline": null,
+      "spa_route": "/jobs/applications",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V4-TASK-049",
+      "status": 200,
+      "final_url": "/jobs/applications",
+      "file": "screens/jobs-applications.desktop.png",
+      "requests": [
+        "GET /api/v1/applications/page",
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /jobs/applications"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": "listado de candidaturas; en el monolito viv\u00eda dentro de /jobs"
+    },
+    {
+      "name": "company-postings",
+      "baseline": null,
+      "spa_route": "/company/postings",
+      "viewport": "desktop",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company/postings",
+      "file": "screens/company-postings.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/job-postings",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company/postings"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": "gesti\u00f3n de ofertas; en el monolito viv\u00eda dentro de /company-dashboard"
+    },
+    {
+      "name": "messages",
+      "baseline": null,
+      "spa_route": "/messages",
+      "viewport": "desktop",
+      "as": "student",
+      "vertical": "V6-TASK-051",
+      "status": 200,
+      "final_url": "/messages",
+      "file": "screens/messages.desktop.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/conversations",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /messages"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": "mensajer\u00eda; nunca tuvo pantalla legacy (TASK-024 la dej\u00f3 solo como API)"
+    },
+    {
+      "name": "root",
+      "baseline": "root",
+      "spa_route": "/",
+      "viewport": "mobile",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/",
+      "file": "screens/root.mobile.png",
+      "requests": [
+        "GET /",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /images/goal.svg",
+        "GET /images/resources.svg",
+        "GET /images/roadmap.svg"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          8178
+        ],
+        "parity_size": [
+          390,
+          6745
+        ],
+        "layout_rms": 80.12,
+        "ink_baseline": 0.35278,
+        "ink_parity": 0.20776,
+        "palette_baseline": {
+          "teal": 0.02501,
+          "teal_light": 0.00737,
+          "ink": 0.15171
+        },
+        "palette_parity": {
+          "teal": 0.04347,
+          "teal_light": 0.00399,
+          "ink": 0.00462
+        },
+        "palette_px_parity": {
+          "teal": 27127,
+          "teal_light": 2491,
+          "ink": 2883
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "home",
+      "baseline": "home",
+      "spa_route": "/",
+      "viewport": "mobile",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/",
+      "file": "screens/home.mobile.png",
+      "requests": [
+        "GET /",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /images/goal.svg",
+        "GET /images/resources.svg",
+        "GET /images/roadmap.svg"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          8178
+        ],
+        "parity_size": [
+          390,
+          6745
+        ],
+        "layout_rms": 80.12,
+        "ink_baseline": 0.35278,
+        "ink_parity": 0.20776,
+        "palette_baseline": {
+          "teal": 0.02501,
+          "teal_light": 0.00737,
+          "ink": 0.15171
+        },
+        "palette_parity": {
+          "teal": 0.04347,
+          "teal_light": 0.00399,
+          "ink": 0.00462
+        },
+        "palette_px_parity": {
+          "teal": 27127,
+          "teal_light": 2491,
+          "ink": 2883
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "about",
+      "baseline": "about",
+      "spa_route": "/about",
+      "viewport": "mobile",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/about",
+      "file": "screens/about.mobile.png",
+      "requests": [
+        "GET /about",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          11755
+        ],
+        "parity_size": [
+          390,
+          8279
+        ],
+        "layout_rms": 58.63,
+        "ink_baseline": 0.25366,
+        "ink_parity": 0.23169,
+        "palette_baseline": {
+          "teal": 0.03431,
+          "teal_light": 0.00045,
+          "ink": 0.12497
+        },
+        "palette_parity": {
+          "teal": 0.03676,
+          "teal_light": 0.00624,
+          "ink": 0.06701
+        },
+        "palette_px_parity": {
+          "teal": 22937,
+          "teal_light": 3892,
+          "ink": 41812
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "login",
+      "baseline": "login",
+      "spa_route": "/login",
+      "viewport": "mobile",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/login",
+      "file": "screens/login.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /login"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          844
+        ],
+        "parity_size": [
+          390,
+          1513
+        ],
+        "layout_rms": 83.37,
+        "ink_baseline": 0.48584,
+        "ink_parity": 0.56348,
+        "palette_baseline": {
+          "teal": 0.24086,
+          "teal_light": 0.01569,
+          "ink": 0.00527
+        },
+        "palette_parity": {
+          "teal": 0.21657,
+          "teal_light": 0.00459,
+          "ink": 0.00135
+        },
+        "palette_px_parity": {
+          "teal": 127791,
+          "teal_light": 2711,
+          "ink": 798
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "register",
+      "baseline": "register",
+      "spa_route": "/register",
+      "viewport": "mobile",
+      "as": "anonymous",
+      "vertical": "V1-TASK-046",
+      "status": 200,
+      "final_url": "/register",
+      "file": "screens/register.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /images/Logo_Ready_to_Use.png",
+        "GET /register"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          844
+        ],
+        "parity_size": [
+          390,
+          1873
+        ],
+        "layout_rms": 88.86,
+        "ink_baseline": 0.33813,
+        "ink_parity": 0.47949,
+        "palette_baseline": {
+          "teal": 0.15056,
+          "teal_light": 0.01432,
+          "ink": 0.01191
+        },
+        "palette_parity": {
+          "teal": 0.17876,
+          "teal_light": 0.00371,
+          "ink": 0.00205
+        },
+        "palette_px_parity": {
+          "teal": 111544,
+          "teal_light": 2317,
+          "ink": 1279
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "admin-login",
+      "baseline": "admin-login",
+      "spa_route": "/admin/login",
+      "viewport": "mobile",
+      "as": "anonymous",
+      "vertical": "V8-TASK-053",
+      "status": 200,
+      "final_url": "/admin/login",
+      "file": "screens/admin-login.mobile.png",
+      "requests": [
+        "GET /admin/login",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          900
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 22.09,
+        "ink_baseline": 1.0,
+        "ink_parity": 1.0,
+        "palette_baseline": {
+          "teal": 0.0,
+          "teal_light": 0.0,
+          "ink": 0.952
+        },
+        "palette_parity": {
+          "teal": 0.0319,
+          "teal_light": 0.0,
+          "ink": 0.94344
+        },
+        "palette_px_parity": {
+          "teal": 10499,
+          "teal_light": 0,
+          "ink": 310542
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "questionnaire",
+      "baseline": "questionnaire",
+      "spa_route": "/questionnaire",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V2-TASK-047",
+      "status": 200,
+      "final_url": "/questionnaire",
+      "file": "screens/questionnaire.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/questionnaire",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /questionnaire"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          844
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 26.1,
+        "ink_baseline": 0.04199,
+        "ink_parity": 0.05225,
+        "palette_baseline": {
+          "teal": 0.0,
+          "teal_light": 0.0,
+          "ink": 0.00587
+        },
+        "palette_parity": {
+          "teal": 0.0029,
+          "teal_light": 0.0,
+          "ink": 0.01495
+        },
+        "palette_px_parity": {
+          "teal": 954,
+          "teal_light": 0,
+          "ink": 4921
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "user-profile",
+      "baseline": "user-profile",
+      "spa_route": "/profile",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V2-TASK-047",
+      "status": 200,
+      "final_url": "/profile",
+      "file": "screens/user-profile.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/friends",
+        "GET /api/v1/friends/requests/incoming",
+        "GET /api/v1/friends/requests/outgoing",
+        "GET /api/v1/questionnaire/profile",
+        "GET /api/v1/resume-course-audits/attempts",
+        "GET /api/v1/resumes",
+        "GET /api/v1/users/me",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /profile"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          3458
+        ],
+        "parity_size": [
+          390,
+          2352
+        ],
+        "layout_rms": 62.47,
+        "ink_baseline": 0.12207,
+        "ink_parity": 0.0144,
+        "palette_baseline": {
+          "teal": 0.01316,
+          "teal_light": 0.01402,
+          "ink": 0.07024
+        },
+        "palette_parity": {
+          "teal": 0.00446,
+          "teal_light": 0.0,
+          "ink": 0.0053
+        },
+        "palette_px_parity": {
+          "teal": 2786,
+          "teal_light": 0,
+          "ink": 3309
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "dashboard",
+      "baseline": "dashboard",
+      "spa_route": "/dashboard",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/dashboard",
+      "file": "screens/dashboard.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/dashboard/student",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /dashboard"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          2783
+        ],
+        "parity_size": [
+          390,
+          2044
+        ],
+        "layout_rms": 67.34,
+        "ink_baseline": 0.17212,
+        "ink_parity": 0.00757,
+        "palette_baseline": {
+          "teal": 0.02647,
+          "teal_light": 0.00393,
+          "ink": 0.07794
+        },
+        "palette_parity": {
+          "teal": 0.00405,
+          "teal_light": 1e-05,
+          "ink": 0.00765
+        },
+        "palette_px_parity": {
+          "teal": 2529,
+          "teal_light": 5,
+          "ink": 4772
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "resources",
+      "baseline": "resources",
+      "spa_route": "/resources",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/resources",
+      "file": "screens/resources.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/resources",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /resources"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          1316
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 99.54,
+        "ink_baseline": 0.31274,
+        "ink_parity": 0.02075,
+        "palette_baseline": {
+          "teal": 0.04981,
+          "teal_light": 0.00474,
+          "ink": 0.16124
+        },
+        "palette_parity": {
+          "teal": 0.00501,
+          "teal_light": 0.0,
+          "ink": 0.00434
+        },
+        "palette_px_parity": {
+          "teal": 1648,
+          "teal_light": 0,
+          "ink": 1429
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "resource-detail",
+      "baseline": "resource-detail",
+      "spa_route": "/resources/{resource}",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "file": "screens/resource-detail.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+        "GET /api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/progress",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          1371
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 95.11,
+        "ink_baseline": 0.25464,
+        "ink_parity": 0.0332,
+        "palette_baseline": {
+          "teal": 0.02618,
+          "teal_light": 0.00403,
+          "ink": 0.15202
+        },
+        "palette_parity": {
+          "teal": 0.0118,
+          "teal_light": 0.0,
+          "ink": 0.00491
+        },
+        "palette_px_parity": {
+          "teal": 3884,
+          "teal_light": 0,
+          "ink": 1617
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "roadmaps",
+      "baseline": "roadmaps",
+      "spa_route": "/roadmaps",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/roadmaps",
+      "file": "screens/roadmaps.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/me/roadmaps",
+        "GET /api/v1/roadmaps",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /roadmaps"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          1902
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 82.29,
+        "ink_baseline": 0.23071,
+        "ink_parity": 0.04492,
+        "palette_baseline": {
+          "teal": 0.03915,
+          "teal_light": 0.00289,
+          "ink": 0.11355
+        },
+        "palette_parity": {
+          "teal": 0.00296,
+          "teal_light": 0.0,
+          "ink": 0.01368
+        },
+        "palette_px_parity": {
+          "teal": 973,
+          "teal_light": 0,
+          "ink": 4503
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "roadmap-detail",
+      "baseline": "roadmap-detail",
+      "spa_route": "/roadmaps/{slug}",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V3-TASK-048",
+      "status": 200,
+      "final_url": "/roadmaps/baseline-backend-engineer",
+      "file": "screens/roadmap-detail.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/roadmaps/baseline-backend-engineer",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /roadmaps/baseline-backend-engineer"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          1475
+        ],
+        "parity_size": [
+          390,
+          1008
+        ],
+        "layout_rms": 98.69,
+        "ink_baseline": 0.36792,
+        "ink_parity": 0.01953,
+        "palette_baseline": {
+          "teal": 0.05063,
+          "teal_light": 0.0108,
+          "ink": 0.14185
+        },
+        "palette_parity": {
+          "teal": 0.00248,
+          "teal_light": 0.0,
+          "ink": 0.00978
+        },
+        "palette_px_parity": {
+          "teal": 973,
+          "teal_light": 0,
+          "ink": 3846
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "jobs",
+      "baseline": "jobs",
+      "spa_route": "/jobs",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V4-TASK-049",
+      "status": 200,
+      "final_url": "/jobs",
+      "file": "screens/jobs.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/jobs/board",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /jobs"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          2422
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 102.62,
+        "ink_baseline": 0.33154,
+        "ink_parity": 0.03149,
+        "palette_baseline": {
+          "teal": 0.03647,
+          "teal_light": 0.00218,
+          "ink": 0.20828
+        },
+        "palette_parity": {
+          "teal": 0.01021,
+          "teal_light": 0.0,
+          "ink": 0.00617
+        },
+        "palette_px_parity": {
+          "teal": 3362,
+          "teal_light": 0,
+          "ink": 2031
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "company-dashboard",
+      "baseline": "company-dashboard",
+      "spa_route": "/company",
+      "viewport": "mobile",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company",
+      "file": "screens/company-dashboard.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/dashboard",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          2500
+        ],
+        "parity_size": [
+          390,
+          992
+        ],
+        "layout_rms": 80.75,
+        "ink_baseline": 0.21216,
+        "ink_parity": 0.01733,
+        "palette_baseline": {
+          "teal": 0.00467,
+          "teal_light": 0.00101,
+          "ink": 0.08789
+        },
+        "palette_parity": {
+          "teal": 0.0026,
+          "teal_light": 0.0,
+          "ink": 0.00835
+        },
+        "palette_px_parity": {
+          "teal": 1004,
+          "teal_light": 0,
+          "ink": 3232
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "company-candidates",
+      "baseline": "company-candidates",
+      "spa_route": "/company/applicants",
+      "viewport": "mobile",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company/applicants",
+      "file": "screens/company-candidates.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/applicants",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company/applicants"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          1511
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 106.29,
+        "ink_baseline": 0.35303,
+        "ink_parity": 0.02124,
+        "palette_baseline": {
+          "teal": 0.00027,
+          "teal_light": 0.0,
+          "ink": 0.14544
+        },
+        "palette_parity": {
+          "teal": 0.00428,
+          "teal_light": 0.0,
+          "ink": 0.00636
+        },
+        "palette_px_parity": {
+          "teal": 1409,
+          "teal_light": 0,
+          "ink": 2092
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "company-team",
+      "baseline": "company-team",
+      "spa_route": "/company/recruiters",
+      "viewport": "mobile",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company/recruiters",
+      "file": "screens/company-team.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/recruiters",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company/recruiters"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          2208
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 81.17,
+        "ink_baseline": 0.17163,
+        "ink_parity": 0.04858,
+        "palette_baseline": {
+          "teal": 0.01151,
+          "teal_light": 0.0,
+          "ink": 0.10088
+        },
+        "palette_parity": {
+          "teal": 0.0149,
+          "teal_light": 0.0,
+          "ink": 0.00469
+        },
+        "palette_px_parity": {
+          "teal": 4904,
+          "teal_light": 0,
+          "ink": 1543
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "community",
+      "baseline": "community",
+      "spa_route": "/community",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V6-TASK-051",
+      "status": 200,
+      "final_url": "/community",
+      "file": "screens/community.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/communities",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /community"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          1395
+        ],
+        "parity_size": [
+          390,
+          844
+        ],
+        "layout_rms": 99.17,
+        "ink_baseline": 0.29614,
+        "ink_parity": 0.04175,
+        "palette_baseline": {
+          "teal": 0.05987,
+          "teal_light": 0.00456,
+          "ink": 0.14927
+        },
+        "palette_parity": {
+          "teal": 0.01654,
+          "teal_light": 0.0,
+          "ink": 0.0055
+        },
+        "palette_px_parity": {
+          "teal": 5443,
+          "teal_light": 0,
+          "ink": 1809
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "community-feed",
+      "baseline": "community-feed",
+      "spa_route": "/community/{community}",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V6-TASK-051",
+      "status": 200,
+      "final_url": "/community/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+      "file": "screens/community-feed.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+        "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership",
+        "GET /api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts/enriched",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /community/27cbaf93-f0d7-48ab-8c4c-4a161941a817"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          2103
+        ],
+        "parity_size": [
+          390,
+          846
+        ],
+        "layout_rms": 78.07,
+        "ink_baseline": 0.19556,
+        "ink_parity": 0.02832,
+        "palette_baseline": {
+          "teal": 0.02441,
+          "teal_light": 0.00253,
+          "ink": 0.10125
+        },
+        "palette_parity": {
+          "teal": 0.0088,
+          "teal_light": 0.0,
+          "ink": 0.00581
+        },
+        "palette_px_parity": {
+          "teal": 2905,
+          "teal_light": 0,
+          "ink": 1916
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "career-lab",
+      "baseline": "career-lab",
+      "spa_route": "/career-lab",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V7-TASK-052",
+      "status": 200,
+      "final_url": "/career-lab",
+      "file": "screens/career-lab.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/capstone/analytics/roles",
+        "GET /api/v1/capstone/learning-route/runs",
+        "GET /api/v1/capstone/resumes/0e475b0f-a365-41fb-baea-25553c1b86fe/skills",
+        "GET /api/v1/resumes",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /career-lab"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          6865
+        ],
+        "parity_size": [
+          390,
+          1618
+        ],
+        "layout_rms": 45.17,
+        "ink_baseline": 0.06665,
+        "ink_parity": 0.03711,
+        "palette_baseline": {
+          "teal": 0.00953,
+          "teal_light": 0.00084,
+          "ink": 0.03071
+        },
+        "palette_parity": {
+          "teal": 0.01449,
+          "teal_light": 0.0,
+          "ink": 0.00841
+        },
+        "palette_px_parity": {
+          "teal": 9039,
+          "teal_light": 0,
+          "ink": 5247
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "admin",
+      "baseline": "admin",
+      "spa_route": "/admin",
+      "viewport": "mobile",
+      "as": "admin",
+      "vertical": "V8-TASK-053",
+      "status": 200,
+      "final_url": "/admin",
+      "file": "screens/admin.mobile.png",
+      "requests": [
+        "GET /admin",
+        "GET /api/v1/admin/stats",
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": null,
+      "comparison": {
+        "baseline_size": [
+          390,
+          844
+        ],
+        "parity_size": [
+          390,
+          852
+        ],
+        "layout_rms": 21.71,
+        "ink_baseline": 0.99976,
+        "ink_parity": 0.99951,
+        "palette_baseline": {
+          "teal": 3e-05,
+          "teal_light": 0.0,
+          "ink": 0.98364
+        },
+        "palette_parity": {
+          "teal": 0.00289,
+          "teal_light": 0.00143,
+          "ink": 0.94461
+        },
+        "palette_px_parity": {
+          "teal": 960,
+          "teal_light": 475,
+          "ink": 313874
+        },
+        "brand_preserved": true
+      }
+    },
+    {
+      "name": "jobs-applications",
+      "baseline": null,
+      "spa_route": "/jobs/applications",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V4-TASK-049",
+      "status": 200,
+      "final_url": "/jobs/applications",
+      "file": "screens/jobs-applications.mobile.png",
+      "requests": [
+        "GET /api/v1/applications/page",
+        "GET /api/v1/auth/session",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /jobs/applications"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": "listado de candidaturas; en el monolito viv\u00eda dentro de /jobs"
+    },
+    {
+      "name": "company-postings",
+      "baseline": null,
+      "spa_route": "/company/postings",
+      "viewport": "mobile",
+      "as": "recruiter",
+      "vertical": "V5-TASK-050",
+      "status": 200,
+      "final_url": "/company/postings",
+      "file": "screens/company-postings.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/companies/me/job-postings",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /company/postings"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": "gesti\u00f3n de ofertas; en el monolito viv\u00eda dentro de /company-dashboard"
+    },
+    {
+      "name": "messages",
+      "baseline": null,
+      "spa_route": "/messages",
+      "viewport": "mobile",
+      "as": "student",
+      "vertical": "V6-TASK-051",
+      "status": 200,
+      "final_url": "/messages",
+      "file": "screens/messages.mobile.png",
+      "requests": [
+        "GET /api/v1/auth/session",
+        "GET /api/v1/conversations",
+        "GET /assets/index-vJCjfsOR.js",
+        "GET /assets/index-vLAm1Xdm.css",
+        "GET /messages"
+      ],
+      "legacy_requests": [],
+      "page_errors": [],
+      "blocked_external_requests": [],
+      "note": "mensajer\u00eda; nunca tuvo pantalla legacy (TASK-024 la dej\u00f3 solo como API)"
+    }
+  ],
+  "api_permissions": [
+    {
+      "path": "/api/v1/admin/applications",
+      "url": "/api/v1/admin/applications",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/communities",
+      "url": "/api/v1/admin/communities",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/companies",
+      "url": "/api/v1/admin/companies",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/jobs",
+      "url": "/api/v1/admin/jobs",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/resources",
+      "url": "/api/v1/admin/resources",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/resources/{resource_id}",
+      "url": "/api/v1/admin/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/stats",
+      "url": "/api/v1/admin/stats",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/users",
+      "url": "/api/v1/admin/users",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/admin/users/{user_id}/resource-progress",
+      "url": "/api/v1/admin/users/09e52b5d-3781-44a2-9b87-feae1a341adf/resource-progress",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/applications",
+      "url": "/api/v1/applications",
+      "actor_spec": "student",
+      "vertical": "V4-TASK-049",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/applications/eligible-resumes",
+      "url": "/api/v1/applications/eligible-resumes",
+      "actor_spec": "student",
+      "vertical": "V4-TASK-049",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/capstone/analytics/roles",
+      "url": "/api/v1/capstone/analytics/roles",
+      "actor_spec": "student",
+      "vertical": "V7-TASK-052",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/capstone/analytics/status",
+      "url": "/api/v1/capstone/analytics/status",
+      "actor_spec": "student",
+      "vertical": "V7-TASK-052",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/capstone/catalog/quality",
+      "url": "/api/v1/capstone/catalog/quality",
+      "actor_spec": "student",
+      "vertical": "V7-TASK-052",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/capstone/gap-analysis",
+      "url": "/api/v1/capstone/gap-analysis",
+      "actor_spec": "student",
+      "vertical": "V7-TASK-052",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 422,
+        "admin": 422,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/capstone/learning-route/runs",
+      "url": "/api/v1/capstone/learning-route/runs",
+      "actor_spec": "student",
+      "vertical": "V7-TASK-052",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/capstone/resumes/{resume_id}/skills",
+      "url": "/api/v1/capstone/resumes/0e475b0f-a365-41fb-baea-25553c1b86fe/skills",
+      "actor_spec": "student",
+      "vertical": "V7-TASK-052",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 404,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/communities",
+      "url": "/api/v1/communities",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/communities/tags",
+      "url": "/api/v1/communities/tags",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/communities/{community_id}",
+      "url": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/communities/{community_id}/membership",
+      "url": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/membership",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/communities/{community_id}/posts",
+      "url": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 403,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [
+        "admin: 403 (autorizaci\u00f3n de recurso, no de rol)"
+      ],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/communities/{community_id}/posts/enriched",
+      "url": "/api/v1/communities/27cbaf93-f0d7-48ab-8c4c-4a161941a817/posts/enriched",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 403,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [
+        "admin: 403 (autorizaci\u00f3n de recurso, no de rol)"
+      ],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/community-posts/{post_id}/comments",
+      "url": "/api/v1/community-posts/8680f5c7-2664-44ea-9727-09a2c8b7ce70/comments",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 403,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [
+        "admin: 403 (autorizaci\u00f3n de recurso, no de rol)"
+      ],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/community-posts/{post_id}/comments/enriched",
+      "url": "/api/v1/community-posts/8680f5c7-2664-44ea-9727-09a2c8b7ce70/comments/enriched",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 403,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [
+        "admin: 403 (autorizaci\u00f3n de recurso, no de rol)"
+      ],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me",
+      "url": "/api/v1/companies/me",
+      "actor_spec": "recruiter",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 200
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me/applicants",
+      "url": "/api/v1/companies/me/applicants",
+      "actor_spec": "recruiter",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 200
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me/applications/{application_id}/resume/download",
+      "url": "/api/v1/companies/me/applications/35be4548-a1c7-4647-8e06-b0577d893e87/resume/download",
+      "actor_spec": "recruiter",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 500
+      },
+      "violations": [],
+      "resource_scoped": [
+        "recruiter: 500 por almacenamiento de objetos no configurado en este arn\u00e9s, no por el c\u00f3digo"
+      ],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me/applications/{application_id}/resume/preview",
+      "url": "/api/v1/companies/me/applications/35be4548-a1c7-4647-8e06-b0577d893e87/resume/preview",
+      "actor_spec": "recruiter",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 500
+      },
+      "violations": [],
+      "resource_scoped": [
+        "recruiter: 500 por almacenamiento de objetos no configurado en este arn\u00e9s, no por el c\u00f3digo"
+      ],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me/job-postings",
+      "url": "/api/v1/companies/me/job-postings",
+      "actor_spec": "recruiter:job_manager",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 200
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me/recruiters",
+      "url": "/api/v1/companies/me/recruiters",
+      "actor_spec": "recruiter:owner",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 200
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/companies/me/recruiters/current",
+      "url": "/api/v1/companies/me/recruiters/current",
+      "actor_spec": "recruiter",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 200
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/company_dashboard",
+      "url": "/api/v1/company_dashboard",
+      "actor_spec": "recruiter",
+      "vertical": "V5-TASK-050",
+      "entitled": [
+        "recruiter"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 401,
+        "admin": 401,
+        "recruiter": 200
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/conversations",
+      "url": "/api/v1/conversations",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/conversations/{conversation_id}/messages",
+      "url": "/api/v1/conversations/0188343d-149d-4b53-be1c-9e208c59f1fe/messages",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 404,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/dashboard/stats",
+      "url": "/api/v1/dashboard/stats",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/friends",
+      "url": "/api/v1/friends",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/friends/requests/incoming",
+      "url": "/api/v1/friends/requests/incoming",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/friends/requests/outgoing",
+      "url": "/api/v1/friends/requests/outgoing",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/friends/status",
+      "url": "/api/v1/friends/status",
+      "actor_spec": "student",
+      "vertical": "V6-TASK-051",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/jobs/board",
+      "url": "/api/v1/jobs/board",
+      "actor_spec": "student",
+      "vertical": "V4-TASK-049",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/jobs/keywords",
+      "url": "/api/v1/jobs/keywords",
+      "actor_spec": "student",
+      "vertical": "V4-TASK-049",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/jobs/keywords/{job_id}",
+      "url": "/api/v1/jobs/keywords/6ca1dbf8-aec6-4f69-bf3d-5bf57f95c919",
+      "actor_spec": "student",
+      "vertical": "V4-TASK-049",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 404,
+        "admin": 404,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/me/roadmaps",
+      "url": "/api/v1/me/roadmaps",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/profile",
+      "url": "/api/v1/profile",
+      "actor_spec": "student",
+      "vertical": "V2-TASK-047",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/profile/cv",
+      "url": "/api/v1/profile/cv",
+      "actor_spec": "student",
+      "vertical": "V2-TASK-047",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/profile/cv/course-audit-attempts",
+      "url": "/api/v1/profile/cv/course-audit-attempts",
+      "actor_spec": "student",
+      "vertical": "V2-TASK-047",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/profile/cv/{resume_id}/similar",
+      "url": "/api/v1/profile/cv/0e475b0f-a365-41fb-baea-25553c1b86fe/similar",
+      "actor_spec": "student",
+      "vertical": "V2-TASK-047",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 404,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/questionnaire",
+      "url": "/api/v1/questionnaire",
+      "actor_spec": "student",
+      "vertical": "V2-TASK-047",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/questionnaire/profile",
+      "url": "/api/v1/questionnaire/profile",
+      "actor_spec": "student",
+      "vertical": "V2-TASK-047",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 500,
+        "admin": 404,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": [
+        "student: 500"
+      ]
+    },
+    {
+      "path": "/api/v1/resources",
+      "url": "/api/v1/resources",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/resources/file",
+      "url": "/api/v1/resources/file",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 422,
+        "admin": 422,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/resources/{resource_id}",
+      "url": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/resources/{resource_id}/outline",
+      "url": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/outline",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/resources/{resource_id}/progress",
+      "url": "/api/v1/resources/3dd926b0-77c3-41cc-a7f6-f1a03b1bb20d/progress",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/roadmaps",
+      "url": "/api/v1/roadmaps",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/roadmaps/{slug}",
+      "url": "/api/v1/roadmaps/baseline-backend-engineer",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/students_dashboard",
+      "url": "/api/v1/students_dashboard",
+      "actor_spec": "student",
+      "vertical": "V3-TASK-048",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/users/me",
+      "url": "/api/v1/users/me",
+      "actor_spec": "student",
+      "vertical": "V1-TASK-046",
+      "entitled": [
+        "admin",
+        "student"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 200,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    },
+    {
+      "path": "/api/v1/users/{id}",
+      "url": "/api/v1/users/09e52b5d-3781-44a2-9b87-feae1a341adf",
+      "actor_spec": "admin",
+      "vertical": "V8-TASK-053",
+      "entitled": [
+        "admin"
+      ],
+      "observed": {
+        "anonymous": 401,
+        "student": 403,
+        "admin": 200,
+        "recruiter": 401
+      },
+      "violations": [],
+      "resource_scoped": [],
+      "server_errors": []
+    }
+  ],
+  "ui_guards": [
+    {
+      "route": "/dashboard",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/dashboard",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "student",
+      "landed": "/dashboard",
+      "stayed": true
+    },
+    {
+      "route": "/dashboard",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/dashboard",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "admin",
+      "landed": "/dashboard",
+      "stayed": true
+    },
+    {
+      "route": "/profile",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/profile",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "student",
+      "landed": "/profile",
+      "stayed": true
+    },
+    {
+      "route": "/profile",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/profile",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "admin",
+      "landed": "/profile",
+      "stayed": true
+    },
+    {
+      "route": "/questionnaire",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/questionnaire",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "student",
+      "landed": "/questionnaire",
+      "stayed": true
+    },
+    {
+      "route": "/questionnaire",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/questionnaire",
+      "owner": "student",
+      "vertical": "V2-TASK-047",
+      "caller": "admin",
+      "landed": "/questionnaire",
+      "stayed": true
+    },
+    {
+      "route": "/resources",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/resources",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "student",
+      "landed": "/resources",
+      "stayed": true
+    },
+    {
+      "route": "/resources",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/resources",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "admin",
+      "landed": "/resources",
+      "stayed": true
+    },
+    {
+      "route": "/roadmaps",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/roadmaps",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "student",
+      "landed": "/roadmaps",
+      "stayed": true
+    },
+    {
+      "route": "/roadmaps",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/roadmaps",
+      "owner": "student",
+      "vertical": "V3-TASK-048",
+      "caller": "admin",
+      "landed": "/roadmaps",
+      "stayed": true
+    },
+    {
+      "route": "/jobs",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/jobs",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "student",
+      "landed": "/jobs",
+      "stayed": true
+    },
+    {
+      "route": "/jobs",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/jobs",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "admin",
+      "landed": "/jobs",
+      "stayed": true
+    },
+    {
+      "route": "/jobs/applications",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/jobs/applications",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "student",
+      "landed": "/jobs/applications",
+      "stayed": true
+    },
+    {
+      "route": "/jobs/applications",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/jobs/applications",
+      "owner": "student",
+      "vertical": "V4-TASK-049",
+      "caller": "admin",
+      "landed": "/jobs/applications",
+      "stayed": true
+    },
+    {
+      "route": "/career-lab",
+      "owner": "student",
+      "vertical": "V7-TASK-052",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/career-lab",
+      "owner": "student",
+      "vertical": "V7-TASK-052",
+      "caller": "student",
+      "landed": "/career-lab",
+      "stayed": true
+    },
+    {
+      "route": "/career-lab",
+      "owner": "student",
+      "vertical": "V7-TASK-052",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/career-lab",
+      "owner": "student",
+      "vertical": "V7-TASK-052",
+      "caller": "admin",
+      "landed": "/career-lab",
+      "stayed": true
+    },
+    {
+      "route": "/community",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/community",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "student",
+      "landed": "/community",
+      "stayed": true
+    },
+    {
+      "route": "/community",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/community",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "admin",
+      "landed": "/community",
+      "stayed": true
+    },
+    {
+      "route": "/messages",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/messages",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "student",
+      "landed": "/messages",
+      "stayed": true
+    },
+    {
+      "route": "/messages",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": false
+    },
+    {
+      "route": "/messages",
+      "owner": "student",
+      "vertical": "V6-TASK-051",
+      "caller": "admin",
+      "landed": "/messages",
+      "stayed": true
+    },
+    {
+      "route": "/company",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/company",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "student",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "recruiter",
+      "landed": "/company",
+      "stayed": true
+    },
+    {
+      "route": "/company",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "admin",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company/postings",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/company/postings",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "student",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company/postings",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "recruiter",
+      "landed": "/company/postings",
+      "stayed": true
+    },
+    {
+      "route": "/company/postings",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "admin",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company/applicants",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/company/applicants",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "student",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company/applicants",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "recruiter",
+      "landed": "/company/applicants",
+      "stayed": true
+    },
+    {
+      "route": "/company/applicants",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "admin",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company/recruiters",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "anonymous",
+      "landed": "/login",
+      "stayed": false
+    },
+    {
+      "route": "/company/recruiters",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "student",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/company/recruiters",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "recruiter",
+      "landed": "/company/recruiters",
+      "stayed": true
+    },
+    {
+      "route": "/company/recruiters",
+      "owner": "recruiter",
+      "vertical": "V5-TASK-050",
+      "caller": "admin",
+      "landed": "/dashboard",
+      "stayed": false
+    },
+    {
+      "route": "/admin",
+      "owner": "admin",
+      "vertical": "V8-TASK-053",
+      "caller": "anonymous",
+      "landed": "/admin/login",
+      "stayed": false
+    },
+    {
+      "route": "/admin",
+      "owner": "admin",
+      "vertical": "V8-TASK-053",
+      "caller": "student",
+      "landed": "/admin/login",
+      "stayed": false
+    },
+    {
+      "route": "/admin",
+      "owner": "admin",
+      "vertical": "V8-TASK-053",
+      "caller": "recruiter",
+      "landed": "/admin/login",
+      "stayed": false
+    },
+    {
+      "route": "/admin",
+      "owner": "admin",
+      "vertical": "V8-TASK-053",
+      "caller": "admin",
+      "landed": "/admin",
+      "stayed": true
+    }
+  ],
+  "screens_without_spa": [
+    {
+      "baseline": "register-api-alias",
+      "vertical": "V1-TASK-046",
+      "reason": "alias de API, no pantalla; el SPA registra contra POST /api/v1/auth/register"
+    }
+  ]
+}

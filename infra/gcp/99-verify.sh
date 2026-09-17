@@ -72,8 +72,21 @@ done
 for name in "${SECRET_NAMES[@]}"; do
   count="$(gcloud secrets versions list "$name" --project "$PROJECT_ID" --format='value(name)' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$count" = "0" ]; then
-    echo "FAIL  secret $name has no version — a revision wired to it will not start"
-    FAILURES=$((FAILURES + 1))
+    # Optional secrets are the ones no revision references yet (see
+    # _secrets.sh). The failure this check exists to catch is a *wired* secret
+    # with no value, which takes the revision down at start; an unwired one
+    # takes nothing down. Reporting it as FAIL trains everyone to read a red
+    # verifier as normal, which is how a real failure gets missed.
+    optional=0
+    for _opt in "${OPTIONAL_SECRETS[@]:-}"; do
+      [ "$_opt" = "$name" ] && optional=1
+    done
+    if [ "$optional" = "1" ]; then
+      echo "WARN  secret $name has no version — not wired by any revision, pending on purpose"
+    else
+      echo "FAIL  secret $name has no version — a revision wired to it will not start"
+      FAILURES=$((FAILURES + 1))
+    fi
   else
     echo "PASS  secret $name has $count version(s)"
   fi

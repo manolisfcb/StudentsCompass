@@ -5922,6 +5922,11 @@ export interface components {
             id: string;
             /** Is Active */
             is_active: boolean;
+            /**
+             * Is Superuser
+             * @default false
+             */
+            is_superuser: boolean;
             /** Is Verified */
             is_verified: boolean;
             /** Role */
