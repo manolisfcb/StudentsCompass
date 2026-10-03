@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,10 +12,19 @@ from app.core.observability import external_call
 from app.core.offload import BoundedOffload, OffloadRejected
 from app.services.analytics.courseCatalogQueries import load_active_course_links
 
-try:
-    from ortools.sat.python import cp_model
-except ModuleNotFoundError:  # pragma: no cover - depends on optional runtime dependency.
-    cp_model = None
+@lru_cache(maxsize=1)
+def _load_cp_model():
+    """OR-Tools' CP-SAT module, imported on first use; ``None`` if not installed.
+
+    Not imported at module level: OR-Tools drags pandas in with it, and the two
+    were the heaviest import on the cold-start path of every instance, paid
+    before uvicorn could answer even requests that never solve a route.
+    """
+    try:
+        from ortools.sat.python import cp_model
+    except ModuleNotFoundError:  # pragma: no cover - depends on optional runtime dependency.
+        return None
+    return cp_model
 
 
 LOGGER = logging.getLogger(__name__)
@@ -407,7 +417,7 @@ class ORToolsLearningRouteOptimizer:
 
     @staticmethod
     def is_available() -> bool:
-        return cp_model is not None
+        return _load_cp_model() is not None
 
     async def optimize(
         self,
@@ -416,7 +426,7 @@ class ORToolsLearningRouteOptimizer:
         match_score_before: float,
         constraints: LearningRouteConstraints,
     ) -> dict:
-        if cp_model is None:
+        if not self.is_available():
             raise ORToolsUnavailableError("OR-Tools is not installed; CP-SAT optimization is unavailable.")
 
         missing_by_id = {skill["skill_id"]: skill for skill in missing_skills}
@@ -571,6 +581,7 @@ class ORToolsLearningRouteOptimizer:
         constraints: LearningRouteConstraints,
     ) -> dict:
         """Pure: data in, solution dict out. Runs in a worker thread."""
+        cp_model = _load_cp_model()
         model = cp_model.CpModel()
         course_vars = [
             model.NewBoolVar(f"x_course_{index}")
@@ -958,6 +969,7 @@ class ORToolsLearningRouteOptimizer:
 
     @staticmethod
     def _solver_status_name(solver, status: int) -> str:
+        cp_model = _load_cp_model()
         if status == cp_model.OPTIMAL:
             return "OPTIMAL"
         if status == cp_model.FEASIBLE:

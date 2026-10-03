@@ -22,6 +22,11 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
 
+# The runtime user cannot write __pycache__ under /app (and
+# PYTHONDONTWRITEBYTECODE forbids it anyway), so without this every cold start
+# recompiles the whole app from source before uvicorn can answer.
+RUN python -m compileall -q app
+
 RUN addgroup --system app \
     && adduser --system --ingroup app --home /app app
 

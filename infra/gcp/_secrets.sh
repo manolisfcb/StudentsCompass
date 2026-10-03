@@ -57,8 +57,8 @@ declare -a SECRETS=(
 #   APIFY_API_TOKEN         read by nothing (docs/dependencies.md:77)
 #   IMAGEKIT_PUBLIC_KEY     read by nothing
 #   IMAGEKIT_URL_ENDPOINT   read by nothing, and a public URL besides
-#   HF_TOKEN                only used when EMBEDDINGS_PROVIDER=local; the
-#   HUGGINGFACE_HUB_TOKEN   default is "hash" and production does not override it
+#   HF_TOKEN                read by nothing: the local sentence-transformer
+#   HUGGINGFACE_HUB_TOKEN   provider they served was removed with torch
 #   INTERNAL_TASKS_SHARED_SECRET
 #                           the dev alternative to OIDC. A production deployment
 #                           that sets only this is *refused* by the internal

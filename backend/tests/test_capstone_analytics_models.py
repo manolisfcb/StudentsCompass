@@ -103,6 +103,7 @@ async def test_capstone_analytics_status_reports_catalog_readiness(client, db_se
     assert ready_payload["embedding_model_name"]
     assert ready_payload["semantic_matching_ready"] is False
     assert ready_payload["local_embedding_provider_configured"] is False
+    assert ready_payload["local_embedding_package_available"] is False
     assert ready_payload["embedding_fallback_provider"] == "hash"
     assert ready_payload["embedding_model_cache_strategy"]
     assert ready_payload["embedding_production_recommendation"]
@@ -457,9 +458,7 @@ async def test_capstone_gap_analysis_returns_missing_skills_and_recommended_cour
 
 
 @pytest.mark.asyncio
-async def test_semantic_matching_separates_exact_and_semantic_matches(monkeypatch):
-    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
-
+async def test_semantic_matching_separates_exact_and_semantic_matches():
     vectors = {
         "python python programming": [1.0, 0.0],
         "data visualization data_visualization analytics": [0.0, 1.0],
@@ -548,9 +547,7 @@ def test_skill_gap_scoring_prioritizes_required_weight_minus_student_evidence():
 
 
 @pytest.mark.asyncio
-async def test_semantic_context_similarity_uses_full_resume_and_role_text(monkeypatch):
-    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
-
+async def test_semantic_context_similarity_uses_full_resume_and_role_text():
     async def fake_embedding(text: str):
         if "dashboards" in text.lower():
             return [1.0, 0.0]
@@ -570,20 +567,14 @@ async def test_semantic_context_similarity_uses_full_resume_and_role_text(monkey
 
 
 @pytest.mark.asyncio
-async def test_capstone_gap_analysis_falls_back_when_local_embedding_model_fails(
+async def test_capstone_gap_analysis_falls_back_when_provider_is_the_retired_local_one(
     db_session,
     test_user,
     monkeypatch,
 ):
+    # An environment still configured for the removed sentence-transformer must
+    # keep working on hash vectors, not fail the analysis.
     monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
-
-    def fail_local_embedding(text: str):
-        raise RuntimeError("model unavailable")
-
-    monkeypatch.setattr(
-        "app.services.analytics.embeddingService._generate_local_embedding",
-        fail_local_embedding,
-    )
     await seed_capstone_analytics_minimum(db_session)
     resume = ResumeModel(
         view_url="https://storage.example/resume.pdf",

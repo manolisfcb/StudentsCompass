@@ -3,15 +3,14 @@
 ``upsert_resume_embedding_from_text`` used to generate the embedding, then look
 for an existing row, then commit — in that order, every call. So opening the
 gap analysis twice on an unchanged CV paid twice for the same vector and wrote
-it twice. With the hash provider that is CPU on a warm path; with the local
-sentence-transformer it is a forward pass and its resident memory, on a request
-someone is waiting for.
+it twice. With the hash provider that is CPU on a warm path; with a model
+provider it is a paid call, on a request someone is waiting for.
 
 The stored fingerprint of (text, model, scheme version) is what lets the second
 call answer from the row it already has. These tests pin that the skip is real
 (no generation, no write), that it is not too eager (changed text, changed
-model, or a NULL fingerprint all regenerate), and that hash and local vectors
-never end up sharing a space.
+model, or a NULL fingerprint all regenerate), and that hash vectors and those
+of a real model never end up sharing a space.
 """
 from __future__ import annotations
 
@@ -34,6 +33,8 @@ from app.services.analytics.embeddingService import (
 from tests.harness import count_queries
 
 SUMMARY = "Candidate has SQL, Python and Tableau experience across three internships."
+# Any name that is not the hash one: stands in for a real model's vector space.
+SEMANTIC_MODEL_NAME = "semantic-model-v1"
 
 
 @pytest.fixture(autouse=True)
@@ -231,23 +232,23 @@ async def test_a_row_whose_vector_is_missing_is_regenerated(
 
 
 @pytest.mark.asyncio
-async def test_hash_and_local_vectors_never_share_a_row(db_session, test_user, monkeypatch):
+async def test_hash_and_model_vectors_never_share_a_row(db_session, test_user, monkeypatch):
     """The fallback must not overwrite a semantic vector with a hash one."""
     resume = await _resume(db_session, test_user.id)
     service = ResumeEmbeddingService(db_session)
 
     await service.upsert_resume_embedding_from_text(resume_id=resume.id, text=SUMMARY)
 
-    # A "local" provider that works, stored under the sentence-transformer name.
-    async def local_result(text):
-        return embeddingService.generate_hash_embedding(text), embeddingService.MODEL_NAME
+    # A model provider that works, stored under its own name.
+    async def model_result(text):
+        return embeddingService.generate_hash_embedding(text), SEMANTIC_MODEL_NAME
 
-    monkeypatch.setattr(embeddingService, "generate_embedding_with_model", local_result)
-    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
+    monkeypatch.setattr(embeddingService, "generate_embedding_with_model", model_result)
+    monkeypatch.setattr(embeddingService, "get_effective_model_name", lambda: SEMANTIC_MODEL_NAME)
     await service.upsert_resume_embedding_from_text(resume_id=resume.id, text=SUMMARY)
 
     rows = await _rows(db_session, resume.id)
-    assert {row.model_name for row in rows} == {HASH_MODEL_NAME, embeddingService.MODEL_NAME}
+    assert {row.model_name for row in rows} == {HASH_MODEL_NAME, SEMANTIC_MODEL_NAME}
     for row in rows:
         assert row.text_fingerprint == compute_text_fingerprint(
             SUMMARY, model_name=row.model_name
@@ -255,17 +256,13 @@ async def test_hash_and_local_vectors_never_share_a_row(db_session, test_user, m
 
 
 @pytest.mark.asyncio
-async def test_a_local_provider_that_falls_back_stores_under_the_hash_key(
+async def test_a_provider_that_falls_back_stores_under_the_hash_key(
     db_session, test_user, monkeypatch
 ):
     """The vector is fingerprinted under the model that actually produced it."""
     resume = await _resume(db_session, test_user.id)
-    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
-    monkeypatch.setattr(
-        embeddingService,
-        "_generate_local_embedding",
-        lambda _text: (_ for _ in ()).throw(RuntimeError("no model on this box")),
-    )
+    # Expected a model vector; the provider answers with a hash one.
+    monkeypatch.setattr(embeddingService, "get_effective_model_name", lambda: SEMANTIC_MODEL_NAME)
 
     stored = await ResumeEmbeddingService(db_session).upsert_resume_embedding_from_text(
         resume_id=resume.id, text=SUMMARY

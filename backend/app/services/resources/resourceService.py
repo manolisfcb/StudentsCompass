@@ -507,6 +507,7 @@ class ResourceService:
             "level": resource.level,
             "estimated_duration_minutes": resource.estimated_duration_minutes,
             "external_url": resource.external_url,
+            "is_published": resource.is_published,
             "is_locked": resource.is_locked,
             "created_at": resource.created_at.isoformat(),
             "modules": modules,

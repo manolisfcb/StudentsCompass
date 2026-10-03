@@ -56,7 +56,7 @@ ese `continue-on-error` es **TASK-067**.
 | `boto3` | `app/services/storage/s3Service.py` | |
 | `imagekitio` | `app/services/storage/mediaStorageService.py` | |
 | `ortools` | `app/services/analytics/learningRouteOptimizerService.py` | CP-SAT |
-| `sentence-transformers` | `app/services/analytics/embeddingService.py` | opcional en runtime |
+| `numpy` | `app/services/analytics/embeddingService.py`, `semanticMatchingService.py` | antes llegaba solo de rebote vía `sentence-transformers`; ahora es directa |
 
 ### Sin `import` directo, y por qué cada una se queda
 

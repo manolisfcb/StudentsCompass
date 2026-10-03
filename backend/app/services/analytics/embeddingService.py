@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 import hashlib
-import importlib.util
 import logging
 import os
 import re
 from datetime import datetime, timezone
-from functools import lru_cache
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -18,17 +15,15 @@ from app.models.resumeEmbeddingsModel import ResumeEmbedding
 
 LOGGER = logging.getLogger(__name__)
 
-MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 EMBEDDING_DIMS = int(os.getenv("EMBEDDING_DIMS", "384"))
 #: Width of ``resume_embeddings.embedding``. Fixed in the column type, so it
 #: is not configurable: ``EMBEDDING_DIMS`` can be pointed at another model,
 #: but a vector that does not fit the column is refused, not truncated.
 EMBEDDING_COLUMN_DIMS = 384
-# Stored as the model_name for hash-fallback vectors so they never share a
-# (resume_id, model_name) key with real sentence-transformer embeddings.
+# Stored as the model_name for hash vectors so they never share a
+# (resume_id, model_name) key with vectors from a real embedding model.
 HASH_MODEL_NAME = "hash-v1"
 DEFAULT_EMBEDDINGS_PROVIDER = "hash"
-LOCAL_PROVIDER_NAMES = {"local", "sentence-transformers", "sentence_transformers"}
 #: Bumped when the fingerprint recipe changes. Every stored fingerprint carries
 #: the version that produced it, so an old one simply stops matching and the
 #: vector is regenerated once — no migration required, no silent reuse of a
@@ -99,27 +94,30 @@ def get_effective_model_name() -> str:
     """Model name under which embeddings are stored for the configured provider.
 
     Mirrors the model name reported by ``generate_embedding_with_model`` so that
-    corpus searches query the matching vector space (hash vectors never share a
-    space with sentence-transformer vectors).
+    corpus searches query the matching vector space. The hash provider is the
+    only one left since the local sentence-transformer was retired (it pulled
+    torch into the image and multiplied the cold start); a real-vector provider
+    has to return its own name here, or its vectors would share a key with
+    hashes.
     """
-    return MODEL_NAME if get_embedding_provider() in LOCAL_PROVIDER_NAMES else HASH_MODEL_NAME
+    return HASH_MODEL_NAME
 
 
 def get_embedding_status() -> dict:
     provider = get_embedding_provider()
-    local_package_available = importlib.util.find_spec("sentence_transformers") is not None
-    local_configured = provider in LOCAL_PROVIDER_NAMES
+    # The local_* keys stay in the public status contract, but there is no local
+    # provider any more: they are always False, and so is semantic readiness,
+    # because a hash vector carries no meaning to match on.
     return {
         "enabled": is_embedding_generation_enabled(),
         "provider": provider,
-        "model_name": MODEL_NAME,
+        "model_name": get_effective_model_name(),
         "dims": EMBEDDING_DIMS,
-        "semantic_matching_ready": local_configured and local_package_available,
-        "local_provider_configured": local_configured,
-        "local_package_available": local_package_available,
+        "semantic_matching_ready": False,
+        "local_provider_configured": False,
+        "local_package_available": False,
         "fallback_provider": "hash",
-        "model_cache_strategy": "lru_cache_process_memory",
-        "local_model_cache_dir": os.getenv("SENTENCE_TRANSFORMERS_HOME") or os.getenv("HF_HOME"),
+        "model_cache_strategy": "none",
         "local_failure_count": _EMBEDDING_METRICS["local_failure_count"],
         "fallback_to_hash_count": _EMBEDDING_METRICS["fallback_to_hash_count"],
         "unknown_provider_fallback_count": _EMBEDDING_METRICS["unknown_provider_fallback_count"],
@@ -127,9 +125,9 @@ def get_embedding_status() -> dict:
         "generation_skipped_count": _EMBEDDING_METRICS["generation_skipped_count"],
         "fingerprint_version": FINGERPRINT_VERSION,
         "production_recommendation": (
-            "Use EMBEDDINGS_PROVIDER=local with sentence-transformers installed and model cache warmed."
+            "Hash embeddings only: semantic matching stays off until an API embedding provider is configured."
             if provider == "hash"
-            else "Monitor fallback_to_hash_count and local_failure_count before relying on semantic scoring."
+            else "Monitor fallback_to_hash_count before relying on semantic scoring."
         ),
     }
 
@@ -137,28 +135,16 @@ def get_embedding_status() -> dict:
 async def generate_embedding_with_model(text: str) -> tuple[list[float], str] | None:
     """Generate an embedding and report the model name actually used.
 
-    The returned model name distinguishes a real sentence-transformer vector
-    from a hash-fallback vector (including the local -> hash fallback path), so
-    callers can persist them under separate keys.
+    The returned model name distinguishes a real model's vector from a
+    hash-fallback vector, so callers can persist them under separate keys.
+    ``EMBEDDINGS_PROVIDER=local`` names the retired sentence-transformer and is
+    now an unknown provider: it falls back to hash and is counted as such.
     """
     clean_text = (text or "").strip()
     if not clean_text or not is_embedding_generation_enabled():
         return None
 
     provider = get_embedding_provider()
-    if provider in LOCAL_PROVIDER_NAMES:
-        try:
-            vector = await asyncio.to_thread(_generate_local_embedding, clean_text)
-            return vector, MODEL_NAME
-        except Exception as exc:  # noqa: BLE001
-            _EMBEDDING_METRICS["local_failure_count"] += 1
-            _EMBEDDING_METRICS["fallback_to_hash_count"] += 1
-            LOGGER.warning(
-                "Local embedding provider failed; falling back to hash embeddings. error=%s",
-                exc,
-            )
-            return generate_hash_embedding(clean_text), HASH_MODEL_NAME
-
     if provider == "hash":
         return generate_hash_embedding(clean_text), HASH_MODEL_NAME
 
@@ -207,10 +193,9 @@ class ResumeEmbeddingService:
 
         The old order was: generate, then look, then write — every call paid for
         a vector and a commit even when nothing had changed. With the hash
-        provider that is CPU; with the local model it is a sentence-transformer
-        forward pass and the RSS that comes with it. Now the fingerprint of
-        (text, model, scheme version) is compared *first*, and an identical
-        request costs one SELECT and nothing else.
+        provider that is CPU; with a model provider it is a paid call. Now the
+        fingerprint of (text, model, scheme version) is compared *first*, and an
+        identical request costs one SELECT and nothing else.
 
         A stored row whose fingerprint is NULL has no demonstrable provenance —
         it predates the column — so it is regenerated once and then carries one.
@@ -237,7 +222,7 @@ class ResumeEmbeddingService:
         _EMBEDDING_METRICS["generation_count"] += 1
         embedding, effective_model_name = result
 
-        # The provider may have fallen back (local -> hash), which is a
+        # The provider may have fallen back to hash, which is a
         # different vector space and a different key. Fingerprint under the
         # model that actually produced the vector, never the one we hoped for.
         stored_model = model_name or effective_model_name
@@ -384,16 +369,3 @@ def generate_hash_embedding(text: str, dims: int = EMBEDDING_DIMS) -> list[float
     if norm == 0.0:
         return vector.tolist()
     return np.round(vector / norm, 8).tolist()
-
-
-@lru_cache(maxsize=1)
-def _load_sentence_transformer():
-    from sentence_transformers import SentenceTransformer
-
-    return SentenceTransformer(MODEL_NAME)
-
-
-def _generate_local_embedding(text: str) -> list[float]:
-    model = _load_sentence_transformer()
-    vector = model.encode(text, normalize_embeddings=True)
-    return [float(value) for value in vector]

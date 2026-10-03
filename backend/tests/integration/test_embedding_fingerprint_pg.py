@@ -17,6 +17,7 @@ from sqlalchemy import select, text
 pytestmark = [pytest.mark.integration, pytest.mark.postgres]
 
 SUMMARY = "Candidate has SQL, Python and Tableau experience across three internships."
+SEMANTIC_MODEL_NAME = "semantic-model-v1"
 
 
 @pytest.fixture(autouse=True)
@@ -138,11 +139,10 @@ async def test_two_first_generations_racing_leave_one_row(schema, pg_sessionmake
 
 @pytest.mark.asyncio
 async def test_similarity_only_compares_inside_one_model_space(schema, pg_sessionmaker):
-    """A hash vector must never be ranked against a sentence-transformer one."""
+    """A hash vector must never be ranked against one from a real model."""
     from app.models.resumeEmbeddingsModel import ResumeEmbedding
     from app.services.analytics.embeddingService import (
         HASH_MODEL_NAME,
-        MODEL_NAME,
         ResumeEmbeddingService,
         generate_hash_embedding,
     )
@@ -162,7 +162,7 @@ async def test_similarity_only_compares_inside_one_model_space(schema, pg_sessio
             ResumeEmbedding(
                 id=uuid.uuid4(),
                 resume_id=other_space.id,
-                model_name=MODEL_NAME,
+                model_name=SEMANTIC_MODEL_NAME,
                 dims=384,
                 embedding=generate_hash_embedding(SUMMARY),
             )
@@ -177,7 +177,7 @@ async def test_similarity_only_compares_inside_one_model_space(schema, pg_sessio
 
         # And asking in the other space finds the other row, not these.
         in_other_space = await service.find_similar_resumes(
-            resume_id=other_space.id, k=10, model_name=MODEL_NAME
+            resume_id=other_space.id, k=10, model_name=SEMANTIC_MODEL_NAME
         )
         assert in_other_space == []
         assert (

@@ -87,7 +87,10 @@ async def get_resource(
     resource = await service.get_resource_with_outline(resource_id)
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
-    return resource
+    # Lessons must go through the content codec: serialising the ORM rows
+    # directly hands back the raw stored `content` with `video_url`/`notes`
+    # unset, and the lesson viewer then shows a video lesson as plain text.
+    return service.to_detail_payload(resource)
 
 
 @router.get("/resources/{resource_id}/outline")
