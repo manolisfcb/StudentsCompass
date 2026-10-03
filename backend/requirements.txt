@@ -10,7 +10,7 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
-anyio==4.13.0
+anyio==4.14.2
     # via
     #   google-genai
     #   httpx
@@ -147,7 +147,7 @@ pydantic==2.13.4
     #   imagekitio
 pydantic-core==2.46.4
     # via pydantic
-pyjwt==2.13.0
+pyjwt==2.15.1
     # via fastapi-users
 pymupdf==1.27.2.3
     # via studentscompass
@@ -212,7 +212,7 @@ tzdata==2026.2
     # via
     #   pandas
     #   psycopg
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   botocore
     #   requests
