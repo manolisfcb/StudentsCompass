@@ -12,6 +12,7 @@ from app.config import (  # noqa: F401  (re-exported for existing importers)
     AUTO_CREATE_TABLES,
     DATABASE_URL,
     DB_DISABLE_POOL,
+    DB_POOL_PRE_PING,
     ENV,
     SQLALCHEMY_ECHO,
     env_int,
@@ -41,8 +42,11 @@ def _build_engine():
         DATABASE_URL,
         pool_size=env_int("DB_POOL_SIZE", 5, minimum=1),
         max_overflow=env_int("DB_MAX_OVERFLOW", 10, minimum=0),
-        pool_pre_ping=True,
-        pool_recycle=env_int("DB_POOL_RECYCLE_SECONDS", 300, minimum=30),
+        # The ping cost ~100 ms on every checkout against Neon. A connection
+        # younger than Neon's 5-minute idle suspend cannot have been dropped by
+        # it, so recycling below that does the ping's job for free.
+        pool_pre_ping=DB_POOL_PRE_PING,
+        pool_recycle=env_int("DB_POOL_RECYCLE_SECONDS", 240, minimum=30),
         **common,
     )
 

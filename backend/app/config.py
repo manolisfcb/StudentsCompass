@@ -69,6 +69,11 @@ SQLALCHEMY_ECHO = env_flag("SQLALCHEMY_ECHO", "0")
 AUTO_CREATE_TABLES = env_flag("AUTO_CREATE_TABLES", "0")
 # Opt back into a connection-per-request engine for true serverless targets.
 DB_DISABLE_POOL = env_flag("DB_DISABLE_POOL", "0")
+# Off by default: against Neon each ping is several round trips (~100 ms per
+# request at 27 ms RTT). Recycling connections younger than Neon's 5-minute
+# idle suspend covers the stale-connection case the ping was there for; turn it
+# back on for a database that drops idle connections earlier than that.
+DB_POOL_PRE_PING = env_flag("DB_POOL_PRE_PING", "0")
 
 # --- Authentication secret -------------------------------------------------
 #: What a development environment falls back to when ``SECRET_KEY`` is unset.

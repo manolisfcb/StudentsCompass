@@ -100,7 +100,7 @@ async def get_students_dashboard(
     
     try:
         logger.info(f"Fetching dashboard data for user {user.id}")
-        dashboard_data = await DashboardService.get_student_dashboard(user.id, session)
+        dashboard_data = await DashboardService.get_student_dashboard(user.id, session, user=user)
         logger.info(f"Dashboard data fetched successfully for user {user.id}")
         return dashboard_data
     except Exception as exc:

@@ -1,15 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import case, func, or_, select
-from sqlalchemy.orm import selectinload
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.companyModel import Company
 from app.models.jobPostingModel import JobPosting
-from app.models.resourceModel import ResourceModel, ResourceModuleModel
+from app.models.resourceModel import ResourceLessonModel, ResourceModel, ResourceModuleModel
 from app.models.userModel import User
 from app.models.userStatsModel import UserStatsModel
 from app.models.resumeModel import ResumeModel
-from app.services.learning.courseProgress import CORE_COURSES, CourseProgressProjector
-from typing import Dict, List
+from app.services.learning.courseProgress import CORE_COURSES, CoreCourseState, CourseProgressProjector
+from typing import Dict, List, Optional
 from uuid import UUID
 from datetime import datetime
 import logging
@@ -122,9 +121,14 @@ class DashboardService:
         }
 
     @staticmethod
-    async def get_student_dashboard(user_id: UUID, session: AsyncSession) -> Dict:
+    async def get_student_dashboard(
+        user_id: UUID, session: AsyncSession, user: Optional[User] = None
+    ) -> Dict:
         """
         Get complete dashboard data for a student including all stats, progress, and applications
+
+        ``user`` is the row the auth dependency already loaded; passing it saves
+        reading it again.
         """
         try:
             logger.info(f"Fetching dashboard data for user: {user_id}")
@@ -150,7 +154,12 @@ class DashboardService:
                 application_stats["offers"],
             )
             
-            progress_data = await DashboardService._project_student_progress(user_id, session)
+            # Read once and shared: the percentages and the "next lesson" links
+            # are two views of the same lessons and progress rows.
+            course_state = await CourseProgressProjector(session).core_course_state(user_id)
+            progress_data = await DashboardService._project_student_progress(
+                user_id, session, course_state=course_state
+            )
 
             logger.info(f"Progress data: {progress_data}")
             
@@ -161,8 +170,9 @@ class DashboardService:
             )
             
             # Fetch user info to avoid extra client calls
-            user_result = await session.execute(select(User).where(User.id == user_id))
-            user = user_result.scalar_one_or_none()
+            if user is None or user.id != user_id:
+                user_result = await session.execute(select(User).where(User.id == user_id))
+                user = user_result.scalar_one_or_none()
 
             dashboard_data = {
                 "user": {
@@ -192,7 +202,9 @@ class DashboardService:
                     "interviews": application_stats["interviews"],
                     "offers": application_stats["offers"]
                 },
-                "resource_navigation": await DashboardService._get_core_resource_navigation(user_id, session),
+                "resource_navigation": await DashboardService._get_core_resource_navigation(
+                    user_id, session, course_state=course_state
+                ),
                 "recent_applications": recent_applications,
                 "resources": [
                     {
@@ -393,7 +405,9 @@ class DashboardService:
             raise
 
     @staticmethod
-    async def _project_student_progress(user_id: UUID, session: AsyncSession) -> Dict[str, int | float]:
+    async def _project_student_progress(
+        user_id: UUID, session: AsyncSession, course_state: Optional[CoreCourseState] = None
+    ) -> Dict[str, int | float]:
         """The progress a student is shown, projected from facts.
 
         ``resource_lesson_progress`` rows and approved resume audits are the
@@ -403,8 +417,9 @@ class DashboardService:
         deployment whose courses were never seeded — and it is never written
         here, because a GET that writes turns every page view into a write.
         """
-        projector = CourseProgressProjector(session)
-        course_progress = await projector.core_course_progress(user_id)
+        if course_state is None:
+            course_state = await CourseProgressProjector(session).core_course_state(user_id)
+        course_progress = course_state.percent_by_key()
 
         if course_progress:
             progress_data = {
@@ -468,7 +483,9 @@ class DashboardService:
             return {}
 
     @staticmethod
-    async def _get_core_resource_navigation(user_id: UUID, session: AsyncSession) -> Dict[str, str]:
+    async def _get_core_resource_navigation(
+        user_id: UUID, session: AsyncSession, course_state: Optional[CoreCourseState] = None
+    ) -> Dict[str, str]:
         """Deep link to the next unfinished lesson of each core course.
 
         Resolved by ``core_code`` and completed through the shared projector, so
@@ -476,45 +493,59 @@ class DashboardService:
         lesson finished by an approved audit is not offered again here.
         """
         navigation = {key: "/resources" for key in DashboardService.CORE_RESOURCE_KEYS}
-        projector = CourseProgressProjector(session)
 
         try:
-            resolved = await projector.resolve_core_courses()
+            if course_state is None:
+                course_state = await CourseProgressProjector(session).core_course_state(user_id)
+            resolved = course_state.resolved
             if not resolved:
                 return navigation
 
-            resources_result = await session.execute(
-                select(ResourceModel)
-                .where(
-                    ResourceModel.id.in_(list(resolved.values())),
-                    ResourceModel.is_published.is_(True),
-                    ResourceModel.is_locked.is_(False),
+            # Only ids and positions are needed to find the next lesson, so one
+            # flat query replaces loading every resource with its modules and
+            # lessons (three round trips).
+            rows = (
+                await session.execute(
+                    select(
+                        ResourceModel.id,
+                        ResourceModuleModel.id,
+                        ResourceModuleModel.position,
+                        ResourceLessonModel.id,
+                        ResourceLessonModel.position,
+                    )
+                    .select_from(ResourceModel)
+                    .outerjoin(ResourceModuleModel, ResourceModuleModel.resource_id == ResourceModel.id)
+                    .outerjoin(ResourceLessonModel, ResourceLessonModel.module_id == ResourceModuleModel.id)
+                    .where(
+                        ResourceModel.id.in_(list(resolved.values())),
+                        ResourceModel.is_published.is_(True),
+                        ResourceModel.is_locked.is_(False),
+                    )
                 )
-                .options(selectinload(ResourceModel.modules).selectinload(ResourceModuleModel.lessons))
-            )
-            resources = {resource.id: resource for resource in resources_result.scalars().all()}
-            if not resources:
-                return navigation
-
-            completed = await projector.completed_lesson_ids(
-                user_id=user_id, resource_ids=list(resources.keys())
-            )
+            ).all()
         except Exception:
             logger.exception("Core course navigation unavailable for user %s", user_id)
             return navigation
 
+        lessons_by_resource: Dict[UUID, list] = {}
+        for resource_id, module_id, module_position, lesson_id, lesson_position in rows:
+            lessons = lessons_by_resource.setdefault(resource_id, [])
+            if lesson_id is not None:
+                lessons.append(((module_position, str(module_id), lesson_position), lesson_id))
+        if not lessons_by_resource:
+            return navigation
+
         for key, resource_id in resolved.items():
-            resource = resources.get(resource_id)
-            if not resource:
+            if resource_id not in lessons_by_resource:
                 continue
 
-            ordered_lesson_ids = []
-            for module in sorted(resource.modules, key=lambda current: current.position):
-                ordered_lesson_ids.extend(
-                    lesson.id for lesson in sorted(module.lessons, key=lambda current: current.position)
-                )
+            # Modules by position, then lessons by position within each module.
+            ordered_lesson_ids = [
+                lesson_id
+                for _order, lesson_id in sorted(lessons_by_resource[resource_id], key=lambda item: item[0])
+            ]
 
-            completed_ids = completed.get(resource_id, set())
+            completed_ids = course_state.completed.get(resource_id, set())
             target_lesson_id = next(
                 (lesson_id for lesson_id in ordered_lesson_ids if lesson_id not in completed_ids),
                 None,
@@ -524,9 +555,9 @@ class DashboardService:
                 target_lesson_id = ordered_lesson_ids[-1]
 
             if target_lesson_id:
-                navigation[key] = f"/resources/{resource.id}?lesson={target_lesson_id}"
+                navigation[key] = f"/resources/{resource_id}?lesson={target_lesson_id}"
             else:
-                navigation[key] = f"/resources/{resource.id}"
+                navigation[key] = f"/resources/{resource_id}"
 
         return navigation
 

@@ -82,6 +82,26 @@ class CourseCompletion:
         return percent(self.completed_lessons, self.total_lessons)
 
 
+@dataclass(frozen=True)
+class CoreCourseState:
+    """Everything one read of the core courses yields, for callers needing more than percentages.
+
+    The dashboard shows both the percentage per course and a link to the next
+    unfinished lesson. Both come from the same facts, so it reads them once and
+    derives both, instead of asking the projector twice.
+    """
+
+    resolved: dict[str, UUID]
+    completion: dict[UUID, CourseCompletion]
+    completed: dict[UUID, set[UUID]]
+
+    def percent_by_key(self) -> dict[str, int]:
+        """Percentage per core course key, or ``{}`` when no core course has content."""
+        if not any(item.total_lessons > 0 for item in self.completion.values()):
+            return {}
+        return {key: self.completion[resource_id].percent for key, resource_id in self.resolved.items()}
+
+
 class CourseProgressProjector:
     """Reads facts, answers "what is done?". Never writes.
 
@@ -180,6 +200,15 @@ class CourseProgressProjector:
 
     async def completion_of(self, *, user_id: UUID, resource_ids: list[UUID]) -> dict[UUID, CourseCompletion]:
         """Completed/total per course, from the same facts as the lesson view."""
+        completion, _completed = await self._completion_and_completed(
+            user_id=user_id, resource_ids=resource_ids
+        )
+        return completion
+
+    async def _completion_and_completed(
+        self, *, user_id: UUID, resource_ids: list[UUID]
+    ) -> tuple[dict[UUID, CourseCompletion], dict[UUID, set[UUID]]]:
+        """The totals and the completed lesson ids, from one read of the lessons."""
         lessons = await self._lessons_of(resource_ids)
         totals: dict[UUID, int] = {resource_id: 0 for resource_id in resource_ids}
         for _, resource_id, _ in lessons:
@@ -190,7 +219,7 @@ class CourseProgressProjector:
         completed = await self._completed_from_lessons(
             user_id=user_id, resource_ids=resource_ids, lessons=lessons
         )
-        return {
+        completion = {
             resource_id: CourseCompletion(
                 resource_id=resource_id,
                 completed_lessons=len(completed.get(resource_id, set())),
@@ -198,6 +227,7 @@ class CourseProgressProjector:
             )
             for resource_id in resource_ids
         }
+        return completion, completed
 
     async def resolve_core_courses(self) -> dict[str, UUID]:
         """Map each core course key to its published resource id, by code.
@@ -238,14 +268,18 @@ class CourseProgressProjector:
         numbers instead of reporting a confident 0% for courses that were never
         seeded.
         """
+        return (await self.core_course_state(user_id)).percent_by_key()
+
+    async def core_course_state(self, user_id: UUID) -> CoreCourseState:
+        """Resolved core courses with their completion and completed lessons, read once."""
         resolved = await self.resolve_core_courses()
         if not resolved:
-            return {}
+            return CoreCourseState(resolved={}, completion={}, completed={})
 
-        completion = await self.completion_of(user_id=user_id, resource_ids=list(resolved.values()))
-        if not any(item.total_lessons > 0 for item in completion.values()):
-            return {}
-        return {key: completion[resource_id].percent for key, resource_id in resolved.items()}
+        completion, completed = await self._completion_and_completed(
+            user_id=user_id, resource_ids=list(resolved.values())
+        )
+        return CoreCourseState(resolved=resolved, completion=completion, completed=completed)
 
 
 async def core_course_code_inventory(session: AsyncSession) -> list[dict]:

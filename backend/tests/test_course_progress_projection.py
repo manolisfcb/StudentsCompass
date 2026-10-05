@@ -556,3 +556,105 @@ async def test_reading_a_roadmap_does_not_write_its_stage_cache(db_session, test
         await service.get_roadmap_detail(user_id=test_user.id, slug=roadmap.slug)
 
     assert counter.writes == 0, counter.statements
+
+
+# ---------------------------------------------------------------------------
+# The student dashboard reads the course facts once
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_navigation_points_at_the_first_unfinished_lesson_across_modules(db_session, test_user):
+    resource, first_module_lessons = await _seed_course(
+        db_session,
+        core_code="resume_templates",
+        title="Resume Templates",
+        lesson_types=["text", "text"],
+    )
+    # A second module placed *before* the seeded one, its lessons inserted out
+    # of order: the link must follow positions, not insertion order.
+    earlier_module = ResourceModuleModel(
+        id=uuid.uuid4(), resource_id=resource.id, title="Intro", position=0
+    )
+    db_session.add(earlier_module)
+    await db_session.flush()
+    intro_second = ResourceLessonModel(
+        id=uuid.uuid4(), module_id=earlier_module.id, title="Intro 2", position=2,
+        content_type="text", content="body",
+    )
+    intro_first = ResourceLessonModel(
+        id=uuid.uuid4(), module_id=earlier_module.id, title="Intro 1", position=1,
+        content_type="text", content="body",
+    )
+    db_session.add_all([intro_second, intro_first])
+    await db_session.commit()
+
+    await _complete(db_session, test_user.id, intro_first)
+    navigation = await DashboardService._get_core_resource_navigation(test_user.id, db_session)
+    assert navigation["resume"] == f"/resources/{resource.id}?lesson={intro_second.id}"
+
+    await _complete(db_session, test_user.id, intro_second)
+    navigation = await DashboardService._get_core_resource_navigation(test_user.id, db_session)
+    assert navigation["resume"] == f"/resources/{resource.id}?lesson={first_module_lessons[0].id}"
+
+    for lesson in first_module_lessons:
+        await _complete(db_session, test_user.id, lesson)
+    navigation = await DashboardService._get_core_resource_navigation(test_user.id, db_session)
+    # Everything done: the last lesson, not nowhere.
+    assert navigation["resume"] == f"/resources/{resource.id}?lesson={first_module_lessons[-1].id}"
+    assert navigation["linkedin"] == "/resources"
+
+
+@pytest.mark.asyncio
+async def test_navigation_skips_a_locked_course_and_links_an_empty_one(db_session, test_user):
+    locked, _ = await _seed_course(
+        db_session,
+        core_code="resume_templates",
+        title="Resume Templates",
+        lesson_types=["text"],
+    )
+    locked.is_locked = True
+    empty = ResourceModel(
+        id=uuid.uuid4(),
+        core_code="linkedin_optimization",
+        title="LinkedIn Optimization",
+        description="Course.",
+        category="Career",
+        is_published=True,
+    )
+    db_session.add(empty)
+    await db_session.commit()
+
+    navigation = await DashboardService._get_core_resource_navigation(test_user.id, db_session)
+
+    assert navigation["resume"] == "/resources"
+    assert navigation["linkedin"] == f"/resources/{empty.id}"
+
+
+@pytest.mark.asyncio
+async def test_the_student_dashboard_reads_each_course_fact_once(db_session, test_user):
+    from tests.conftest import test_engine
+
+    for course in CORE_COURSES:
+        await _seed_course(
+            db_session,
+            core_code=course.code,
+            title=course.seed_title,
+            lesson_types=["text", "text", "resume_upload"],
+        )
+
+    with count_queries(test_engine) as counter:
+        payload = await DashboardService.get_student_dashboard(
+            test_user.id, db_session, user=test_user
+        )
+
+    statements = [" ".join(statement.split()) for statement in counter.statements]
+    # It used to re-read the user the auth dependency had already loaded, and
+    # to project the courses twice: once for the percentages, once for links.
+    assert not any(statement.startswith("SELECT users.") for statement in statements)
+    assert len(statements) == len(set(statements)), "a statement ran twice"
+    # application counts, recent applications, resolve courses, lessons,
+    # progress rows, approval check, navigation.
+    assert counter.selects <= 7
+    assert payload["user"]["email"] == test_user.email
+    assert set(payload["resource_navigation"]) == set(DashboardService.CORE_RESOURCE_KEYS)
