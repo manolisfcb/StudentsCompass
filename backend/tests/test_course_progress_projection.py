@@ -653,8 +653,42 @@ async def test_the_student_dashboard_reads_each_course_fact_once(db_session, tes
     # to project the courses twice: once for the percentages, once for links.
     assert not any(statement.startswith("SELECT users.") for statement in statements)
     assert len(statements) == len(set(statements)), "a statement ran twice"
-    # application counts, recent applications, resolve courses, lessons,
-    # progress rows, approval check, navigation.
-    assert counter.selects <= 7
+    # application counts, recent applications, resolve courses, the outline
+    # with this user's progress (which also feeds the links), approval check.
+    assert counter.selects <= 5
     assert payload["user"]["email"] == test_user.email
     assert set(payload["resource_navigation"]) == set(DashboardService.CORE_RESOURCE_KEYS)
+
+
+@pytest.mark.asyncio
+async def test_another_users_progress_does_not_count_on_the_dashboard(db_session, test_user):
+    from app.models.userModel import User
+
+    other = User(
+        id=uuid.uuid4(),
+        email="other@example.com",
+        hashed_password="x",
+        is_active=True,
+        is_superuser=False,
+        is_verified=True,
+    )
+    db_session.add(other)
+    await db_session.commit()
+    resource, lessons = await _seed_course(
+        db_session,
+        core_code="resume_templates",
+        title="Resume Templates",
+        lesson_types=["text", "text"],
+    )
+    await _complete(db_session, other.id, lessons[0])
+    await _complete(db_session, other.id, lessons[1])
+    await _complete(db_session, test_user.id, lessons[0])
+
+    state = await CourseProgressProjector(db_session).core_course_state(test_user.id)
+
+    assert state.percent_by_key()["resume"] == 50
+    assert state.lesson_order[resource.id] == [lesson.id for lesson in lessons]
+    navigation = await DashboardService._get_core_resource_navigation(
+        test_user.id, db_session, course_state=state
+    )
+    assert navigation["resume"] == f"/resources/{resource.id}?lesson={lessons[1].id}"

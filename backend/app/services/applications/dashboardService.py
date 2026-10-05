@@ -3,7 +3,6 @@ from sqlalchemy import case, func, or_, select
 from app.models.applicationModel import ApplicationModel, ApplicationStatus
 from app.models.companyModel import Company
 from app.models.jobPostingModel import JobPosting
-from app.models.resourceModel import ResourceLessonModel, ResourceModel, ResourceModuleModel
 from app.models.userModel import User
 from app.models.userStatsModel import UserStatsModel
 from app.models.resumeModel import ResumeModel
@@ -497,54 +496,17 @@ class DashboardService:
         try:
             if course_state is None:
                 course_state = await CourseProgressProjector(session).core_course_state(user_id)
-            resolved = course_state.resolved
-            if not resolved:
-                return navigation
-
-            # Only ids and positions are needed to find the next lesson, so one
-            # flat query replaces loading every resource with its modules and
-            # lessons (three round trips).
-            rows = (
-                await session.execute(
-                    select(
-                        ResourceModel.id,
-                        ResourceModuleModel.id,
-                        ResourceModuleModel.position,
-                        ResourceLessonModel.id,
-                        ResourceLessonModel.position,
-                    )
-                    .select_from(ResourceModel)
-                    .outerjoin(ResourceModuleModel, ResourceModuleModel.resource_id == ResourceModel.id)
-                    .outerjoin(ResourceLessonModel, ResourceLessonModel.module_id == ResourceModuleModel.id)
-                    .where(
-                        ResourceModel.id.in_(list(resolved.values())),
-                        ResourceModel.is_published.is_(True),
-                        ResourceModel.is_locked.is_(False),
-                    )
-                )
-            ).all()
         except Exception:
             logger.exception("Core course navigation unavailable for user %s", user_id)
             return navigation
 
-        lessons_by_resource: Dict[UUID, list] = {}
-        for resource_id, module_id, module_position, lesson_id, lesson_position in rows:
-            lessons = lessons_by_resource.setdefault(resource_id, [])
-            if lesson_id is not None:
-                lessons.append(((module_position, str(module_id), lesson_position), lesson_id))
-        if not lessons_by_resource:
-            return navigation
-
-        for key, resource_id in resolved.items():
-            if resource_id not in lessons_by_resource:
+        # The outline came with the progress read; finding the next lesson
+        # needs no query of its own.
+        for key, resource_id in course_state.resolved.items():
+            if resource_id in course_state.locked or resource_id not in course_state.lesson_order:
                 continue
 
-            # Modules by position, then lessons by position within each module.
-            ordered_lesson_ids = [
-                lesson_id
-                for _order, lesson_id in sorted(lessons_by_resource[resource_id], key=lambda item: item[0])
-            ]
-
+            ordered_lesson_ids = course_state.lesson_order[resource_id]
             completed_ids = course_state.completed.get(resource_id, set())
             target_lesson_id = next(
                 (lesson_id for lesson_id in ordered_lesson_ids if lesson_id not in completed_ids),

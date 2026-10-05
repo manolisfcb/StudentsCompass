@@ -15,10 +15,10 @@ than by a title an admin can edit.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -94,6 +94,11 @@ class CoreCourseState:
     resolved: dict[str, UUID]
     completion: dict[UUID, CourseCompletion]
     completed: dict[UUID, set[UUID]]
+    #: Lesson ids per course in reading order (modules by position, then
+    #: lessons by position), so the dashboard can find the next lesson without
+    #: loading the course again.
+    lesson_order: dict[UUID, list[UUID]] = field(default_factory=dict)
+    locked: frozenset[UUID] = frozenset()
 
     def percent_by_key(self) -> dict[str, int]:
         """Percentage per core course key, or ``{}`` when no core course has content."""
@@ -160,16 +165,22 @@ class CourseProgressProjector:
         user_id: UUID,
         resource_ids: list[UUID],
         lessons: list[tuple[UUID, UUID, str]],
+        recorded: set[UUID] | None = None,
     ) -> dict[UUID, set[UUID]]:
         """The projection itself, over lessons the caller already has.
 
         Split out so a caller that needs the lesson rows for something else —
         ``completion_of`` needs them for the totals — does not fetch them twice.
+        ``recorded`` is the set of lessons with a progress row, when the caller
+        read it together with the lessons.
         """
         if not lessons:
             return {resource_id: set() for resource_id in resource_ids}
 
-        recorded = await self._recorded_progress(user_id, [lesson_id for lesson_id, _, _ in lessons])
+        if recorded is None:
+            recorded = await self._recorded_progress(
+                user_id, [lesson_id for lesson_id, _, _ in lessons]
+            )
 
         resume_upload_lessons = [
             (lesson_id, resource_id)
@@ -271,15 +282,87 @@ class CourseProgressProjector:
         return (await self.core_course_state(user_id)).percent_by_key()
 
     async def core_course_state(self, user_id: UUID) -> CoreCourseState:
-        """Resolved core courses with their completion and completed lessons, read once."""
+        """Resolved core courses with their completion, outline and lock state.
+
+        Three round trips at most — resolve the courses, one query for their
+        outline and this user's progress rows, and the approval check only when
+        a ``resume_upload`` lesson is among them — where reading lessons,
+        progress and the outline separately took five.
+        """
         resolved = await self.resolve_core_courses()
         if not resolved:
             return CoreCourseState(resolved={}, completion={}, completed={})
+        resource_ids = list(resolved.values())
 
-        completion, completed = await self._completion_and_completed(
-            user_id=user_id, resource_ids=list(resolved.values())
+        has_progress = (
+            exists()
+            .where(
+                ResourceLessonProgressModel.user_id == user_id,
+                ResourceLessonProgressModel.lesson_id == ResourceLessonModel.id,
+            )
+            .correlate(ResourceLessonModel)
         )
-        return CoreCourseState(resolved=resolved, completion=completion, completed=completed)
+        rows = (
+            await self.session.execute(
+                select(
+                    ResourceModel.id,
+                    ResourceModel.is_locked,
+                    ResourceModuleModel.id,
+                    ResourceModuleModel.position,
+                    ResourceLessonModel.id,
+                    ResourceLessonModel.position,
+                    ResourceLessonModel.content_type,
+                    has_progress,
+                )
+                .select_from(ResourceModel)
+                .outerjoin(ResourceModuleModel, ResourceModuleModel.resource_id == ResourceModel.id)
+                .outerjoin(ResourceLessonModel, ResourceLessonModel.module_id == ResourceModuleModel.id)
+                .where(ResourceModel.id.in_(resource_ids))
+            )
+        ).all()
+
+        lessons: list[tuple[UUID, UUID, str]] = []
+        recorded: set[UUID] = set()
+        locked: set[UUID] = set()
+        ordered: dict[UUID, list[tuple[tuple, UUID]]] = {}
+        for resource_id, is_locked, module_id, module_position, lesson_id, lesson_position, content_type, done in rows:
+            if is_locked:
+                locked.add(resource_id)
+            course_lessons = ordered.setdefault(resource_id, [])
+            if lesson_id is None:
+                continue
+            lessons.append((lesson_id, resource_id, content_type))
+            if done:
+                recorded.add(lesson_id)
+            # The module id keeps lessons of two modules sharing a position
+            # grouped by module instead of interleaved.
+            course_lessons.append(((module_position, str(module_id), lesson_position), lesson_id))
+
+        totals: dict[UUID, int] = {resource_id: 0 for resource_id in resource_ids}
+        for _, resource_id, _ in lessons:
+            totals[resource_id] += 1
+        completed = await self._completed_from_lessons(
+            user_id=user_id, resource_ids=resource_ids, lessons=lessons, recorded=recorded
+        )
+        completion = {
+            resource_id: CourseCompletion(
+                resource_id=resource_id,
+                completed_lessons=len(completed.get(resource_id, set())),
+                total_lessons=totals[resource_id],
+            )
+            for resource_id in resource_ids
+        }
+        lesson_order = {
+            resource_id: [lesson_id for _order, lesson_id in sorted(items, key=lambda item: item[0])]
+            for resource_id, items in ordered.items()
+        }
+        return CoreCourseState(
+            resolved=resolved,
+            completion=completion,
+            completed=completed,
+            lesson_order=lesson_order,
+            locked=frozenset(locked),
+        )
 
 
 async def core_course_code_inventory(session: AsyncSession) -> list[dict]:
