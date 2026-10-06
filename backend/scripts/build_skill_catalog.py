@@ -307,21 +307,25 @@ def build(cache: Path) -> dict:
     # tool names come before ESCO's broader concepts. A skill whose display
     # name was already taken by another skill is merged into that one's labels
     # rather than created twice.
+    # Keys compared as the extractor compares them (plurals folded), or two
+    # skills would end up answering to one key.
+    match_key = SkillNormalizer.match_key
     owner: dict[str, int] = {}
     merged: list[dict] = []
     for candidate in candidates:
-        display_key = normalize(candidate["display"])
+        display_key = match_key(candidate["display"])
         if display_key in owner:
             target = merged[owner[display_key]]
-            target["aliases"].extend(label for label in candidate["labels"] if normalize(label) not in owner)
             for label in candidate["labels"]:
-                owner.setdefault(normalize(label), owner[display_key])
+                if match_key(label) not in owner:
+                    owner[match_key(label)] = owner[display_key]
+                    target["aliases"].append(label)
             continue
         index = len(merged)
         name = SkillNormalizer.normalize_canonical_name(candidate["display"])[:120]
         aliases = []
         for label in candidate["labels"]:
-            key = normalize(label)
+            key = match_key(label)
             if key in owner:
                 continue
             owner[key] = index

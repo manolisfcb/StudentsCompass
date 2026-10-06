@@ -261,14 +261,33 @@ class JobTargetAnalysisService:
 
     # -- the analysis ------------------------------------------------------------
 
+    async def _refresh_cv_skills(self, resume: ResumeModel, *, user_id: UUID) -> None:
+        """Read the CV against the catalogue as it is now, not as it was.
+
+        A CV extracted before the catalogue grew (TASK-082) would show every
+        newly catalogued skill it mentions as a gap. Re-reading the summary is
+        rules only and additive — what the student confirmed or rejected keeps
+        its status — which is what Career Lab's skills sync already does. A CV
+        without a summary is read from its file only the first time, as
+        before: that costs a download from storage.
+        """
+        if resume.ai_summary:
+            await self.extraction.extract_resume_skills_from_text(
+                resume_id=resume.id,
+                user_id=user_id,
+                text=resume.ai_summary,
+                extraction_method="resume_summary_rules_v1",
+                source_section="ai_summary",
+            )
+            return
+        await self.extraction._extract_from_resume_summary_if_needed(resume=resume, user_id=user_id)
+
     async def analyze(self, target: JobTargetModel, resume: ResumeModel) -> dict:
         parse = await self.ensure_parse(target)
         parsed = parse.parsed or {}
         requirements = list(parsed.get("requirements") or [])
 
-        await self.extraction._extract_from_resume_summary_if_needed(
-            resume=resume, user_id=target.user_id
-        )
+        await self._refresh_cv_skills(resume, user_id=target.user_id)
         current_skills = await self.review.get_resume_skills(resume.id)
 
         matcher = SemanticMatchingService(session=self.session)

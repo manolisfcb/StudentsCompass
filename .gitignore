@@ -58,6 +58,9 @@ docs/refactor/parity/sidebyside/
 
 data/
 data/*
+# TASK-082: `data/` above matches at any depth, and this one is not a dataset:
+# it is application data the image ships (questionnaires, the skill catalogue).
+!backend/app/data/
 
 # TASK-055: names a project and its identities; not this repository's business.
 infra/gcp/config.env
