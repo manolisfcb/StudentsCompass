@@ -14444,8 +14444,7 @@ Can run in parallel with: TASK-074, TASK-075
 
 ### Completion Notes
 
-**2026-10-05 — cerrada en código e infraestructura versionada; la política no
-está aplicada en el proyecto GCP.**
+**2026-10-05 — cerrada, y aplicada en el proyecto `gen-lang-client-0908704200`.**
 
 - Los contadores en proceso (`fallback_to_hash_count`, `provider_failure_count`)
   no sirven para alertar en Cloud Run: viven en la memoria de una instancia que
@@ -14463,9 +14462,15 @@ está aplicada en el proyecto GCP.**
   ausente, el proveedor mal escrito o una caída dentro del script de
   sincronización no pasan por una llamada externa fallida dentro de una
   petición, y son justo los casos que dejarían el matching apagado sin ruido.
-- **Pendiente fuera del repo:** ejecutar `70-observability.sh` contra el
-  proyecto para crear la métrica y la política. No lo hice: es una acción sobre
-  GCP que te corresponde decidir y lanzar.
+- **Aplicado** con la cuenta `mmedinac26@gmail.com` y `--project` fijado por
+  variables de entorno de un solo comando (la cuenta y el proyecto por defecto de
+  esta máquina son los de duk; la configuración global no se tocó). Se aplicaron
+  **sólo** la métrica `embedding_fallback_to_hash` y la política
+  `alertPolicies/5823059083667904717`, con el contenido exacto del script, sobre
+  el canal «StudentsCompass on-call» existente. No se reejecutó el script entero
+  porque habría reescrito las seis políticas de TASK-057 con el contenido del
+  fichero, deshaciendo cualquier ajuste hecho desde la consola. Queda: 5 métricas
+  de log y 7 políticas.
 
 **Validación.** Cinco casos nuevos en `tests/test_gemini_embeddings.py`: un WARNING
 estructurado por caída con el motivo correcto (error del proveedor, sin clave,

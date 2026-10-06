@@ -278,9 +278,8 @@ TASK-076 añade una quinta métrica y una séptima política:
 `embedding_fallback_reason` que `embeddingService._log_fallback` escribe cada vez
 que un proveedor de embeddings real cae a hash. La caída es invisible para el
 usuario —la gap analysis sigue, sin matching semántico— y por eso necesita
-alerta propia. Excluye `kill_switch`, que es una caída pedida. Hasta que se
-vuelva a ejecutar `70-observability.sh` en el proyecto, la métrica y la política
-existen sólo en este fichero.
+alerta propia. Excluye `kill_switch`, que es una caída pedida. Aplicadas en el
+proyecto el 2026-10-05 (sólo esas dos piezas, no el script entero).
 
 Lo que **no** cubre, documentado en la salida del propio script: una métrica
 real de pool de conexiones de DB. No existe hoy ni en logs ni en Cloud
