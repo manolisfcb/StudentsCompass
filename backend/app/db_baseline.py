@@ -644,6 +644,48 @@ def create_schema(connection) -> None:
     )
     op.create_index('ix_job_analysis_active_lease', 'job_analysis', ['lease_expires_at'], unique=False, postgresql_where=sa.text("status IN ('PENDING', 'PROCESSING')"))
     op.create_index('uq_job_analysis_active_per_resume', 'job_analysis', ['user_id', 'resume_id'], unique=True, postgresql_where=sa.text("status IN ('PENDING', 'PROCESSING')"))
+    op.create_table('job_description_parses',
+    sa.CheckConstraint('(embedding IS NULL) = (embedding_model_name IS NULL)', name='ck_job_description_parses_embedding_has_model'),
+    sa.Column('text_hash', sa.String(length=64), nullable=False),
+    sa.Column('source', sa.String(length=32), nullable=False),
+    sa.Column('parsed', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=False),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=True),
+    sa.Column('embedding_model_name', sa.String(length=120), nullable=True),
+    sa.Column('model_id', sa.String(length=120), nullable=False),
+    sa.Column('prompt_version', sa.String(length=32), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('text_hash')
+    )
+    op.create_table('job_targets',
+    sa.CheckConstraint("status IN ('pending', 'parsing', 'ready', 'failed')", name='ck_job_targets_status'),
+    sa.CheckConstraint("workplace_type IS NULL OR workplace_type IN ('onsite', 'hybrid', 'remote')", name='ck_job_targets_workplace_type'),
+    sa.CheckConstraint('attempts >= 0', name='ck_job_targets_attempts_non_negative'),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('resume_id', sa.UUID(), nullable=True),
+    sa.Column('text_hash', sa.String(length=64), nullable=False),
+    sa.Column('raw_text', sa.Text(), nullable=False),
+    sa.Column('source', sa.String(length=32), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('company', sa.String(length=255), nullable=True),
+    sa.Column('location', sa.String(length=255), nullable=True),
+    sa.Column('workplace_type', sa.String(length=16), nullable=True),
+    sa.Column('status', sa.String(length=16), nullable=False),
+    sa.Column('error_message', sa.Text(), nullable=True),
+    sa.Column('attempts', sa.Integer(), server_default='0', nullable=False),
+    sa.Column('lease_expires_at', sa.DateTime(), nullable=True),
+    sa.Column('provider_attempted_at', sa.DateTime(), nullable=True),
+    sa.Column('match_snapshot', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['resume_id'], ['resumes.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_job_targets_active_lease', 'job_targets', ['lease_expires_at'], unique=False, postgresql_where=sa.text("status IN ('pending', 'parsing')"))
+    op.create_index('ix_job_targets_text_hash', 'job_targets', ['text_hash'], unique=False)
+    op.create_index('ix_job_targets_user_created', 'job_targets', ['user_id', 'created_at'], unique=False)
     op.create_table('job_skills',
     sa.CheckConstraint('importance_score IS NULL OR (importance_score >= 0 AND importance_score <= 1)', name='ck_job_skills_importance_score_fraction'),
     sa.Column('id', sa.UUID(), nullable=False),

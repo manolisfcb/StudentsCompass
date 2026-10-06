@@ -34,6 +34,7 @@ from app.models.idempotencyModel import IdempotencyRecordModel
 from app.models.interviewAvailabilityModel import InterviewAvailabilityModel
 from app.models.jobAnalysisModel import JobAnalysisModel
 from app.models.jobPostingModel import JobPosting
+from app.models.jobTargetModel import JobDescriptionParseModel, JobTargetModel
 from app.models.messageModel import (
     ConversationModel,
     ConversationParticipantModel,
@@ -99,8 +100,10 @@ ALL_MODELS = (
     IdempotencyRecordModel,
     InterviewAvailabilityModel,
     JobAnalysisModel,
+    JobDescriptionParseModel,
     JobPosting,
     JobSkillModel,
+    JobTargetModel,
     MessageModel,
     OptimizationRunModel,
     PostModel,

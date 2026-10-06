@@ -159,7 +159,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-074 | Tabla `skill_embeddings`, generación por lotes y backfill del catálogo | HIGH | PHASE-C0 | COMPLETED | TASK-072 | TASK-073, TASK-077 |
 | TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | HIGH | PHASE-C0 | COMPLETED | TASK-073, TASK-074 | TASK-077 |
 | TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | MEDIUM | PHASE-C0 | COMPLETED | TASK-073 | TASK-074, TASK-075 |
-| TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | TODO | NONE | TASK-072, TASK-082, TASK-083 |
+| TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | COMPLETED | NONE | TASK-072, TASK-082, TASK-083 |
 | TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | TODO | TASK-077 | TASK-082 |
 | TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | HIGH | PHASE-C1 | TODO | TASK-075, TASK-077 | TASK-082 |
 | TASK-080 | Roadmap desde los gaps con días hasta la entrevista como restricción | MEDIUM | PHASE-C1 | TODO | TASK-079 | TASK-081 |
@@ -14472,3 +14472,118 @@ estructurado por caída con el motivo correcto (error del proveedor, sin clave,
 kill switch, proveedor desconocido), ninguno con el proveedor sano, y el
 formatter JSON emitiendo los campos que filtra la métrica. `bash -n` sobre el
 script.
+
+## TASK-077 — Tablas `job_targets` y `job_description_parses` con su ciclo de lease
+
+Status: COMPLETED
+Priority: HIGH
+Phase: PHASE-C1
+Category: Database / Business Logic
+
+### Objective
+
+Dar a C1 dónde guardar la vacante que pega un usuario y el parse de su texto,
+con el mismo ciclo de lease durable que `job_analysis`.
+
+### Problem
+
+No existe ningún sitio para una oferta externa: `job_postings` exige
+`company_id NOT NULL` (es del lado recruiter) y `job_skills` ya hace doble
+función. Plan 11 §5.
+
+### Desired State
+
+- `job_description_parses`: caché **compartida entre usuarios**, PK `text_hash`
+  (sha256 del texto normalizado), `parsed` JSONB, `embedding Vector(384)` con
+  `embedding_model_name`, `model_id`, `prompt_version`, `source`, timestamps.
+- `job_targets`: la vacante de un usuario. `user_id`, `resume_id`, `text_hash`,
+  `raw_text`, `source`, `title`, `company`, `location`, `workplace_type`,
+  `status` (`pending` / `parsing` / `ready` / `failed`), `attempts`,
+  `lease_expires_at`, `provider_attempted_at`, `error_message`,
+  `match_snapshot` JSONB, timestamps.
+- Ciclo de lease copiado de `job_analysis`: claim condicional en un UPDATE,
+  renovación, y recuperación que **nunca** re-ejecuta un trabajo que ya llamó al
+  proveedor.
+- Normalización del texto definida en un único sitio, porque decide el acierto
+  de la caché compartida.
+
+### Decisiones
+
+- **`text_hash` sin FK.** La vacante nace `pending`, antes que su parse, y §5
+  deja abierta la caducidad por TTL de los parses: una FK impediría las dos.
+- **`embedding_model_name` junto al vector.** Un vector sin el nombre de su
+  espacio es exactamente el error que cerró C0.
+- **`source` sin CHECK.** §11 pide poder añadir `ats_api` sin migrar.
+- **`status` y `workplace_type` como texto con CHECK**, no como ENUM nativo:
+  sin `CREATE TYPE` que rompa una migración rejugada (nota de `b8f3c05a71d4`).
+- `resume_id` con `ON DELETE SET NULL`: borrar un CV no borra las vacantes que
+  el usuario guardó. `user_id` con `ON DELETE CASCADE`.
+- Sin unicidad por (usuario, texto): comparar dos CV contra la misma oferta es
+  legítimo. El doble POST lo resuelve la idempotencia de TASK-041 en TASK-078.
+
+### Scope
+
+IN SCOPE: modelos, migración, baseline, servicio de ciclo de vida y lease, tests.
+
+OUT OF SCOPE: endpoint (TASK-078), análisis (TASK-079), parse por LLM (TASK-089).
+
+### Dependencies
+
+Depends on: NONE
+
+### Blocks
+
+Blocks: TASK-078, TASK-079, TASK-089, TASK-093
+
+### Parallelization
+
+Can run in parallel with: TASK-072, TASK-082, TASK-083
+
+### Acceptance Criteria
+
+- [x] Migración aditiva, rejugable, con downgrade, probada en PostgreSQL.
+- [x] Baseline y modelos concuerdan.
+- [x] Dos workers no reclaman la misma vacante.
+- [x] Una vacante interrumpida tras llamar al proveedor falla, no se repite.
+- [x] Dos usuarios que pegan el mismo texto comparten un parse.
+- [x] Relevant tests pass.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.**
+
+- **Modelos** `app/models/jobTargetModel.py`: `JobDescriptionParseModel` y
+  `JobTargetModel`, con las decisiones de arriba. `job_description_parses` lleva
+  un CHECK que impide guardar un vector sin su `embedding_model_name` (o al
+  revés). Índices: `(user_id, created_at)` para el listado, `text_hash`, y el
+  parcial `ix_job_targets_active_lease` sobre `pending`/`parsing`, como el de
+  `job_analysis`.
+- **Migración** `e5b2c9d4a817` (sobre `d3e8a1f5c702`): aditiva, rejugable, sin
+  backfill; DDL añadido al baseline.
+- **Servicio** `app/services/careerLab/jobTargetService.py`:
+  `normalize_job_text` / `job_text_hash` (NFKC, saltos de línea, espacios no
+  separables, blancos al final y rachas de líneas vacías; mayúsculas y
+  puntuación se conservan); `store_parse` con «gana el primero» decidido por la
+  PK; `create_target`, `get_user_target`; y el ciclo `claim` / `renew_lease` /
+  `mark_provider_attempted` / `complete` / `fail` / `recover_stale` /
+  `due_target_ids`, con las mismas tres salidas de recuperación que
+  `cvAnalysisService`.
+- **Duplicación conocida:** el ciclo de lease es una copia del de `job_analysis`,
+  como pide el plan. Extraer un helper común exigiría tocar `cvAnalysisService`,
+  fuera de alcance; queda señalado para cuando haya un tercer usuario del patrón.
+
+**Validación.** `tests/test_job_targets.py` (14 casos: normalización, caché
+compartida, propiedad, CHECK de estado, lease, recuperación con sus tres
+salidas). `tests/integration/test_job_targets_pg.py` (4): la revisión construye
+lo que declaran los modelos, con el índice parcial y los cuatro CHECK, es
+rejugable y su downgrade la deshace; dos workers compitiendo por una vacante
+obtienen **un** lease; dos usuarios guardando el mismo parse a la vez escriben
+**una** fila; borrar el CV deja la vacante con `resume_id` NULL y borrar el
+usuario la elimina. Además, `alembic upgrade head` real desde `b8f3c05a71d4`,
+`downgrade -2` y `upgrade head` otra vez sobre la base de la lane. Lane rápida
+**874 passed**; PostgreSQL **141 passed** y consistente archivo a archivo;
+`ruff` limpio.
+
+`alembic upgrade --sql` (modo offline) no funciona en este repositorio desde
+`b8f3c05a71d4`, que ya usaba `inspect()` para ser rejugable; las dos revisiones
+nuevas siguen ese mismo patrón.
