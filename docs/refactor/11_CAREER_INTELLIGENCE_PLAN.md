@@ -20,6 +20,14 @@ Career Lab le responde cuatro preguntas sobre **esa** vacante concreta:
 
 Más un registro de candidaturas propio con sus analíticas.
 
+
+Y, como **plus de pago**, una preparación técnica a fondo para esa vacante: no
+una lista de preguntas, sino una guía por tema («para esta vacante de ML repasa
+estos modelos, cómo se entrenan, qué es lo que más se pregunta de cada uno y qué
+ejercicio práctico te pueden poner»). Mientras no exista pasarela de pago sólo
+la usa el admin; el resto de usuarios la ve como *coming soon*. Detalle en §4.4
+y §4.5.
+
 **No se construye descubrimiento de vacantes.** Ni scraping, ni crawler, ni pool
 compartido de ofertas. El usuario trae la vacante. El §11 explica por qué y qué
 camino deja abierto.
@@ -30,8 +38,10 @@ El flujo completo es:
 CV (ya analizado) ──────┐
                         ├─→ Match · Gaps · Roadmap        [$0 LLM]
 Oferta pegada ─→ Parse ─┘         ├─→ CV Coach            [1 llamada]
-                [1 llamada,       └─→ Interview Prep      [1 llamada]
-                 caché compartida]
+                [1 llamada,       ├─→ Interview Prep      [1 llamada]
+                 caché compartida]└─→ Interview Prep técnico  [plus de pago]
+                                        ├─ Plan técnico   [1 llamada]
+                                        └─ Tema a fondo   [1 llamada/tema]
 ```
 
 ## 2. Línea base comprobada
@@ -64,24 +74,28 @@ En el snapshot revisado ya existe, y se reutiliza sin reescribir:
   Redis, pero sí `AI_ALLOW_UNSHARED_COUNTER=1` o el guard falla cerrado en
   producción.
 
-Y existen tres defectos que este plan corrige porque lo bloquean:
+Y existen cuatro defectos que este plan corrige porque lo bloquean:
 
 - **El matching semántico está apagado de facto.** `EMBEDDINGS_PROVIDER` vale
-  `"hash"` por defecto (`embeddingService.py:30`), así que todo vector guardado
-  hoy es un hash de relleno. Además `semantic_matching_ready` se define como
-  `local_configured and local_package_available`
-  (`embeddingService.py:115`), leído por `_semantic_ready()`
-  (`semanticMatchingService.py:289`): con cualquier proveedor que no sea el
-  local, el matching semántico se desactiva **sin error**.
+  `"hash"` por defecto, así que todo vector guardado hoy es un hash de relleno.
+  Desde `e6ec0b4`, que retiró el proveedor local, `semantic_matching_ready` vale
+  `False` fijo, leído por `_semantic_ready()` en `semanticMatchingService.py`:
+  no hay ningún proveedor con el que el matching semántico se encienda.
+  *(Corregido en TASK-072/073, 2026-10-05.)*
 - **El catálogo canónico tiene 117 skills**, sembradas para tres roles (Data
   Analyst, Business Analyst, Junior Data Scientist) en
   `capstoneAnalyticsSeedService.py:298`. Una oferta fuera de esos roles produce
   omisiones silenciosas: una skill no catalogada no aparece como gap, **no
   aparece en absoluto**.
-- **`get_effective_model_name()`** (`embeddingService.py:104`) etiqueta como
-  `hash-v1` cualquier vector que no venga del proveedor local, de modo que
+- **`get_effective_model_name()`** devuelve `hash-v1` siempre, de modo que
   vectores de API compartirían clave `(resume_id, model_name)` con vectores
-  hash.
+  hash. *(Corregido en TASK-072: los vectores Gemini se guardan como
+  `gemini-embedding-001@384`.)*
+- **Los umbrales de similitud son de MiniLM** (detectado al ejecutar C0, no
+  estaba en la versión original del plan). `semanticMatchingService.py` decide
+  match semántico con coseno ≥ 0,72 y débil ≥ 0,48, y bandas de contexto en
+  0,78 / 0,62. Con `gemini-embedding-001` a 384 dos skills sin relación dan
+  0,74–0,80: con esos umbrales casi todo sería match. Ver §4.3.
 
 ## 3. Decisiones tomadas
 
@@ -95,6 +109,9 @@ Y existen tres defectos que este plan corrige porque lo bloquean:
 | D6 | El usuario ve *tiers* (Esencial / Completo / Profundo), nunca nombres de modelo | Evita la comparación «¿por qué te pago si me suscribo al proveedor?» y permite cambiar el modelo en silencio |
 | D7 | Cuota en créditos ponderados por coste, no en número de análisis | Con modelos variables el coste por análisis va de $0,002 a $0,057. Contar análisis no acota nada |
 | D8 | Free: 2 análisis de por vida, luego modo manual gratuito indefinido | Pre-ingresos. El modo manual es determinista y cuesta $0, así que el usuario sigue teniendo producto |
+| D9 | El Interview Prep técnico es el tier Profundo del Prep y sólo de pago | Es la pieza de mayor valor percibido y la más cara de generar. Ponerla en Free rompería el techo de $0,012 por cuenta del §7 |
+| D10 | Hasta tener pagos, el plus sólo lo usa el admin (`is_superuser`); el resto ve *coming soon* | Permite construirlo, usarlo de verdad y medir su coste real (§13) antes de ponerle precio, sin exponer gasto a usuarios que no pagan |
+| D11 | El acceso lo decide el servidor, nunca el cliente | La SPA sólo pinta lo que la API declara. Un cliente modificado no puede desbloquear una llamada de pago |
 
 ## 4. Arquitectura del flujo y su coste
 
@@ -127,13 +144,17 @@ absoluta, no un orden relativo, y no hay con qué calibrarlo.
 
 ### 4.2 Lo que sí toca un LLM
 
-Tres llamadas como máximo por par (CV, oferta), y sólo una es automática:
+Tres llamadas como máximo por par (CV, oferta) en los tiers Esencial y Completo,
+y sólo una es automática. El plus técnico (§4.4) añade las suyas, todas a
+demanda:
 
 | Llamada | Disparo | Depende de | Caché |
 |---|---|---|---|
 | Parse de la oferta | Automática al pegar | Sólo de la oferta | `sha256(texto)`, **compartida entre usuarios** |
 | CV Coach | Botón | CV + oferta | Por (CV, oferta, tier) |
 | Interview Prep | Botón | CV + oferta + gaps | Por (CV, oferta, tier) |
+| Plan técnico *(plus)* | Botón | Oferta parseada + skills del CV + gaps | Por (CV, oferta, `prompt_version`) |
+| Tema a fondo *(plus)* | Botón, por tema | Plan técnico + tema + nivel del usuario en él | Por (plan, tema, `prompt_version`) |
 
 Reabrir un resultado guardado cuesta cero. Regenerarlo cuesta créditos: si fuera
 gratis se convierte en un bucle de gasto.
@@ -171,6 +192,123 @@ empíricamente antes de fijar el esquema:
 - `task_type` = `SEMANTIC_SIMILARITY`, **el mismo en ambos lados** de toda
   comparación, o los espacios no alinean.
 
+**Verificado el 2026-10-05** (TASK-072): la API acepta 384 sin migrar nada, y a
+esa dimensión devuelve vectores de norma ≈ 0,43, así que la normalización manual
+era imprescindible.
+
+**Umbrales por modelo.** Un coseno no es un número portable. Medido con Gemini a
+384: sinónimos 0,95–0,99, skills relacionadas 0,88–0,94, sin relación
+0,74–0,80; contexto CV↔oferta alineada 0,87, rol adyacente 0,84, otra
+tecnología 0,76, otra profesión 0,68. Cada modelo lleva un `SimilarityProfile`
+(match semántico ≥ 0,95, débil ≥ 0,88; contexto reescalado entre 0,70 y 0,90) y
+un modelo sin perfil **no** activa el matching semántico. El componente
+`coseno_CV_oferta` del score de §4.1 usa ese valor reescalado, no el coseno
+crudo: en crudo, un CV sin relación con la oferta regalaría ~17 puntos. Los
+valores de contexto son provisionales hasta calibrarlos con ofertas reales en
+TASK-079. Detalle en `docs/capstone_product/matching_methodology.md`.
+
+### 4.4 Interview Prep técnico — el plus de pago
+
+El Interview Prep de Esencial y Completo responde «qué me pueden preguntar». El
+plus responde **«qué tengo que dominar para esta entrevista técnica, y cómo lo
+practico»**. Es el tier Profundo del Prep (D9), definido en §6 y construido en
+la fase C8.
+
+Ejemplo de lo que tiene que producir, para una vacante de ML junior con un CV
+que trae Python y pandas pero poco modelado:
+
+> **Tema 1 — Modelos de árboles y gradient boosting** · prioridad alta · gap
+> La oferta pide «XGBoost/LightGBM» como obligatorio y tu CV no los menciona.
+> - *Qué dominar*: cómo se construye un árbol (criterio de split, impureza),
+>   bagging vs boosting, cómo se entrena el boosting sobre los residuos, learning
+>   rate y número de árboles, regularización, early stopping.
+> - *Lo que más se pregunta*: «¿Por qué random forest reduce varianza y boosting
+>   sesgo?», «¿Cómo evitas overfitting en XGBoost?», «¿Cómo tratas variables
+>   categóricas?» — cada una con el esquema de una buena respuesta y las
+>   repreguntas habituales.
+> - *Ejercicio probable*: take-home de clasificación tabular con desbalance de
+>   clases; qué se evalúa (validación, métrica elegida, leakage) y errores
+>   típicos.
+> - *Cómo lo cuentas con tu CV*: conectar el proyecto X del CV con el tema.
+> - *Para estudiarlo*: cursos del catálogo que cubren la skill.
+
+Se genera en **dos niveles**, para que el coste siga al interés real del
+usuario y no al tamaño de la guía:
+
+1. **Plan técnico** — una llamada. Devuelve:
+   - El **formato de entrevista probable** según rol y seniority (screening,
+     live coding, take-home, system design / ML design, caso), etiquetado
+     siempre como *probable*, nunca como el proceso real de la empresa.
+   - **Entre 4 y 8 temas**, cada uno con: nombre, por qué aparece (cita el
+     requisito de la oferta del que sale), prioridad, y si para el usuario es
+     **gap**, **refuerzo** (lo tiene pero flojo) o **fortaleza a defender**. La
+     prioridad sale de `SkillGapScoringService`, no del LLM: el modelo explica
+     y desarrolla, el ranking lo pone el motor determinista.
+   - Por tema, 3–5 conceptos clave y 2 preguntas de muestra.
+2. **Tema a fondo** — una llamada por tema, a demanda. Devuelve: conceptos con
+   la explicación que se espera oír en una entrevista (cómo funciona, cómo se
+   entrena, cuándo usarlo y cuándo no, trade-offs), 6–10 preguntas típicas
+   teóricas y prácticas con esquema de respuesta y repreguntas, uno o dos
+   ejercicios prácticos probables con criterios de evaluación y errores
+   comunes, y cómo enlazar el tema con la experiencia que ya trae el CV.
+
+Reglas de contenido, que van en el prompt **y** en validación del schema:
+
+- **Sin inventar sobre la empresa.** Nada de «en Google preguntan X». Las
+  preguntas se presentan como habituales para el rol y la tecnología, no como
+  filtradas. Es el mismo principio que «sin inventar experiencia» del CV Coach.
+- **Sin enlaces generados por el modelo.** Los recursos de estudio salen del
+  catálogo de cursos que ya usa el roadmap (`learningRouteOptimizerService`),
+  emparejados por `skill_id`. Un modelo que inventa URLs es el fallo más
+  visible posible en una función de pago.
+- **Anclado a la oferta.** Cada tema cita el requisito del parse del que sale;
+  un tema sin requisito de origen se descarta en validación.
+- **Nivel ajustado al CV.** El mismo tema se explica distinto si es gap (desde
+  la base) que si es fortaleza (a nivel de repregunta difícil).
+
+### 4.5 Acceso al plus: admin ahora, Premium después, *coming soon* para el resto
+
+El acceso lo resuelve el servidor con una sola función, que es la única fuente
+de verdad (D11):
+
+```
+feature_access(user, "technical_prep") -> "available" | "coming_soon" | "upgrade_required"
+```
+
+| Situación | Resultado |
+|---|---|
+| `user.is_superuser` | `available` — siempre, en todas las fases |
+| `TECHNICAL_PREP_PUBLIC` apagado (valor por defecto) | `coming_soon` para todos los demás |
+| `TECHNICAL_PREP_PUBLIC` encendido y plan Premium | `available` |
+| `TECHNICAL_PREP_PUBLIC` encendido y plan Free | `upgrade_required` |
+
+- **Backend.** Los endpoints del plus llaman a `feature_access` **antes** de
+  `AIUsageService.reserve()` y de `aiBudgetGuard`, de modo que un usuario sin
+  acceso nunca reserva crédito ni llega al proveedor. Responden 403 con un
+  código estable (`feature_coming_soon` / `upgrade_required`), en la línea del
+  modelo de errores de [error_model.md](../error_model.md). El patrón ya existe
+  en `current_admin_user` (`adminService.py:46`) y en
+  `capstoneAnalyticsRoute.py:66`; aquí no se reutiliza tal cual porque la regla
+  dejará de ser sólo de admin.
+- **Sesión.** La sesión expone un mapa `features: {technical_prep: <estado>}`,
+  igual que hoy expone `is_superuser` (`sessionSchema.py:36`) para navegación.
+  La SPA **no** deduce el acceso de `is_superuser`: sólo pinta el estado que
+  le llega.
+- **Frontend.** Con `available`, la sección funciona. Con `coming_soon`, se ve
+  una tarjeta dentro del análisis de la vacante con el nombre del plus, una
+  descripción de lo que hará y una vista previa estática (un ejemplo genérico
+  fijo, nunca generado para el usuario), con la insignia *Coming soon* y sin
+  botón de acción. Con `upgrade_required`, la misma tarjeta lleva el CTA de
+  Premium. La tarjeta no dispara ninguna petición al backend del plus.
+- **Uso del admin.** Se registra en `ai_usage_events` con
+  `feature="technical_prep"` y `source="admin_preview"`. No consume créditos de
+  usuario, pero **sí** cuenta en el guard global: un admin no es una vía para
+  saltarse el techo diario. Esas filas son las que alimentan la medición de
+  §13.
+- **Abrirlo** es encender `TECHNICAL_PREP_PUBLIC` cuando C7 esté en producción
+  y los costes medidos cuadren con los créditos. Es configuración, no
+  despliegue.
+
 ## 5. Modelo de datos
 
 Tres tablas nuevas. **No se toca `job_postings`** (su `company_id` es
@@ -185,6 +323,7 @@ función entre postings y semillas de rol; una tercera la vuelve ilegible).
 | `parsed` | JSONB: requisitos, obligatorio vs deseable, importancia, seniority |
 | `embedding` | `Vector(384)` |
 | `model_id`, `prompt_version` | Qué produjo este parse |
+| `source` | De dónde vino el texto. Hoy sólo `pasted`; es lo que §11 necesita |
 | `created_at` | Para TTL si se decide caducarlos |
 
 Es compartida porque el parse **no depende del CV**. Por eso D4 fija su modelo:
@@ -198,6 +337,7 @@ caché perdería casi todo su acierto.
 | `user_id`, `resume_id` | Propiedad |
 | `text_hash` | → `job_description_parses` |
 | `raw_text` | El texto pegado |
+| `source` | `pasted` hoy; abre la puerta a `ats_api` sin migrar (§11) |
 | `title`, `company`, `location`, `workplace_type` | Del parse, editables |
 | `status` | `pending` / `parsing` / `ready` / `failed` |
 | `attempts`, `lease_expires_at`, `provider_attempted_at` | Patrón de `jobAnalysisModel`, copiado tal cual |
@@ -276,10 +416,13 @@ sin desplegar.
 |---|---|---|---|
 | **Esencial** | 3 bullets | 5 preguntas | 3 |
 | **Completo** | todos los bullets, qué evalúa el entrevistador, estructura de respuesta | 10 preguntas | 5 |
-| *Profundo* | *+ alternativas, respuesta modelo, contexto de empresa* | *+ repreguntas* | *45* |
+| **Profundo** *(plus, de pago)* | *+ alternativas, respuesta modelo* — no se construye aún | **Interview Prep técnico** (§4.4): plan técnico + temas a fondo | ver §7 |
 
-Profundo queda **definido pero no construido** (§10). Añadirlo después es
-configuración.
+Del tier Profundo se construye **sólo el lado Prep**, como Interview Prep
+técnico (fase C8), con acceso restringido al admin hasta que haya pagos (§4.5).
+El lado Coach de Profundo sigue **definido pero no construido** (§10). El
+«contexto de empresa» que figuraba aquí se retira: sin descubrimiento ni fuente
+verificable, sería contenido inventado sobre una empresa real.
 
 Los tiers difieren en **qué generan**, no sólo en qué modelo corre por detrás.
 Si sólo cambiara el modelo, llamar «Profundo» a uno insinuaría que hace más
@@ -332,8 +475,17 @@ tres.
 | Coach + Prep, Completo | 4 |
 | Análisis completo, Esencial | **3** |
 | Análisis completo, Completo | **5** |
+| Plan técnico *(plus)* | **10** *(estimado)* |
+| Tema a fondo *(plus)*, por tema | **15** *(estimado)* |
 
 El parse consume crédito para que nadie pegue 500 ofertas sin tocar el resto.
+
+Una guía técnica completa típica (plan + 5 temas) son ~85 créditos, ≈ $0,17:
+cabe holgada en los 1.000 créditos/mes de Premium y no cambia su coste máximo,
+que sigue acotado por la cuota. Los dos valores del plus son **estimaciones**
+hasta que el uso del admin dé cifras reales (§13). Cada llamada lleva su propio
+`max_output_tokens` (Cerco 1): el tema a fondo es la salida más larga de todo
+el producto y la que más necesita el tope.
 
 `AIUsageService.reserve()` ya tiene el ciclo de reserva; sólo tiene que reservar
 **N unidades en vez de 1**. `ensure_llm_attempt_allowed(attempts=N)` ya acepta
@@ -350,12 +502,14 @@ y el techo deja de significar nada. Pasa a contar **créditos**.
 | | Free | Premium ($9,99/mes) |
 |---|---|---|
 | Tiers | Esencial | Esencial y Completo |
+| Interview Prep técnico | *Coming soon* → luego CTA de Premium | **Sí** (cuando se abra, §4.5) |
 | Cuota | **2 análisis de por vida** | 1.000 créditos/mes |
 | Al agotarse | **Modo manual, gratis, indefinido** | Renueva |
-| Coste máximo para nosotros | **$0,006** | **$2,00** |
+| Coste máximo para nosotros | **$0,012** (2 análisis × 3 créditos × $0,002) | **$2,00** |
 | Margen bruto | — | 80% |
 
-Exposición total con 10.000 usuarios gratuitos: **$62 de por vida**.
+Exposición total con 10.000 usuarios gratuitos: **$120 de por vida** en LLM, más
+los ~$12 de embeddings de D2.
 
 ### La cuota de por vida se cuenta en el ledger, no en Redis
 
@@ -407,11 +561,16 @@ secuencia: hay producto en la calle antes de la primera llamada de pago.
 | **C5** | Interview Prep | 1 llamada/click | Sí |
 | **C6** | Tracker de candidaturas y analíticas | $0 | Sí |
 | **C7** | Planes, pasarela de pago, gates de tier | $0 | Sí |
+| **C8** | Interview Prep técnico (plus): acceso por `feature_access`, plan técnico, temas a fondo, tarjeta *coming soon* | 1 llamada/plan + 1/tema, sólo admin | Sí, como *coming soon*; uso real sólo admin |
 
 **Condición de salida obligatoria de C2**, que bloquea todo lo posterior:
 ninguna feature de C3 en adelante llega a usuarios hasta que estén vivos el
 límite de 2 de por vida contado sobre el ledger, `REQUIRE_VERIFIED_FOR_AI=1` y
 los tres cercos del §7.
+
+**C8 no espera a C7.** Depende de C5 (reutiliza el Prep y su schema) y de C2
+(capa de proveedor y cercos), pero no de los pagos: mientras sólo lo use el
+admin no hay nada que cobrar. Lo que sí espera a C7 es **abrirlo** (TASK-102).
 
 ## 9. Tareas
 
@@ -424,7 +583,7 @@ TASK-072; el último ocupado es TASK-071.
 | TASK-073 | Corregir `semantic_matching_ready` y `get_effective_model_name` para proveedores no locales | C0 | TASK-072 |
 | TASK-074 | Tabla `skill_embeddings`, generación por lotes y backfill del catálogo | C0 | TASK-072 |
 | TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | C0 | TASK-074 |
-| TASK-076 | Alerta sobre `fallback_to_hash_count` y `local_failure_count` | C0 | TASK-073 |
+| TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | C0 | TASK-073 |
 | TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | C1 | — |
 | TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | C1 | TASK-077 |
 | TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | C1 | TASK-077, TASK-075 |
@@ -445,12 +604,25 @@ TASK-072; el último ocupado es TASK-071.
 | TASK-094 | Analíticas personales de candidatura | C6 | TASK-093 |
 | TASK-095 | Planes, gates de tier y pasarela de pago | C7 | TASK-085 |
 | TASK-096 | Activar gate de verificación y blocklist de dominios desechables | C7 | TASK-086 |
+| TASK-097 | `feature_access` server-side, flag `TECHNICAL_PREP_PUBLIC`, mapa `features` en la sesión y 403 con código estable | C8 | — |
+| TASK-098 | Plan técnico: schema, prompt, validación (tema anclado a requisito, sin URLs) y caché por (CV, oferta, `prompt_version`) | C8 | TASK-092, TASK-097, TASK-087 |
+| TASK-099 | Tema a fondo por tema, a demanda, con `max_output_tokens` propio | C8 | TASK-098 |
+| TASK-100 | Recursos de estudio por tema desde el catálogo de cursos, emparejados por `skill_id` | C8 | TASK-098, TASK-080 |
+| TASK-101 | UI React del plus: guía navegable por tema y tarjeta *coming soon* / *upgrade* según `features` | C8 | TASK-097, TASK-081 |
+| TASK-102 | Abrir el plus a Premium: encender `TECHNICAL_PREP_PUBLIC`, fijar créditos con costes medidos | C7 | TASK-095, TASK-099 |
 
 ## 10. Qué queda fuera, deliberadamente
 
 - **Descubrimiento de vacantes en cualquier forma.** Ni scraping de LinkedIn, ni
   APIs de agregadores, ni lectura de career pages. §11 explica el camino.
-- **Tier Profundo.** Definido en §6, no construido. Es configuración.
+- **Lado Coach del tier Profundo.** Definido en §6, no construido. Del tier
+  Profundo sólo se construye el Interview Prep técnico (C8).
+- **Contexto de empresa** y cualquier afirmación sobre el proceso real de una
+  empresa concreta. El plus técnico habla de lo habitual para el rol y la
+  tecnología, no de lo que «pregunta» una empresa.
+- **Simulador de entrevista interactivo** (chat de mock interview con
+  corrección de respuestas). Es la evolución natural del plus, pero multiplica
+  llamadas por sesión y necesita su propio diseño de coste.
 - **Entrada por URL o por fichero.** Sólo texto pegado. Es lo que el usuario
   tiene delante en la otra pestaña, y no añade infraestructura ni riesgo de
   bloqueo.
@@ -479,8 +651,10 @@ es lo que hace el §5.
 | Omisiones silenciosas por catálogo pobre | TASK-082 lo siembra desde ESCO/O\*NET y TASK-090 lo hace crecer con el uso |
 | Un modelo se retira a mitad de trimestre | El mapeo tier→modelo es configuración y el usuario nunca vio el nombre (D5, D6) |
 | Un fallo de coste se come el presupuesto | Tres cercos independientes (§7). El global ya existe y fallará cerrado |
-| Granja de cuentas contra el tier gratuito | Verificación de email, límite por IP, blocklist y Google OAuth. Exposición acotada en $0,006 por cuenta |
+| Granja de cuentas contra el tier gratuito | Verificación de email, límite por IP, blocklist y Google OAuth. Exposición acotada en $0,012 por cuenta |
 | El porcentaje transmite una precisión que no tenemos | Nunca se muestra desnudo: banda y desglose obligatorios (§4.1) |
+| El plus técnico inventa preguntas «de la empresa», URLs o contenido técnico incorrecto | Reglas de contenido del §4.4 en prompt y en validación; recursos sólo del catálogo; el uso del admin en C8 sirve de revisión manual antes de abrirlo |
+| El plus se filtra a usuarios sin acceso | `feature_access` en servidor antes de reservar crédito (§4.5); la tarjeta *coming soon* no llama al backend del plus; test de 403 para usuario no admin |
 
 ## 13. Números a validar antes de fijar precios
 
@@ -488,6 +662,12 @@ Las estimaciones de tokens por llamada (~2k de entrada en el parse, ~4,6k en el
 coach, ~5,5k en el prep) son estimadas, no medidas. Hay que medirlas con 20 ofertas
 reales en cuanto C3 funcione y reajustar el valor del crédito. La estructura de
 §7 no cambia; sólo su constante.
+
+Lo mismo vale para el plus técnico, con una ventaja: durante C8 el admin es su
+único usuario, y cada llamada queda en `ai_usage_events` con
+`source="admin_preview"` y su `model_id` real. Antes de TASK-102 se calculan
+sobre esas filas el coste medio y el p95 del plan técnico y del tema a fondo, y
+se fijan sus créditos definitivos (hoy 10 y 15, estimados).
 
 Los precios de proveedor usados en este plan proceden de agregadores públicos
 consultados el 2026-09-20, no de las páginas oficiales. Contrastar contra

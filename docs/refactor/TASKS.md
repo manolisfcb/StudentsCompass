@@ -58,16 +58,14 @@ IDs estables: nunca renumerar/reutilizar; nueva tarea usa el siguiente ID libre.
 
 ## Plan 11 — Career Lab como copiloto de candidatura
 
-TASK-072 a TASK-098 ejecutan [11_CAREER_INTELLIGENCE_PLAN.md](11_CAREER_INTELLIGENCE_PLAN.md), una vertical nueva sobre la arquitectura del plan 08. Sus fases son **PHASE-C0 a PHASE-C8** y corresponden a las C0–C8 de §8 de ese plan. Se numeran aparte de PHASE-0…6 y PHASE-M0…M5.
-
-TASK-072 a TASK-096 son las de §9 del plan. **TASK-097 y TASK-098 se añaden aquí** porque §4.4 y §4.5 del plan definen el Interview Prep técnico y su gate de acceso (D9–D11) y los sitúan en una fase C8 que §8 y §9 no llegaron a listar.
+TASK-072 a TASK-102 ejecutan [11_CAREER_INTELLIGENCE_PLAN.md](11_CAREER_INTELLIGENCE_PLAN.md), una vertical nueva sobre la arquitectura del plan 08, y son exactamente las de su §9. Sus fases son **PHASE-C0 a PHASE-C8** y corresponden a las C0–C8 de §8 de ese plan. Se numeran aparte de PHASE-0…6 y PHASE-M0…M5. TASK-102 es de PHASE-C7 aunque cierra el plus de C8: abrirlo espera a los pagos, construirlo no.
 
 Dos correcciones al plan que las fichas recogen, medidas el 2026-10-05 contra la API real (ver Completion Notes de TASK-072):
 
 - **Los umbrales de similitud dependen del modelo.** `SEMANTIC_MATCH_THRESHOLD = 0.72` y `WEAK_MATCH_THRESHOLD = 0.48` se calibraron para MiniLM. Con `gemini-embedding-001` a 384 dimensiones dos skills sin relación dan coseno 0,74–0,80: con los umbrales actuales **todo** candidato sería un match semántico. TASK-073 no puede declarar el matching listo sin un perfil de umbrales por modelo.
 - **La línea base de §2 ya no es la del commit que cita.** `e6ec0b4` retiró el proveedor local: hoy `semantic_matching_ready` vale `False` fijo y `get_effective_model_name()` devuelve `hash-v1` siempre. El defecto que describe §2 sigue existiendo; las líneas citadas no.
 
-**READY al adoptar el plan 11 (2026-10-05): TASK-072, TASK-077, TASK-082 y TASK-083.** La condición de salida de C2 (§8 del plan) es funcional, no sólo de dependencias: ninguna tarea de C3 en adelante llega a usuarios sin TASK-086 en producción, `REQUIRE_VERIFIED_FOR_AI=1` y los tres cercos de §7. Por eso TASK-089 depende de TASK-086.
+**READY al adoptar el plan 11 (2026-10-05): TASK-072, TASK-077, TASK-082, TASK-083 y TASK-097.** La condición de salida de C2 (§8 del plan) es una puerta de **despliegue**, no una dependencia de código: una tarea de C3 en adelante puede construirse, pero no llega a usuarios sin TASK-086 en producción, `REQUIRE_VERIFIED_FOR_AI=1` y los tres cercos de §7.
 
 ## Concurrencia e integración
 
@@ -173,7 +171,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-086 | Cuota de por vida contada sobre el ledger durable | CRITICAL | PHASE-C2 | TODO | TASK-085 | TASK-087, TASK-088 |
 | TASK-087 | `max_output_tokens` y caps de entrada por tarea | HIGH | PHASE-C2 | TODO | TASK-083 | TASK-084, TASK-085 |
 | TASK-088 | Cerrar las cinco fugas de nombre de modelo hacia el cliente | HIGH | PHASE-C2 | TODO | TASK-084 | TASK-085, TASK-086 |
-| TASK-089 | Parse de oferta por LLM con caché compartida por hash | HIGH | PHASE-C3 | TODO | TASK-077, TASK-083, TASK-086 | NONE |
+| TASK-089 | Parse de oferta por LLM con caché compartida por hash | HIGH | PHASE-C3 | TODO | TASK-077, TASK-083 | NONE |
 | TASK-090 | Auto-registro de skills no catalogadas con estado revisable | MEDIUM | PHASE-C3 | TODO | TASK-074, TASK-089 | TASK-091, TASK-092 |
 | TASK-091 | CV Coach | HIGH | PHASE-C4 | TODO | TASK-089 | TASK-090, TASK-092 |
 | TASK-092 | Interview Prep | HIGH | PHASE-C5 | TODO | TASK-089 | TASK-090, TASK-091 |
@@ -181,8 +179,12 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-094 | Analíticas personales de candidatura | LOW | PHASE-C6 | TODO | TASK-093 | NONE |
 | TASK-095 | Planes, gates de tier y pasarela de pago | HIGH | PHASE-C7 | TODO | TASK-085 | TASK-096 |
 | TASK-096 | Activar gate de verificación y blocklist de dominios desechables | HIGH | PHASE-C7 | TODO | TASK-086 | TASK-095 |
-| TASK-097 | `feature_access` server-side, mapa `features` en la sesión y tarjeta *coming soon* | HIGH | PHASE-C8 | TODO | TASK-081 | TASK-089 |
-| TASK-098 | Interview Prep técnico: Plan técnico y Tema a fondo (sólo admin hasta C7) | MEDIUM | PHASE-C8 | TODO | TASK-085, TASK-089, TASK-097 | TASK-091, TASK-092 |
+| TASK-097 | `feature_access` server-side, flag `TECHNICAL_PREP_PUBLIC`, mapa `features` en la sesión y 403 con código estable | HIGH | PHASE-C8 | TODO | NONE | TASK-072, TASK-077, TASK-082, TASK-083 |
+| TASK-098 | Plan técnico: schema, prompt, validación (tema anclado a requisito, sin URLs) y caché por (CV, oferta, `prompt_version`) | MEDIUM | PHASE-C8 | TODO | TASK-087, TASK-092, TASK-097 | TASK-093 |
+| TASK-099 | Tema a fondo por tema, a demanda, con `max_output_tokens` propio | MEDIUM | PHASE-C8 | TODO | TASK-098 | TASK-100 |
+| TASK-100 | Recursos de estudio por tema desde el catálogo de cursos, emparejados por `skill_id` | MEDIUM | PHASE-C8 | TODO | TASK-080, TASK-098 | TASK-099 |
+| TASK-101 | UI React del plus: guía navegable por tema y tarjeta *coming soon* / *upgrade* según `features` | MEDIUM | PHASE-C8 | TODO | TASK-081, TASK-097 | TASK-098 |
+| TASK-102 | Abrir el plus a Premium: encender `TECHNICAL_PREP_PUBLIC`, fijar créditos con costes medidos | MEDIUM | PHASE-C7 | TODO | TASK-095, TASK-099 | NONE |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
