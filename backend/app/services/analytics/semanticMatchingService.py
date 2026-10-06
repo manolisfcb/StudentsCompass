@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Awaitable, Callable
+from typing import TYPE_CHECKING, Awaitable, Callable
 
 import numpy as np
 
@@ -14,6 +14,9 @@ from app.services.analytics.embeddingService import (
     get_embedding_status,
     get_similarity_profile,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 EmbeddingFn = Callable[[str], Awaitable[list[float] | None]]
@@ -70,8 +73,13 @@ class SemanticMatchingService:
         embedding_fn: EmbeddingFn = generate_embedding_in_active_space,
         semantic_ready_override: bool | None = None,
         profile: SimilarityProfile | None = None,
+        session: "AsyncSession | None" = None,
     ):
         self.embedding_fn = embedding_fn
+        # With a session, catalog skill vectors come from ``skill_embeddings``:
+        # one SELECT per analysis, and a provider call only for a skill that has
+        # never been embedded. Without one, each skill text is embedded here.
+        self.session = session
         self.semantic_ready_override = semantic_ready_override
         # Only the default embedder is safe to share across requests in a
         # process-wide cache. Injected functions (tests, custom callers) use a
@@ -109,15 +117,20 @@ class SemanticMatchingService:
         ]
         semantic_ready = self._semantic_ready()
 
-        # Embed each candidate skill once up front instead of recomputing its
-        # embedding for every required skill (was an N x M embedding blow-up),
-        # then stack them into a single normalized matrix so each required skill
-        # is matched with one vectorized matrix-vector product instead of an
-        # inner Python loop of pairwise cosine calls.
+        # Fetch every vector the analysis needs in one go — candidates and the
+        # required skills that are not exact matches — then stack the candidates
+        # into a single normalized matrix so each required skill is matched with
+        # one vectorized matrix-vector product instead of pairwise cosine calls.
         candidate_pairs: list[tuple[dict, list[float]]] = []
+        vectors: dict[str, list[float]] = {}
         if semantic_ready and available_semantic_candidates:
+            pending_required = [
+                required for required in required_skills
+                if required["skill_id"] not in exact_current_by_id
+            ]
+            vectors = await self._skill_vectors(available_semantic_candidates + pending_required)
             for candidate in available_semantic_candidates:
-                embedding = await self._embed_cached(self._skill_text(candidate))
+                embedding = vectors.get(str(candidate["skill_id"]))
                 if embedding:
                     candidate_pairs.append((candidate, embedding))
 
@@ -134,8 +147,9 @@ class SemanticMatchingService:
                 continue
 
             semantic_match = None
-            if semantic_ready and candidate_matrix is not None:
-                semantic_match = await self._best_semantic_match(required, candidate_matrix, candidate_skills)
+            required_embedding = vectors.get(str(required["skill_id"]))
+            if candidate_matrix is not None and required_embedding:
+                semantic_match = self._best_semantic_match(required_embedding, candidate_matrix, candidate_skills)
 
             if semantic_match and semantic_match["similarity_score"] >= self.profile.semantic_match:
                 score = importance * semantic_match["similarity_score"] * 0.82
@@ -236,16 +250,35 @@ class SemanticMatchingService:
             message=message,
         )
 
-    async def _best_semantic_match(
+    async def _skill_vectors(self, skills: list[dict]) -> dict[str, list[float]]:
+        """Vectors of ``skills``, keyed by ``str(skill_id)``.
+
+        The default embedder with a session reads the catalog's stored vectors
+        (``SkillEmbeddingService``). Anything else embeds each skill's text here,
+        evidence included, as the matcher always did.
+        """
+        if self.session is not None and self._use_shared_cache:
+            from app.services.analytics.skillEmbeddingService import SkillEmbeddingService
+
+            stored = await SkillEmbeddingService(self.session).get_vectors(skills)
+            return {str(skill_id): vector for skill_id, vector in stored.items()}
+
+        vectors: dict[str, list[float]] = {}
+        for skill in skills:
+            key = str(skill["skill_id"])
+            if key in vectors:
+                continue
+            embedding = await self._embed_cached(self._skill_text(skill))
+            if embedding:
+                vectors[key] = embedding
+        return vectors
+
+    def _best_semantic_match(
         self,
-        required_skill: dict,
+        required_embedding: list[float],
         candidate_matrix: np.ndarray,
         candidate_skills: list[dict],
     ) -> dict | None:
-        required_embedding = await self._embed_cached(self._skill_text(required_skill))
-        if not required_embedding:
-            return None
-
         vector = np.asarray(required_embedding, dtype=np.float64)
         if vector.shape[0] != candidate_matrix.shape[1]:
             return None

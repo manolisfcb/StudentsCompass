@@ -49,10 +49,21 @@ whose vectors carry meaning and can be called, and a calibrated
   fails. A fallback vector is never compared against a Gemini one: the matcher
   treats it as "no vector". Ready when the key is set.
 
-The service builds short text representations of each skill using display name,
-normalized name, category, and evidence text when present. It embeds the
-required skill and candidate current skills, then compares them with cosine
-similarity.
+Each catalog skill is embedded **once** from its display name, normalized name
+and category, and stored in `skill_embeddings` per model, with the same
+fingerprint versioning as `resume_embeddings`. The gap analysis reads every
+vector it needs in one SELECT; a skill that has never been embedded costs one
+batched provider call, after which it is stored. Over an embedded catalog an
+analysis makes **no** embedding call. Fill or refresh the table with
+`scripts/sync_skill_embeddings.py` after seeding the catalog or changing the
+provider (117 seed skills: two requests, under two seconds; a second run makes
+no call).
+
+Per-occurrence evidence text is left out of the vector: it differs per CV and
+posting, so it would make the vector uncacheable, and the seed catalog's
+templated evidence ("X is part of the Data Analyst seed profile") pulled every
+seed skill towards the same point. Callers that inject their own embedding
+function still embed the full text, evidence included.
 
 Thresholds depend on the model, because each model spreads its cosines over
 its own range:

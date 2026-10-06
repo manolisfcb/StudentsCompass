@@ -200,6 +200,21 @@ def create_schema(connection) -> None:
     sa.UniqueConstraint('normalized_name', name='uq_skills_normalized_name')
     )
     op.create_index('ix_skills_category', 'skills', ['category'], unique=False)
+    op.create_table('skill_embeddings',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('skill_id', sa.UUID(), nullable=False),
+    sa.Column('model_name', sa.String(length=120), nullable=False),
+    sa.Column('dims', sa.Integer(), nullable=False),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=384), nullable=False),
+    sa.Column('text_fingerprint', sa.String(length=64), nullable=False),
+    sa.Column('fingerprint_version', sa.String(length=16), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['skill_id'], ['skills.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_skill_embeddings_embedding_hnsw', 'skill_embeddings', ['embedding'], unique=False, postgresql_using='hnsw', postgresql_with={'m': '16', 'ef_construction': '64'}, postgresql_ops={'embedding': 'vector_cosine_ops'})
+    op.create_index('uq_skill_embeddings_skill_model', 'skill_embeddings', ['skill_id', 'model_name'], unique=True)
     op.create_table('storage_deletion_intents',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('storage_location_id', sa.String(length=255), nullable=False),

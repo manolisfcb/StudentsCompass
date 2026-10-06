@@ -61,6 +61,7 @@ from app.models.roadmapModel import (
     UserStageProgressModel,
     UserTaskProgressModel,
 )
+from app.models.skillEmbeddingModel import SkillEmbedding
 from app.models.storageDeletionIntentModel import StorageDeletionIntentModel
 from app.models.taskOutboxModel import TaskOutboxModel
 from app.models.skillModel import (
@@ -115,6 +116,7 @@ ALL_MODELS = (
     RoadmapModel,
     RoadmapStageModel,
     SkillAliasModel,
+    SkillEmbedding,
     SkillModel,
     StageProjectModel,
     StageTaskModel,

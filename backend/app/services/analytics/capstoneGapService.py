@@ -84,7 +84,7 @@ class CapstoneGapService:
         )
         requirements_source = required_skills[0]["source_type"] if required_skills else "none"
 
-        semantic_service = SemanticMatchingService()
+        semantic_service = SemanticMatchingService(session=self.session)
         match_summary = await semantic_service.analyze_required_skill_matches(
             current_skills=current_skills,
             required_skills=required_skills,

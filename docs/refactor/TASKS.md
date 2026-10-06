@@ -156,8 +156,8 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-071 | Aislar el bucle de eventos que rompe el transporte por defecto del outbox | LOW | PHASE-0 | TODO | TASK-054 | TASK-064, TASK-070 |
 | TASK-072 | Proveedor de embeddings por API con dimensión 384 y normalización L2 | HIGH | PHASE-C0 | COMPLETED | NONE | TASK-077, TASK-082, TASK-083 |
 | TASK-073 | Corregir `semantic_matching_ready` y `get_effective_model_name` para proveedores no locales | HIGH | PHASE-C0 | COMPLETED | TASK-072 | TASK-077, TASK-082, TASK-083 |
-| TASK-074 | Tabla `skill_embeddings`, generación por lotes y backfill del catálogo | HIGH | PHASE-C0 | TODO | TASK-072 | TASK-073, TASK-077 |
-| TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | HIGH | PHASE-C0 | TODO | TASK-073, TASK-074 | TASK-077 |
+| TASK-074 | Tabla `skill_embeddings`, generación por lotes y backfill del catálogo | HIGH | PHASE-C0 | COMPLETED | TASK-072 | TASK-073, TASK-077 |
+| TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | HIGH | PHASE-C0 | COMPLETED | TASK-073, TASK-074 | TASK-077 |
 | TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | MEDIUM | PHASE-C0 | TODO | TASK-073 | TASK-074, TASK-075 |
 | TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | TODO | NONE | TASK-072, TASK-082, TASK-083 |
 | TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | TODO | TASK-077 | TASK-082 |
@@ -14268,7 +14268,7 @@ es exactamente lo que resuelven TASK-074 y TASK-075, y la razón para no encende
 
 ## TASK-074 — Tabla `skill_embeddings`, generación por lotes y backfill del catálogo
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-C0
 Category: Database / Performance
@@ -14306,17 +14306,49 @@ Can run in parallel with: TASK-073, TASK-077
 
 ### Acceptance Criteria
 
-- [ ] Backfill dos veces seguidas: la segunda no llama al proveedor.
-- [ ] Migración upgrade/downgrade probada en la lane PostgreSQL.
-- [ ] Relevant tests pass.
+- [x] Backfill dos veces seguidas: la segunda no llama al proveedor.
+- [x] Migración upgrade/downgrade probada en la lane PostgreSQL.
+- [x] Relevant tests pass.
 
 ### Completion Notes
 
-_Pendiente._
+**2026-10-05 — cerrada.**
+
+- **Tabla** `skill_embeddings` (`app/models/skillEmbeddingModel.py`): `skill_id`
+  FK con `ON DELETE CASCADE`, `model_name`, `dims`, `embedding Vector(384) NOT
+  NULL`, `text_fingerprint` y `fingerprint_version` **NOT NULL** (a diferencia de
+  `resume_embeddings`, no hay filas heredadas sin procedencia que tolerar), único
+  `uq_skill_embeddings_skill_model` y HNSW coseno.
+- **Migración** `d3e8a1f5c702` (sobre `b8f3c05a71d4`): sólo aditiva, rejugable,
+  sin backfill — los vectores cuestan una llamada y no se generan durante un
+  despliegue. El downgrade sólo pierde datos regenerables. DDL añadido también al
+  baseline (`app/db_baseline.py`) para que una base vacía siga verificando contra
+  los modelos.
+- **Servicio** `SkillEmbeddingService`: `get_vectors(skills)` lee todos los
+  vectores en un SELECT, embebe los que faltan en lotes de 100 y los guarda con
+  upsert atómico sobre `(skill_id, model_name)`; si el proveedor cae a hash no
+  guarda ni devuelve nada. `sync_catalog()` es el backfill idempotente.
+- **Texto embebido**: nombre, nombre normalizado y categoría. **Sin evidencia**:
+  varía por CV y oferta (vector no cacheable), y la del catálogo semilla es una
+  plantilla («X is part of the Data Analyst seed profile») que acercaba todas
+  las skills semilla entre sí.
+- **Script** `backend/scripts/sync_skill_embeddings.py`.
+
+**Validación.** `tests/test_skill_embeddings.py` (8 casos de esta ficha) en la
+lane rápida. `tests/integration/test_skill_embeddings_pg.py` en PostgreSQL real:
+la revisión construye lo que declaran los modelos (`compare_metadata` vacío),
+deja el único y el HNSW `vector_cosine_ops`, es rejugable y su downgrade la
+deshace; el baseline concuerda con los modelos; dos sesiones embebiendo a la vez
+la misma skill nueva dejan **una** fila; la búsqueda del vecino más cercano corre
+sobre pgvector. Lane PostgreSQL completa **137 passed** (133 antes) y
+`check_integration_lane_consistency.sh` OK. Real contra la API sobre la base de
+la lane: las **117 skills semilla en 1,85 s (2 peticiones)**; la segunda pasada,
+0,04 s y cero llamadas.
+
 
 ## TASK-075 — Leer vectores de skill desde base de datos en `SemanticMatchingService`
 
-Status: TODO
+Status: COMPLETED
 Priority: HIGH
 Phase: PHASE-C0
 Category: Performance
@@ -14345,13 +14377,32 @@ Can run in parallel with: TASK-077
 
 ### Acceptance Criteria
 
-- [ ] Gap analysis con catálogo ya embebido: cero llamadas al proveedor.
-- [ ] Mismo resultado que con el embebido en caliente.
-- [ ] Relevant tests pass.
+- [x] Gap analysis con catálogo ya embebido: cero llamadas al proveedor.
+- [x] Mismo resultado que con el embebido en caliente.
+- [x] Relevant tests pass.
 
 ### Completion Notes
 
-_Pendiente._
+**2026-10-05 — cerrada.** `SemanticMatchingService(session=...)` lee los vectores
+de skill de `skill_embeddings`; `capstoneGapService` le pasa su sesión.
+
+- Todos los vectores del análisis (candidatas y requeridas no exactas) se piden
+  en **una** llamada a `SkillEmbeddingService.get_vectors`: un SELECT, y un lote
+  al proveedor sólo para skills nunca embebidas.
+- Sin sesión, o con un embebedor inyectado, el comportamiento es el de siempre
+  (texto con evidencia, embebido en el momento). Los tests existentes no cambian.
+- La LRU en proceso sigue existiendo para el camino sin sesión, pero ya no es lo
+  que protege del coste.
+
+**Validación.** Tres casos en `tests/test_skill_embeddings.py`: con el catálogo
+embebido el análisis hace **cero** llamadas; cuatro skills nunca embebidas
+cuestan **una** petición y la siguiente vez ninguna; el resultado con vectores
+guardados es idéntico al de embeber en el momento. Real sobre la base de la lane
+con el catálogo semilla: análisis 15×15 en **8 ms, cero llamadas** (la sonda de
+TASK-073 hacía 8 llamadas HTTPS en serie para 4×4). Weak matches del ejemplo:
+Project Management←Agile 0,925, Process Mapping←Business Analysis 0,902. Lane
+rápida **854 passed, 133 skipped**; PostgreSQL **137 passed**; `ruff` limpio.
+
 
 ## TASK-076 — Alerta sobre `fallback_to_hash_count` y `provider_failure_count`
 
