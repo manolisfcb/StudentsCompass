@@ -191,10 +191,12 @@ async def test_the_same_unrelated_cosine_would_have_matched_under_legacy_thresho
 @pytest.mark.parametrize(
     ("cosine", "level", "score"),
     [
-        (0.87, "strong", 0.85),  # measured: data analyst CV vs data analyst posting
-        (0.84, "moderate", 0.70),  # measured: same CV vs junior data scientist
-        (0.76, "weak", 0.30),  # measured: same CV vs frontend engineer
-        (0.68, "weak", 0.0),  # measured: same CV vs registered nurse
+        # Percentiles measured on 168 real CV × posting pairs (TASK-079).
+        (0.794, "strong", 0.94),  # aligned p90
+        (0.768, "strong", 0.68),  # aligned median
+        (0.728, "moderate", 0.28),  # adjacent median
+        (0.708, "weak", 0.08),  # unrelated median
+        (0.68, "weak", 0.0),  # below the unrelated median
     ],
 )
 async def test_context_is_banded_raw_and_reported_rescaled(cosine, level, score):

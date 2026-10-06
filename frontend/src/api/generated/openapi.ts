@@ -1068,6 +1068,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career-lab/job-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Job Targets
+         * @description The caller's own job targets, newest first.
+         */
+        get: operations["career_lab_list_job_targets"];
+        put?: never;
+        /**
+         * Create Job Target
+         * @description Paste a job description and get its analysis against one of your CVs.
+         *
+         *     The analysis runs in the request and the answer carries it: score, band,
+         *     breakdown, strengths and prioritised gaps. A target whose analysis failed is
+         *     still created, with ``status: failed`` and a reason, so nothing the user
+         *     pasted is lost.
+         *
+         *     Retry-safe under ``Idempotency-Key``: a lost response retried does not file
+         *     the same vacancy twice.
+         */
+        post: operations["career_lab_create_job_target"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career-lab/job-targets/{target_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job Target
+         * @description One of the caller's job targets with its stored analysis. Reopening is free.
+         */
+        get: operations["career_lab_get_job_target"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/communities": {
         parameters: {
             query?: never;
@@ -4664,6 +4716,42 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** JobMatchAnalysisRead */
+        JobMatchAnalysisRead: {
+            /** Analysis Version */
+            analysis_version: string;
+            /** Band */
+            band: ("strong_match" | "match" | "weak_match") | null;
+            components: components["schemas"]["MatchComponentsRead"];
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
+            context: components["schemas"]["MatchContextRead"];
+            /** Gaps */
+            gaps: components["schemas"]["MatchGapRead"][];
+            gate: components["schemas"]["MatchGateRead"];
+            /** Parse Version */
+            parse_version: string;
+            requirements: components["schemas"]["MatchRequirementsRead"];
+            /**
+             * Resume Id
+             * Format: uuid
+             */
+            resume_id: string;
+            /** Score */
+            score: number | null;
+            /** Semantic Matching Ready */
+            semantic_matching_ready: boolean;
+            seniority: components["schemas"]["MatchSeniorityRead"];
+            /** Strengths */
+            strengths: components["schemas"]["MatchStrengthRead"][];
+            /** Title */
+            title?: string | null;
+            /** Workplace Type */
+            workplace_type?: ("onsite" | "hybrid" | "remote") | null;
+        };
         /** JobPostingRead */
         JobPostingRead: {
             /** Application Url */
@@ -4847,6 +4935,122 @@ export interface components {
             /** Summary */
             summary?: string | null;
         };
+        /**
+         * JobTargetCreate
+         * @description A job description the user pasted, and the CV to read it against.
+         */
+        JobTargetCreate: {
+            /**
+             * Resume Id
+             * Format: uuid
+             */
+            resume_id: string;
+            /** Text */
+            text: string;
+        };
+        /**
+         * JobTargetPageRead
+         * @description One bounded page of the user's job targets, newest first.
+         */
+        JobTargetPageRead: {
+            /**
+             * Has More
+             * @default false
+             */
+            has_more: boolean;
+            /** Items */
+            items: components["schemas"]["JobTargetSummaryRead"][];
+            /** Limit */
+            limit: number;
+            /** Next Cursor */
+            next_cursor?: string | null;
+        };
+        /** JobTargetRead */
+        JobTargetRead: {
+            analysis?: components["schemas"]["JobMatchAnalysisRead"] | null;
+            /** Band */
+            band?: ("strong_match" | "match" | "weak_match") | null;
+            /** Company */
+            company: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Location */
+            location: string | null;
+            /** Raw Text */
+            raw_text: string;
+            /** Resume Id */
+            resume_id: string | null;
+            /** Score */
+            score?: number | null;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "parsing" | "ready" | "failed";
+            /** Title */
+            title: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Workplace Type */
+            workplace_type: ("onsite" | "hybrid" | "remote") | null;
+        };
+        /**
+         * JobTargetSummaryRead
+         * @description A row of the user's list: no pasted text, the headline numbers only.
+         */
+        JobTargetSummaryRead: {
+            /** Band */
+            band?: ("strong_match" | "match" | "weak_match") | null;
+            /** Company */
+            company: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Location */
+            location: string | null;
+            /** Resume Id */
+            resume_id: string | null;
+            /** Score */
+            score?: number | null;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "parsing" | "ready" | "failed";
+            /** Title */
+            title: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Workplace Type */
+            workplace_type: ("onsite" | "hybrid" | "remote") | null;
+        };
         /** KeywordsResponse */
         KeywordsResponse: {
             /** Cv Filename */
@@ -4857,6 +5061,105 @@ export interface components {
             keywords: string;
             /** Summary */
             summary?: string | null;
+        };
+        /** MatchComponentRead */
+        MatchComponentRead: {
+            /** Available */
+            available: boolean;
+            /** Effective Weight */
+            effective_weight: number;
+            /** Value */
+            value: number | null;
+            /** Weight */
+            weight: number;
+        };
+        /** MatchComponentsRead */
+        MatchComponentsRead: {
+            context: components["schemas"]["MatchComponentRead"];
+            seniority: components["schemas"]["MatchComponentRead"];
+            skills: components["schemas"]["MatchComponentRead"];
+            title: components["schemas"]["MatchComponentRead"];
+        };
+        /** MatchContextRead */
+        MatchContextRead: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "strong" | "moderate" | "weak" | "unavailable";
+            /** Message */
+            message?: string | null;
+            /** Value */
+            value: number | null;
+        };
+        /** MatchGapRead */
+        MatchGapRead: {
+            /** Closest Skill */
+            closest_skill?: string | null;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "gap" | "reinforce";
+            /** Priority Rank */
+            priority_rank: number;
+            /** Reason */
+            reason: string;
+            /** Requirement */
+            requirement?: ("required" | "preferred") | null;
+            /** Similarity */
+            similarity?: number | null;
+            /** Skill Gap Score */
+            skill_gap_score: number;
+            /** Skill Id */
+            skill_id: string;
+        };
+        /** MatchGateRead */
+        MatchGateRead: {
+            /** Reason */
+            reason: string;
+            /** Value */
+            value: number;
+        };
+        /** MatchRequirementsRead */
+        MatchRequirementsRead: {
+            /** Evidence */
+            evidence: number;
+            /** Preferred */
+            preferred: number;
+            /** Required */
+            required: number;
+            /** Required Covered */
+            required_covered: number;
+        };
+        /** MatchSeniorityRead */
+        MatchSeniorityRead: {
+            /** Asked */
+            asked?: ("intern" | "junior" | "mid" | "senior" | "lead") | null;
+            /** Cv */
+            cv?: ("intern" | "junior" | "mid" | "senior" | "lead") | null;
+            /** Min Years */
+            min_years?: number | null;
+        };
+        /** MatchStrengthRead */
+        MatchStrengthRead: {
+            /** Display Name */
+            display_name: string;
+            /**
+             * Match Type
+             * @enum {string}
+             */
+            match_type: "exact" | "semantic";
+            /** Matched With */
+            matched_with?: string | null;
+            /** Requirement */
+            requirement?: ("required" | "preferred") | null;
+            /** Similarity */
+            similarity?: number | null;
+            /** Skill Id */
+            skill_id: string;
         };
         /** MessageCreate */
         MessageCreate: {
@@ -8622,6 +8925,130 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CapstoneSkillExtractionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    career_lab_list_job_targets: {
+        parameters: {
+            query?: {
+                /** @description Cursor from a previous page's next_cursor; returns older targets. */
+                before?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobTargetPageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    career_lab_create_job_target: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobTargetCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobTargetRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    career_lab_get_job_target: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobTargetRead"];
                 };
             };
             /** @description Validation Error */

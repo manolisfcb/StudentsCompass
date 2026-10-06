@@ -21,6 +21,14 @@ from uuid import UUID
 from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.pagination import (
+    clamp_page_size,
+    encode_cursor,
+    fetch_probe_limit,
+    keyset_before,
+    split_probe,
+)
+
 from app.models.jobTargetModel import (
     JOB_SOURCE_PASTED,
     JOB_TARGET_STATUS_FAILED,
@@ -76,7 +84,17 @@ class JobTargetService:
     # -- the shared parse cache ------------------------------------------------
 
     async def get_parse(self, text_hash: str) -> JobDescriptionParseModel | None:
-        return await self.session.get(JobDescriptionParseModel, text_hash)
+        """The stored parse, reloaded over whatever the session already holds.
+
+        Writes to this table go through Core UPDATEs, which bypass the identity
+        map; a plain ``session.get`` would hand back the pre-write object.
+        """
+        result = await self.session.execute(
+            select(JobDescriptionParseModel)
+            .where(JobDescriptionParseModel.text_hash == text_hash)
+            .execution_options(populate_existing=True)
+        )
+        return result.scalar_one_or_none()
 
     async def store_parse(
         self,
@@ -157,6 +175,28 @@ class JobTargetService:
                 JobTargetModel.id == target_id, JobTargetModel.user_id == user_id
             )
         )
+
+    async def list_user_target_page(
+        self, *, user_id: UUID, before: str | None = None, limit: int | None = None
+    ) -> tuple[list[JobTargetModel], str | None, bool, int]:
+        """One page of the user's targets, newest first.
+
+        ``user_id`` is in the WHERE, so a cursor taken from someone else's list
+        addresses nothing here. Raises ``InvalidCursor`` for a malformed one.
+        """
+        page_size = clamp_page_size(limit)
+        conditions = [JobTargetModel.user_id == user_id]
+        if before:
+            conditions.append(keyset_before(JobTargetModel.created_at, JobTargetModel.id, before))
+        result = await self.session.execute(
+            select(JobTargetModel)
+            .where(*conditions)
+            .order_by(JobTargetModel.created_at.desc(), JobTargetModel.id.desc())
+            .limit(fetch_probe_limit(page_size))
+        )
+        rows, has_more = split_probe(list(result.scalars().all()), page_size)
+        next_cursor = encode_cursor(rows[-1].created_at, rows[-1].id) if rows and has_more else None
+        return rows, next_cursor, has_more, page_size
 
     # -- the lease cycle ---------------------------------------------------------
 

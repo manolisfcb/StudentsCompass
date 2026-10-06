@@ -135,7 +135,13 @@ score = gate × (0,45·cobertura_skills + 0,25·coseno_CV_oferta
 ```
 
 `gate` es 0/1 por ubicación y modalidad cuando el usuario las declara. Los pesos
-son calibrables y viven en configuración.
+son calibrables y viven en configuración (`JOB_MATCH_WEIGHTS`).
+
+Dos reglas añadidas al construirlo (TASK-079): un componente sin señal no vale 0,
+se marca *no disponible* y su peso se reparte entre los demás; y el peso de
+`cobertura_skills` escala con cuántos requisitos del catálogo dio la oferta
+(completo a partir de 3), porque una oferta legal de la que el catálogo solo leyó
+«Sales» salía con 0,75 de cobertura.
 
 El número se muestra **siempre** junto a su banda (`ApplicationMatchStrength`,
 que ya existe con `strong_match` / `match` / `weak_match`) y a su desglose por
@@ -198,14 +204,23 @@ era imprescindible.
 
 **Umbrales por modelo.** Un coseno no es un número portable. Medido con Gemini a
 384: sinónimos 0,95–0,99, skills relacionadas 0,88–0,94, sin relación
-0,74–0,80; contexto CV↔oferta alineada 0,87, rol adyacente 0,84, otra
-tecnología 0,76, otra profesión 0,68. Cada modelo lleva un `SimilarityProfile`
-(match semántico ≥ 0,95, débil ≥ 0,88; contexto reescalado entre 0,70 y 0,90) y
-un modelo sin perfil **no** activa el matching semántico. El componente
-`coseno_CV_oferta` del score de §4.1 usa ese valor reescalado, no el coseno
-crudo: en crudo, un CV sin relación con la oferta regalaría ~17 puntos. Los
-valores de contexto son provisionales hasta calibrarlos con ofertas reales en
-TASK-079. Detalle en `docs/capstone_product/matching_methodology.md`.
+0,74–0,80. Cada modelo lleva un `SimilarityProfile` (match semántico ≥ 0,95,
+débil ≥ 0,88) y un modelo sin perfil **no** activa el matching semántico.
+
+El contexto CV↔oferta se calibró en TASK-079 con 168 pares: cuatro resúmenes de
+CV × 42 ofertas públicas reales de siete familias de rol. Dos resultados:
+
+- **Qué se embebe de la oferta pesa más que los umbrales.** El texto de empresa
+  (beneficios, igualdad de oportunidades, «about us») es común a todas las
+  ofertas de un empleador y domina el vector. AUC alineada vs no relacionada:
+  oferta entera 0,84; título + secciones del puesto, sin las de empresa, primeros
+  3.000 caracteres, 0,94. Se embebe lo segundo.
+- **Umbrales**: reescalado entre 0,70 (mediana de no relacionadas) y 0,80 (p90 de
+  alineadas); «strong» ≥ 0,75, «moderate» ≥ 0,725. Una primera calibración con
+  cuatro pares sintéticos (0,87 / 0,68) no aguantó ofertas reales.
+
+El componente `coseno_CV_oferta` del score de §4.1 usa ese valor reescalado, no
+el coseno crudo. Detalle en `docs/capstone_product/matching_methodology.md`.
 
 ### 4.4 Interview Prep técnico — el plus de pago
 

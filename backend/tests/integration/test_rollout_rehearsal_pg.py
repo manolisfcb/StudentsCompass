@@ -464,6 +464,10 @@ DECLARED_ADDED_PATHS = {
     # being hard to find (app/core/internalAuth.py).
     "/internal/tasks/cv-analyses/{job_id}",
     "/internal/tasks/cv-analyses-reconcile",
+    # TASK-078/079 (plan 11, C1): Career Lab job targets — paste a job
+    # description, get its deterministic analysis against a CV.
+    "/api/v1/career-lab/job-targets",
+    "/api/v1/career-lab/job-targets/{target_id}",
 }
 
 

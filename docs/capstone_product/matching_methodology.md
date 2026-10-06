@@ -70,16 +70,30 @@ its own range:
 
 | Profile | Semantic match | Weak match | Context strong / moderate | Context reported as |
 | --- | --- | --- | --- | --- |
-| `gemini-embedding-001@384` | `>= 0.95` | `>= 0.88` | `>= 0.85` / `>= 0.80` | `(cos − 0.70) / 0.20`, clamped to [0, 1] |
+| `gemini-embedding-001@384` | `>= 0.95` | `>= 0.88` | `>= 0.75` / `>= 0.725` | `(cos − 0.70) / 0.10`, clamped to [0, 1] |
 | Legacy (MiniLM; injected embedders) | `>= 0.72` | `>= 0.48` | `>= 0.78` / `>= 0.62` | raw cosine |
 
 The Gemini profile was measured on 2026-10-05: synonyms 0.95–0.99
 (PostgreSQL / Postgres), related skills 0.88–0.94 (Tableau / Power BI, MySQL /
 PostgreSQL), unrelated 0.74–0.80 (XGBoost / Tableau). A related skill is a weak
 match — transferable, not a substitute. Under the legacy thresholds every one of
-those pairs would have been a semantic match. The context values rest on four
-synthetic CV↔posting pairs (aligned 0.87, adjacent role 0.84, other stack 0.76,
-other profession 0.68) and are provisional until real postings calibrate them.
+those pairs would have been a semantic match.
+
+The context values were calibrated on 168 pairs: four CV summaries (data
+analyst, frontend developer, marketing and accounting students) × 42 real
+public postings from seven role families, each pair labelled aligned, adjacent
+or unrelated. Cosine percentiles — aligned p25 0.746 / p50 0.768 / p90 0.794;
+adjacent p50 0.728 / p75 0.750; unrelated p50 0.708 / p75 0.727. The floor sits
+at the unrelated median, the ceiling at the aligned p90, "strong" at the
+aligned p25 and "moderate" at the adjacent median. A first calibration on four
+synthetic pairs (aligned 0.87, unrelated 0.68) did not survive real postings.
+
+**What is embedded of a posting matters more than the thresholds.** Real
+postings carry benefits, equal-opportunity and "about us" text shared by every
+posting of an employer, and it dominates the vector. Separation of aligned from
+unrelated roles (AUC) on the same 168 pairs: whole posting 0.84; title only
+0.91; title plus the role's own sections, employer sections dropped, first 3000
+characters 0.94. Career Lab embeds the last (`jobDescriptionRules.role_text`).
 
 Semantic matches count as matched required skills. Weak matches are reported for
 explanation but remain in `missing_skills` because the product should not claim

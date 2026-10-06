@@ -227,8 +227,25 @@ class SemanticMatchingService:
                 message="Context similarity is unavailable because embeddings could not be generated.",
             )
 
-        # Banded on the raw cosine, reported rescaled: each model has its own
-        # background similarity, and an unrelated CV should score 0, not it.
+        return self.context_from_vectors(
+            resume_embedding, role_embedding, evidence_sources=evidence_sources
+        )
+
+    def context_from_vectors(
+        self,
+        resume_embedding: list[float],
+        role_embedding: list[float],
+        *,
+        evidence_sources: list[str],
+    ) -> SemanticContextSummary:
+        """Context similarity of two vectors already in the profile's space.
+
+        For callers that hold stored vectors (a CV's ``resume_embeddings`` row,
+        a posting's ``job_description_parses`` row) and should not pay to embed
+        the same texts again. Banded on the raw cosine, reported rescaled: each
+        model has its own background similarity, and an unrelated CV should
+        score 0, not it.
+        """
         cosine = _cosine_similarity(resume_embedding, role_embedding)
         similarity = round(self.profile.rescale_context(cosine), 4)
         if cosine >= self.profile.context_strong:
@@ -245,7 +262,7 @@ class SemanticMatchingService:
             context_similarity_score=similarity,
             context_match_level=match_level,
             semantic_context_ready=True,
-            provider=embedding_status["provider"],
+            provider=get_embedding_status()["provider"],
             evidence_sources=evidence_sources,
             message=message,
         )

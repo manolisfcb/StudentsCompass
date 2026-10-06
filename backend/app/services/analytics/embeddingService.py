@@ -129,21 +129,28 @@ LEGACY_SIMILARITY_PROFILE = SimilarityProfile(
 #: is never semantically ready: comparing its cosines against another model's
 #: thresholds is exactly the error this table exists to prevent.
 #:
-#: ``gemini-embedding-001@384`` — measured 2026-10-05 (TASK-072/073) with
-#: ``task_type=SEMANTIC_SIMILARITY`` on skill texts shaped like ``_skill_text``:
-#: synonyms 0.95–0.99, related skills 0.88–0.94, unrelated 0.74–0.80. A related
-#: skill is a weak match, not a substitute. Context CV↔job: aligned 0.87,
-#: adjacent role 0.84, other stack 0.76, other profession 0.68. The context
-#: values rest on four synthetic pairs and are provisional until TASK-079
-#: calibrates them against real postings.
+#: ``gemini-embedding-001@384`` — skill thresholds measured 2026-10-05
+#: (TASK-072/073) with ``task_type=SEMANTIC_SIMILARITY`` on skill texts shaped
+#: like ``_skill_text``: synonyms 0.95–0.99, related skills 0.88–0.94, unrelated
+#: 0.74–0.80. A related skill is a weak match, not a substitute.
+#:
+#: Context thresholds measured 2026-10-05 (TASK-079) on 168 pairs: four CV
+#: summaries × 42 real public postings from seven role families, labelled
+#: aligned / adjacent / unrelated, the posting reduced to its role text
+#: (``careerLab.jobDescriptionRules.role_text``). Cosine percentiles —
+#: aligned p25 0.746 / p50 0.768 / p90 0.794; adjacent p50 0.728 / p75 0.750;
+#: unrelated p50 0.708 / p75 0.727. Floor at the unrelated median, ceiling at
+#: the aligned p90; "strong" from the aligned p25, "moderate" from the adjacent
+#: median. A first, synthetic calibration (aligned 0.87, unrelated 0.68) did
+#: not survive real postings and was replaced.
 SIMILARITY_PROFILES: dict[str, SimilarityProfile] = {
     "gemini-embedding-001@384": SimilarityProfile(
         semantic_match=0.95,
         weak_match=0.88,
-        context_strong=0.85,
-        context_moderate=0.80,
+        context_strong=0.75,
+        context_moderate=0.725,
         context_floor=0.70,
-        context_ceiling=0.90,
+        context_ceiling=0.80,
     ),
 }
 

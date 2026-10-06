@@ -160,8 +160,8 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | HIGH | PHASE-C0 | COMPLETED | TASK-073, TASK-074 | TASK-077 |
 | TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | MEDIUM | PHASE-C0 | COMPLETED | TASK-073 | TASK-074, TASK-075 |
 | TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | COMPLETED | NONE | TASK-072, TASK-082, TASK-083 |
-| TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | TODO | TASK-077 | TASK-082 |
-| TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | HIGH | PHASE-C1 | TODO | TASK-075, TASK-077 | TASK-082 |
+| TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | COMPLETED | TASK-077 | TASK-082 |
+| TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | HIGH | PHASE-C1 | COMPLETED | TASK-075, TASK-077 | TASK-082 |
 | TASK-080 | Roadmap desde los gaps con días hasta la entrevista como restricción | MEDIUM | PHASE-C1 | TODO | TASK-079 | TASK-081 |
 | TASK-081 | Pantalla React de análisis de vacante | HIGH | PHASE-C1 | TODO | TASK-079 | TASK-080 |
 | TASK-082 | Sembrar el catálogo de skills desde ESCO/O\*NET | MEDIUM | PHASE-C1 | TODO | NONE | TASK-072, TASK-077, TASK-083 |
@@ -14592,3 +14592,141 @@ usuario la elimina. Además, `alembic upgrade head` real desde `b8f3c05a71d4`,
 `alembic upgrade --sql` (modo offline) no funciona en este repositorio desde
 `b8f3c05a71d4`, que ya usaba `inspect()` para ser rejugable; las dos revisiones
 nuevas siguen ese mismo patrón.
+
+## TASK-078 — Endpoint de alta de oferta por texto pegado, con cap de longitud
+
+Status: COMPLETED
+Priority: HIGH
+Phase: PHASE-C1
+Category: API / Business Logic
+
+### Objective
+
+Que el usuario pegue una oferta que encontró por su cuenta y quede guardada como
+suya, asociada a uno de sus CV.
+
+### Desired State
+
+- `POST /api/v1/career-lab/job-targets` `{text, resume_id}` → 201 con la vacante
+  y su análisis (TASK-079). Reintentable con `Idempotency-Key`.
+- `GET /api/v1/career-lab/job-targets` paginado por cursor, sin el texto pegado.
+- `GET /api/v1/career-lab/job-targets/{id}`: reabrir es gratis.
+- Texto acotado: mínimo `JOB_TEXT_MIN_CHARS` (200), máximo `JOB_TEXT_MAX_CHARS`
+  (20.000). Se **rechaza** con 422, no se trunca: una oferta cortada pierde
+  justo la sección de requisitos, que suele ir al final.
+
+### Dependencies
+
+Depends on: TASK-077
+
+### Acceptance Criteria
+
+- [x] Alta, listado y detalle, siempre limitados al propietario.
+- [x] Cap de longitud por los dos lados.
+- [x] CV ajeno → 404 con el error model.
+- [x] Un POST reintentado con la misma clave crea una vacante.
+- [x] Contrato OpenAPI regenerado y compatible.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.** `app/routes/careerLabRoute.py`, esquemas en
+`app/schemas/careerLabSchema.py` (el análisis va tipado hasta las hojas, porque el
+frontend genera sus tipos del contrato). Contrato `contract/openapi.json` y tipos
+del frontend regenerados; `check_openapi_compat.py`: tres operaciones nuevas,
+ningún cambio incompatible. Las dos rutas nuevas quedan declaradas en
+`DECLARED_ADDED_PATHS` del ensayo de rollout.
+
+Una vacante cuyo análisis falla **se crea igual**, con `status: failed` y un
+motivo que no filtra la excepción: lo que el usuario pegó no se pierde.
+
+**Validación.** `tests/test_career_lab_job_targets.py`: alta con análisis,
+caché de parse compartida entre dos altas del mismo texto, cap por arriba y por
+abajo sin crear nada, CV ajeno → 404 `not_found`, idempotencia, listado y
+reapertura limitados al propietario, análisis fallido con motivo.
+
+## TASK-079 — Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps
+
+Status: COMPLETED
+Priority: HIGH
+Phase: PHASE-C1
+Category: Business Logic
+
+### Objective
+
+Responder la primera pregunta del plan 11 §1 —¿encaja conmigo y por qué?— sin
+llamar a un LLM.
+
+### Desired State
+
+`score = gate × Σ wᵢ·componenteᵢ` sobre skills, contexto, título y seniority
+(§4.1), siempre con banda y desglose; fortalezas; gaps priorizados por
+`SkillGapScoringService` con su explicación; umbrales de contexto calibrados con
+ofertas reales.
+
+### Dependencies
+
+Depends on: TASK-075, TASK-077
+
+### Acceptance Criteria
+
+- [x] Score con banda y desglose, nunca desnudo.
+- [x] Componente sin señal → no disponible, peso repartido; nunca un valor inventado.
+- [x] Pesos y bandas en configuración.
+- [x] Umbrales de contexto calibrados con ofertas reales.
+- [x] Coste marginal cero salvo, como mucho, el embedding de una oferta nueva.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.**
+
+- **Parse por reglas** (`app/services/careerLab/jobDescriptionRules.py`,
+  `jd_rules_v1`): skills del catálogo línea a línea; obligatoria o deseable por
+  cabecera de sección o por la propia línea («nice to have», «se valora»…), y lo
+  obligatorio gana. Si la oferta tiene sección de requisitos, lo mencionado solo
+  en la intro cuenta como deseable («turn sales data into decisions» no exige
+  Sales); sin secciones, todo es obligatorio. Título, nivel (del título o de los
+  años pedidos, **nunca** del cuerpo: «report to the hiring manager» no es el
+  nivel del puesto) y modalidad. Inglés y español. Se guarda en
+  `job_description_parses` y se comparte entre usuarios.
+- **Análisis** (`jobTargetAnalysisService.py`): skills = cobertura ponderada por
+  importancia con crédito parcial semántico/débil; contexto = coseno CV↔oferta
+  reescalado por el perfil del modelo, **desde vectores guardados** (CV en
+  `resume_embeddings`, oferta en el parse); título = parte de las palabras del
+  rol que nombra el resumen del CV; seniority = distancia de niveles. Pesos
+  `JOB_MATCH_WEIGHTS` (0,45/0,25/0,20/0,10) y bandas 0,70/0,45 en configuración.
+  Fortalezas con tipo de match; gaps como `gap` o `reinforce` (una skill afín
+  cubre en parte, y se nombra), priorizados con su razón.
+- **Dos reglas nuevas, por lo que mostraron datos reales:** un componente sin
+  señal se marca no disponible y su peso se reparte; y el peso de skills escala
+  con la evidencia del catálogo (completo desde 3 requisitos ponderados). Sin lo
+  segundo, una oferta legal de la que el catálogo solo leyó «Sales» puntuaba
+  0,75 en skills y quedaba a 0,37 en total; con ello, 0,21.
+- **Calibración del contexto con ofertas reales.** 168 pares: cuatro resúmenes de
+  CV × 42 ofertas públicas (APIs de boards de Greenhouse, sin scraping) de siete
+  familias de rol, etiquetados alineada / adyacente / no relacionada.
+  1. La calibración sintética de TASK-073 **no aguantó**: con la oferta entera,
+     alineadas mediana 0,72 y no relacionadas 0,66, con una no relacionada en
+     0,78. El perfil provisional habría puesto casi toda oferta real en «weak».
+  2. Lo decisivo es **qué se embebe**. AUC alineada vs no relacionada: oferta
+     entera 0,84; título 0,91; título + secciones del puesto sin las de empresa,
+     3.000 caracteres, **0,94** (alineada vs adyacente 0,83). Se embebe esto
+     último (`role_text`).
+  3. Perfil `gemini-embedding-001@384` de contexto: suelo 0,70, techo 0,80,
+     strong ≥ 0,75, moderate ≥ 0,725, desde los percentiles medidos (en el
+     docstring de `SIMILARITY_PROFILES` y en `matching_methodology.md`).
+- **De punta a punta, real** (API de Gemini + PostgreSQL de la lane), un CV de
+  data analyst contra tres ofertas reales: *Data Analyst* 0,59 `match` (le resta
+  que pide senior con 6 años), *Data Scientist* 0,49 `match`, *Commercial
+  Counsel* 0,21 `weak_match`.
+
+**Efecto lateral a vigilar.** El perfil de contexto también lo usa la gap
+analysis existente de Career Lab, cuyo «contexto de rol» es otro texto
+(requisitos semilla + extractos de ofertas). Con `hash` en producción no cambia
+nada hoy; cuando se active Gemini, su `context_similarity_score` usará estos
+umbrales, calibrados para CV↔oferta.
+
+**Validación.** `tests/test_career_lab_job_targets.py` (30 casos: parse, reglas
+del score, bandas, configuración, evidencia, texto de rol, endpoint, proveedor
+real simulado sin re-embeber en la segunda alta). Lane rápida **904 passed,
+137 skipped**; PostgreSQL + Redis **141 passed** y consistente archivo a
+archivo; frontend 293 tests, typecheck y `api:check`; `ruff` limpio.

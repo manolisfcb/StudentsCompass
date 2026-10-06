@@ -39,6 +39,7 @@ from app.routes.adminRoute import router as admin_router
 import logging
 
 from app.routes.capstoneAnalyticsRoute import router as capstone_analytics_router
+from app.routes.careerLabRoute import router as career_lab_router
 from app.routes.internalTasksRoute import router as internal_tasks_router
 from app.routes.healthRoute import router as health_router
 from app.core.resume_analyzer.resume_text_extractor import shutdown_resume_text_extractors
@@ -217,6 +218,7 @@ app.include_router(roadmap_router, prefix="/api/v1", tags=["roadmaps"])
 app.include_router(roadmap_legacy_router, prefix="/api/v1", tags=["roadmaps"])
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
 app.include_router(capstone_analytics_router, prefix="/api/v1", tags=["capstone"])
+app.include_router(career_lab_router, prefix="/api/v1", tags=["career-lab"])
 # Deliberately *not* under /api/v1: these are not part of the public contract
 # and are reachable only with a task credential (app/core/internalAuth.py).
 app.include_router(internal_tasks_router, tags=["internal"])

@@ -142,6 +142,44 @@ AI_ALLOW_UNSHARED_COUNTER = env_flag("AI_ALLOW_UNSHARED_COUNTER", "0")
 # until a real email provider is wired so existing users are not locked out.
 REQUIRE_VERIFIED_FOR_AI = env_flag("REQUIRE_VERIFIED_FOR_AI", "0")
 
+# --- Career Lab (plan 11) --------------------------------------------------
+# A pasted job description is bounded like the CV is (MAX_RESUME_CHARS): too
+# short is not a posting, too long is a paste of a whole page and, from C3 on,
+# an input-token bill. Rejected, not truncated — a cut posting loses exactly the
+# requirements section that tends to come last.
+JOB_TEXT_MIN_CHARS = env_int("JOB_TEXT_MIN_CHARS", 200, minimum=1)
+JOB_TEXT_MAX_CHARS = env_int("JOB_TEXT_MAX_CHARS", 20_000, minimum=1)
+
+
+def env_weights(name: str, default: tuple[float, ...]) -> tuple[float, ...]:
+    """Comma-separated non-negative floats with a positive sum, or ``default``."""
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    try:
+        values = tuple(float(part) for part in raw.split(","))
+    except ValueError:
+        return default
+    if len(values) != len(default) or any(v < 0 for v in values) or sum(values) <= 0:
+        return default
+    return values
+
+
+# Plan 11 §4.1: score = gate × (skills, context, title, seniority). Calibrable
+# without a deploy, as the plan asks; the order of the four values is fixed.
+JOB_MATCH_WEIGHTS = env_weights("JOB_MATCH_WEIGHTS", (0.45, 0.25, 0.20, 0.10))
+# Band thresholds on the final score (ApplicationMatchStrength's three values).
+def env_fraction(name: str, default: float) -> float:
+    try:
+        value = float(os.getenv(name, str(default)).strip())
+    except (TypeError, ValueError):
+        return default
+    return value if 0.0 <= value <= 1.0 else default
+
+
+JOB_MATCH_STRONG_THRESHOLD = env_fraction("JOB_MATCH_STRONG_THRESHOLD", 0.70)
+JOB_MATCH_THRESHOLD = env_fraction("JOB_MATCH_THRESHOLD", 0.45)
+
 # --- Uploads ---------------------------------------------------------------
 # Every budget below is per request and enforced twice: once on the raw ASGI
 # body, before the multipart parser can spool it, and once on the parsed part,
