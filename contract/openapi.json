@@ -7677,6 +7677,134 @@
         "title": "JobTargetRead",
         "type": "object"
       },
+      "JobTargetRoadmapRead": {
+        "properties": {
+          "constraints": {
+            "$ref": "#/components/schemas/RoadmapConstraintsRead"
+          },
+          "covered_gaps": {
+            "items": {
+              "$ref": "#/components/schemas/RoadmapGapRead"
+            },
+            "title": "Covered Gaps",
+            "type": "array"
+          },
+          "gap_coverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gap Coverage"
+          },
+          "objective_version": {
+            "title": "Objective Version",
+            "type": "string"
+          },
+          "solver_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solver Status"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/RoadmapStepRead"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "target_id": {
+            "format": "uuid",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "total_cost": {
+            "title": "Total Cost",
+            "type": "number"
+          },
+          "total_hours": {
+            "title": "Total Hours",
+            "type": "number"
+          },
+          "uncovered_gaps": {
+            "items": {
+              "$ref": "#/components/schemas/RoadmapUncoveredGapRead"
+            },
+            "title": "Uncovered Gaps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "target_id",
+          "objective_version",
+          "constraints",
+          "total_cost",
+          "total_hours",
+          "gap_coverage",
+          "steps",
+          "covered_gaps",
+          "uncovered_gaps"
+        ],
+        "title": "JobTargetRoadmapRead",
+        "type": "object"
+      },
+      "JobTargetRoadmapRequest": {
+        "description": "The time left before the interview, and how much of it goes to study.",
+        "properties": {
+          "budget": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget"
+          },
+          "days_until_interview": {
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Days Until Interview",
+            "type": "integer"
+          },
+          "hours_per_day": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 16.0,
+            "title": "Hours Per Day",
+            "type": "number"
+          },
+          "max_courses": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Courses"
+          }
+        },
+        "required": [
+          "days_until_interview",
+          "hours_per_day"
+        ],
+        "title": "JobTargetRoadmapRequest",
+        "type": "object"
+      },
       "JobTargetSummaryRead": {
         "description": "A row of the user's list: no pasted text, the headline numbers only.",
         "properties": {
@@ -9598,6 +9726,51 @@
         "title": "ResumeUploadRead",
         "type": "object"
       },
+      "RoadmapConstraintsRead": {
+        "properties": {
+          "available_hours": {
+            "title": "Available Hours",
+            "type": "number"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget"
+          },
+          "days_until_interview": {
+            "title": "Days Until Interview",
+            "type": "integer"
+          },
+          "hours_per_day": {
+            "title": "Hours Per Day",
+            "type": "number"
+          },
+          "max_courses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Courses"
+          }
+        },
+        "required": [
+          "days_until_interview",
+          "hours_per_day",
+          "available_hours"
+        ],
+        "title": "RoadmapConstraintsRead",
+        "type": "object"
+      },
       "RoadmapDetailRead": {
         "properties": {
           "completed_tasks": {
@@ -9680,6 +9853,53 @@
         "title": "RoadmapDetailRead",
         "type": "object"
       },
+      "RoadmapGapRead": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "gap",
+              "reinforce"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "priority_rank": {
+            "title": "Priority Rank",
+            "type": "integer"
+          },
+          "requirement": {
+            "anyOf": [
+              {
+                "enum": [
+                  "required",
+                  "preferred"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "display_name",
+          "kind",
+          "priority_rank"
+        ],
+        "title": "RoadmapGapRead",
+        "type": "object"
+      },
       "RoadmapListItemRead": {
         "properties": {
           "completed_tasks": {
@@ -9752,6 +9972,192 @@
           "popularity"
         ],
         "title": "RoadmapListItemRead",
+        "type": "object"
+      },
+      "RoadmapSkillRead": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "display_name"
+        ],
+        "title": "RoadmapSkillRead",
+        "type": "object"
+      },
+      "RoadmapStepRead": {
+        "properties": {
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "duration_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Hours"
+          },
+          "end_day": {
+            "title": "End Day",
+            "type": "integer"
+          },
+          "order": {
+            "title": "Order",
+            "type": "integer"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/RoadmapSkillRead"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
+          "start_day": {
+            "title": "Start Day",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "order",
+          "start_day",
+          "end_day",
+          "course_id",
+          "title",
+          "provider",
+          "skills"
+        ],
+        "title": "RoadmapStepRead",
+        "type": "object"
+      },
+      "RoadmapUncoveredGapRead": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "gap",
+              "reinforce"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "priority_rank": {
+            "title": "Priority Rank",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "no_course",
+              "out_of_reach"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "requirement": {
+            "anyOf": [
+              {
+                "enum": [
+                  "required",
+                  "preferred"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirement"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "display_name",
+          "kind",
+          "priority_rank",
+          "reason"
+        ],
+        "title": "RoadmapUncoveredGapRead",
         "type": "object"
       },
       "SaveRoadmapResponse": {
@@ -15605,6 +16011,75 @@
           }
         ],
         "summary": "Get Job Target",
+        "tags": [
+          "career-lab"
+        ]
+      }
+    },
+    "/api/v1/career-lab/job-targets/{target_id}/roadmap": {
+      "post": {
+        "description": "What to study first for this vacancy, in the days left before the interview.\n\nThe gaps of the stored analysis, run through the learning-route optimiser\nwith ``days_until_interview × hours_per_day`` as its hours limit. Nothing\nis stored: the days left change daily, and recomputing is free of LLM cost.\n\nRetry-safe under ``Idempotency-Key``: it spends bounded solver capacity, so\na retry that never saw the first answer replays it instead of solving again.",
+        "operationId": "career_lab_build_job_target_roadmap",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "target_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Target Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobTargetRoadmapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobTargetRoadmapRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "summary": "Build Job Target Roadmap",
         "tags": [
           "career-lab"
         ]

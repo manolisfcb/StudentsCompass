@@ -29,6 +29,8 @@ const AdminPage = lazy(() => import("@/features/admin/AdminPage").then((m) => ({
 const LoginPage = lazy(() => import("@/features/auth/LoginPage").then((m) => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("@/features/auth/RegisterPage").then((m) => ({ default: m.RegisterPage })));
 const CareerLabPage = lazy(() => import("@/features/career-lab/CareerLabPage").then((m) => ({ default: m.CareerLabPage })));
+const JobTargetDetailPage = lazy(() => import("@/features/career-lab/JobTargetDetailPage").then((m) => ({ default: m.JobTargetDetailPage })));
+const JobTargetsPage = lazy(() => import("@/features/career-lab/JobTargetsPage").then((m) => ({ default: m.JobTargetsPage })));
 const ApplicantsPage = lazy(() => import("@/features/company/ApplicantsPage").then((m) => ({ default: m.ApplicantsPage })));
 const CompanyDashboardPage = lazy(() => import("@/features/company/CompanyDashboardPage").then((m) => ({ default: m.CompanyDashboardPage })));
 const JobPostingsPage = lazy(() => import("@/features/company/JobPostingsPage").then((m) => ({ default: m.JobPostingsPage })));
@@ -141,6 +143,8 @@ export const routes: RouteObject[] = [
       { path: "/jobs", element: page(<JobsPage />) },
       { path: "/jobs/applications", element: page(<ApplicationsPage />) },
       { path: "/career-lab", element: page(<CareerLabPage />) },
+      { path: "/career-lab/vacancies", element: page(<JobTargetsPage />) },
+      { path: "/career-lab/vacancies/:targetId", element: page(<JobTargetDetailPage />) },
       { path: "/community", element: page(<CommunitiesListPage />) },
       { path: "/community/:communityId", element: page(<CommunityFeedPage />) },
       { path: "/messages", element: page(<MessagesPage />) },

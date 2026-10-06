@@ -148,6 +148,16 @@ export function CareerLabPage() {
         breadcrumb={<Badge tone="brand">{t("careerLab.kicker")}</Badge>}
       />
 
+      <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-card-title text-ink">{t("careerLab.vacancy.entry.title")}</p>
+          <p className="mt-0.5 text-body-sm text-ink-soft">{t("careerLab.vacancy.entry.body")}</p>
+        </div>
+        <Link to="/career-lab/vacancies" className="shrink-0">
+          <Button>{t("careerLab.vacancy.entry.action")}</Button>
+        </Link>
+      </Card>
+
       {hasResume ? (
         <Card>
           <form

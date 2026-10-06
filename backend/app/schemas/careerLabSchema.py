@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app import config
 from app.schemas.paginationSchema import CursorPage
@@ -177,3 +177,77 @@ class JobTargetRead(JobTargetSummaryRead):
 
 class JobTargetPageRead(CursorPage[JobTargetSummaryRead]):
     """One bounded page of the user's job targets, newest first."""
+
+
+# -- Roadmap (TASK-080) -------------------------------------------------------
+
+
+class JobTargetRoadmapRequest(BaseModel):
+    """The time left before the interview, and how much of it goes to study."""
+
+    days_until_interview: int = Field(..., ge=1, le=365)
+    hours_per_day: float = Field(..., gt=0, le=16)
+    budget: float | None = Field(None, ge=0)
+    max_courses: int | None = Field(None, ge=1, le=10)
+
+
+class RoadmapConstraintsRead(BaseModel):
+    days_until_interview: int
+    hours_per_day: float
+    #: ``days_until_interview × hours_per_day``: the optimiser's hours limit.
+    available_hours: float
+    budget: float | None = None
+    max_courses: int | None = None
+
+
+class RoadmapSkillRead(BaseModel):
+    skill_id: str
+    display_name: str
+
+
+class RoadmapStepRead(BaseModel):
+    order: int
+    #: 1-based days, laid end to end at ``hours_per_day``.
+    start_day: int
+    end_day: int
+    course_id: str
+    title: str
+    provider: str
+    url: str | None = None
+    cost: float | None = None
+    currency: str | None = None
+    duration_hours: float | None = None
+    difficulty: str | None = None
+    rating: float | None = None
+    #: The vacancy's gaps this course works on.
+    skills: list[RoadmapSkillRead]
+
+
+class RoadmapGapRead(BaseModel):
+    skill_id: str
+    display_name: str
+    requirement: Requirement | None = None
+    kind: Literal["gap", "reinforce"]
+    priority_rank: int
+
+
+class RoadmapUncoveredGapRead(RoadmapGapRead):
+    #: ``no_course``: nothing in the course catalogue teaches it.
+    #: ``out_of_reach``: a course exists but did not fit the time or budget.
+    reason: Literal["no_course", "out_of_reach"]
+
+
+class JobTargetRoadmapRead(BaseModel):
+    target_id: UUID
+    objective_version: str
+    solver_status: str | None = None
+    constraints: RoadmapConstraintsRead
+    total_cost: float
+    total_hours: float
+    #: 0–1, share of the gaps' priority weight the route covers. Null when
+    #: the vacancy has no gaps.
+    gap_coverage: float | None
+    steps: list[RoadmapStepRead]
+    covered_gaps: list[RoadmapGapRead]
+    uncovered_gaps: list[RoadmapUncoveredGapRead]
+

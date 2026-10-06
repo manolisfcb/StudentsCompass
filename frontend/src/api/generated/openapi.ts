@@ -1120,6 +1120,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career-lab/job-targets/{target_id}/roadmap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Build Job Target Roadmap
+         * @description What to study first for this vacancy, in the days left before the interview.
+         *
+         *     The gaps of the stored analysis, run through the learning-route optimiser
+         *     with ``days_until_interview × hours_per_day`` as its hours limit. Nothing
+         *     is stored: the days left change daily, and recomputing is free of LLM cost.
+         *
+         *     Retry-safe under ``Idempotency-Key``: it spends bounded solver capacity, so
+         *     a retry that never saw the first answer replays it instead of solving again.
+         */
+        post: operations["career_lab_build_job_target_roadmap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/communities": {
         parameters: {
             query?: never;
@@ -5009,6 +5036,45 @@ export interface components {
             /** Workplace Type */
             workplace_type: ("onsite" | "hybrid" | "remote") | null;
         };
+        /** JobTargetRoadmapRead */
+        JobTargetRoadmapRead: {
+            constraints: components["schemas"]["RoadmapConstraintsRead"];
+            /** Covered Gaps */
+            covered_gaps: components["schemas"]["RoadmapGapRead"][];
+            /** Gap Coverage */
+            gap_coverage: number | null;
+            /** Objective Version */
+            objective_version: string;
+            /** Solver Status */
+            solver_status?: string | null;
+            /** Steps */
+            steps: components["schemas"]["RoadmapStepRead"][];
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /** Total Cost */
+            total_cost: number;
+            /** Total Hours */
+            total_hours: number;
+            /** Uncovered Gaps */
+            uncovered_gaps: components["schemas"]["RoadmapUncoveredGapRead"][];
+        };
+        /**
+         * JobTargetRoadmapRequest
+         * @description The time left before the interview, and how much of it goes to study.
+         */
+        JobTargetRoadmapRequest: {
+            /** Budget */
+            budget?: number | null;
+            /** Days Until Interview */
+            days_until_interview: number;
+            /** Hours Per Day */
+            hours_per_day: number;
+            /** Max Courses */
+            max_courses?: number | null;
+        };
         /**
          * JobTargetSummaryRead
          * @description A row of the user's list: no pasted text, the headline numbers only.
@@ -5720,6 +5786,19 @@ export interface components {
              */
             resume_id: string;
         };
+        /** RoadmapConstraintsRead */
+        RoadmapConstraintsRead: {
+            /** Available Hours */
+            available_hours: number;
+            /** Budget */
+            budget?: number | null;
+            /** Days Until Interview */
+            days_until_interview: number;
+            /** Hours Per Day */
+            hours_per_day: number;
+            /** Max Courses */
+            max_courses?: number | null;
+        };
         /** RoadmapDetailRead */
         RoadmapDetailRead: {
             /**
@@ -5766,6 +5845,22 @@ export interface components {
              */
             total_tasks: number;
         };
+        /** RoadmapGapRead */
+        RoadmapGapRead: {
+            /** Display Name */
+            display_name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "gap" | "reinforce";
+            /** Priority Rank */
+            priority_rank: number;
+            /** Requirement */
+            requirement?: ("required" | "preferred") | null;
+            /** Skill Id */
+            skill_id: string;
+        };
         /** RoadmapListItemRead */
         RoadmapListItemRead: {
             /**
@@ -5809,6 +5904,63 @@ export interface components {
              * @default 0
              */
             total_tasks: number;
+        };
+        /** RoadmapSkillRead */
+        RoadmapSkillRead: {
+            /** Display Name */
+            display_name: string;
+            /** Skill Id */
+            skill_id: string;
+        };
+        /** RoadmapStepRead */
+        RoadmapStepRead: {
+            /** Cost */
+            cost?: number | null;
+            /** Course Id */
+            course_id: string;
+            /** Currency */
+            currency?: string | null;
+            /** Difficulty */
+            difficulty?: string | null;
+            /** Duration Hours */
+            duration_hours?: number | null;
+            /** End Day */
+            end_day: number;
+            /** Order */
+            order: number;
+            /** Provider */
+            provider: string;
+            /** Rating */
+            rating?: number | null;
+            /** Skills */
+            skills: components["schemas"]["RoadmapSkillRead"][];
+            /** Start Day */
+            start_day: number;
+            /** Title */
+            title: string;
+            /** Url */
+            url?: string | null;
+        };
+        /** RoadmapUncoveredGapRead */
+        RoadmapUncoveredGapRead: {
+            /** Display Name */
+            display_name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "gap" | "reinforce";
+            /** Priority Rank */
+            priority_rank: number;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "no_course" | "out_of_reach";
+            /** Requirement */
+            requirement?: ("required" | "preferred") | null;
+            /** Skill Id */
+            skill_id: string;
         };
         /** SavedRoadmapRead */
         SavedRoadmapRead: {
@@ -9049,6 +9201,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobTargetRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Fallo. El cuerpo es siempre el error model de `/api/v1`: `code` del catálogo (versión 1), `message` seguro, `details` opcional y `request_id` correlacionable con el log. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    career_lab_build_job_target_roadmap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobTargetRoadmapRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobTargetRoadmapRead"];
                 };
             };
             /** @description Validation Error */

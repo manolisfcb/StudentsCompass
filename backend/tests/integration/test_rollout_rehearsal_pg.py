@@ -468,6 +468,8 @@ DECLARED_ADDED_PATHS = {
     # description, get its deterministic analysis against a CV.
     "/api/v1/career-lab/job-targets",
     "/api/v1/career-lab/job-targets/{target_id}",
+    # TASK-080: what to study first for that vacancy, before the interview.
+    "/api/v1/career-lab/job-targets/{target_id}/roadmap",
 }
 
 

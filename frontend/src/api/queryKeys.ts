@@ -44,5 +44,8 @@ export const queryKeys = {
     targetRoles: ["career-lab", "target-roles"] as const,
     skillReview: (resumeId: string) => ["career-lab", "skill-review", resumeId] as const,
     routeRuns: ["career-lab", "route-runs"] as const,
+    /** The vacancy list, every page under one key (`useInfiniteQuery`). */
+    jobTargets: ["career-lab", "job-targets", "list"] as const,
+    jobTarget: (targetId: string) => ["career-lab", "job-targets", "detail", targetId] as const,
   },
 } as const;

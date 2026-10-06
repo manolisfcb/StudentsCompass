@@ -1,6 +1,7 @@
 """Career Lab: a vacancy the user pastes, analysed against their CV (plan 11, C1).
 
-TASK-078 (paste a job description) and TASK-079 (the deterministic analysis).
+TASK-078 (paste a job description), TASK-079 (the deterministic analysis) and
+TASK-080 (what to study first, before the interview).
 No LLM is called on this path: C1 costs nothing per request beyond, at most,
 one embedding of a posting no user has pasted before.
 """
@@ -21,6 +22,8 @@ from app.schemas.careerLabSchema import (
     JobTargetCreate,
     JobTargetPageRead,
     JobTargetRead,
+    JobTargetRoadmapRead,
+    JobTargetRoadmapRequest,
     JobTargetSummaryRead,
 )
 from app.services.accounts.userService import current_active_user
@@ -28,6 +31,11 @@ from app.services.analytics.resumeSkillReviewService import ResumeSkillReviewSer
 from app.services.careerLab.jobTargetAnalysisService import (
     JobTargetAnalysisError,
     JobTargetAnalysisService,
+)
+from app.services.careerLab.jobTargetRoadmapService import (
+    JobTargetRoadmapError,
+    JobTargetRoadmapService,
+    RoadmapConstraints,
 )
 from app.services.careerLab.jobTargetService import JobTargetService
 
@@ -123,3 +131,55 @@ async def get_job_target(
     if target is None:
         raise AppError(ErrorCode.NOT_FOUND, "Job target not found.", status_code=404)
     return JobTargetRead.from_model(target)
+
+
+@router.post("/job-targets/{target_id}/roadmap", response_model=JobTargetRoadmapRead)
+async def build_job_target_roadmap(
+    request: Request,
+    target_id: UUID,
+    payload: JobTargetRoadmapRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """What to study first for this vacancy, in the days left before the interview.
+
+    The gaps of the stored analysis, run through the learning-route optimiser
+    with ``days_until_interview × hours_per_day`` as its hours limit. Nothing
+    is stored: the days left change daily, and recomputing is free of LLM cost.
+
+    Retry-safe under ``Idempotency-Key``: it spends bounded solver capacity, so
+    a retry that never saw the first answer replays it instead of solving again.
+    """
+    guard = await begin_idempotent_request(
+        session,
+        request=request,
+        actor=actor_key("user", user.id),
+        endpoint="POST /career-lab/job-targets/{target_id}/roadmap",
+        # The path is part of what was asked: one key reused on another
+        # vacancy is a different request, not a replay.
+        payload={"target_id": target_id, **payload.model_dump()},
+    )
+    if guard.is_replay:
+        return guard.replay
+
+    try:
+        target = await JobTargetService(session).get_user_target(target_id=target_id, user_id=user.id)
+        if target is None:
+            raise AppError(ErrorCode.NOT_FOUND, "Job target not found.", status_code=404)
+        roadmap = await JobTargetRoadmapService(session).build(
+            target=target,
+            constraints=RoadmapConstraints(
+                days_until_interview=payload.days_until_interview,
+                hours_per_day=payload.hours_per_day,
+                budget=payload.budget,
+                max_courses=payload.max_courses,
+            ),
+        )
+    except JobTargetRoadmapError as exc:
+        await guard.release()
+        raise AppError(ErrorCode.CONFLICT, str(exc), status_code=409) from exc
+    except Exception:
+        await guard.release()
+        raise
+    return await guard.store(JobTargetRoadmapRead(**roadmap))
+

@@ -162,8 +162,8 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | COMPLETED | NONE | TASK-072, TASK-082, TASK-083 |
 | TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | COMPLETED | TASK-077 | TASK-082 |
 | TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | HIGH | PHASE-C1 | COMPLETED | TASK-075, TASK-077 | TASK-082 |
-| TASK-080 | Roadmap desde los gaps con días hasta la entrevista como restricción | MEDIUM | PHASE-C1 | TODO | TASK-079 | TASK-081 |
-| TASK-081 | Pantalla React de análisis de vacante | HIGH | PHASE-C1 | TODO | TASK-079 | TASK-080 |
+| TASK-080 | Roadmap desde los gaps con días hasta la entrevista como restricción | MEDIUM | PHASE-C1 | COMPLETED | TASK-079 | TASK-081 |
+| TASK-081 | Pantalla React de análisis de vacante | HIGH | PHASE-C1 | COMPLETED | TASK-079 | TASK-080 |
 | TASK-082 | Sembrar el catálogo de skills desde ESCO/O\*NET | MEDIUM | PHASE-C1 | TODO | NONE | TASK-072, TASK-077, TASK-083 |
 | TASK-083 | Capa `generate_structured` agnóstica con traducción de schema y mapeo de errores | HIGH | PHASE-C2 | TODO | NONE | TASK-072, TASK-077, TASK-082 |
 | TASK-084 | Registro de tiers en configuración y resolución server-side por slug | HIGH | PHASE-C2 | TODO | TASK-083 | TASK-087 |
@@ -14730,3 +14730,170 @@ del score, bandas, configuración, evidencia, texto de rol, endpoint, proveedor
 real simulado sin re-embeber en la segunda alta). Lane rápida **904 passed,
 137 skipped**; PostgreSQL + Redis **141 passed** y consistente archivo a
 archivo; frontend 293 tests, typecheck y `api:check`; `ruff` limpio.
+
+## TASK-081 — Pantalla React de análisis de vacante
+
+Status: COMPLETED
+Priority: HIGH
+Phase: PHASE-C1
+Category: Frontend
+
+### Objective
+
+Convertir C1 en producto: que un estudiante pegue una oferta que encontró por su
+cuenta y lea, en pantalla, si encaja con su CV y por qué (plan 11 §1, pregunta 1).
+El backend ya existe (TASK-078, TASK-079); sin pantalla nadie puede usarlo.
+
+### Desired State
+
+- `/career-lab/vacancies`: elegir CV, pegar la oferta con contador de
+  caracteres acotado a los mismos 200–20.000 del backend, y la lista de
+  vacantes analizadas (cursor, «Cargar más»). Sin CV → estado vacío hacia
+  `/profile`.
+- `/career-lab/vacancies/:targetId`: el análisis guardado. Reabrir no recalcula.
+  - El score **nunca desnudo** (plan 11 §4.1): siempre con su banda y con el
+    desglose por componente; un componente sin señal se muestra *no
+    disponible*, no como 0.
+  - Si el catálogo reconoció pocos requisitos (`requirements.evidence < 1`), se
+    dice: el score se apoya menos en skills por eso.
+  - Gate a 0 con su motivo; seniority pedida vs la del CV.
+  - Fortalezas (exacta / semántica, con la skill del CV que la cubre) y gaps
+    ordenados por prioridad (`gap` / `reinforce`, con su razón).
+  - `status: failed` → el motivo del backend; el texto pegado sigue visible.
+- Entrada desde la pantalla actual de Career Lab.
+- React no recalcula nada: cada número es del backend (plan 08 §7).
+
+### Dependencies
+
+Depends on: TASK-079
+
+### Acceptance Criteria
+
+- [x] Alta con `Idempotency-Key`, navegación al análisis y lista invalidada.
+- [x] Score siempre con banda y desglose; componente no disponible ≠ 0.
+- [x] Evidencia baja, gate, análisis fallido y CV ausente tienen su estado.
+- [x] Lista paginada por cursor.
+- [x] Tests de api y de pantalla; typecheck, lint e i18n limpios.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.**
+
+- **Rutas.** `/career-lab/vacancies` (`JobTargetsPage`: CV, oferta pegada,
+  historial) y `/career-lab/vacancies/:targetId` (`JobTargetDetailPage`). Se
+  entra desde una tarjeta en `/career-lab`; la entrada del menú lateral ya queda
+  activa en las sub-rutas. Las dos rutas añadidas a `$spa_route_known` de
+  `frontend/nginx.conf`: sin eso, recargar la página daba 404 en producción
+  (`cutoverRouting.test.ts` lo exige).
+- **Alta.** Contador y límites 200–20.000 replicados en el cliente solo para
+  avisar antes de enviar; el 422 del backend sigue mandando y su mensaje se
+  muestra si llega. `Idempotency-Key` **estable por pegado**: reintentar tras un
+  fallo reutiliza la clave (el backend devuelve la misma vacante), y editar el
+  texto o cambiar de CV genera una nueva. Al terminar, la respuesta se mete en
+  la caché del detalle y se navega a él sin otra petición.
+- **Detalle.** Score grande con su banda al lado, y el desglose por componente
+  con el peso **efectivo**; un componente sin señal dice «Not available» y que
+  su peso pasó a los demás. Sin score → «Not scored», nunca 0 %. Avisos para
+  gate a 0 (con su motivo), evidencia de catálogo baja (cuenta las skills
+  reconocidas y avisa de que lo que el catálogo no conoce no sale como gap) y
+  matching semántico no disponible. Fortalezas exactas o semánticas (con la
+  skill del CV que la cubre), gaps por `priority_rank` con su razón y la skill
+  más cercana en `reinforce`. Análisis fallido → motivo del backend; el texto
+  pegado siempre se puede desplegar.
+- **Lista.** `useInfiniteQuery` sobre el cursor del backend, con «Load more».
+- Claves i18n literales (mapas de claves, no plantillas), para que
+  `i18n:check` pueda verificarlas.
+
+**Validación.** 17 tests nuevos: api (alta con clave, cursor codificado,
+reapertura), alta (sin CV, mínimo sin llamar a la API, alta y navegación,
+reintento con la misma clave y clave nueva al editar, lista con bandas y
+cursor) y detalle (banda y desglose, no disponible ≠ 0, evidencia baja, orden
+de gaps, gate, fallido, sin score). Frontend **310 passed**; typecheck, lint,
+`i18n:check`, `api:check` y `contrast:check` limpios. Revisado en navegador
+contra la API simulada, en escritorio y a 390 px.
+
+## TASK-080 — Roadmap desde los gaps con días hasta la entrevista como restricción
+
+Status: COMPLETED
+Priority: MEDIUM
+Phase: PHASE-C1
+Category: API / Business Logic / Frontend
+
+### Objective
+
+Responder la segunda pregunta del plan 11 §1 —¿qué me falta y qué estudio
+primero?— para **una** vacante, con el tiempo que queda hasta la entrevista como
+restricción, reutilizando el optimizador de rutas que ya existe y sin LLM.
+
+### Desired State
+
+- `POST /api/v1/career-lab/job-targets/{id}/roadmap`
+  `{days_until_interview, hours_per_day, budget?, max_courses?}` → la ruta.
+  Horas disponibles = días × horas/día, como restricción dura del optimizador
+  (`learningRouteOptimizerService`, CP-SAT o heurística de reserva). Los gaps
+  que entran son los del análisis guardado (TASK-079), con su prioridad.
+  Reintentable con `Idempotency-Key` (gasta capacidad acotada del solver).
+- Respuesta: pasos en orden con su ventana de días (día X–Y a ese ritmo),
+  qué gaps cubre cada curso, coste y horas totales, y los gaps que quedan
+  fuera **con el motivo**: ningún curso del catálogo los enseña, o no caben en
+  el tiempo/presupuesto. Sin score proyectado: el optimizador proyecta
+  *readiness* de rol, no el score de esta vacante, y un número que no es el de
+  la vacante no se enseña junto a ella.
+- No se guarda: depende de los días que quedan, que cambian cada día. Recalcular
+  es gratis.
+- Pantalla: en el detalle de la vacante (TASK-081), formulario de días y horas y
+  la ruta resultante.
+
+### Dependencies
+
+Depends on: TASK-079
+
+### Acceptance Criteria
+
+- [x] Las horas disponibles acotan la ruta; con menos días caben menos cursos.
+- [x] Gaps sin curso en el catálogo y gaps que no caben, separados y nombrados.
+- [x] Solo el propietario; vacante sin análisis → 409; ajena → 404.
+- [x] Reintento con la misma clave no vuelve a resolver.
+- [x] Contrato regenerado y compatible; tests de backend y frontend.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.**
+
+- **Backend.** `app/services/careerLab/jobTargetRoadmapService.py` y
+  `POST /api/v1/career-lab/job-targets/{target_id}/roadmap`. El optimizador no
+  se toca: recibe los gaps del análisis guardado en la forma que ya lee
+  (`skill_gap_score` como peso, `priority_rank` ≤ 3 como críticos) y
+  `días × horas/día` como `available_hours`. Los pasos llevan su ventana de
+  días puestos uno detrás de otro a ese ritmo; un día a medio usar lo aprovecha
+  el curso siguiente.
+- **Por qué queda fuera un gap.** El optimizador da los dos casos como «no
+  cubierto»; una consulta a `load_active_course_links` los separa:
+  `no_course` (ningún curso del catálogo lo enseña: más tiempo no lo arregla) y
+  `out_of_reach` (hay curso, pero no cabe en tiempo o presupuesto).
+- **Sin score proyectado**, deliberadamente: el que calcula el optimizador es de
+  *readiness* de rol y suponía cerrar todo el hueco restante; enseñarlo junto a
+  la vacante sería un número que no es el suyo. En su lugar, `gap_coverage`:
+  parte del peso de prioridad de los gaps que cubre la ruta.
+- **Idempotencia** con el id de la vacante dentro de la huella: la misma clave
+  sobre otra vacante es otra petición, no un replay.
+- **Frontend.** `JobTargetRoadmapPanel` en el detalle de la vacante, solo si
+  hay gaps: días, horas/día y presupuesto opcional; pasos con «Days X–Y», la
+  entrevista al final y los dos grupos de gaps fuera con su explicación. El
+  aviso «no cabe nada» sale solo cuando lo que dejó fuera fue el tiempo.
+- **Comprobado contra el catálogo semilla** con la oferta de los tests: 30 días
+  a 3 h → tres cursos (Data Cleaning, Power BI, Statistics); 3 días a 4 h → solo
+  el de Data Cleaning, prioridad 1; 2 días a 1 h → ninguno. «Sales» siempre
+  `no_course`: el catálogo no tiene cursos de ventas, que es lo que TASK-082
+  amplía.
+
+**Validación.** `tests/test_career_lab_job_target_roadmap.py`: 13 casos
+(calendario por días, ruta dentro del tiempo, menos días caben menos cursos,
+presupuesto y tope de cursos, vacante sin gaps, sin análisis → 409, ajena →
+404, límites → 422, reintento sin segundo solve). Lane rápida **917 passed,
+137 skipped**; `ruff` limpio. Contrato regenerado: `check_openapi_compat.py`,
+una operación nueva, ningún cambio incompatible; la ruta declarada en
+`DECLARED_ADDED_PATHS`. Frontend **319 passed**; typecheck, lint, `i18n:check`,
+`api:check` y `contrast:check` limpios; revisado en navegador con la API
+simulada, en escritorio y a 390 px. PostgreSQL + Redis **141 passed**, con el
+ensayo de rollout reconociendo la ruta nueva.

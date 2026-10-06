@@ -119,3 +119,70 @@ export async function fetchLearningRouteRuns(limit = 5): Promise<RouteRun[]> {
   );
   return data.runs;
 }
+
+/*
+ * Job targets (TASK-081, plan 11 C1): a vacancy the student pasted, analysed
+ * against one of their CVs. The analysis is deterministic and comes back in
+ * the create response, so there is nothing to poll.
+ */
+
+export type JobTargetCreate = RequestOf<"career_lab_create_job_target">;
+export type JobTarget = ResponseOf<"career_lab_get_job_target">;
+export type JobTargetPage = ResponseOf<"career_lab_list_job_targets">;
+export type JobTargetSummary = JobTargetPage["items"][number];
+export type JobMatchAnalysis = NonNullable<JobTarget["analysis"]>;
+export type MatchBand = NonNullable<JobTarget["band"]>;
+
+/**
+ * The bounds `JobTargetCreate` enforces (`JOB_TEXT_MIN_CHARS` /
+ * `JOB_TEXT_MAX_CHARS`). Mirrored only so the form can say how far off the
+ * paste is before sending it; the backend's 422 stays the authority.
+ */
+export const JOB_TEXT_MIN_CHARS = 200;
+export const JOB_TEXT_MAX_CHARS = 20_000;
+
+/** Retry-safe under `Idempotency-Key`: a lost response retried files one vacancy. */
+export async function createJobTarget(payload: JobTargetCreate, idempotencyKey: string): Promise<JobTarget> {
+  const { data } = await apiRequest<JobTarget>("/api/v1/career-lab/job-targets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
+    body: JSON.stringify(payload),
+  });
+  return data;
+}
+
+export async function fetchJobTargetsPage(before?: string | null): Promise<JobTargetPage> {
+  const query = before ? `?before=${encodeURIComponent(before)}` : "";
+  const { data } = await apiRequest<JobTargetPage>(`/api/v1/career-lab/job-targets${query}`);
+  return data;
+}
+
+export async function fetchJobTarget(targetId: string): Promise<JobTarget> {
+  const { data } = await apiRequest<JobTarget>(`/api/v1/career-lab/job-targets/${encodeURIComponent(targetId)}`);
+  return data;
+}
+
+export type JobTargetRoadmapRequest = RequestOf<"career_lab_build_job_target_roadmap">;
+export type JobTargetRoadmap = ResponseOf<"career_lab_build_job_target_roadmap">;
+
+/**
+ * What to study first for a vacancy, in the days left before the interview
+ * (TASK-080). Spends bounded solver capacity, so it carries an
+ * `Idempotency-Key`, like `optimizeLearningRoute`. Nothing is stored server
+ * side: the days left change daily and recomputing is free.
+ */
+export async function buildJobTargetRoadmap(
+  targetId: string,
+  payload: JobTargetRoadmapRequest,
+  idempotencyKey: string,
+): Promise<JobTargetRoadmap> {
+  const { data } = await apiRequest<JobTargetRoadmap>(
+    `/api/v1/career-lab/job-targets/${encodeURIComponent(targetId)}/roadmap`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify(payload),
+    },
+  );
+  return data;
+}

@@ -3,9 +3,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetSessionRefreshState } from "@/api/client";
 import {
   addManualResumeSkill,
+  buildJobTargetRoadmap,
+  createJobTarget,
   deleteResumeSkill,
   evaluateLearningRouteBaselines,
   fetchGapAnalysis,
+  fetchJobTarget,
+  fetchJobTargetsPage,
   fetchLearningRouteRuns,
   fetchResumeSkillReview,
   fetchTargetRoles,
@@ -121,5 +125,54 @@ describe("career-lab api", () => {
     await fetchLearningRouteRuns(5);
     const [path] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(path).toBe("/api/v1/capstone/learning-route/runs?limit=5");
+  });
+
+  it("creates a job target with POST, the pasted text and an Idempotency-Key", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(201, { id: "t1" })));
+    vi.stubGlobal("fetch", fetchMock);
+    await createJobTarget({ text: "a posting", resume_id: "r1" }, "33333333-3333-3333-3333-333333333333");
+    const [path, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(path).toBe("/api/v1/career-lab/job-targets");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ text: "a posting", resume_id: "r1" });
+    expect((init.headers as Record<string, string>)["Idempotency-Key"]).toBe(
+      "33333333-3333-3333-3333-333333333333",
+    );
+  });
+
+  it("pages job targets by cursor, encoding it", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(jsonResponse(200, { items: [], next_cursor: null, has_more: false, limit: 20 })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await fetchJobTargetsPage();
+    await fetchJobTargetsPage("a+b/c");
+    const paths = fetchMock.mock.calls.map((call) => (call as unknown as [string])[0]);
+    expect(paths).toEqual(["/api/v1/career-lab/job-targets", "/api/v1/career-lab/job-targets?before=a%2Bb%2Fc"]);
+  });
+
+  it("reopens one job target", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(200, { id: "t1" })));
+    vi.stubGlobal("fetch", fetchMock);
+    await fetchJobTarget("t1");
+    const [path] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(path).toBe("/api/v1/career-lab/job-targets/t1");
+  });
+
+  it("asks for a vacancy's roadmap with POST and an Idempotency-Key", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(200, { steps: [] })));
+    vi.stubGlobal("fetch", fetchMock);
+    await buildJobTargetRoadmap(
+      "t1",
+      { days_until_interview: 10, hours_per_day: 2, budget: null },
+      "44444444-4444-4444-4444-444444444444",
+    );
+    const [path, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(path).toBe("/api/v1/career-lab/job-targets/t1/roadmap");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ days_until_interview: 10, hours_per_day: 2, budget: null });
+    expect((init.headers as Record<string, string>)["Idempotency-Key"]).toBe(
+      "44444444-4444-4444-4444-444444444444",
+    );
   });
 });
