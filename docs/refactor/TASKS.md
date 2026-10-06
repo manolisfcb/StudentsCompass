@@ -158,7 +158,7 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-073 | Corregir `semantic_matching_ready` y `get_effective_model_name` para proveedores no locales | HIGH | PHASE-C0 | COMPLETED | TASK-072 | TASK-077, TASK-082, TASK-083 |
 | TASK-074 | Tabla `skill_embeddings`, generación por lotes y backfill del catálogo | HIGH | PHASE-C0 | COMPLETED | TASK-072 | TASK-073, TASK-077 |
 | TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | HIGH | PHASE-C0 | COMPLETED | TASK-073, TASK-074 | TASK-077 |
-| TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | MEDIUM | PHASE-C0 | TODO | TASK-073 | TASK-074, TASK-075 |
+| TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | MEDIUM | PHASE-C0 | COMPLETED | TASK-073 | TASK-074, TASK-075 |
 | TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | TODO | NONE | TASK-072, TASK-082, TASK-083 |
 | TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | TODO | TASK-077 | TASK-082 |
 | TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | HIGH | PHASE-C1 | TODO | TASK-075, TASK-077 | TASK-082 |
@@ -14406,7 +14406,7 @@ rápida **854 passed, 133 skipped**; PostgreSQL **137 passed**; `ruff` limpio.
 
 ## TASK-076 — Alerta sobre `fallback_to_hash_count` y `provider_failure_count`
 
-Status: TODO
+Status: COMPLETED
 Priority: MEDIUM
 Phase: PHASE-C0
 Category: Observability
@@ -14439,9 +14439,36 @@ Can run in parallel with: TASK-074, TASK-075
 
 ### Acceptance Criteria
 
-- [ ] Log estructurado por cada caída a hash con el proveedor real configurado.
-- [ ] Política de alerta versionada en `infra/`.
+- [x] Log estructurado por cada caída a hash con el proveedor real configurado.
+- [x] Política de alerta versionada en `infra/`.
 
 ### Completion Notes
 
-_Pendiente._
+**2026-10-05 — cerrada en código e infraestructura versionada; la política no
+está aplicada en el proyecto GCP.**
+
+- Los contadores en proceso (`fallback_to_hash_count`, `provider_failure_count`)
+  no sirven para alertar en Cloud Run: viven en la memoria de una instancia que
+  escala a cero. La alerta se construye, como las de TASK-057, sobre un **log
+  estructurado**: `embeddingService._log_fallback` emite un WARNING por caída con
+  `embedding_fallback=true`, `embedding_provider`, `embedding_fallback_reason`
+  (`provider_error`, `missing_api_key`, `kill_switch`, `unknown_provider`) y
+  `embedding_texts`. `CloudLoggingFormatter` ya convierte esos extras en campos
+  de `jsonPayload`.
+- `infra/gcp/70-observability.sh`: métrica de log `embedding_fallback_to_hash`
+  (excluye `kill_switch`, que es una caída pedida) y política «embeddings
+  cayendo a hash» (> 3 en 15 min) con runbook por motivo. Documentado en
+  `infra/gcp/README.md`.
+- Por qué hace falta aunque exista la alerta de fallos externos: la clave
+  ausente, el proveedor mal escrito o una caída dentro del script de
+  sincronización no pasan por una llamada externa fallida dentro de una
+  petición, y son justo los casos que dejarían el matching apagado sin ruido.
+- **Pendiente fuera del repo:** ejecutar `70-observability.sh` contra el
+  proyecto para crear la métrica y la política. No lo hice: es una acción sobre
+  GCP que te corresponde decidir y lanzar.
+
+**Validación.** Cinco casos nuevos en `tests/test_gemini_embeddings.py`: un WARNING
+estructurado por caída con el motivo correcto (error del proveedor, sin clave,
+kill switch, proveedor desconocido), ninguno con el proveedor sano, y el
+formatter JSON emitiendo los campos que filtra la métrica. `bash -n` sobre el
+script.

@@ -87,6 +87,19 @@ create_log_metric "ai_budget_ceiling_reached" \
   "El guard de TASK-007 (aiBudgetGuard) rechazó una llamada a un proveedor de IA por techo de tasa o de cuota diaria alcanzado. Proxy de presión de gasto: no hay una cifra en dólares emitida a logs (el ledger de TASK-012 vive en la tabla ai_usage_event, no en una línea de log), así que esto alerta sobre el guard actuando, que es lo que TASK-057 pide 'apoyado en' — no sobre el gasto en sí." \
   "${API_LOG_FILTER} AND jsonPayload.logger=\"app.services.ai.aiBudgetGuard\" AND severity=\"WARNING\""
 
+# TASK-076. Cada caída de embeddings a hash con un proveedor real configurado
+# (EMBEDDINGS_PROVIDER=gemini). Al llamador le es invisible por diseño: el
+# análisis sigue, sólo que sin matching semántico. Sin esta métrica, una clave
+# ausente o un proveedor caído apagarían el matching otra vez sin que nadie lo
+# viera — el defecto que el plan 11 §2 se propuso cerrar. Los errores del
+# proveedor dentro de una petición ya cuentan en cloud_run_external_call_failures;
+# ésta cubre además la clave ausente, el proveedor desconocido y las caídas fuera
+# de una petición (script de sincronización). El kill switch se excluye: es una
+# caída pedida, no un fallo.
+create_log_metric "embedding_fallback_to_hash" \
+  "Embeddings que cayeron a hash con un proveedor real configurado (embeddingService._log_fallback). Campo embedding_fallback_reason: provider_error, missing_api_key o unknown_provider." \
+  "${API_LOG_FILTER} AND jsonPayload.embedding_fallback=true AND jsonPayload.embedding_fallback_reason!=\"kill_switch\""
+
 # --- Políticas de alerta ------------------------------------------------------
 #
 # Cada política referencia el canal de arriba y trae su propio runbook: un
@@ -291,6 +304,40 @@ conditions:
           perSeriesAligner: ALIGN_COUNT
 EOF
 apply_policy "StudentsCompass — techo de gasto de IA alcanzado" "$POLICY_DIR/ai-budget.yaml"
+
+# 7. Embeddings cayendo a hash (TASK-076).
+cat > "$POLICY_DIR/embedding-fallback.yaml" <<EOF
+displayName: "StudentsCompass — embeddings cayendo a hash"
+combiner: OR
+notificationChannels: ["$CHANNEL_NAME"]
+documentation:
+  content: |
+    El proveedor de embeddings configurado no está produciendo vectores y el
+    matching semántico está apagado de facto: las gap analysis siguen, pero
+    sólo con matches exactos. Runbook: en Logs Explorer filtrar
+    jsonPayload.embedding_fallback=true y mirar embedding_fallback_reason.
+    missing_api_key → GENAI_API_KEY no llega a la revisión (Secret Manager,
+    40-secrets.sh). unknown_provider → EMBEDDINGS_PROVIDER mal escrito.
+    provider_error → cuota, auth o caída de Gemini; ver el detalle en el
+    message y la status page antes de escalar. Mientras dure, nada se guarda
+    en skill_embeddings bajo el modelo real, así que no hay que limpiar nada
+    después; scripts/sync_skill_embeddings.py completa lo que faltara.
+  mimeType: text/markdown
+conditions:
+  - displayName: "Más de 3 caídas a hash en 15 minutos"
+    conditionThreshold:
+      filter: >-
+        resource.type="cloud_run_revision"
+        AND resource.labels.service_name="$API_SERVICE"
+        AND metric.type="logging.googleapis.com/user/embedding_fallback_to_hash"
+      comparison: COMPARISON_GT
+      thresholdValue: 3
+      duration: 0s
+      aggregations:
+        - alignmentPeriod: 900s
+          perSeriesAligner: ALIGN_SUM
+EOF
+apply_policy "StudentsCompass — embeddings cayendo a hash" "$POLICY_DIR/embedding-fallback.yaml"
 
 # --- Budget de facturación ----------------------------------------------------
 #

@@ -299,3 +299,76 @@ async def test_a_failed_gemini_call_never_writes_under_the_gemini_name(
 
     assert stored.model_name == HASH_MODEL_NAME
     assert stored.text_fingerprint == compute_text_fingerprint(SUMMARY, model_name=HASH_MODEL_NAME)
+
+
+# ---------------------------------------------------------------------------
+# Every fallback is logged with stable fields (TASK-076)
+# ---------------------------------------------------------------------------
+
+
+def _fallback_records(caplog) -> list:
+    return [record for record in caplog.records if getattr(record, "embedding_fallback", False)]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("setup", "reason"),
+    [
+        ("provider_error", "provider_error"),
+        ("missing_api_key", "missing_api_key"),
+        ("kill_switch", "kill_switch"),
+    ],
+)
+async def test_each_fallback_is_one_structured_warning(gemini, monkeypatch, caplog, setup, reason):
+    if setup == "provider_error":
+        gemini.error = RuntimeError("503 UNAVAILABLE")
+    elif setup == "missing_api_key":
+        monkeypatch.setattr(embeddingService, "_get_gemini_client", lambda: None)
+    else:
+        monkeypatch.setattr(config, "AI_KILL_SWITCH", True)
+
+    with caplog.at_level("WARNING", logger=embeddingService.LOGGER.name):
+        await generate_embeddings_batch(["Python", "SQL"])
+
+    (record,) = _fallback_records(caplog)
+    assert record.levelname == "WARNING"
+    assert record.embedding_provider == "gemini"
+    assert record.embedding_fallback_reason == reason
+    assert record.embedding_texts == 2
+
+
+@pytest.mark.asyncio
+async def test_an_unknown_provider_is_logged_as_such(monkeypatch, caplog):
+    monkeypatch.setenv("EMBEDDINGS_PROVIDER", "local")
+
+    with caplog.at_level("WARNING", logger=embeddingService.LOGGER.name):
+        await generate_embedding_with_model("Python")
+
+    (record,) = _fallback_records(caplog)
+    assert record.embedding_fallback_reason == "unknown_provider"
+
+
+@pytest.mark.asyncio
+async def test_a_working_provider_logs_no_fallback(gemini, caplog):
+    with caplog.at_level("WARNING", logger=embeddingService.LOGGER.name):
+        await generate_embeddings_batch(["Python"])
+
+    assert _fallback_records(caplog) == []
+
+
+def test_the_json_formatter_emits_the_fallback_fields_as_fields():
+    """The log metric filters on jsonPayload.embedding_fallback; it has to exist."""
+    import json
+    import logging
+
+    from app.logging import CloudLoggingFormatter
+
+    record = logging.LogRecord(embeddingService.LOGGER.name, logging.WARNING, __file__, 1, "x", None, None)
+    record.embedding_fallback = True
+    record.embedding_fallback_reason = "missing_api_key"
+
+    payload = json.loads(CloudLoggingFormatter().format(record))
+
+    assert payload["embedding_fallback"] is True
+    assert payload["embedding_fallback_reason"] == "missing_api_key"
+    assert payload["severity"] == "WARNING"

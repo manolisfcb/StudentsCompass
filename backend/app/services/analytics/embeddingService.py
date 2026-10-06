@@ -56,7 +56,39 @@ _EMBEDDING_METRICS = {
 
 
 class EmbeddingProviderUnavailable(RuntimeError):
-    """The configured provider could not produce a vector for this request."""
+    """The configured provider could not produce a vector for this request.
+
+    ``reason`` is a stable, low-cardinality label for logs and alerts:
+    ``kill_switch``, ``missing_api_key`` or ``provider_error``.
+    """
+
+    def __init__(self, message: str, *, reason: str = "provider_error"):
+        super().__init__(message)
+        self.reason = reason
+
+
+def _log_fallback(*, provider: str, reason: str, texts: int, detail: str) -> None:
+    """One structured WARNING per fallback to hash (TASK-076).
+
+    Every fallback is silent to the caller by design, which is exactly why it
+    has to be loud here: a missing key or a dead provider would otherwise turn
+    semantic matching off again with nothing to show for it. The fields are
+    what ``infra/gcp/70-observability.sh`` builds its log metric on; keep their
+    names stable.
+    """
+    LOGGER.warning(
+        "Embeddings fell back to hash (provider=%s, reason=%s, texts=%d): %s",
+        provider,
+        reason,
+        texts,
+        detail,
+        extra={
+            "embedding_fallback": True,
+            "embedding_provider": provider,
+            "embedding_fallback_reason": reason,
+            "embedding_texts": texts,
+        },
+    )
 
 
 @dataclass(frozen=True)
@@ -293,10 +325,10 @@ async def _gemini_embed(texts: list[str]) -> list[list[float]]:
 
     # The kill switch stops every paid provider call, not only generation.
     if config.AI_KILL_SWITCH:
-        raise EmbeddingProviderUnavailable("AI kill switch is on")
+        raise EmbeddingProviderUnavailable("AI kill switch is on", reason="kill_switch")
     client = _get_gemini_client()
     if client is None:
-        raise EmbeddingProviderUnavailable("GENAI_API_KEY is not set")
+        raise EmbeddingProviderUnavailable("GENAI_API_KEY is not set", reason="missing_api_key")
 
     from google.genai import types
 
@@ -361,15 +393,20 @@ async def generate_embeddings_batch(texts: list[str]) -> tuple[list[list[float]]
         try:
             return await _gemini_embed(clean_texts), gemini_model_name()
         except EmbeddingProviderUnavailable as exc:
-            LOGGER.warning(
-                "Gemini embeddings unavailable (%s). Falling back to hash embeddings.", exc
+            _log_fallback(
+                provider=provider, reason=exc.reason, texts=len(clean_texts), detail=str(exc)
             )
             _EMBEDDING_METRICS["provider_failure_count"] += 1
             _EMBEDDING_METRICS["fallback_to_hash_count"] += 1
             return [generate_hash_embedding(text) for text in clean_texts], HASH_MODEL_NAME
 
     if provider != "hash":
-        LOGGER.warning("Unknown EMBEDDINGS_PROVIDER=%s. Falling back to hash embeddings.", provider)
+        _log_fallback(
+            provider=provider,
+            reason="unknown_provider",
+            texts=len(clean_texts),
+            detail=f"EMBEDDINGS_PROVIDER={provider!r} is not a known provider",
+        )
         _EMBEDDING_METRICS["unknown_provider_fallback_count"] += 1
         _EMBEDDING_METRICS["fallback_to_hash_count"] += 1
     return [generate_hash_embedding(text) for text in clean_texts], HASH_MODEL_NAME
