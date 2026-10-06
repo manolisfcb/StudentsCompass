@@ -56,6 +56,19 @@ Ninguna tarea COMPLETED se reabre. TASK-016 y TASK-017, cerradas bajo el plan an
 
 IDs estables: nunca renumerar/reutilizar; nueva tarea usa el siguiente ID libre. Sin cleanup lateral: descubrimiento fuera de Scope → finding/tarea nueva, no ampliar silenciosamente. Bug Fix significa que cambia el comportamiento defectuoso explícitamente descrito; el resto se preserva.
 
+## Plan 11 — Career Lab como copiloto de candidatura
+
+TASK-072 a TASK-098 ejecutan [11_CAREER_INTELLIGENCE_PLAN.md](11_CAREER_INTELLIGENCE_PLAN.md), una vertical nueva sobre la arquitectura del plan 08. Sus fases son **PHASE-C0 a PHASE-C8** y corresponden a las C0–C8 de §8 de ese plan. Se numeran aparte de PHASE-0…6 y PHASE-M0…M5.
+
+TASK-072 a TASK-096 son las de §9 del plan. **TASK-097 y TASK-098 se añaden aquí** porque §4.4 y §4.5 del plan definen el Interview Prep técnico y su gate de acceso (D9–D11) y los sitúan en una fase C8 que §8 y §9 no llegaron a listar.
+
+Dos correcciones al plan que las fichas recogen, medidas el 2026-10-05 contra la API real (ver Completion Notes de TASK-072):
+
+- **Los umbrales de similitud dependen del modelo.** `SEMANTIC_MATCH_THRESHOLD = 0.72` y `WEAK_MATCH_THRESHOLD = 0.48` se calibraron para MiniLM. Con `gemini-embedding-001` a 384 dimensiones dos skills sin relación dan coseno 0,74–0,80: con los umbrales actuales **todo** candidato sería un match semántico. TASK-073 no puede declarar el matching listo sin un perfil de umbrales por modelo.
+- **La línea base de §2 ya no es la del commit que cita.** `e6ec0b4` retiró el proveedor local: hoy `semantic_matching_ready` vale `False` fijo y `get_effective_model_name()` devuelve `hash-v1` siempre. El defecto que describe §2 sigue existiendo; las líneas citadas no.
+
+**READY al adoptar el plan 11 (2026-10-05): TASK-072, TASK-077, TASK-082 y TASK-083.** La condición de salida de C2 (§8 del plan) es funcional, no sólo de dependencias: ninguna tarea de C3 en adelante llega a usuarios sin TASK-086 en producción, `REQUIRE_VERIFIED_FOR_AI=1` y los tres cercos de §7. Por eso TASK-089 depende de TASK-086.
+
 ## Concurrencia e integración
 
 Usar worktree/branch por tarea cuando haya agentes paralelos. Las reclamaciones y merges de TASKS.md se serializan mediante un único integrador: leer estado fresco, actualizar solo fila y sección propias y evitar sobrescribir reclamaciones. En workspace compartido reservar archivos antes de editar; si se descubre un solapamiento no anticipado, detener la parte conflictiva y coordinar. READY no es permiso para editar un archivo tomado por otra tarea.
@@ -143,6 +156,33 @@ Reglas arquitectónicas: backend autoritativo en reglas sensibles; UI solo proye
 | TASK-069 | Crear el esquema base también fuera de PostgreSQL | MEDIUM | PHASE-0 | COMPLETED | TASK-009 | NONE |
 | TASK-070 | Hacer que la lane de integración corra entera sin cascada | MEDIUM | PHASE-0 | COMPLETED | TASK-001 | NONE |
 | TASK-071 | Aislar el bucle de eventos que rompe el transporte por defecto del outbox | LOW | PHASE-0 | TODO | TASK-054 | TASK-064, TASK-070 |
+| TASK-072 | Proveedor de embeddings por API con dimensión 384 y normalización L2 | HIGH | PHASE-C0 | COMPLETED | NONE | TASK-077, TASK-082, TASK-083 |
+| TASK-073 | Corregir `semantic_matching_ready` y `get_effective_model_name` para proveedores no locales | HIGH | PHASE-C0 | COMPLETED | TASK-072 | TASK-077, TASK-082, TASK-083 |
+| TASK-074 | Tabla `skill_embeddings`, generación por lotes y backfill del catálogo | HIGH | PHASE-C0 | TODO | TASK-072 | TASK-073, TASK-077 |
+| TASK-075 | Leer vectores de skill desde base de datos en `SemanticMatchingService` | HIGH | PHASE-C0 | TODO | TASK-073, TASK-074 | TASK-077 |
+| TASK-076 | Alerta sobre `fallback_to_hash_count` y `provider_failure_count` | MEDIUM | PHASE-C0 | TODO | TASK-073 | TASK-074, TASK-075 |
+| TASK-077 | Tablas `job_targets` y `job_description_parses` con su ciclo de lease | HIGH | PHASE-C1 | TODO | NONE | TASK-072, TASK-082, TASK-083 |
+| TASK-078 | Endpoint de alta de oferta por texto pegado, con cap de longitud | HIGH | PHASE-C1 | TODO | TASK-077 | TASK-082 |
+| TASK-079 | Análisis determinista oferta↔CV: score, bandas, fortalezas y gaps | HIGH | PHASE-C1 | TODO | TASK-075, TASK-077 | TASK-082 |
+| TASK-080 | Roadmap desde los gaps con días hasta la entrevista como restricción | MEDIUM | PHASE-C1 | TODO | TASK-079 | TASK-081 |
+| TASK-081 | Pantalla React de análisis de vacante | HIGH | PHASE-C1 | TODO | TASK-079 | TASK-080 |
+| TASK-082 | Sembrar el catálogo de skills desde ESCO/O\*NET | MEDIUM | PHASE-C1 | TODO | NONE | TASK-072, TASK-077, TASK-083 |
+| TASK-083 | Capa `generate_structured` agnóstica con traducción de schema y mapeo de errores | HIGH | PHASE-C2 | TODO | NONE | TASK-072, TASK-077, TASK-082 |
+| TASK-084 | Registro de tiers en configuración y resolución server-side por slug | HIGH | PHASE-C2 | TODO | TASK-083 | TASK-087 |
+| TASK-085 | Créditos ponderados en `AIUsageService` y `aiBudgetGuard` | CRITICAL | PHASE-C2 | TODO | TASK-084 | TASK-087, TASK-088 |
+| TASK-086 | Cuota de por vida contada sobre el ledger durable | CRITICAL | PHASE-C2 | TODO | TASK-085 | TASK-087, TASK-088 |
+| TASK-087 | `max_output_tokens` y caps de entrada por tarea | HIGH | PHASE-C2 | TODO | TASK-083 | TASK-084, TASK-085 |
+| TASK-088 | Cerrar las cinco fugas de nombre de modelo hacia el cliente | HIGH | PHASE-C2 | TODO | TASK-084 | TASK-085, TASK-086 |
+| TASK-089 | Parse de oferta por LLM con caché compartida por hash | HIGH | PHASE-C3 | TODO | TASK-077, TASK-083, TASK-086 | NONE |
+| TASK-090 | Auto-registro de skills no catalogadas con estado revisable | MEDIUM | PHASE-C3 | TODO | TASK-074, TASK-089 | TASK-091, TASK-092 |
+| TASK-091 | CV Coach | HIGH | PHASE-C4 | TODO | TASK-089 | TASK-090, TASK-092 |
+| TASK-092 | Interview Prep | HIGH | PHASE-C5 | TODO | TASK-089 | TASK-090, TASK-091 |
+| TASK-093 | Tracker de candidaturas con estados propios | MEDIUM | PHASE-C6 | TODO | TASK-077 | TASK-079 |
+| TASK-094 | Analíticas personales de candidatura | LOW | PHASE-C6 | TODO | TASK-093 | NONE |
+| TASK-095 | Planes, gates de tier y pasarela de pago | HIGH | PHASE-C7 | TODO | TASK-085 | TASK-096 |
+| TASK-096 | Activar gate de verificación y blocklist de dominios desechables | HIGH | PHASE-C7 | TODO | TASK-086 | TASK-095 |
+| TASK-097 | `feature_access` server-side, mapa `features` en la sesión y tarjeta *coming soon* | HIGH | PHASE-C8 | TODO | TASK-081 | TASK-089 |
+| TASK-098 | Interview Prep técnico: Plan técnico y Tema a fondo (sólo admin hasta C7) | MEDIUM | PHASE-C8 | TODO | TASK-085, TASK-089, TASK-097 | TASK-091, TASK-092 |
 
 ## TASK-001 — Fijar baseline aislada y pruebas PostgreSQL de integridad
 
@@ -13992,3 +14032,363 @@ Performance: LOW
 Maintainability: MEDIUM
 Cost: LOW
 Risk: LOW
+
+## TASK-072 — Proveedor de embeddings por API con dimensión 384 y normalización L2
+
+Status: COMPLETED
+Priority: HIGH
+Phase: PHASE-C0
+Category: Business Logic / External Integration
+
+### Objective
+
+Que `EMBEDDINGS_PROVIDER=gemini` produzca vectores reales de `gemini-embedding-001`
+que quepan en las columnas `Vector(384)` existentes y se puedan comparar por coseno.
+
+### Problem
+
+Desde `e6ec0b4` el único proveedor es `hash`: todo vector guardado es un hash de
+tokens sin significado y el matching semántico está apagado. D2 del plan 11
+descarta volver a `sentence-transformers` (memoria de instancia) y elige
+embeddings por API.
+
+### Evidence / Location
+
+- `backend/app/services/analytics/embeddingService.py` `generate_embedding_with_model`:
+  sólo conoce `hash`; cualquier otro valor cae a hash y cuenta
+  `unknown_provider_fallback_count`.
+- `resume_embeddings.embedding` es `Vector(384)` con índice HNSW coseno.
+
+### Desired State
+
+- `EMBEDDINGS_PROVIDER=gemini` genera con `gemini-embedding-001`,
+  `output_dimensionality=384`, `task_type=SEMANTIC_SIMILARITY` en todos los lados.
+- Cada vector sale normalizado L2: con reducción dimensional la API **no** lo
+  devuelve normalizado.
+- El vector se guarda bajo un `model_name` que identifica modelo y dimensión,
+  nunca `hash-v1`.
+- Si la API falla o no hay clave, cae a hash con su propio nombre de modelo y lo
+  cuenta; jamás guarda un hash bajo el nombre del modelo real.
+- Una función por lotes (`generate_embeddings_batch`) para TASK-074.
+- `hash` sigue siendo el valor por defecto: este cambio no altera nada en
+  producción hasta que alguien cambie la variable.
+
+### Scope
+
+IN SCOPE: el proveedor, su configuración, su manejo de errores, tests.
+
+OUT OF SCOPE: declarar el matching listo (TASK-073), umbrales por modelo
+(TASK-073), `skill_embeddings` (TASK-074), alertas (TASK-076).
+
+### Dependencies
+
+Depends on: NONE
+
+### Blocks
+
+Blocks: TASK-073, TASK-074
+
+### Parallelization
+
+Can run in parallel with: TASK-077, TASK-082, TASK-083
+
+### Acceptance Criteria
+
+- [x] Verificado empíricamente que la API acepta 384 dimensiones.
+- [x] Vectores de norma 1 con `EMBEDDINGS_PROVIDER=gemini`.
+- [x] Fallo del proveedor → hash bajo `hash-v1`, contado, sin excepción al llamador.
+- [x] `AI_KILL_SWITCH` también corta los embeddings por API.
+- [x] Tests sin red: el cliente se sustituye en test.
+- [x] Existing behavior remains compatible.
+- [x] Relevant tests pass.
+
+### Validation
+
+Sonda real contra la API (dimensión y norma) y lane rápida de backend.
+
+### Rollback / Risk Notes
+
+Rollback = `EMBEDDINGS_PROVIDER=hash`. Los vectores Gemini quedan bajo su propio
+`model_name` y no contaminan búsquedas de hash.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.** `EMBEDDINGS_PROVIDER=gemini` produce vectores reales;
+`hash` sigue siendo el valor por defecto, así que nada cambia en producción hasta
+que se cambie la variable.
+
+**Medido contra la API real**, antes de escribir código:
+
+- **384 dimensiones: aceptadas.** `output_dimensionality=384` devuelve 384
+  valores. No hace falta migrar columnas ni el índice HNSW.
+- **Sin normalizar a 384.** Norma ≈ 0,42–0,43 (la salida nativa de 3072 sí viene
+  a norma 1). La normalización L2 manual del plan era necesaria.
+- **La distribución del coseno es otra.** Con `task_type=SEMANTIC_SIMILARITY`,
+  texto de skill como lo arma `_skill_text`: sinónimos 0,95–0,99 (PostgreSQL /
+  Postgres, AWS / Amazon Web Services); relacionadas 0,88–0,94 (Tableau / Power BI,
+  Docker / Kubernetes); **sin relación 0,74–0,80** (XGBoost / Tableau, Python /
+  Accounting). Contexto CV↔oferta: alineada 0,87, adyacente 0,84, otra tecnología
+  0,76, otra profesión 0,68. Los umbrales actuales (0,72 / 0,48 y 0,78 / 0,62) son
+  de MiniLM: con ellos casi todo sería match. Es trabajo de TASK-073, y por eso
+  `semantic_matching_ready` sigue en `False` aquí.
+
+**Qué se hizo** (`backend/app/services/analytics/embeddingService.py`):
+
+- `generate_embeddings_batch(texts)` es el único camino; `generate_embedding_with_model`
+  es un lote de uno. Trocea a 100 (límite de la API), mantiene el orden y
+  normaliza L2 cada vector.
+- Todos los vectores de un lote comparten nombre de modelo: si un trozo falla,
+  **el lote entero** cae a hash. Ningún llamador recibe una lista que mezcle dos
+  espacios.
+- Nombre de almacenamiento `gemini-embedding-001@384`: el ancho forma parte del
+  espacio. Un fallo cae a hash bajo `hash-v1`, nunca bajo el nombre de Gemini.
+- Sin clave, con `AI_KILL_SWITCH` encendido, con error del proveedor, timeout
+  (`EMBEDDING_TIMEOUT_SECONDS`, 10 s) o un vector de otro ancho: hash, contado en
+  `provider_failure_count` / `fallback_to_hash_count`, sin excepción al llamador.
+  Un intento por trozo, sin reintentos.
+- Los embeddings **no** cuentan en el techo de intentos de `aiBudgetGuard`: son
+  ~1000× más baratos que una generación y el backfill del catálogo (TASK-074) se
+  comería el techo diario. Sí respetan el kill switch.
+- `get_effective_model_name()` se movió aquí desde TASK-073: con el proveedor
+  devolviendo `gemini-…@384` y esta función devolviendo `hash-v1`, el salto por
+  fingerprint de `upsert_resume_embedding_from_text` buscaba la fila equivocada y
+  devolvía para siempre el vector hash viejo. No se pueden separar.
+- Estado: nuevas claves `provider_configured` y `provider_failure_count`. Las del
+  contrato público siguen todas.
+
+**Validación.** `tests/test_gemini_embeddings.py` (15 casos, sin red: el cliente
+se sustituye) y la lane rápida completa: **824 passed, 129 skipped**. Sonda real
+con el código nuevo: tres vectores de 384 y norma 1,000000, sinónimos 0,990, sin
+relación 0,788, cero fallos. `ruff` limpio. La lane PostgreSQL no se ejecutó en
+esta sesión; el camino de escritura que ejercita no cambió.
+
+Doc actualizada: `docs/capstone_product/matching_methodology.md` (decía que el
+matching se activa con `EMBEDDINGS_PROVIDER=local`, que ya no existe).
+
+## TASK-073 — Corregir `semantic_matching_ready` y `get_effective_model_name` para proveedores no locales
+
+Status: COMPLETED
+Priority: HIGH
+Phase: PHASE-C0
+Category: Business Logic / Bug Fix
+
+### Objective
+
+Que el matching semántico se encienda con un proveedor por API configurado, y que
+lo haga con umbrales calibrados para ese modelo.
+
+### Problem
+
+`get_embedding_status()` devuelve `semantic_matching_ready: False` fijo y
+`get_effective_model_name()` devuelve `hash-v1` siempre. Y aun corregido eso, los
+umbrales de `semanticMatchingService.py` (0,72 / 0,48) y de contexto (0,78 / 0,62)
+son de MiniLM: con Gemini@384 dos skills sin relación dan 0,74–0,80 y un CV de
+data analyst contra una oferta de enfermería da 0,68 de contexto.
+
+### Desired State
+
+- `get_effective_model_name()` refleja el proveedor configurado.
+- `semantic_matching_ready` es verdadero sólo si el proveedor produce vectores con
+  significado **y** está configurado (clave presente).
+- Perfil de umbrales por `model_name` (match semántico, match débil, banda de
+  contexto y reescalado del coseno de contexto a [0, 1]); sin perfil, no hay
+  matching semántico.
+- Un vector que cayó a hash nunca entra en una comparación contra vectores del
+  modelo real.
+
+### Scope
+
+IN SCOPE: `embeddingService`, `semanticMatchingService`, tests.
+
+OUT OF SCOPE: leer vectores desde base de datos (TASK-075).
+
+### Dependencies
+
+Depends on: TASK-072
+
+### Blocks
+
+Blocks: TASK-075, TASK-076
+
+### Parallelization
+
+Can run in parallel with: TASK-077, TASK-082, TASK-083
+
+### Acceptance Criteria
+
+- [x] Con `hash` el estado y el resultado de la gap analysis no cambian.
+- [x] Con `gemini` y clave, `semantic_matching_ready` es `True`.
+- [x] Umbrales por modelo, con los valores medidos documentados.
+- [x] Existing behavior remains compatible.
+- [x] Relevant tests pass.
+
+### Completion Notes
+
+**2026-10-05 — cerrada.** Con `EMBEDDINGS_PROVIDER=gemini` y `GENAI_API_KEY`, el
+matching semántico se enciende y lee los cosenos en la escala de su modelo. Con
+`hash` (el valor por defecto) el estado y la gap analysis no cambian.
+
+- `get_effective_model_name()` se hizo en TASK-072 (ver sus notas: no se podía
+  separar del proveedor sin romper el salto por fingerprint).
+- **Readiness** (`is_semantic_matching_ready`): generación encendida, proveedor
+  distinto de hash, proveedor llamable (clave presente) y perfil calibrado para su
+  modelo. Un `GEMINI_EMBEDDING_MODEL` sin perfil queda **no listo**, en vez de
+  compararse con umbrales de otro modelo.
+- **`SimilarityProfile` por modelo** (`embeddingService.SIMILARITY_PROFILES`).
+  `gemini-embedding-001@384`: match semántico ≥ 0,95, débil ≥ 0,88; contexto
+  fuerte ≥ 0,85, moderado ≥ 0,80, reportado reescalado `(cos − 0,70) / 0,20`.
+  Valores y medidas en `docs/capstone_product/matching_methodology.md`. El perfil
+  de contexto descansa en cuatro pares sintéticos: **provisional hasta TASK-079**.
+- **Contexto reescalado.** `context_similarity_score` pesa el 20 % de
+  `overall_readiness_score`. Con Gemini en crudo, un CV de data analyst contra una
+  oferta de enfermería daba 0,68: 13,6 puntos regalados. Reescalado da 0.
+- **Ningún vector de fallback entra en una comparación.** El embebedor por
+  defecto del matcher es `generate_embedding_in_active_space`, que devuelve `None`
+  si el vector vino de otro modelo que el configurado. Un hash tiene el mismo
+  ancho que un vector Gemini y nada impedía compararlos.
+- La caché LRU en proceso pasa a indexarse por nombre de modelo, no por
+  proveedor.
+- Un embebedor inyectado (tests, llamadores propios) conserva el perfil legado
+  0,72 / 0,48 / 0,78 / 0,62 sin reescalado: los tests existentes no cambian.
+
+**Validación.** `tests/test_similarity_profiles.py` (18 casos, entre ellos uno que
+fija el defecto: coseno 0,79 es match semántico con el perfil legado y gap con el
+de Gemini). Lane rápida completa **843 passed, 129 skipped**; `ruff` limpio en
+todo el backend. Sonda real con el matcher por defecto y la API: requeridas Power
+BI, XGBoost, Kubernetes, PostgreSQL contra Tableau, Python, Excel, MySQL →
+Power BI←Tableau (0,921) y PostgreSQL←MySQL (0,903) **débiles**, XGBoost y
+Kubernetes **gaps**, `match_score` 0,16. Con los umbrales legados las cuatro
+habrían sido match semántico.
+
+Esa misma sonda hizo **8 llamadas HTTPS en serie** para cuatro pares de skills:
+es exactamente lo que resuelven TASK-074 y TASK-075, y la razón para no encender
+`EMBEDDINGS_PROVIDER=gemini` en producción antes de tenerlas.
+
+## TASK-074 — Tabla `skill_embeddings`, generación por lotes y backfill del catálogo
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-C0
+Category: Database / Performance
+
+### Objective
+
+Embeber cada skill del catálogo una sola vez en su vida y guardarla.
+
+### Problem
+
+`SemanticMatchingService` embebe cada skill en un bucle secuencial con un LRU en
+proceso. Con un proveedor por API son ~50 viajes HTTPS por análisis, y Cloud Run
+escala a cero y vacía el LRU.
+
+### Desired State
+
+- Tabla `skill_embeddings` (`skill_id` FK, `embedding Vector(384)`, `model_name`,
+  `text_fingerprint`, `fingerprint_version`), único por `(skill_id, model_name)`,
+  índice HNSW coseno. Migración nueva con rollback.
+- Servicio que embebe por lotes las skills sin vector vigente para el modelo
+  actual, saltando las de fingerprint igual.
+- Comando de backfill idempotente.
+
+### Dependencies
+
+Depends on: TASK-072
+
+### Blocks
+
+Blocks: TASK-075, TASK-090
+
+### Parallelization
+
+Can run in parallel with: TASK-073, TASK-077
+
+### Acceptance Criteria
+
+- [ ] Backfill dos veces seguidas: la segunda no llama al proveedor.
+- [ ] Migración upgrade/downgrade probada en la lane PostgreSQL.
+- [ ] Relevant tests pass.
+
+### Completion Notes
+
+_Pendiente._
+
+## TASK-075 — Leer vectores de skill desde base de datos en `SemanticMatchingService`
+
+Status: TODO
+Priority: HIGH
+Phase: PHASE-C0
+Category: Performance
+
+### Objective
+
+Que un análisis típico haga cero llamadas de embedding de skills.
+
+### Desired State
+
+`SemanticMatchingService` carga en una consulta los vectores de todas las skills
+implicadas desde `skill_embeddings` para el modelo vigente; las que falten se
+embeben en un lote y se guardan. El LRU en proceso deja de ser la protección.
+
+### Dependencies
+
+Depends on: TASK-073, TASK-074
+
+### Blocks
+
+Blocks: TASK-079
+
+### Parallelization
+
+Can run in parallel with: TASK-077
+
+### Acceptance Criteria
+
+- [ ] Gap analysis con catálogo ya embebido: cero llamadas al proveedor.
+- [ ] Mismo resultado que con el embebido en caliente.
+- [ ] Relevant tests pass.
+
+### Completion Notes
+
+_Pendiente._
+
+## TASK-076 — Alerta sobre `fallback_to_hash_count` y `provider_failure_count`
+
+Status: TODO
+Priority: MEDIUM
+Phase: PHASE-C0
+Category: Observability
+
+### Objective
+
+Que una caída silenciosa a hash con el proveedor real configurado se vea.
+
+### Problem
+
+Con un proveedor por API, cada fallo cae a hash sin error. Sin alerta, el matching
+semántico puede quedar apagado de facto otra vez sin que nadie lo note.
+
+### Desired State
+
+Las caídas se emiten como log estructurado con nombre estable y una alerta de
+Cloud Monitoring (en la línea de TASK-057) dispara cuando superan un umbral.
+
+### Dependencies
+
+Depends on: TASK-073
+
+### Blocks
+
+Blocks: NONE
+
+### Parallelization
+
+Can run in parallel with: TASK-074, TASK-075
+
+### Acceptance Criteria
+
+- [ ] Log estructurado por cada caída a hash con el proveedor real configurado.
+- [ ] Política de alerta versionada en `infra/`.
+
+### Completion Notes
+
+_Pendiente._

@@ -33,21 +33,42 @@ a required role skill linked to `python`.
 
 ## Semantic Matching
 
-Semantic matching is enabled only when:
+Semantic matching is enabled only when the embedding status reports
+`semantic_matching_ready`, which requires all of: generation on, a provider
+whose vectors carry meaning and can be called, and a calibrated
+`SimilarityProfile` for its model (`embeddingService.SIMILARITY_PROFILES`).
 
-- `EMBEDDINGS_PROVIDER=local`; and
-- the embedding status reports semantic matching readiness, including local
-  package availability.
+- `EMBEDDINGS_PROVIDER=hash` (the default) produces token hashes with no
+  meaning to match on: never ready.
+- The local sentence-transformer provider was retired (it pulled torch into
+  the image); `EMBEDDINGS_PROVIDER=local` now falls back to hash.
+- `EMBEDDINGS_PROVIDER=gemini` produces real `gemini-embedding-001` vectors at
+  384 dimensions, L2-normalised and stored as `gemini-embedding-001@384`. It
+  needs `GENAI_API_KEY`, honours `AI_KILL_SWITCH`, and falls back to hash
+  (stored under `hash-v1`, counted in `provider_failure_count`) when the API
+  fails. A fallback vector is never compared against a Gemini one: the matcher
+  treats it as "no vector". Ready when the key is set.
 
 The service builds short text representations of each skill using display name,
 normalized name, category, and evidence text when present. It embeds the
 required skill and candidate current skills, then compares them with cosine
 similarity.
 
-Current thresholds:
+Thresholds depend on the model, because each model spreads its cosines over
+its own range:
 
-- semantic match: similarity `>= 0.72`;
-- weak or partial match: similarity `>= 0.48` and `< 0.72`.
+| Profile | Semantic match | Weak match | Context strong / moderate | Context reported as |
+| --- | --- | --- | --- | --- |
+| `gemini-embedding-001@384` | `>= 0.95` | `>= 0.88` | `>= 0.85` / `>= 0.80` | `(cos − 0.70) / 0.20`, clamped to [0, 1] |
+| Legacy (MiniLM; injected embedders) | `>= 0.72` | `>= 0.48` | `>= 0.78` / `>= 0.62` | raw cosine |
+
+The Gemini profile was measured on 2026-10-05: synonyms 0.95–0.99
+(PostgreSQL / Postgres), related skills 0.88–0.94 (Tableau / Power BI, MySQL /
+PostgreSQL), unrelated 0.74–0.80 (XGBoost / Tableau). A related skill is a weak
+match — transferable, not a substitute. Under the legacy thresholds every one of
+those pairs would have been a semantic match. The context values rest on four
+synthetic CV↔posting pairs (aligned 0.87, adjacent role 0.84, other stack 0.76,
+other profession 0.68) and are provisional until real postings calibrate them.
 
 Semantic matches count as matched required skills. Weak matches are reported for
 explanation but remain in `missing_skills` because the product should not claim

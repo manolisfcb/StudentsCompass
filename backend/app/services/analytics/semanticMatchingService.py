@@ -7,20 +7,26 @@ from typing import Awaitable, Callable
 import numpy as np
 
 from app.services.analytics.embeddingService import (
-    generate_embedding,
-    get_embedding_provider,
+    LEGACY_SIMILARITY_PROFILE,
+    SimilarityProfile,
+    generate_embedding_in_active_space,
+    get_effective_model_name,
     get_embedding_status,
+    get_similarity_profile,
 )
 
 
 EmbeddingFn = Callable[[str], Awaitable[list[float] | None]]
 
-SEMANTIC_MATCH_THRESHOLD = 0.72
-WEAK_MATCH_THRESHOLD = 0.48
+# The MiniLM-era thresholds, kept as names for callers that read them. The
+# matcher itself reads its thresholds from a per-model ``SimilarityProfile``.
+SEMANTIC_MATCH_THRESHOLD = LEGACY_SIMILARITY_PROFILE.semantic_match
+WEAK_MATCH_THRESHOLD = LEGACY_SIMILARITY_PROFILE.weak_match
 
 # Process-wide LRU cache for skill-text embeddings. Skill texts are short and
-# repeat heavily across gap-analysis requests, so caching the deterministic
-# default embedder avoids recomputing them on every request.
+# repeat heavily across gap-analysis requests, so caching the default embedder
+# avoids recomputing them on every request. Keyed by model name, so a provider
+# change never serves a vector from the previous space.
 _SKILL_EMBEDDING_CACHE: "OrderedDict[tuple[str, str], list[float]]" = OrderedDict()
 _SKILL_EMBEDDING_CACHE_MAXSIZE = 2048
 
@@ -59,14 +65,27 @@ class SemanticContextSummary:
 
 
 class SemanticMatchingService:
-    def __init__(self, embedding_fn: EmbeddingFn = generate_embedding, semantic_ready_override: bool | None = None):
+    def __init__(
+        self,
+        embedding_fn: EmbeddingFn = generate_embedding_in_active_space,
+        semantic_ready_override: bool | None = None,
+        profile: SimilarityProfile | None = None,
+    ):
         self.embedding_fn = embedding_fn
         self.semantic_ready_override = semantic_ready_override
-        # Only the deterministic default embedder is safe to share across requests
-        # in a process-wide cache. Injected functions (tests, custom callers) use a
+        # Only the default embedder is safe to share across requests in a
+        # process-wide cache. Injected functions (tests, custom callers) use a
         # per-instance cache so they never read another caller's cached vectors.
-        self._use_shared_cache = embedding_fn is generate_embedding
+        self._use_shared_cache = embedding_fn is generate_embedding_in_active_space
         self._local_cache: dict[str, list[float]] = {}
+        # The default embedder reads cosines with its own model's profile. An
+        # injected function has no stored model to look one up by, so it keeps
+        # the thresholds its callers were written against.
+        self.profile = (
+            profile
+            or (get_similarity_profile() if self._use_shared_cache else None)
+            or LEGACY_SIMILARITY_PROFILE
+        )
 
     async def analyze_required_skill_matches(
         self,
@@ -118,13 +137,13 @@ class SemanticMatchingService:
             if semantic_ready and candidate_matrix is not None:
                 semantic_match = await self._best_semantic_match(required, candidate_matrix, candidate_skills)
 
-            if semantic_match and semantic_match["similarity_score"] >= SEMANTIC_MATCH_THRESHOLD:
+            if semantic_match and semantic_match["similarity_score"] >= self.profile.semantic_match:
                 score = importance * semantic_match["similarity_score"] * 0.82
                 semantic_score_total += score
                 semantic_matches.append({**required, **semantic_match})
                 continue
 
-            if semantic_match and semantic_match["similarity_score"] >= WEAK_MATCH_THRESHOLD:
+            if semantic_match and semantic_match["similarity_score"] >= self.profile.weak_match:
                 score = importance * semantic_match["similarity_score"] * 0.35
                 weak_score += score
                 weak_matches.append({**required, **semantic_match})
@@ -194,11 +213,14 @@ class SemanticMatchingService:
                 message="Context similarity is unavailable because embeddings could not be generated.",
             )
 
-        similarity = round(_cosine_similarity(resume_embedding, role_embedding), 4)
-        if similarity >= 0.78:
+        # Banded on the raw cosine, reported rescaled: each model has its own
+        # background similarity, and an unrelated CV should score 0, not it.
+        cosine = _cosine_similarity(resume_embedding, role_embedding)
+        similarity = round(self.profile.rescale_context(cosine), 4)
+        if cosine >= self.profile.context_strong:
             match_level = "strong"
             message = "The full resume context is strongly aligned with the target role context."
-        elif similarity >= 0.62:
+        elif cosine >= self.profile.context_moderate:
             match_level = "moderate"
             message = "The full resume context has partial alignment with the target role context."
         else:
@@ -241,7 +263,7 @@ class SemanticMatchingService:
 
         matched_skill = candidate_skills[best_index]
         return {
-            "match_type": "semantic" if best_score >= SEMANTIC_MATCH_THRESHOLD else "weak",
+            "match_type": "semantic" if best_score >= self.profile.semantic_match else "weak",
             "matched_skill_id": matched_skill["skill_id"],
             "matched_skill_display_name": matched_skill["display_name"],
             "similarity_score": round(best_score, 4),
@@ -250,7 +272,7 @@ class SemanticMatchingService:
     async def _embed_cached(self, text: str) -> list[float] | None:
         """Embed ``text`` with a cache to avoid recomputing repeated skill texts."""
         if self._use_shared_cache:
-            key = (get_embedding_provider(), text)
+            key = (get_effective_model_name(), text)
             cached = _SKILL_EMBEDDING_CACHE.get(key)
             if cached is not None:
                 _SKILL_EMBEDDING_CACHE.move_to_end(key)

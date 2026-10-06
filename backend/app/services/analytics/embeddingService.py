@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import os
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
+from typing import Any
 from uuid import UUID, uuid4
 
 import numpy as np
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.observability import external_call
 from app.models.resumeEmbeddingsModel import ResumeEmbedding
 
 LOGGER = logging.getLogger(__name__)
@@ -29,13 +34,91 @@ DEFAULT_EMBEDDINGS_PROVIDER = "hash"
 #: vector is regenerated once — no migration required, no silent reuse of a
 #: fingerprint computed under different rules.
 FINGERPRINT_VERSION = "v1"
+
+GEMINI_PROVIDER = "gemini"
+GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
+#: Part of the vector space, not a tuning knob: two vectors compare only if
+#: both sides were embedded with the same task type. Changing it means a new
+#: model name (see ``gemini_model_name``), never a silent reinterpretation.
+GEMINI_EMBEDDING_TASK_TYPE = "SEMANTIC_SIMILARITY"
+#: The API caps one embed request at 100 inputs.
+GEMINI_EMBEDDING_BATCH_SIZE = 100
+EMBEDDING_TIMEOUT_SECONDS = float(os.getenv("EMBEDDING_TIMEOUT_SECONDS", "10"))
+
 _EMBEDDING_METRICS = {
     "local_failure_count": 0,
+    "provider_failure_count": 0,
     "fallback_to_hash_count": 0,
     "unknown_provider_fallback_count": 0,
     "generation_skipped_count": 0,
     "generation_count": 0,
 }
+
+
+class EmbeddingProviderUnavailable(RuntimeError):
+    """The configured provider could not produce a vector for this request."""
+
+
+@dataclass(frozen=True)
+class SimilarityProfile:
+    """How to read a cosine produced by one embedding model.
+
+    A cosine is not a portable number: each model spreads its scores over its
+    own range. ``semantic_match`` / ``weak_match`` decide when a current skill
+    stands in for a required one. Context similarity is banded on the raw
+    cosine (``context_strong`` / ``context_moderate``) and reported rescaled to
+    [0, 1] between ``context_floor`` and ``context_ceiling``, so that an
+    unrelated CV scores 0 rather than the model's background similarity.
+    """
+
+    semantic_match: float
+    weak_match: float
+    context_strong: float
+    context_moderate: float
+    context_floor: float = 0.0
+    context_ceiling: float = 1.0
+
+    def rescale_context(self, cosine: float) -> float:
+        span = self.context_ceiling - self.context_floor
+        return max(0.0, min((cosine - self.context_floor) / span, 1.0))
+
+
+#: The thresholds the matcher always had, calibrated for MiniLM. Used when the
+#: caller injects its own embedding function (tests, custom callers): there is
+#: no stored model to look up, and those callers were written against them.
+LEGACY_SIMILARITY_PROFILE = SimilarityProfile(
+    semantic_match=0.72,
+    weak_match=0.48,
+    context_strong=0.78,
+    context_moderate=0.62,
+)
+
+#: Calibrated profiles, keyed by storage model name. A model with no entry here
+#: is never semantically ready: comparing its cosines against another model's
+#: thresholds is exactly the error this table exists to prevent.
+#:
+#: ``gemini-embedding-001@384`` — measured 2026-10-05 (TASK-072/073) with
+#: ``task_type=SEMANTIC_SIMILARITY`` on skill texts shaped like ``_skill_text``:
+#: synonyms 0.95–0.99, related skills 0.88–0.94, unrelated 0.74–0.80. A related
+#: skill is a weak match, not a substitute. Context CV↔job: aligned 0.87,
+#: adjacent role 0.84, other stack 0.76, other profession 0.68. The context
+#: values rest on four synthetic pairs and are provisional until TASK-079
+#: calibrates them against real postings.
+SIMILARITY_PROFILES: dict[str, SimilarityProfile] = {
+    "gemini-embedding-001@384": SimilarityProfile(
+        semantic_match=0.95,
+        weak_match=0.88,
+        context_strong=0.85,
+        context_moderate=0.80,
+        context_floor=0.70,
+        context_ceiling=0.90,
+    ),
+}
+
+
+def get_similarity_profile(model_name: str | None = None) -> SimilarityProfile | None:
+    """The calibrated profile of ``model_name`` (default: the configured one)."""
+    return SIMILARITY_PROFILES.get(model_name or get_effective_model_name())
 
 
 class EmbeddingDimensionMismatch(ValueError):
@@ -90,35 +173,74 @@ def is_embedding_generation_enabled() -> bool:
     return get_embedding_provider() not in {"", "0", "false", "off", "disabled", "none"}
 
 
+def gemini_model_name() -> str:
+    """Storage name of the Gemini vector space: model plus width.
+
+    The same model truncated to another width is another space, so the width
+    is part of the name. A hash vector is never stored under this name.
+    """
+    return f"{GEMINI_EMBEDDING_MODEL}@{EMBEDDING_COLUMN_DIMS}"
+
+
 def get_effective_model_name() -> str:
     """Model name under which embeddings are stored for the configured provider.
 
     Mirrors the model name reported by ``generate_embedding_with_model`` so that
-    corpus searches query the matching vector space. The hash provider is the
-    only one left since the local sentence-transformer was retired (it pulled
-    torch into the image and multiplied the cold start); a real-vector provider
-    has to return its own name here, or its vectors would share a key with
-    hashes.
+    corpus searches query the matching vector space, and so the fingerprint skip
+    in ``upsert_resume_embedding_from_text`` looks for the row the provider is
+    about to write. Unknown providers fall back to hash, so they report hash.
     """
+    if get_embedding_provider() == GEMINI_PROVIDER:
+        return gemini_model_name()
     return HASH_MODEL_NAME
+
+
+def is_provider_configured() -> bool:
+    """Whether the configured provider can be called at all.
+
+    ``hash`` needs nothing. ``gemini`` needs an API key; without one every
+    request falls back to hash, which is a configuration error worth showing.
+    """
+    provider = get_embedding_provider()
+    if provider == "hash":
+        return True
+    if provider == GEMINI_PROVIDER:
+        return bool(os.getenv("GENAI_API_KEY"))
+    return False
+
+
+def is_semantic_matching_ready() -> bool:
+    """Whether cosines from the configured provider can be acted on.
+
+    Three conditions, all required: generation is on, the provider produces
+    vectors with meaning and can be called (hash never qualifies; Gemini needs
+    its key), and its model has a calibrated ``SimilarityProfile``.
+    """
+    return (
+        is_embedding_generation_enabled()
+        and get_embedding_provider() != "hash"
+        and is_provider_configured()
+        and get_similarity_profile() is not None
+    )
 
 
 def get_embedding_status() -> dict:
     provider = get_embedding_provider()
     # The local_* keys stay in the public status contract, but there is no local
-    # provider any more: they are always False, and so is semantic readiness,
-    # because a hash vector carries no meaning to match on.
+    # provider any more: they are always False.
     return {
         "enabled": is_embedding_generation_enabled(),
         "provider": provider,
+        "provider_configured": is_provider_configured(),
         "model_name": get_effective_model_name(),
-        "dims": EMBEDDING_DIMS,
-        "semantic_matching_ready": False,
+        "dims": EMBEDDING_COLUMN_DIMS if provider == GEMINI_PROVIDER else EMBEDDING_DIMS,
+        "semantic_matching_ready": is_semantic_matching_ready(),
         "local_provider_configured": False,
         "local_package_available": False,
         "fallback_provider": "hash",
         "model_cache_strategy": "none",
         "local_failure_count": _EMBEDDING_METRICS["local_failure_count"],
+        "provider_failure_count": _EMBEDDING_METRICS["provider_failure_count"],
         "fallback_to_hash_count": _EMBEDDING_METRICS["fallback_to_hash_count"],
         "unknown_provider_fallback_count": _EMBEDDING_METRICS["unknown_provider_fallback_count"],
         "generation_count": _EMBEDDING_METRICS["generation_count"],
@@ -132,6 +254,127 @@ def get_embedding_status() -> dict:
     }
 
 
+def _l2_normalize(vector: list[float]) -> list[float]:
+    """Unit-length copy of ``vector``.
+
+    Gemini only pre-normalises its native 3072-dimension output. Truncated to
+    384 the norm comes back around 0.43, and a cosine computed as a plain dot
+    product over such vectors would be quietly wrong.
+    """
+    array = np.asarray(vector, dtype=np.float64)
+    norm = float(np.linalg.norm(array))
+    if norm == 0.0:
+        return array.tolist()
+    return (array / norm).tolist()
+
+
+@lru_cache(maxsize=1)
+def _build_gemini_client(api_key: str) -> Any:
+    from google import genai
+
+    return genai.Client(api_key=api_key)
+
+
+def _get_gemini_client() -> Any | None:
+    api_key = os.getenv("GENAI_API_KEY")
+    if not api_key:
+        return None
+    return _build_gemini_client(api_key)
+
+
+async def _gemini_embed(texts: list[str]) -> list[list[float]]:
+    """Embed ``texts`` with Gemini, in order, or raise ``EmbeddingProviderUnavailable``.
+
+    One attempt per chunk and no retries: a failure falls back to hash in the
+    caller, which is cheaper than retrying a paid call against an API that just
+    refused it.
+    """
+    from app import config
+
+    # The kill switch stops every paid provider call, not only generation.
+    if config.AI_KILL_SWITCH:
+        raise EmbeddingProviderUnavailable("AI kill switch is on")
+    client = _get_gemini_client()
+    if client is None:
+        raise EmbeddingProviderUnavailable("GENAI_API_KEY is not set")
+
+    from google.genai import types
+
+    embed_config = types.EmbedContentConfig(
+        task_type=GEMINI_EMBEDDING_TASK_TYPE,
+        output_dimensionality=EMBEDDING_COLUMN_DIMS,
+    )
+    vectors: list[list[float]] = []
+    for start in range(0, len(texts), GEMINI_EMBEDDING_BATCH_SIZE):
+        chunk = texts[start : start + GEMINI_EMBEDDING_BATCH_SIZE]
+        try:
+            with external_call("gemini_embeddings"):
+                response = await asyncio.wait_for(
+                    client.aio.models.embed_content(
+                        model=GEMINI_EMBEDDING_MODEL,
+                        contents=chunk,
+                        config=embed_config,
+                    ),
+                    timeout=EMBEDDING_TIMEOUT_SECONDS,
+                )
+        except Exception as exc:
+            raise EmbeddingProviderUnavailable(f"{type(exc).__name__}: {exc}") from exc
+
+        embeddings = list(response.embeddings or [])
+        if len(embeddings) != len(chunk):
+            raise EmbeddingProviderUnavailable(
+                f"asked for {len(chunk)} embeddings, received {len(embeddings)}"
+            )
+        for embedding in embeddings:
+            values = list(embedding.values or [])
+            if len(values) != EMBEDDING_COLUMN_DIMS:
+                raise EmbeddingProviderUnavailable(
+                    str(
+                        EmbeddingDimensionMismatch(
+                            model_name=gemini_model_name(),
+                            produced=len(values),
+                            expected=EMBEDDING_COLUMN_DIMS,
+                        )
+                    )
+                )
+            vectors.append(_l2_normalize(values))
+    return vectors
+
+
+async def generate_embeddings_batch(texts: list[str]) -> tuple[list[list[float]], str] | None:
+    """Embed several texts in one go and report the model that produced them.
+
+    All vectors of one call share one model name: if the provider fails for any
+    chunk, the whole batch falls back to hash, so a caller never holds a list
+    that mixes two vector spaces. Texts are stripped exactly as
+    ``normalize_embedding_text`` does; an empty text is refused, because its
+    position in the result would otherwise be ambiguous.
+    """
+    clean_texts = [normalize_embedding_text(text) for text in texts]
+    if not clean_texts or not is_embedding_generation_enabled():
+        return None
+    if any(not text for text in clean_texts):
+        raise ValueError("generate_embeddings_batch received an empty text")
+
+    provider = get_embedding_provider()
+    if provider == GEMINI_PROVIDER:
+        try:
+            return await _gemini_embed(clean_texts), gemini_model_name()
+        except EmbeddingProviderUnavailable as exc:
+            LOGGER.warning(
+                "Gemini embeddings unavailable (%s). Falling back to hash embeddings.", exc
+            )
+            _EMBEDDING_METRICS["provider_failure_count"] += 1
+            _EMBEDDING_METRICS["fallback_to_hash_count"] += 1
+            return [generate_hash_embedding(text) for text in clean_texts], HASH_MODEL_NAME
+
+    if provider != "hash":
+        LOGGER.warning("Unknown EMBEDDINGS_PROVIDER=%s. Falling back to hash embeddings.", provider)
+        _EMBEDDING_METRICS["unknown_provider_fallback_count"] += 1
+        _EMBEDDING_METRICS["fallback_to_hash_count"] += 1
+    return [generate_hash_embedding(text) for text in clean_texts], HASH_MODEL_NAME
+
+
 async def generate_embedding_with_model(text: str) -> tuple[list[float], str] | None:
     """Generate an embedding and report the model name actually used.
 
@@ -140,23 +383,36 @@ async def generate_embedding_with_model(text: str) -> tuple[list[float], str] | 
     ``EMBEDDINGS_PROVIDER=local`` names the retired sentence-transformer and is
     now an unknown provider: it falls back to hash and is counted as such.
     """
-    clean_text = (text or "").strip()
-    if not clean_text or not is_embedding_generation_enabled():
+    clean_text = normalize_embedding_text(text)
+    if not clean_text:
         return None
-
-    provider = get_embedding_provider()
-    if provider == "hash":
-        return generate_hash_embedding(clean_text), HASH_MODEL_NAME
-
-    LOGGER.warning("Unknown EMBEDDINGS_PROVIDER=%s. Falling back to hash embeddings.", provider)
-    _EMBEDDING_METRICS["unknown_provider_fallback_count"] += 1
-    _EMBEDDING_METRICS["fallback_to_hash_count"] += 1
-    return generate_hash_embedding(clean_text), HASH_MODEL_NAME
+    result = await generate_embeddings_batch([clean_text])
+    if result is None:
+        return None
+    vectors, model_name = result
+    return vectors[0], model_name
 
 
 async def generate_embedding(text: str) -> list[float] | None:
     result = await generate_embedding_with_model(text)
     return result[0] if result else None
+
+
+async def generate_embedding_in_active_space(text: str) -> list[float] | None:
+    """A vector from the configured model, or ``None``.
+
+    A hash fallback has the same width as a Gemini vector, so nothing would stop
+    it from being compared against one — and the cosine between two different
+    spaces is noise. Whatever compares vectors uses this, and treats a fallback
+    as "no vector" rather than as a vector.
+    """
+    result = await generate_embedding_with_model(text)
+    if result is None:
+        return None
+    vector, model_name = result
+    if model_name != get_effective_model_name():
+        return None
+    return vector
 
 
 class ResumeEmbeddingService:
