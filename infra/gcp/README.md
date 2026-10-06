@@ -287,6 +287,28 @@ Monitoring (SQLAlchemy no la expone; Neon no es Cloud SQL), así que su síntoma
 —agotamiento— se alerta indirectamente vía la alerta de 5xx en vez de
 inventarse una fuente de telemetría que TASK-028 no decidió emitir.
 
+### Vectores del catálogo de skills (plan 11, TASK-074)
+
+`studentscompass-sync-skill-embeddings` es un Job de Cloud Run de un solo uso
+que ejecuta `SkillEmbeddingService.sync_catalog()` con la imagen de la API y la
+cuenta `sc-api` (la única con acceso a `DATABASE_URL` y `GENAI_API_KEY` a la
+vez), así que ningún secreto sale de GCP. Es idempotente: una skill con vector
+vigente no vuelve a llamar al proveedor. Primera ejecución, 2026-10-06: 117
+skills embebidas bajo `gemini-embedding-001@384`.
+
+Relanzarlo tras sembrar o ampliar el catálogo (TASK-082) o tras cambiar de
+modelo, actualizando antes la imagen a la del SHA desplegado:
+
+```bash
+gcloud run jobs update studentscompass-sync-skill-embeddings \
+  --project "$PROJECT_ID" --region "$REGION" --image "<imagen api:SHA>"
+gcloud run jobs execute studentscompass-sync-skill-embeddings \
+  --project "$PROJECT_ID" --region "$REGION" --wait
+```
+
+No es imprescindible: el primer análisis que necesite una skill sin vector la
+embebe y la guarda.
+
 ### Runbook de rollback por revisión
 
 No hay comando especial: es el mismo que usa el job `rollback` de `deploy.yml`.
