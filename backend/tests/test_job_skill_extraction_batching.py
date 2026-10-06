@@ -115,7 +115,9 @@ async def test_the_sweep_commits_per_batch_not_per_posting(
         f"over {posting_count} postings"
     )
     # Postings + lookup + one existing-links read and one insert per batch.
-    assert counter.selects <= 4 + expected_batches, (
+    # The lookup is three selects on a cold cache (catalogue fingerprint,
+    # skills, aliases) and one when warm (TASK-082): this test starts cold.
+    assert counter.selects <= 5 + expected_batches, (
         f"{counter.selects} selects for {posting_count} postings"
     )
     assert counter.count("INSERT") == expected_batches

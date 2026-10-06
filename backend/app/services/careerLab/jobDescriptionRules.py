@@ -23,7 +23,7 @@ from app.services.analytics.skillExtractionService import SkillExtractionService
 RULES_MODEL_ID = "rules"
 #: Bumped whenever the rules below change what they extract. A parse stored
 #: under another version is recomputed, never reinterpreted.
-RULES_PARSE_VERSION = "jd_rules_v1"
+RULES_PARSE_VERSION = "jd_rules_v2"
 
 REQUIRED = "required"
 PREFERRED = "preferred"
@@ -118,6 +118,38 @@ _ROLE_SECTION = re.compile(
     r"buscamos|el puesto|tu rol)",
     re.IGNORECASE,
 )
+
+
+# Lines that speak for the employer wherever they sit, often as an unheaded
+# closing paragraph: equal opportunity, accommodations, the hiring process,
+# pay and benefits. Read on 3,218 public postings (TASK-082), they were where
+# most false requirements came from: "where everyone can excel" read as Excel,
+# "inform your recruiting contact" as Recruiting, "sales commissions" as Sales,
+# "the tool has been reviewed by an independent auditor" as Auditing.
+_BOILERPLATE_LINE = re.compile(
+    r"(equal (employment )?opportunit|affirmative action|without regard to|"
+    r"regardless of (race|gender|age|religion)|protected (veteran|characteristic)|"
+    r"\b(diverse|inclusive) (culture|community|workplace|environment|team)|"
+    r"committed to (fostering|building|creating|growing|providing|diversity|equal)|"
+    r"\baccommodations?\b|recruit(ing|ment) (process|contact|team|scam)|"
+    r"\bscam\b|background check|e-?verify|privacy (notice|policy)|"
+    r"(independent|bias) audit|\bai (tools?|disclaimer)|"
+    r"\bbenefits\b|401\(?k\)?|\bequity\b|\bbonus(es)?\b|commission|"
+    r"(base )?salary|pay (range|transparency)|compensation (package|range)|"
+    r"paid (time off|leave|parental)|health (insurance|care|, dental)|"
+    r"igualdad de oportunidades|sin distinci[oó]n|beneficios|salario|retribuci[oó]n)",
+    re.IGNORECASE,
+)
+
+
+# The unheaded paragraph that introduces the company: "At Instacart, we
+# invite the world to share love through food…" read as Household Products.
+_COMPANY_INTRO = re.compile(r"^([Aa]t|[Ee]n) [A-Z][\w&.'’\- ]{1,40}, (we|our|nuestr[oa]s?|somos)\b")
+
+
+def is_employer_line(line: str) -> bool:
+    """A line about the employer, not the role: never read for requirements."""
+    return bool(_BOILERPLATE_LINE.search(line) or _COMPANY_INTRO.search(line))
 
 
 def role_text(title: str | None, text: str) -> str:
@@ -260,8 +292,19 @@ async def parse_job_description(
     outside = PREFERRED if structured else REQUIRED
     section = outside
     found: dict[str, ParsedRequirement] = {}
+    employer = False
     for line in lines:
         if not line:
+            continue
+        # The same section reading as `role_text`: an employer section (about
+        # us, benefits, equal opportunity…) runs until a role section starts,
+        # and nothing in it is a requirement of the role.
+        if len(line) <= 80 and _EMPLOYER_SECTION.search(line):
+            employer = True
+            continue
+        if len(line) <= 80 and _ROLE_SECTION.search(line):
+            employer = False
+        if employer or is_employer_line(line):
             continue
         marker = _line_marker(line)
         if marker is not None and _is_header(line):
